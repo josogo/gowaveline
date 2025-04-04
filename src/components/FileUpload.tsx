@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { toast } from "sonner";
 import { useNavigate } from 'react-router-dom';
-import { analyzeStatement, StatementAnalysis } from '@/services/statementService';
+import { analyzeStatement, useMockAnalysis, StatementAnalysis } from '@/services/statementService';
 
 const FileUpload = () => {
   const [file, setFile] = useState<File | null>(null);

@@ -1,5 +1,5 @@
 
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
 
 // Types for analysis results
@@ -20,18 +20,6 @@ export interface StatementAnalysis {
   fees: FeeStructure;
 }
 
-// Initialize Supabase client - these environment variables should be set in your environment
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-
-// Check if we have the required configuration
-const isSupabaseConfigured = supabaseUrl && supabaseAnonKey;
-
-// Only create the client if configuration is available
-const supabase = isSupabaseConfigured 
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : null;
-
 /**
  * Analyzes a merchant statement using backend services via Supabase Edge Function
  * @param file The statement file to analyze
@@ -43,14 +31,8 @@ export const analyzeStatement = async (
   onProgress: (progress: number) => void
 ): Promise<StatementAnalysis> => {
   try {
-    // Check if Supabase is configured
-    if (!isSupabaseConfigured || !supabase) {
-      console.warn('Supabase is not configured. Using mock data instead.');
-      return useMockAnalysis(onProgress);
-    }
-
-    // First, we need to upload the file to Supabase Storage
-    onProgress(10); // Start progress
+    // Start progress
+    onProgress(10);
     
     // Create a unique file name to avoid collisions
     const timeStamp = new Date().getTime();
@@ -112,9 +94,9 @@ export const analyzeStatement = async (
 
 /**
  * A fallback function that simulates the statement analysis process
- * Used when Supabase is not configured
+ * Used when uploading or processing fails
  */
-const useMockAnalysis = async (
+export const useMockAnalysis = async (
   onProgress: (progress: number) => void
 ): Promise<StatementAnalysis> => {
   // Simulate API delays for a more realistic experience
@@ -146,4 +128,3 @@ const useMockAnalysis = async (
     }
   };
 };
-
