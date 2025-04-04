@@ -127,7 +127,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        ...analysisResult
+        ...analysisResult,
+        isMockData: false // Explicitly set isMockData to false
       }),
       { headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );

@@ -6,13 +6,14 @@ import Dashboard from '@/components/Dashboard';
 import CallToAction from '@/components/CallToAction';
 import Footer from '@/components/Footer';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatementAnalysis } from '@/services/statementService';
 
 const Results = () => {
   const [analysis, setAnalysis] = useState<StatementAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,19 +23,38 @@ const Results = () => {
     if (storedData) {
       try {
         const parsedData = JSON.parse(storedData);
+        console.log("Retrieved analysis data from localStorage:", parsedData);
         setAnalysis(parsedData);
+        setLoading(false);
       } catch (err) {
         console.error('Error parsing stored analysis data:', err);
         setError('Error retrieving analysis data. Please try uploading your statement again.');
+        setLoading(false);
       }
     } else {
       setError('No analysis data found. Please upload a merchant statement first.');
+      setLoading(false);
     }
   }, []);
 
   const handleReturnHome = () => {
     navigate('/');
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-lg">Loading analysis results...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -58,18 +78,6 @@ const Results = () => {
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
                 We've analyzed your merchant statement and found several insights that could help you reduce costs.
               </p>
-              
-              {analysis?.isMockData && (
-                <div className="mt-4 mx-auto max-w-md">
-                  <Alert variant="warning" className="bg-amber-50 border-amber-200">
-                    <AlertCircle className="h-4 w-4 text-amber-500" />
-                    <AlertTitle className="text-amber-700">Demo Data</AlertTitle>
-                    <AlertDescription className="text-amber-600">
-                      This is using demonstration data, not your actual statement analysis.
-                    </AlertDescription>
-                  </Alert>
-                </div>
-              )}
             </div>
             
             {analysis && <Dashboard analysisData={analysis} />}

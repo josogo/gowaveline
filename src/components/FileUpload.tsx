@@ -66,15 +66,17 @@ const FileUpload = () => {
   const useFallbackData = async () => {
     setUsingMockData(true);
     setDebugInfo("Using mock data as fallback");
+    setUploading(true);
     
     try {
       const mockData = await useMockAnalysis((progressValue) => {
         setProgress(progressValue);
       });
       
+      // Explicitly set isMockData flag to true
       localStorage.setItem('statementAnalysis', JSON.stringify({
         ...mockData,
-        isMockData: true // Flag to indicate this is mock data
+        isMockData: true
       }));
       
       toast.success("Using sample data for demonstration");
@@ -86,6 +88,7 @@ const FileUpload = () => {
       console.error('Mock analysis failed:', fallbackError);
       toast.error("Something went wrong. Please try again later.");
       setProgress(0);
+      setUploading(false);
     }
   };
   
@@ -108,17 +111,8 @@ const FileUpload = () => {
       
       console.log("Analysis data received:", analysisData);
       
-      // Check if we received valid analysis data
-      if (!analysisData || !analysisData.success) {
-        setDebugInfo("Analysis returned invalid data");
-        throw new Error("Analysis returned invalid data");
-      }
-      
       // Store analysis data in localStorage for the results page to use
-      localStorage.setItem('statementAnalysis', JSON.stringify({
-        ...analysisData,
-        isMockData: false // Flag to indicate this is real data
-      }));
+      localStorage.setItem('statementAnalysis', JSON.stringify(analysisData));
       
       toast.success("Analysis complete!");
       

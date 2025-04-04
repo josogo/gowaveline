@@ -105,7 +105,11 @@ export const analyzeStatement = async (
       .from('statements')
       .remove([fileName]);
     
-    return analysisData;
+    // Make sure isMockData is explicitly set to false
+    return {
+      ...analysisData,
+      isMockData: false
+    };
     
   } catch (error) {
     console.error('Analysis error:', error);
