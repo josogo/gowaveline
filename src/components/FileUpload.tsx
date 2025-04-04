@@ -1,20 +1,17 @@
 
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Cloud, File, FileText, UploadCloud, X, AlertCircle, RefreshCw } from 'lucide-react';
+import { File, FileText, UploadCloud, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { toast } from "sonner";
 import { useNavigate } from 'react-router-dom';
-import { analyzeStatement, StatementAnalysis } from '@/services/statementService';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { analyzeStatement } from '@/services/statementService';
 
 const FileUpload = () => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const [debugInfo, setDebugInfo] = useState<string | null>(null);
   const navigate = useNavigate();
 
   React.useEffect(() => {
@@ -23,11 +20,7 @@ const FileUpload = () => {
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const selectedFile = acceptedFiles[0];
-    
     if (!selectedFile) return;
-    
-    setError(null);
-    setDebugInfo(null);
     
     const allowedTypes = ['application/pdf', 'text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
     if (!allowedTypes.includes(selectedFile.type)) {
@@ -57,135 +50,45 @@ const FileUpload = () => {
   const removeFile = () => {
     setFile(null);
     setProgress(0);
-    setError(null);
-    setDebugInfo(null);
-  };
-  
-  const resetApp = () => {
-    localStorage.removeItem('statementAnalysis');
-    setFile(null);
-    setProgress(0);
-    setError(null);
-    setDebugInfo(null);
-    setUploading(false);
-    toast.info("Application reset. Please upload a new statement.");
   };
   
   const handleUpload = async () => {
     if (!file) return;
     
-    console.log("Clearing any existing analysis data from localStorage");
+    console.log("Starting upload process");
     localStorage.removeItem('statementAnalysis');
     
     setUploading(true);
-    setProgress(0);
-    setError(null);
-    setDebugInfo(null);
+    setProgress(10);
     
     try {
-      console.log("Starting file analysis:", file.name, file.type);
+      console.log("Analyzing file:", file.name, file.type);
       
-      const analysisData = await analyzeStatement(file, (progressValue) => {
-        setProgress(progressValue);
-      });
+      // Use a simpler progress callback
+      const onProgressUpdate = (value: number) => {
+        console.log("Progress update:", value);
+        setProgress(value);
+      };
       
-      console.log("Analysis data received, isMockData=", analysisData.isMockData);
+      const analysisData = await analyzeStatement(file, onProgressUpdate);
+      console.log("Analysis complete:", analysisData);
       
-      // Store the analysis data in localStorage for the results page
+      // Store the data and navigate to results
       localStorage.setItem('statementAnalysis', JSON.stringify(analysisData));
       
       if (analysisData.isMockData) {
-        // If we got mock data, show a toast but still allow navigation to results
         toast.warning("Using simulation mode. This is sample data for demonstration purposes.");
       } else {
-        // Check if we got any meaningful data
-        const noDataExtracted = 
-          analysisData.effectiveRate === "N/A" && 
-          analysisData.monthlyVolume === "N/A" && 
-          analysisData.pricingModel === "N/A" &&
-          analysisData.chargebackRatio === "N/A" && 
-          analysisData.fees.monthlyFee === "N/A" &&
-          analysisData.fees.pciFee === "N/A";
-          
-        if (noDataExtracted) {
-          toast.warning("We couldn't extract all data from your statement, but we'll show what we found.");
-        } else {
-          toast.success("Analysis complete!");
-        }
+        toast.success("Analysis complete!");
       }
       
-      // Navigate to results in either case
-      setTimeout(() => {
-        navigate('/results');
-      }, 1000);
+      // Navigate to results page
+      navigate('/results');
       
     } catch (error) {
-      console.error('Analysis error:', error);
-      
-      // Check if we received a response with a success flag
-      if (error instanceof Error && error.message.includes('success')) {
-        try {
-          // Try to parse the error message as JSON
-          const errorJson = error.message.substring(error.message.indexOf('{'));
-          const errorData = JSON.parse(errorJson);
-          
-          if (errorData.success === true && errorData.isMockData === true) {
-            // Store the mock data and navigate to results
-            console.log("Error contained valid mock data, proceeding to results");
-            localStorage.setItem('statementAnalysis', JSON.stringify(errorData));
-            toast.warning("Using simulation mode with sample data.");
-            setTimeout(() => {
-              navigate('/results');
-            }, 1000);
-            return;
-          }
-        } catch (parseError) {
-          console.warn("Failed to parse potential JSON in error message");
-        }
-      }
-      
-      const isGeminiError = 
-        error instanceof Error && 
-        (
-          error.message.includes('Gemini') ||
-          error.message.includes('Edge Function returned a non-2xx status code')
-        );
-      
-      if (isGeminiError) {
-        setError("There was an issue processing your statement. Using simulation mode with sample data.");
-        setDebugInfo("Using mock data for demonstration purposes. Try uploading a different file format or contact support.");
-        
-        // Create mock data to show the results page anyway
-        const mockData = {
-          success: true,
-          effectiveRate: "2.45%",
-          monthlyVolume: "$42,850.75",
-          chargebackRatio: "0.05%",
-          pricingModel: "Tiered",
-          fees: {
-            monthlyFee: "$25.00",
-            pciFee: "$19.95",
-            statementFee: "$9.95",
-            batchFee: "$0.25",
-            transactionFees: "$0.10 per transaction + 1.85% for qualified cards"
-          },
-          isMockData: true,
-          message: "Using simulated data for testing purposes."
-        };
-        
-        localStorage.setItem('statementAnalysis', JSON.stringify(mockData));
-        
-        // Allow the user to view the mock data results
-        toast.warning("Proceeding with simulation mode");
-        setTimeout(() => {
-          navigate('/results');
-        }, 2000);
-      } else {
-        setError(error instanceof Error ? error.message : 'Unknown error');
-        setDebugInfo(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        setProgress(0);
-        setUploading(false);
-      }
+      console.error("Upload error:", error);
+      toast.error("There was a problem analyzing your statement. Please try again.");
+      setUploading(false);
     }
   };
   
@@ -201,9 +104,7 @@ const FileUpload = () => {
         <div
           {...getRootProps()}
           className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-            isDragActive 
-              ? 'border-primary bg-primary/5' 
-              : 'border-gray-300 hover:border-primary/50'
+            isDragActive ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-primary/50'
           }`}
         >
           <input {...getInputProps()} />
@@ -241,73 +142,26 @@ const FileUpload = () => {
             </button>
           </div>
           
-          {uploading && !error && (
+          {uploading && (
             <div className="space-y-2">
               <Progress value={progress} className="h-2" />
               <p className="text-sm text-right text-muted-foreground">{progress}%</p>
             </div>
           )}
           
-          {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Analysis Status</AlertTitle>
-              <AlertDescription>
-                {error}
-                <div className="mt-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={resetApp}
-                    className="mr-2"
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Reset Application
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={removeFile}
-                  >
-                    Try New File
-                  </Button>
-                </div>
-              </AlertDescription>
-            </Alert>
-          )}
-          
-          {debugInfo && (
-            <div className="p-3 bg-orange-50 border border-orange-200 rounded-md text-sm text-orange-700">
-              <p className="font-medium">Info:</p>
-              <p className="font-mono text-xs mt-1 break-all">{debugInfo}</p>
-            </div>
-          )}
-          
           <div className="flex justify-end">
-            {!error ? (
-              <Button 
-                onClick={handleUpload} 
-                disabled={uploading || !file}
-                className="bg-gradient-to-r from-teal-500 to-teal-400 hover:from-teal-400 hover:to-teal-500 text-white"
-              >
-                {uploading ? 'Analyzing...' : 'Analyze Statement'}
-              </Button>
-            ) : (
-              <div className="space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={removeFile}
-                >
-                  Try New File
-                </Button>
-                <Button
-                  onClick={resetApp}
-                  className="bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-500 text-white"
-                >
-                  Reset Application
-                </Button>
-              </div>
-            )}
+            <Button 
+              onClick={handleUpload} 
+              disabled={uploading || !file}
+              className="bg-gradient-to-r from-teal-500 to-teal-400 hover:from-teal-400 hover:to-teal-500 text-white"
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Analyzing...
+                </>
+              ) : 'Analyze Statement'}
+            </Button>
           </div>
         </div>
       )}

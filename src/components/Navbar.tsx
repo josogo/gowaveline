@@ -25,15 +25,15 @@ const Navbar: React.FC<NavbarProps> = ({ className }) => {
           src="/lovable-uploads/2d9abfe8-af53-43b1-9ce4-d5c73518ff44.png" 
           alt="Gowaveline Logo" 
           className="h-10 w-auto"
+          onClick={() => navigate('/')}
+          style={{ cursor: 'pointer' }}
         />
         <span className="font-bold text-xl">Gowaveline</span>
       </div>
       
       <div className="hidden md:flex items-center space-x-6">
-        <a href="https://gowaveline.com" target="_blank" rel="noopener noreferrer">
-          <Button variant="link">Home</Button>
-        </a>
-        <Button variant="link" onClick={() => navigate('/')}>About</Button>
+        <Button variant="link" onClick={() => navigate('/')}>Home</Button>
+        <Button variant="link" onClick={() => navigate('/industries')}>Industries</Button>
         <Button variant="link" onClick={() => navigate('/')}>Features</Button>
         <Button variant="link" onClick={() => navigate('/')}>Contact</Button>
       </div>
