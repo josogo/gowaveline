@@ -1,10 +1,8 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Dashboard from '@/components/Dashboard';
 import CallToAction from '@/components/CallToAction';
-import Footer from '@/components/Footer';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -58,7 +56,6 @@ const Results = () => {
             <p className="text-lg">Loading analysis results...</p>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -92,7 +89,6 @@ const Results = () => {
           </>
         )}
       </main>
-      <Footer />
     </div>
   );
 };

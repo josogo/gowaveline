@@ -8,6 +8,13 @@ const Hero = () => {
     <div className="relative px-6 lg:px-8 py-16 md:py-24">
       <div className="mx-auto max-w-5xl">
         <div className="text-center animate-fade-in">
+          <div className="flex justify-center mb-8">
+            <img 
+              src="/lovable-uploads/2d9abfe8-af53-43b1-9ce4-d5c73518ff44.png" 
+              alt="Gowaveline Logo" 
+              className="h-24 md:h-32 w-auto"
+            />
+          </div>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground sm:text-6xl">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-orange-400">
               Analyze
