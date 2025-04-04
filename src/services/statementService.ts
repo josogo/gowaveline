@@ -18,6 +18,7 @@ export interface StatementAnalysis {
   chargebackRatio: string;
   pricingModel: string;
   fees: FeeStructure;
+  isMockData?: boolean; // Flag to indicate if this is mock data
 }
 
 /**
@@ -73,7 +74,7 @@ export const analyzeStatement = async (
     }
     
     const fileUrl = urlData.signedUrl;
-    console.log("Got signed URL for the file");
+    console.log("Got signed URL for the file:", fileUrl);
     onProgress(60); // Update progress after getting URL
     
     // Call the Supabase Edge Function to analyze the statement
@@ -83,20 +84,22 @@ export const analyzeStatement = async (
         body: { fileUrl, fileName, fileType: file.type },
       });
     
+    console.log("Response from edge function:", analysisData, analysisError);
+    
     if (analysisError) {
       console.error('Error analyzing statement:', analysisError);
       throw new Error(`Failed to analyze statement: ${analysisError.message}`);
     }
     
-    if (!analysisData) {
-      console.error('No analysis data returned');
-      throw new Error('No analysis data returned from the function');
+    if (!analysisData || !analysisData.success) {
+      console.error('No analysis data returned or analysis unsuccessful');
+      throw new Error('Analysis failed: No valid data returned from the analysis function');
     }
     
     console.log("Analysis data received:", analysisData);
     onProgress(100); // Analysis complete
     
-    // Clean up the uploaded file after analysis (optional)
+    // Clean up the uploaded file after analysis
     console.log("Cleaning up uploaded file");
     await supabase.storage
       .from('statements')
@@ -107,13 +110,13 @@ export const analyzeStatement = async (
   } catch (error) {
     console.error('Analysis error:', error);
     toast.error(`Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    throw error; // Important: We rethrow the error instead of falling back to mock data
+    throw error; // We rethrow the error to be handled by the caller
   }
 };
 
 /**
  * A fallback function that simulates the statement analysis process
- * Used when uploading or processing fails
+ * Used when uploading or processing fails and the user specifically requests mock data
  */
 export const useMockAnalysis = async (
   onProgress: (progress: number) => void
@@ -144,6 +147,7 @@ export const useMockAnalysis = async (
       statementFee: "$7.50",
       batchFee: "$0.25",
       transactionFees: "$0.10 per transaction"
-    }
+    },
+    isMockData: true
   };
 };

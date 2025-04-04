@@ -2,13 +2,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// This will need to be configured in your Supabase project's secrets
+// Get environment variables
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") || "";
 const GOOGLE_CLOUD_PROJECT_ID = Deno.env.get("GOOGLE_CLOUD_PROJECT_ID") || "";
 const GOOGLE_CLOUD_LOCATION = Deno.env.get("GOOGLE_CLOUD_LOCATION") || "us";
 const GOOGLE_CLOUD_PROCESSOR_ID = Deno.env.get("GOOGLE_CLOUD_PROCESSOR_ID") || "";
 const GOOGLE_CLOUD_API_KEY = Deno.env.get("GOOGLE_CLOUD_API_KEY") || "";
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") || "";
 
+// CORS headers for browser requests
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -20,21 +21,26 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  console.log("Edge function called with method:", req.method);
+  
   try {
     // Parse the request body
     const { fileUrl, fileName, fileType } = await req.json();
     
     if (!fileUrl) {
+      console.error("Missing file URL in request");
       return new Response(
         JSON.stringify({ error: 'Missing file URL' }),
         { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
-    console.log(`Processing file: ${fileName}, URL: ${fileUrl}`);
+    console.log(`Processing file: ${fileName}, Type: ${fileType}, URL available: ${Boolean(fileUrl)}`);
 
     // Download the file from the signed URL
+    console.log("Attempting to download file from signed URL");
     const fileResponse = await fetch(fileUrl);
+    
     if (!fileResponse.ok) {
       console.error(`Failed to download file: ${fileResponse.status} ${fileResponse.statusText}`);
       return new Response(
@@ -50,29 +56,31 @@ serve(async (req) => {
     // Extract text based on file type
     let extractedText = "";
     
-    // For PDF files: Use Document AI if credentials are available, otherwise simulate
-    if (fileType === "application/pdf") {
+    if (fileType.includes("pdf")) {
       if (GOOGLE_CLOUD_API_KEY && GOOGLE_CLOUD_PROJECT_ID && GOOGLE_CLOUD_PROCESSOR_ID) {
         try {
+          console.log("Attempting Document AI extraction");
           extractedText = await extractTextWithDocumentAI(fileContent, fileType);
-          console.log("Text extracted with Document AI");
+          console.log("Document AI extraction successful");
         } catch (error) {
           console.error("Document AI extraction failed:", error);
           extractedText = simulateTextExtraction("pdf");
-          console.log("Falling back to simulated text extraction");
+          console.log("Falling back to PDF text simulation");
         }
       } else {
+        console.log("No Document AI credentials available");
         extractedText = simulateTextExtraction("pdf");
-        console.log("No Document AI credentials, using simulated text extraction");
+        console.log("Using PDF text simulation");
       }
     } 
-    // For CSV/Excel files: Parse directly or simulate
     else if (fileType.includes("csv") || fileType.includes("excel") || fileType.includes("sheet")) {
-      extractedText = simulateTextExtraction("spreadsheet");
-      console.log("Using simulated text extraction for spreadsheet");
+      console.log("Processing spreadsheet file");
+      const text = new TextDecoder().decode(fileContent);
+      extractedText = text || simulateTextExtraction("spreadsheet");
+      console.log("Extracted text from spreadsheet, length:", extractedText.length);
     } 
-    // Unknown format
     else {
+      console.error("Unsupported file format:", fileType);
       return new Response(
         JSON.stringify({ 
           error: 'Unsupported file format. Please upload a PDF, CSV, or Excel file.' 
@@ -81,7 +89,8 @@ serve(async (req) => {
       );
     }
     
-    if (!extractedText) {
+    if (!extractedText || extractedText.trim().length === 0) {
+      console.error("Failed to extract text from document");
       return new Response(
         JSON.stringify({ error: 'Failed to extract text from document' }),
         { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
@@ -89,8 +98,9 @@ serve(async (req) => {
     }
     
     console.log("Text extraction successful, length:", extractedText.length);
+    console.log("Sample text:", extractedText.substring(0, 200) + "...");
     
-    // Now analyze with OpenAI (if API key is available) or use mock analysis
+    // Now analyze with OpenAI
     let analysisResult;
     
     if (OPENAI_API_KEY) {
@@ -101,13 +111,16 @@ serve(async (req) => {
       } catch (error) {
         console.error("OpenAI analysis failed:", error);
         return new Response(
-          JSON.stringify({ error: `OpenAI analysis failed: ${error.message}` }),
+          JSON.stringify({ error: `OpenAI analysis failed: ${error instanceof Error ? error.message : String(error)}` }),
           { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
         );
       }
     } else {
-      console.log("No OpenAI API key, using mock analysis");
-      analysisResult = getMockAnalysis();
+      console.error("Missing OpenAI API key");
+      return new Response(
+        JSON.stringify({ error: "OpenAI API key is required for statement analysis" }),
+        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
     }
     
     // Return the results
@@ -120,7 +133,7 @@ serve(async (req) => {
     );
     
   } catch (error) {
-    console.error('Error in Supabase Edge Function:', error);
+    console.error('Error in edge function:', error);
     return new Response(
       JSON.stringify({ 
         success: false,
@@ -218,6 +231,7 @@ async function analyzeWithOpenAI(extractedText: string) {
     throw new Error('Missing OpenAI API key');
   }
 
+  console.log("Sending text to OpenAI for analysis");
   const openaiUrl = 'https://api.openai.com/v1/chat/completions';
   
   const response = await fetch(openaiUrl, {
@@ -231,18 +245,33 @@ async function analyzeWithOpenAI(extractedText: string) {
       messages: [
         {
           role: "system",
-          content: "You are a financial analyst specialized in merchant processing statements."
+          content: "You are a financial analyst specialized in merchant processing statements. Extract the requested information precisely from the statement text."
         },
         {
           role: "user",
-          content: `Extract and provide the following information from this merchant statement: 
+          content: `Extract the following information from this merchant statement: 
           1. Effective rate (total fees divided by total volume)
           2. Monthly processing volume
-          3. Chargeback ratio
+          3. Chargeback ratio (chargebacks divided by total volume, or if not available, provide an estimate)
           4. Pricing model (interchange-plus or tiered)
           5. List all fees (monthly fee, PCI fee, statement fee, batch fee, transaction fees, etc.)
           
-          Format the response as a JSON object with these fields. Here's the statement:
+          Format your response as a JSON object with these exact fields:
+          {
+            "effectiveRate": "X.XX%",
+            "monthlyVolume": "$XXX,XXX.XX",
+            "chargebackRatio": "0.XX%",
+            "pricingModel": "Type",
+            "fees": {
+              "monthlyFee": "$XX.XX",
+              "pciFee": "$XX.XX",
+              "statementFee": "$X.XX",
+              "batchFee": "$X.XX",
+              "transactionFees": "description"
+            }
+          }
+          
+          Here's the statement:
           
           ${extractedText}`
         }
@@ -254,47 +283,31 @@ async function analyzeWithOpenAI(extractedText: string) {
 
   if (!response.ok) {
     const errorText = await response.text();
+    console.error("OpenAI API error response:", errorText);
     throw new Error(`OpenAI API error: ${response.status} ${errorText}`);
   }
 
   const result = await response.json();
+  console.log("OpenAI response received"); 
   
   try {
     const analysisJSON = JSON.parse(result.choices[0].message.content);
+    console.log("Parsed analysis result:", analysisJSON);
     return {
-      effectiveRate: analysisJSON.effectiveRate || "2.79%",
-      monthlyVolume: analysisJSON.monthlyVolume || "$145,230.45",
-      chargebackRatio: analysisJSON.chargebackRatio || "0.17%",
-      pricingModel: analysisJSON.pricingModel || "Interchange Plus",
+      effectiveRate: analysisJSON.effectiveRate || "N/A",
+      monthlyVolume: analysisJSON.monthlyVolume || "N/A",
+      chargebackRatio: analysisJSON.chargebackRatio || "N/A",
+      pricingModel: analysisJSON.pricingModel || "N/A",
       fees: {
-        monthlyFee: analysisJSON.fees?.monthlyFee || "$9.95",
-        pciFee: analysisJSON.fees?.pciFee || "$14.95",
-        statementFee: analysisJSON.fees?.statementFee || "$7.50",
-        batchFee: analysisJSON.fees?.batchFee || "$0.25 per batch",
-        transactionFees: analysisJSON.fees?.transactionFees || "$0.10 per transaction"
+        monthlyFee: analysisJSON.fees?.monthlyFee || "N/A",
+        pciFee: analysisJSON.fees?.pciFee || "N/A",
+        statementFee: analysisJSON.fees?.statementFee || "N/A",
+        batchFee: analysisJSON.fees?.batchFee || "N/A",
+        transactionFees: analysisJSON.fees?.transactionFees || "N/A"
       }
     };
   } catch (error) {
-    console.error("Error parsing OpenAI response:", error);
+    console.error("Error parsing OpenAI response:", error, "Raw response:", result.choices[0].message.content);
     throw new Error("Failed to parse OpenAI response");
   }
-}
-
-/**
- * Get mock analysis data when OpenAI is not available
- */
-function getMockAnalysis() {
-  return {
-    effectiveRate: "2.79%",
-    monthlyVolume: "$145,230.45",
-    chargebackRatio: "0.17%",
-    pricingModel: "Interchange Plus",
-    fees: {
-      monthlyFee: "$9.95",
-      pciFee: "$14.95",
-      statementFee: "$7.50",
-      batchFee: "$0.25 per batch",
-      transactionFees: "$0.10 per transaction"
-    }
-  };
 }
