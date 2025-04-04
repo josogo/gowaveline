@@ -14,6 +14,11 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
   
   const currentYear = new Date().getFullYear();
   
+  const handleNavigation = (path: string) => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigate(path);
+  };
+  
   return (
     <footer className={cn("bg-gradient-to-b from-orange-50 to-orange-100 border-t py-12 px-6", className)}>
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -37,21 +42,21 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
         <div>
           <h3 className="font-semibold text-lg mb-4 text-orange-500">Company</h3>
           <ul className="space-y-3">
-            <li><button onClick={() => navigate('/about')} className="text-muted-foreground hover:text-orange-500 transition-colors">About</button></li>
-            <li><button onClick={() => navigate('/case-studies')} className="text-muted-foreground hover:text-orange-500 transition-colors">Case Studies</button></li>
-            <li><button onClick={() => navigate('/blog')} className="text-muted-foreground hover:text-orange-500 transition-colors">Blog</button></li>
-            <li><button onClick={() => navigate('/comparison')} className="text-muted-foreground hover:text-orange-500 transition-colors">Stripe & Shopify Comparison</button></li>
-            <li><button onClick={() => navigate('/partners')} className="text-muted-foreground hover:text-orange-500 transition-colors">Partners</button></li>
+            <li><button onClick={() => handleNavigation('/about')} className="text-muted-foreground hover:text-orange-500 transition-colors">About</button></li>
+            <li><button onClick={() => handleNavigation('/case-studies')} className="text-muted-foreground hover:text-orange-500 transition-colors">Case Studies</button></li>
+            <li><button onClick={() => handleNavigation('/blog')} className="text-muted-foreground hover:text-orange-500 transition-colors">Blog</button></li>
+            <li><button onClick={() => handleNavigation('/comparison')} className="text-muted-foreground hover:text-orange-500 transition-colors">Stripe & Shopify Comparison</button></li>
+            <li><button onClick={() => handleNavigation('/partners')} className="text-muted-foreground hover:text-orange-500 transition-colors">Partners</button></li>
           </ul>
         </div>
         
         <div>
           <h3 className="font-semibold text-lg mb-4 text-orange-500">Resources</h3>
           <ul className="space-y-3">
-            <li><button onClick={() => navigate('/services')} className="text-muted-foreground hover:text-orange-500 transition-colors">Services</button></li>
-            <li><button onClick={() => navigate('/industries')} className="text-muted-foreground hover:text-orange-500 transition-colors">Industries</button></li>
-            <li><button onClick={() => navigate('/high-risk')} className="text-muted-foreground hover:text-orange-500 transition-colors">High Risk Solutions</button></li>
-            <li><button onClick={() => navigate('/contact')} className="text-muted-foreground hover:text-orange-500 transition-colors">Contact Us</button></li>
+            <li><button onClick={() => handleNavigation('/services')} className="text-muted-foreground hover:text-orange-500 transition-colors">Services</button></li>
+            <li><button onClick={() => handleNavigation('/industries')} className="text-muted-foreground hover:text-orange-500 transition-colors">Industries</button></li>
+            <li><button onClick={() => handleNavigation('/high-risk')} className="text-muted-foreground hover:text-orange-500 transition-colors">High Risk Solutions</button></li>
+            <li><button onClick={() => handleNavigation('/contact')} className="text-muted-foreground hover:text-orange-500 transition-colors">Contact Us</button></li>
           </ul>
         </div>
       </div>
@@ -65,15 +70,15 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
             variant="ghost" 
             size="sm" 
             className="text-muted-foreground hover:text-orange-500 flex items-center gap-1 text-xs"
-            onClick={() => navigate('/admin/login')}
+            onClick={() => handleNavigation('/admin/login')}
           >
             <LockKeyhole className="h-3 w-3" />
             Admin Login
           </Button>
         </div>
         <div className="flex space-x-6">
-          <button onClick={() => navigate('/privacy-policy')} className="text-muted-foreground hover:text-orange-500 text-sm">Privacy Policy</button>
-          <button onClick={() => navigate('/')} className="text-muted-foreground hover:text-orange-500 text-sm">Terms of Service</button>
+          <button onClick={() => handleNavigation('/privacy-policy')} className="text-muted-foreground hover:text-orange-500 text-sm">Privacy Policy</button>
+          <button onClick={() => handleNavigation('/')} className="text-muted-foreground hover:text-orange-500 text-sm">Terms of Service</button>
         </div>
       </div>
     </footer>

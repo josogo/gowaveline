@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   Card,
@@ -34,13 +35,14 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, Download, Calendar, Filter, ChevronUp, ChevronDown, Flag, Info } from 'lucide-react';
+import { DollarSign, Download, Calendar, Filter, ChevronUp, ChevronDown, Flag, Info, Plus, Trash2, Edit, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Commission {
   id: string;
   merchantName: string;
-  rep: string;
+  rep: string | null;
+  repPercentage: string;
   amount: string;
   percentage: string;
   payout: string;
@@ -56,13 +58,109 @@ interface CommissionTier {
   residualSplit: string;
 }
 
+interface Agent {
+  id: string;
+  name: string;
+  defaultCommissionRate: string;
+  email: string;
+  status: 'active' | 'inactive';
+}
+
+interface Merchant {
+  id: string;
+  name: string;
+  monthlyVolume: string;
+  monthlyResidual: string;
+  agentId: string | null;
+}
+
 const CommissionTracking = () => {
+  // Agent state
+  const [agents, setAgents] = useState<Agent[]>([
+    {
+      id: '1',
+      name: 'John Smith',
+      defaultCommissionRate: '40%',
+      email: 'john@example.com',
+      status: 'active'
+    },
+    {
+      id: '2',
+      name: 'Sarah Johnson',
+      defaultCommissionRate: '45%',
+      email: 'sarah@example.com',
+      status: 'active'
+    },
+    {
+      id: '3',
+      name: 'Michael Brown',
+      defaultCommissionRate: '40%',
+      email: 'michael@example.com',
+      status: 'active'
+    },
+    {
+      id: '4',
+      name: 'Lisa Davis',
+      defaultCommissionRate: '35%',
+      email: 'lisa@example.com',
+      status: 'active'
+    },
+    {
+      id: '5',
+      name: 'Robert Wilson',
+      defaultCommissionRate: '40%',
+      email: 'robert@example.com',
+      status: 'active'
+    }
+  ]);
+
+  // Merchant state
+  const [merchants, setMerchants] = useState<Merchant[]>([
+    {
+      id: '1',
+      name: 'The Coffee Shop',
+      monthlyVolume: '$45,000',
+      monthlyResidual: '$1,125',
+      agentId: '1'
+    },
+    {
+      id: '2',
+      name: 'Fitness Center Inc.',
+      monthlyVolume: '$120,000',
+      monthlyResidual: '$2,800',
+      agentId: '2'
+    },
+    {
+      id: '3',
+      name: 'Tech Solutions LLC',
+      monthlyVolume: '$87,500',
+      monthlyResidual: '$1,450',
+      agentId: '3'
+    },
+    {
+      id: '4',
+      name: 'Downtown Restaurant',
+      monthlyVolume: '$65,000',
+      monthlyResidual: '$1,300',
+      agentId: '4'
+    },
+    {
+      id: '5',
+      name: 'Beauty Salon & Spa',
+      monthlyVolume: '$38,000',
+      monthlyResidual: '$800',
+      agentId: null
+    }
+  ]);
+
+  // Commissions state
   const [commissions, setCommissions] = useState<Commission[]>([
     {
       id: '1',
       merchantName: "The Coffee Shop",
       rep: "John Smith",
-      amount: "$45,000",
+      repPercentage: "40%",
+      amount: "$1,125",
       percentage: "20%",
       payout: "$450",
       status: "pending",
@@ -72,7 +170,8 @@ const CommissionTracking = () => {
       id: '2',
       merchantName: "Fitness Center Inc.",
       rep: "Sarah Johnson",
-      amount: "$120,000",
+      repPercentage: "45%",
+      amount: "$2,800",
       percentage: "25%",
       payout: "$1,250",
       status: "paid",
@@ -82,7 +181,8 @@ const CommissionTracking = () => {
       id: '3',
       merchantName: "Tech Solutions LLC",
       rep: "Michael Brown",
-      amount: "$87,500",
+      repPercentage: "40%",
+      amount: "$1,450",
       percentage: "20%",
       payout: "$580",
       status: "processing",
@@ -92,7 +192,8 @@ const CommissionTracking = () => {
       id: '4',
       merchantName: "Downtown Restaurant",
       rep: "Lisa Davis",
-      amount: "$65,000",
+      repPercentage: "35%",
+      amount: "$1,300",
       percentage: "20%",
       payout: "$520",
       status: "pending",
@@ -101,10 +202,11 @@ const CommissionTracking = () => {
     {
       id: '5',
       merchantName: "Beauty Salon & Spa",
-      rep: "Robert Wilson",
-      amount: "$38,000",
+      rep: null,
+      repPercentage: "0%",
+      amount: "$800",
       percentage: "20%",
-      payout: "$320",
+      payout: "$0",
       status: "paid",
       date: "2025-03-15"
     }
@@ -141,11 +243,30 @@ const CommissionTracking = () => {
     }
   ]);
   
+  // UI state
   const [filterOption, setFilterOption] = useState('all');
   const [currentRep, setCurrentRep] = useState('all');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [editingTier, setEditingTier] = useState<CommissionTier | null>(null);
+  const [isAddMerchantOpen, setIsAddMerchantOpen] = useState(false);
+  const [isAddAgentOpen, setIsAddAgentOpen] = useState(false);
+  const [currentTab, setCurrentTab] = useState('commissions');
   
+  // Form state
+  const [newMerchant, setNewMerchant] = useState({
+    name: '',
+    monthlyVolume: '',
+    monthlyResidual: '',
+    agentId: ''
+  });
+  
+  const [newAgent, setNewAgent] = useState({
+    name: '',
+    email: '',
+    defaultCommissionRate: ''
+  });
+
+  // Filtered data
   const filteredCommissions = commissions.filter(commission => {
     if (filterOption !== 'all' && commission.status !== filterOption) return false;
     if (currentRep !== 'all' && commission.rep !== currentRep) return false;
@@ -156,7 +277,7 @@ const CommissionTracking = () => {
     return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
   });
   
-  const uniqueReps = Array.from(new Set(commissions.map(comm => comm.rep)));
+  const uniqueReps = Array.from(new Set(commissions.map(comm => comm.rep).filter(Boolean) as string[]));
   
   const totalPendingAmount = filteredCommissions
     .filter(comm => comm.status === 'pending')
@@ -166,6 +287,7 @@ const CommissionTracking = () => {
     .filter(comm => comm.status === 'paid')
     .reduce((sum, comm) => sum + parseFloat(comm.payout.replace('$', '').replace(',', '')), 0);
   
+  // Functions
   const updateCommissionStatus = (id: string, status: 'pending' | 'paid' | 'processing') => {
     setCommissions(prev => 
       prev.map(commission => 
@@ -190,6 +312,132 @@ const CommissionTracking = () => {
     setEditingTier(null);
   };
 
+  const handleAddMerchant = () => {
+    // Convert input values to currency format
+    const volume = newMerchant.monthlyVolume.startsWith('$') 
+      ? newMerchant.monthlyVolume 
+      : `$${parseFloat(newMerchant.monthlyVolume).toLocaleString()}`;
+    
+    const residual = newMerchant.monthlyResidual.startsWith('$') 
+      ? newMerchant.monthlyResidual 
+      : `$${parseFloat(newMerchant.monthlyResidual).toLocaleString()}`;
+    
+    // Create new merchant
+    const merchant: Merchant = {
+      id: `m-${Date.now()}`,
+      name: newMerchant.name,
+      monthlyVolume: volume,
+      monthlyResidual: residual,
+      agentId: newMerchant.agentId || null
+    };
+    
+    setMerchants([...merchants, merchant]);
+    
+    // If agent is assigned, create commission
+    if (newMerchant.agentId) {
+      const agent = agents.find(a => a.id === newMerchant.agentId);
+      if (agent) {
+        // Extract percentage value
+        const agentRate = parseInt(agent.defaultCommissionRate.replace('%', '')) / 100;
+        const residualAmount = parseFloat(newMerchant.monthlyResidual.replace('$', '').replace(',', ''));
+        const payout = (residualAmount * agentRate).toFixed(2);
+        
+        const commission: Commission = {
+          id: `c-${Date.now()}`,
+          merchantName: newMerchant.name,
+          rep: agent.name,
+          repPercentage: agent.defaultCommissionRate,
+          amount: residual,
+          percentage: agent.defaultCommissionRate,
+          payout: `$${payout}`,
+          status: 'pending',
+          date: new Date().toISOString().split('T')[0]
+        };
+        
+        setCommissions([...commissions, commission]);
+      }
+    }
+    
+    setNewMerchant({
+      name: '',
+      monthlyVolume: '',
+      monthlyResidual: '',
+      agentId: ''
+    });
+    
+    setIsAddMerchantOpen(false);
+    toast.success('Merchant added successfully');
+  };
+  
+  const handleAddAgent = () => {
+    const agent: Agent = {
+      id: `a-${Date.now()}`,
+      name: newAgent.name,
+      email: newAgent.email,
+      defaultCommissionRate: newAgent.defaultCommissionRate.includes('%') 
+        ? newAgent.defaultCommissionRate 
+        : `${newAgent.defaultCommissionRate}%`,
+      status: 'active'
+    };
+    
+    setAgents([...agents, agent]);
+    setNewAgent({
+      name: '',
+      email: '',
+      defaultCommissionRate: ''
+    });
+    
+    setIsAddAgentOpen(false);
+    toast.success('Agent added successfully');
+  };
+  
+  const recalculateCommissions = () => {
+    // For each merchant with an agent, calculate commission
+    const newCommissions: Commission[] = [];
+    
+    merchants.forEach(merchant => {
+      if (merchant.agentId) {
+        const agent = agents.find(a => a.id === merchant.agentId);
+        if (agent) {
+          // Extract values
+          const agentRate = parseInt(agent.defaultCommissionRate.replace('%', '')) / 100;
+          const residualAmount = parseFloat(merchant.monthlyResidual.replace('$', '').replace(',', ''));
+          const payout = (residualAmount * agentRate).toFixed(2);
+          
+          // Create or update commission
+          const existingCommIndex = commissions.findIndex(c => 
+            c.merchantName === merchant.name && c.rep === agent.name
+          );
+          
+          if (existingCommIndex >= 0) {
+            const existing = { ...commissions[existingCommIndex] };
+            existing.amount = merchant.monthlyResidual;
+            existing.percentage = agent.defaultCommissionRate;
+            existing.repPercentage = agent.defaultCommissionRate;
+            existing.payout = `$${payout}`;
+            newCommissions.push(existing);
+          } else {
+            const commission: Commission = {
+              id: `c-${Date.now()}-${merchant.id}`,
+              merchantName: merchant.name,
+              rep: agent.name,
+              repPercentage: agent.defaultCommissionRate,
+              amount: merchant.monthlyResidual,
+              percentage: agent.defaultCommissionRate,
+              payout: `$${payout}`,
+              status: 'pending',
+              date: new Date().toISOString().split('T')[0]
+            };
+            newCommissions.push(commission);
+          }
+        }
+      }
+    });
+    
+    setCommissions(newCommissions);
+    toast.success('Commissions recalculated');
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
@@ -205,10 +453,11 @@ const CommissionTracking = () => {
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="commissions" className="space-y-6">
-        <TabsList className="grid grid-cols-2 max-w-md mx-auto">
-          <TabsTrigger value="commissions">Commission Payouts</TabsTrigger>
-          <TabsTrigger value="structure">Commission Structure</TabsTrigger>
+      <Tabs defaultValue="commissions" value={currentTab} onValueChange={setCurrentTab} className="space-y-6">
+        <TabsList className="grid grid-cols-3 max-w-md mx-auto">
+          <TabsTrigger value="commissions">Commissions</TabsTrigger>
+          <TabsTrigger value="merchants">Merchants</TabsTrigger>
+          <TabsTrigger value="agents">Agents</TabsTrigger>
         </TabsList>
         
         <TabsContent value="commissions">
@@ -296,9 +545,20 @@ const CommissionTracking = () => {
                   {sortOrder === 'asc' ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
                 </Button>
                 
-                <Button variant="outline" className="sm:ml-auto">
+                <Button 
+                  variant="outline" 
+                  className="sm:ml-auto"
+                >
                   <Download className="mr-2 h-4 w-4" />
                   Export CSV
+                </Button>
+                
+                <Button 
+                  onClick={recalculateCommissions}
+                  className="bg-orange-500 hover:bg-orange-600"
+                >
+                  <Calculator className="mr-2 h-4 w-4" />
+                  Recalculate
                 </Button>
               </div>
               
@@ -308,8 +568,8 @@ const CommissionTracking = () => {
                     <TableRow>
                       <TableHead>Merchant</TableHead>
                       <TableHead>Rep</TableHead>
-                      <TableHead className="hidden md:table-cell">Volume</TableHead>
-                      <TableHead className="hidden md:table-cell">Rate</TableHead>
+                      <TableHead className="hidden md:table-cell">Residual</TableHead>
+                      <TableHead className="hidden md:table-cell">Rep %</TableHead>
                       <TableHead>Payout</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
@@ -320,9 +580,9 @@ const CommissionTracking = () => {
                       filteredCommissions.map((commission) => (
                         <TableRow key={commission.id}>
                           <TableCell className="font-medium">{commission.merchantName}</TableCell>
-                          <TableCell>{commission.rep}</TableCell>
+                          <TableCell>{commission.rep || 'N/A'}</TableCell>
                           <TableCell className="hidden md:table-cell">{commission.amount}</TableCell>
-                          <TableCell className="hidden md:table-cell">{commission.percentage}</TableCell>
+                          <TableCell className="hidden md:table-cell">{commission.repPercentage}</TableCell>
                           <TableCell className="font-semibold">{commission.payout}</TableCell>
                           <TableCell>{getStatusBadge(commission.status)}</TableCell>
                           <TableCell>
@@ -403,73 +663,21 @@ const CommissionTracking = () => {
           </Card>
         </TabsContent>
         
-        <TabsContent value="structure">
+        <TabsContent value="merchants">
           <Card>
             <CardHeader>
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                  <CardTitle className="text-2xl font-bold text-orange-500">Commission Structure</CardTitle>
-                  <CardDescription>Configure commission tiers and payout rates</CardDescription>
+                  <CardTitle className="text-2xl font-bold text-orange-500">Merchant Management</CardTitle>
+                  <CardDescription>Manage merchants and their monthly residuals</CardDescription>
                 </div>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button className="bg-orange-500 hover:bg-orange-600">
-                      Edit Structure
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[600px]">
-                    <DialogHeader>
-                      <DialogTitle>Edit Commission Structure</DialogTitle>
-                      <DialogDescription>
-                        Update the commission tier structure for sales representatives
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4">
-                      <div className="mb-6">
-                        <h3 className="text-sm font-semibold mb-2">Tier Settings</h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Configure the commission rates and bonuses for each tier based on monthly processing volume.
-                        </p>
-                      </div>
-                      
-                      <div className="space-y-6">
-                        {commissionTiers.map((tier, index) => (
-                          <div key={tier.level} className="border rounded-md p-4 relative">
-                            <div className="absolute right-2 top-2">
-                              <Badge variant="outline">
-                                <Flag className="h-3 w-3 mr-1" />
-                                {tier.level}
-                              </Badge>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                              <div>
-                                <label className="text-sm font-medium">Volume Range</label>
-                                <Input defaultValue={tier.volumeRange} />
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium">Commission Rate</label>
-                                <Input defaultValue={tier.commissionRate} />
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium">Upfront Bonus</label>
-                                <Input defaultValue={tier.upfrontBonus} />
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium">Residual Split</label>
-                                <Input defaultValue={tier.residualSplit} />
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button onClick={() => toast.success('Commission structure updated')}>
-                        Save Changes
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                <Button 
+                  className="bg-orange-500 hover:bg-orange-600"
+                  onClick={() => setIsAddMerchantOpen(true)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Merchant
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
@@ -477,42 +685,243 @@ const CommissionTracking = () => {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50">
-                      <TableHead className="font-semibold">Tier</TableHead>
-                      <TableHead className="font-semibold">Processing Volume</TableHead>
-                      <TableHead className="font-semibold">Commission Rate</TableHead>
-                      <TableHead className="font-semibold">Upfront Bonus</TableHead>
-                      <TableHead className="font-semibold">Residual Split</TableHead>
+                      <TableHead className="font-semibold">Merchant</TableHead>
+                      <TableHead className="font-semibold">Monthly Volume</TableHead>
+                      <TableHead className="font-semibold">Monthly Residual</TableHead>
+                      <TableHead className="font-semibold">Agent</TableHead>
+                      <TableHead className="font-semibold">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {commissionTiers.map((tier) => (
-                      <TableRow key={tier.level}>
-                        <TableCell className="font-medium">{tier.level}</TableCell>
-                        <TableCell>{tier.volumeRange}</TableCell>
-                        <TableCell>{tier.commissionRate}</TableCell>
-                        <TableCell>{tier.upfrontBonus}</TableCell>
-                        <TableCell>{tier.residualSplit}</TableCell>
+                    {merchants.map((merchant) => {
+                      const assignedAgent = agents.find(a => a.id === merchant.agentId);
+                      return (
+                        <TableRow key={merchant.id}>
+                          <TableCell className="font-medium">{merchant.name}</TableCell>
+                          <TableCell>{merchant.monthlyVolume}</TableCell>
+                          <TableCell>{merchant.monthlyResidual}</TableCell>
+                          <TableCell>
+                            {assignedAgent ? (
+                              <div className="flex items-center gap-2">
+                                {assignedAgent.name}
+                                <Badge variant="outline" className="bg-orange-50 text-orange-800">
+                                  {assignedAgent.defaultCommissionRate}
+                                </Badge>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">None</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Button variant="ghost" size="icon">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+              
+              <Dialog open={isAddMerchantOpen} onOpenChange={setIsAddMerchantOpen}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add New Merchant</DialogTitle>
+                    <DialogDescription>
+                      Add a new merchant and set their monthly processing details
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="py-4 space-y-4">
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <label className="text-sm font-medium mb-1 block">
+                          Merchant Name
+                        </label>
+                        <Input 
+                          value={newMerchant.name} 
+                          onChange={(e) => setNewMerchant({...newMerchant, name: e.target.value})}
+                          placeholder="Enter merchant name"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm font-medium mb-1 block">
+                          Monthly Processing Volume
+                        </label>
+                        <Input 
+                          value={newMerchant.monthlyVolume} 
+                          onChange={(e) => setNewMerchant({...newMerchant, monthlyVolume: e.target.value})}
+                          placeholder="$50,000"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm font-medium mb-1 block">
+                          Monthly Residual
+                        </label>
+                        <Input 
+                          value={newMerchant.monthlyResidual} 
+                          onChange={(e) => setNewMerchant({...newMerchant, monthlyResidual: e.target.value})}
+                          placeholder="$1,200"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm font-medium mb-1 block">
+                          Assign Agent (Optional)
+                        </label>
+                        <Select
+                          value={newMerchant.agentId}
+                          onValueChange={(value) => setNewMerchant({...newMerchant, agentId: value})}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select an agent (optional)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">None</SelectItem>
+                            {agents.map((agent) => (
+                              <SelectItem key={agent.id} value={agent.id}>
+                                {agent.name} ({agent.defaultCommissionRate})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsAddMerchantOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleAddMerchant}>
+                      Add Merchant
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="agents">
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <CardTitle className="text-2xl font-bold text-orange-500">Agent Management</CardTitle>
+                  <CardDescription>Manage agents and their commission rates</CardDescription>
+                </div>
+                <Button 
+                  className="bg-orange-500 hover:bg-orange-600"
+                  onClick={() => setIsAddAgentOpen(true)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Agent
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="font-semibold">Agent</TableHead>
+                      <TableHead className="font-semibold">Email</TableHead>
+                      <TableHead className="font-semibold">Default Rate</TableHead>
+                      <TableHead className="font-semibold">Status</TableHead>
+                      <TableHead className="font-semibold">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {agents.map((agent) => (
+                      <TableRow key={agent.id}>
+                        <TableCell className="font-medium">{agent.name}</TableCell>
+                        <TableCell>{agent.email}</TableCell>
+                        <TableCell>{agent.defaultCommissionRate}</TableCell>
+                        <TableCell>
+                          {agent.status === 'active' ? (
+                            <Badge variant="outline" className="bg-green-100 text-green-800">Active</Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-gray-100 text-gray-800">Inactive</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="icon">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </div>
               
-              <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-md">
-                <div className="flex items-start">
-                  <div className="mr-3 mt-1">
-                    <Info className="h-5 w-5 text-blue-500" />
+              <Dialog open={isAddAgentOpen} onOpenChange={setIsAddAgentOpen}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add New Agent</DialogTitle>
+                    <DialogDescription>
+                      Add a new sales agent and set their default commission rate
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="py-4 space-y-4">
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <label className="text-sm font-medium mb-1 block">
+                          Agent Name
+                        </label>
+                        <Input 
+                          value={newAgent.name} 
+                          onChange={(e) => setNewAgent({...newAgent, name: e.target.value})}
+                          placeholder="Enter agent name"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm font-medium mb-1 block">
+                          Email Address
+                        </label>
+                        <Input 
+                          type="email"
+                          value={newAgent.email} 
+                          onChange={(e) => setNewAgent({...newAgent, email: e.target.value})}
+                          placeholder="agent@example.com"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm font-medium mb-1 block">
+                          Default Commission Rate
+                        </label>
+                        <Input 
+                          value={newAgent.defaultCommissionRate} 
+                          onChange={(e) => setNewAgent({...newAgent, defaultCommissionRate: e.target.value})}
+                          placeholder="40%"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-medium text-blue-800 mb-1">About Our Commission Structure</h4>
-                    <p className="text-sm text-blue-700">
-                      Sales representatives can increase their commission tier by achieving higher monthly processing volumes. 
-                      Tier advancements are evaluated at the end of each quarter. Representatives receive both upfront bonuses 
-                      upon merchant approval and ongoing residual commissions based on merchant processing activity.
-                    </p>
-                  </div>
-                </div>
-              </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsAddAgentOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleAddAgent}>
+                      Add Agent
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
         </TabsContent>
