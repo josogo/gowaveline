@@ -30,7 +30,10 @@ serve(async (req) => {
     if (!fileUrl) {
       console.error("Missing file URL in request");
       return new Response(
-        JSON.stringify({ error: 'Missing file URL' }),
+        JSON.stringify({ 
+          success: false,
+          error: 'Missing file URL' 
+        }),
         { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
@@ -44,7 +47,10 @@ serve(async (req) => {
     if (!fileResponse.ok) {
       console.error(`Failed to download file: ${fileResponse.status} ${fileResponse.statusText}`);
       return new Response(
-        JSON.stringify({ error: `Failed to download file: ${fileResponse.status} ${fileResponse.statusText}` }),
+        JSON.stringify({ 
+          success: false,
+          error: `Failed to download file: ${fileResponse.status} ${fileResponse.statusText}` 
+        }),
         { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
@@ -64,18 +70,24 @@ serve(async (req) => {
           console.log("Document AI extraction successful");
         } catch (error) {
           console.error("Document AI extraction failed:", error);
-          // We're not using simulation anymore
           return new Response(
-            JSON.stringify({ error: `Document AI extraction failed: ${error instanceof Error ? error.message : String(error)}` }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+            JSON.stringify({
+              success: false, 
+              error: `PDF processing error: ${error instanceof Error ? error.message : String(error)}.`,
+              message: "The system is currently unable to process PDF files. Please try uploading a CSV or Excel file instead."
+            }),
+            { status: 422, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
           );
         }
       } else {
-        console.log("No Document AI credentials available");
-        // Return an error instead of using simulated data
+        console.error("Document AI credentials not configured");
         return new Response(
-          JSON.stringify({ error: 'Document AI credentials not configured. Unable to process PDF.' }),
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+          JSON.stringify({ 
+            success: false,
+            error: 'Document AI credentials not configured',
+            message: "The system is currently unable to process PDF files. Please try uploading a CSV or Excel file instead, or contact support to enable PDF processing."
+          }),
+          { status: 422, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
         );
       }
     } 
@@ -85,7 +97,10 @@ serve(async (req) => {
       extractedText = text;
       if (!text || text.trim().length === 0) {
         return new Response(
-          JSON.stringify({ error: 'Failed to extract text from spreadsheet' }),
+          JSON.stringify({
+            success: false,
+            error: 'Failed to extract text from spreadsheet' 
+          }),
           { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
         );
       }
@@ -95,6 +110,7 @@ serve(async (req) => {
       console.error("Unsupported file format:", fileType);
       return new Response(
         JSON.stringify({ 
+          success: false,
           error: 'Unsupported file format. Please upload a PDF, CSV, or Excel file.' 
         }),
         { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
@@ -104,7 +120,10 @@ serve(async (req) => {
     if (!extractedText || extractedText.trim().length === 0) {
       console.error("Failed to extract text from document");
       return new Response(
-        JSON.stringify({ error: 'Failed to extract text from document' }),
+        JSON.stringify({
+          success: false,
+          error: 'Failed to extract text from document' 
+        }),
         { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
@@ -123,14 +142,20 @@ serve(async (req) => {
       } catch (error) {
         console.error("OpenAI analysis failed:", error);
         return new Response(
-          JSON.stringify({ error: `OpenAI analysis failed: ${error instanceof Error ? error.message : String(error)}` }),
+          JSON.stringify({
+            success: false,
+            error: `OpenAI analysis failed: ${error instanceof Error ? error.message : String(error)}` 
+          }),
           { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
         );
       }
     } else {
       console.error("Missing OpenAI API key");
       return new Response(
-        JSON.stringify({ error: "OpenAI API key is required for statement analysis" }),
+        JSON.stringify({
+          success: false,
+          error: "OpenAI API key is required for statement analysis" 
+        }),
         { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }

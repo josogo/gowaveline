@@ -19,6 +19,8 @@ export interface StatementAnalysis {
   pricingModel: string;
   fees: FeeStructure;
   isMockData: boolean; // Flag to indicate if this is mock data - always required
+  error?: string; // Optional error message
+  message?: string; // Optional user-friendly message
 }
 
 /**
@@ -91,12 +93,29 @@ export const analyzeStatement = async (
     
     if (analysisError) {
       console.error('Error analyzing statement:', analysisError);
+      
+      // Special handling for PDF processing errors (422 status)
+      if (file.type.includes('pdf') && analysisError.message.includes('non-2xx status code')) {
+        throw new Error('PDF processing is currently unavailable. Please try uploading a CSV or Excel file instead.');
+      }
+      
       throw new Error(`Failed to analyze statement: ${analysisError.message}`);
     }
     
-    if (!analysisData || !analysisData.success) {
-      console.error('No analysis data returned or analysis unsuccessful');
-      throw new Error('Analysis failed: No valid data returned from the analysis function');
+    if (!analysisData) {
+      console.error('No analysis data returned');
+      throw new Error('Analysis failed: No data returned from the analysis function');
+    }
+    
+    if (!analysisData.success) {
+      console.error('Analysis unsuccessful:', analysisData.error || 'Unknown error');
+      
+      // If there's a user-friendly message, use it
+      if (analysisData.message) {
+        throw new Error(analysisData.message);
+      }
+      
+      throw new Error(`Analysis failed: ${analysisData.error || 'Unknown error'}`);
     }
     
     console.log("Analysis data received:", analysisData);
@@ -109,10 +128,26 @@ export const analyzeStatement = async (
       .remove([fileName]);
     
     // Force isMockData to FALSE for real data
-    return {
+    const result: StatementAnalysis = {
       ...analysisData,
       isMockData: false
     };
+    
+    // Validate response data to ensure we're not getting mock data
+    const hasSomeRealData = 
+      result.effectiveRate !== "N/A" || 
+      result.monthlyVolume !== "N/A" || 
+      result.pricingModel !== "N/A" ||
+      result.chargebackRatio !== "N/A" || 
+      result.fees.monthlyFee !== "N/A" ||
+      result.fees.pciFee !== "N/A";
+      
+    if (!hasSomeRealData) {
+      console.warn("Analysis completed but no actual data was extracted from the statement");
+      toast.warning("We couldn't extract any data from your statement. Please try a different file format or contact support.");
+    }
+    
+    return result;
     
   } catch (error) {
     console.error('Analysis error:', error);
