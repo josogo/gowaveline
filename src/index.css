@@ -7,13 +7,13 @@
   :root {
     /* Keeping the original light theme values but updating primary/secondary */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 199 89% 48%; /* Ocean blue foreground instead of black */
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 199 89% 48%; /* Ocean blue card foreground */
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 199 89% 48%; /* Ocean blue popover foreground */
 
     /* Orange as primary */
     --primary: 24 100% 67%;
@@ -46,17 +46,20 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* Ocean blue custom color */
+    --ocean-blue: 199 89% 48%;
   }
 
   .dark {
     --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --foreground: 199 89% 48%; /* Ocean blue foreground in dark mode */
 
     --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card-foreground: 199 89% 48%; /* Ocean blue card foreground in dark mode */
 
     --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover-foreground: 199 89% 48%; /* Ocean blue popover foreground in dark mode */
 
     --primary: 24 100% 67%;
     --primary-foreground: 222.2 47.4% 11.2%;
@@ -110,5 +113,13 @@
   
   .gradient-teal {
     @apply bg-gradient-to-r from-teal-500 to-teal-400;
+  }
+  
+  .ocean-blue-text {
+    @apply text-[#0EA5E9];
+  }
+  
+  .ocean-blue-bg {
+    @apply bg-[#0EA5E9];
   }
 }

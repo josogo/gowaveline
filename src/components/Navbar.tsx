@@ -31,10 +31,10 @@ const Navbar: React.FC<NavbarProps> = ({ className }) => {
       </div>
       
       <div className="hidden md:flex items-center space-x-6">
-        <Button variant="link" onClick={() => navigate('/')}>Home</Button>
-        <Button variant="link" onClick={() => navigate('/industries')}>Industries</Button>
-        <Button variant="link" onClick={() => navigate('/')}>Features</Button>
-        <Button variant="link" onClick={() => navigate('/')}>Contact</Button>
+        <Button variant="link" className="text-[#0EA5E9]" onClick={() => navigate('/')}>Home</Button>
+        <Button variant="link" className="text-[#0EA5E9]" onClick={() => navigate('/industries')}>Industries</Button>
+        <Button variant="link" className="text-[#0EA5E9]" onClick={() => navigate('/')}>Features</Button>
+        <Button variant="link" className="text-[#0EA5E9]" onClick={() => navigate('/')}>Contact</Button>
       </div>
       
       <div>

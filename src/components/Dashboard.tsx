@@ -21,7 +21,7 @@ const Dashboard: React.FC<DashboardProps> = ({ analysisData }) => {
       case 'monthlyVolume':
         return analysisData.monthlyVolume !== "N/A"
           ? "Your total processing for this period"
-          : "Could not extract from statement";
+          : "Most statements don't clearly show this value";
       case 'pricingModel':
         return analysisData.pricingModel !== "N/A"
           ? "Interchange-plus typically saves 15-30%"
@@ -56,7 +56,7 @@ const Dashboard: React.FC<DashboardProps> = ({ analysisData }) => {
             <h3 className="font-semibold text-yellow-800">Limited Data Extracted</h3>
             <p className="text-yellow-700">
               We couldn't extract specific data from your statement. This might be due to the format or structure of your uploaded file.
-              For better results, try uploading a CSV or Excel version of your statement.
+              For better results, try uploading a CSV or Excel version of your statement, or submit for manual analysis.
             </p>
           </div>
         </div>
@@ -76,7 +76,7 @@ const Dashboard: React.FC<DashboardProps> = ({ analysisData }) => {
           description="Total processed amount"
           value={analysisData.monthlyVolume}
           additionalInfo={getAdditionalInfo('monthlyVolume')}
-          valueClassName={analysisData.monthlyVolume === "N/A" ? "text-gray-500" : "text-teal-500"}
+          valueClassName={analysisData.monthlyVolume === "N/A" ? "text-gray-500" : "text-[#0EA5E9]"}
         />
         
         <MetricCard
@@ -92,17 +92,23 @@ const Dashboard: React.FC<DashboardProps> = ({ analysisData }) => {
           description="Disputes percentage"
           value={analysisData.chargebackRatio}
           additionalInfo={getAdditionalInfo('chargebackRatio')}
-          valueClassName={analysisData.chargebackRatio === "N/A" ? "text-gray-500" : "text-teal-500"}
+          valueClassName={analysisData.chargebackRatio === "N/A" ? "text-gray-500" : "text-[#0EA5E9]"}
         />
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mb-8">
-        <Alert variant="default" className="bg-blue-50 border-blue-200 text-blue-800 p-4 rounded-md">
+        <Alert variant="default" className="bg-blue-50 border-blue-200 text-[#0EA5E9] p-4 rounded-md">
           <h3 className="font-medium mb-2">Statement Data</h3>
           <p>
             We've extracted all the information we could find in your statement. 
             Fields marked "N/A" could not be found in the document you uploaded.
           </p>
+          {analysisData.monthlyVolume === "N/A" && (
+            <p className="mt-2 text-sm">
+              <strong>Note about Monthly Volume:</strong> Many statements don't explicitly state the monthly volume,
+              making it difficult to extract automatically. Submit for manual analysis for more complete results.
+            </p>
+          )}
         </Alert>
       </div>
       
