@@ -104,7 +104,7 @@ const Results = () => {
                   <AlertTitle className="text-amber-800">Simulation Mode</AlertTitle>
                   <AlertDescription className="text-amber-700">
                     This is simulated data for demonstration purposes. This is not based on your actual statement.
-                    For accurate results, please ensure your Gemini API key is correctly configured and try uploading a different file format.
+                    For accurate results, please ensure your OpenAI API key is correctly configured and try uploading a different file format.
                   </AlertDescription>
                 </Alert>
               </div>
@@ -117,6 +117,6 @@ const Results = () => {
       </main>
     </div>
   );
-};
+}
 
 export default Results;
