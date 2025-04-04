@@ -1,14 +1,9 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Mail, Trash, RefreshCw, Settings, LogIn, LogOut } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { toast } from "sonner";
+import { Check, Info, Loader2 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const mockEmails = [
   {
@@ -63,7 +58,10 @@ const GmailIntegration = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [emails, setEmails] = useState(mockEmails);
   const [selectedTab, setSelectedTab] = useState('inbox');
-  
+  const [lastSync, setLastSync] = useState(null);
+  const [syncError, setSyncError] = useState(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+
   const handleAuthenticate = () => {
     setIsLoading(true);
     // Simulate OAuth2 authentication flow
@@ -73,7 +71,7 @@ const GmailIntegration = () => {
       toast.success("Successfully connected to Gmail");
     }, 2000);
   };
-  
+
   const handleLogout = () => {
     setIsLoading(true);
     // Simulate logout
@@ -83,7 +81,7 @@ const GmailIntegration = () => {
       toast.info("Disconnected from Gmail");
     }, 1000);
   };
-  
+
   const handleRefresh = () => {
     setIsLoading(true);
     // Simulate email fetch
@@ -98,21 +96,20 @@ const GmailIntegration = () => {
       toast.success("Emails refreshed");
     }, 1500);
   };
-  
+
   const handleDeleteEmail = (emailId: string) => {
     const updatedEmails = emails.filter(email => email.id !== emailId);
     setEmails(updatedEmails);
     toast.success("Email deleted");
   };
-  
+
   const handleMarkAsRead = (emailId: string) => {
     const updatedEmails = emails.map(email => 
       email.id === emailId ? { ...email, read: true } : email
     );
     setEmails(updatedEmails);
   };
-  
-  // Format date to a more readable format
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
@@ -122,21 +119,38 @@ const GmailIntegration = () => {
       minute: '2-digit'
     });
   };
-  
+
   const unreadCount = emails.filter(email => !email.read).length;
-  
+
+  const syncEmails = () => {
+    setIsSyncing(true);
+    // Simulate email sync
+    setTimeout(() => {
+      setIsSyncing(false);
+      setLastSync(new Date().toLocaleString());
+      setSyncError(null);
+      toast.success("Emails synced");
+    }, 1500);
+  };
+
   return (
-    <Card className="w-full">
+    <Card className="w-full h-full">
       <CardHeader>
-        <div className="flex justify-between items-center">
+        <div className="flex items-center justify-between">
           <div>
             <CardTitle>Gmail Integration</CardTitle>
-            <CardDescription>Connect and manage your Gmail account</CardDescription>
+            <CardDescription>Connect your Gmail account to sync customer communications.</CardDescription>
           </div>
           {isAuthenticated && (
-            <Badge variant="outline" className="ml-2 bg-green-50 text-green-700 border-green-200">
+            <Button 
+              size="sm" 
+              variant="secondary" 
+              className="flex items-center gap-1.5"
+              disabled
+            >
+              <Check size={16} />
               Connected
-            </Badge>
+            </Button>
           )}
         </div>
       </CardHeader>
@@ -291,17 +305,43 @@ const GmailIntegration = () => {
           </div>
         )}
       </CardContent>
-      <CardFooter className="flex justify-between border-t pt-6">
-        <p className="text-xs text-muted-foreground">
-          Email data is automatically synced every 15 minutes
-        </p>
-        <Button 
-          variant="secondary"
-          size="sm"
-          onClick={() => toast.info("Settings dialog would open here")}
-        >
-          <Settings className="h-4 w-4 mr-2" /> Settings
-        </Button>
+      
+      <CardFooter className="flex-col items-start gap-4 border-t pt-4">
+        <div className="w-full flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Info size={16} />
+            <span>We only access specific labels you authorize</span>
+          </div>
+          
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={syncEmails} 
+            disabled={isSyncing || !isAuthenticated}
+          >
+            {isSyncing ? (
+              <>
+                <Loader2 size={16} className="mr-2 animate-spin" />
+                Syncing...
+              </>
+            ) : "Sync Now"}
+          </Button>
+        </div>
+        
+        {lastSync && (
+          <div className="w-full text-sm text-muted-foreground">
+            Last sync: {lastSync}
+          </div>
+        )}
+        
+        {syncError && (
+          <Alert variant="destructive" className="mt-2">
+            <AlertTitle>Sync Failed</AlertTitle>
+            <AlertDescription>
+              {syncError}
+            </AlertDescription>
+          </Alert>
+        )}
       </CardFooter>
     </Card>
   );

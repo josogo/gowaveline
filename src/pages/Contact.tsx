@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { z } from 'zod';
@@ -90,15 +91,17 @@ const Contact = () => {
         }),
       });
       
+      const result = await response.json();
+      
       if (!response.ok) {
-        throw new Error('Failed to send email');
+        throw new Error(result.error || 'Failed to send email');
       }
       
       toast.success('Your message has been sent! We\'ll be in touch soon.');
       form.reset();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting form:', error);
-      toast.error('There was a problem sending your message. Please try again later.');
+      toast.error(error?.message || 'There was a problem sending your message. Please try again later.');
     } finally {
       setIsSubmitting(false);
     }
