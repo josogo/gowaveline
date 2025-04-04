@@ -19,8 +19,8 @@ const BlogPostDetail: React.FC<BlogPostDetailProps> = ({ post }) => {
   return (
     <>
       <DialogHeader>
-        <DialogTitle className="text-2xl font-bold text-[#0EA5E9]">{post.title}</DialogTitle>
-        <div className="flex items-center mt-2 text-sm text-gray-500">
+        <DialogTitle className="text-2xl md:text-3xl font-bold text-[#0EA5E9]">{post.title}</DialogTitle>
+        <div className="flex flex-wrap items-center mt-2 text-sm text-gray-500">
           <Calendar className="h-4 w-4 mr-1" />
           <span>{format(post.date, 'MMMM d, yyyy')}</span>
           <span className="mx-2">•</span>
@@ -35,10 +35,17 @@ const BlogPostDetail: React.FC<BlogPostDetailProps> = ({ post }) => {
         </div>
       </DialogHeader>
       
-      <div 
-        className="mt-6 prose prose-lg max-w-none prose-headings:text-[#0EA5E9] prose-a:text-[#0EA5E9]"
-        dangerouslySetInnerHTML={{ __html: post.content }}
-      />
+      <div className="mt-6">
+        <div 
+          className="w-full h-60 md:h-80 bg-center bg-cover rounded-lg mb-6" 
+          style={{ backgroundImage: `url(${post.image})` }}
+        />
+        
+        <div 
+          className="prose prose-lg max-w-none prose-headings:text-[#0EA5E9] prose-a:text-[#0EA5E9] prose-p:text-gray-700 prose-p:leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: post.content }}
+        />
+      </div>
       
       <div className="mt-8 pt-6 border-t">
         <div className="flex flex-col sm:flex-row sm:justify-between items-center gap-4">

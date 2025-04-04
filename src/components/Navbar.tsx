@@ -22,11 +22,11 @@ const Navbar: React.FC<NavbarProps> = ({ className }) => {
   };
 
   const navItems = [
-    { label: 'Home', path: '/' },
     { label: 'Industries', path: '/industries' },
     { label: 'Services', path: '/services' },
     { label: 'High Risk', path: '/high-risk' },
     { label: 'About Us', path: '/about' },
+    { label: 'Blog', path: '/blog' },
     { label: 'Contact', path: '/contact' },
   ];
 
