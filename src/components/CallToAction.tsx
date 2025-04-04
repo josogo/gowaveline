@@ -49,7 +49,7 @@ const CallToAction = () => {
                 Submit Statement
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[525px]">
+            <DialogContent className="w-[95%] max-w-[525px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-xl text-[#0EA5E9]">Upload Your Statement</DialogTitle>
               </DialogHeader>
@@ -92,7 +92,9 @@ const CallToAction = () => {
                         </FormItem>
                       )}
                     />
-                    <FileUpload contactInfo={form.getValues()} />
+                    <div className="pb-6">
+                      <FileUpload contactInfo={form.getValues()} />
+                    </div>
                   </form>
                 </Form>
               </div>

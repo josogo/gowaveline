@@ -27,14 +27,14 @@ const Hero = () => {
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-orange-400">
                 High Risk
               </span>
-              <span className="text-[#0EA5E9]"> processing made Easy</span>
+              <span className="text-[#0EA5E9]"> Processing Made Easy</span>
             </h1>
           ) : (
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground sm:text-6xl">
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-orange-400">
                 High Risk
               </span>
-              <span className="text-[#0EA5E9]"> processing made Easy</span>
+              <span className="text-[#0EA5E9]"> Processing Made Easy</span>
             </h1>
           )}
           
