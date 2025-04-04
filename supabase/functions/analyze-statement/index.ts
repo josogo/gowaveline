@@ -144,8 +144,9 @@ async function processWithGemini(fileContent: ArrayBuffer, fileType: string) {
     const base64File = btoa(binary);
     console.log(`Converted file to base64, length: ${base64File.length}`);
     
-    // Call the Gemini API directly
-    const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${GEMINI_API_KEY}`;
+    // Call the Gemini API with the updated model name
+    // Using gemini-1.5-flash instead of the deprecated gemini-pro-vision
+    const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
     
     const promptText = `
 You are a financial analyst specialized in merchant processing statements. 
@@ -216,7 +217,7 @@ ONLY respond with the JSON - no other text.`;
     const result = await response.json();
     console.log("Received response from Gemini API");
     
-    if (!result.candidates || result.candidates.length === 0 || !result.candidates[0].content.parts.length) {
+    if (!result.candidates || result.candidates.length === 0 || !result.candidates[0].content || !result.candidates[0].content.parts || !result.candidates[0].content.parts.length) {
       throw new Error('Gemini API returned no content');
     }
     

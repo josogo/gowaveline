@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Cloud, File, FileText, UploadCloud, X, AlertCircle, RefreshCw } from 'lucide-react';
@@ -123,7 +122,7 @@ const FileUpload = () => {
       
       if (isGeminiError) {
         setError("Processing requires Gemini API configuration. Please check that your Gemini API key is configured correctly.");
-        setDebugInfo("The system needs the Gemini API key to be configured in Supabase Edge Function Secrets.");
+        setDebugInfo("The system needs the Gemini API key to be configured in Supabase Edge Function Secrets and we need to use a supported model.");
       } else {
         setError(error instanceof Error ? error.message : 'Unknown error');
         setDebugInfo(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);

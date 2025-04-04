@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
 
@@ -47,6 +46,19 @@ export const analyzeStatement = async (
     
     // Upload file to Supabase Storage in a 'statements' bucket
     console.log("Uploading file to Supabase storage");
+    
+    // Create the statements bucket if it doesn't exist
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const statementsBucketExists = buckets?.some(bucket => bucket.name === 'statements');
+    
+    if (!statementsBucketExists) {
+      console.log("Creating statements bucket");
+      await supabase.storage.createBucket('statements', {
+        public: false,
+        fileSizeLimit: 10485760, // 10MB
+      });
+    }
+    
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('statements')
       .upload(fileName, file, {
