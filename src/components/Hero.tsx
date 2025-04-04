@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import FileUpload from '@/components/FileUpload';
+import FileUpload from '@/components/file-upload';
 import { useNavigate } from 'react-router-dom';
 import AnimatedText from '@/components/AnimatedText';
 import { useIsMobile } from '@/hooks/use-mobile';
