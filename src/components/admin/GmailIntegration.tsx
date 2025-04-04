@@ -1,9 +1,22 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Info, Loader2 } from "lucide-react";
+import { 
+  Check, Info, Loader2, Mail, LogIn, 
+  Settings, LogOut, RefreshCw, Trash 
+} from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
 
 const mockEmails = [
   {
@@ -58,8 +71,8 @@ const GmailIntegration = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [emails, setEmails] = useState(mockEmails);
   const [selectedTab, setSelectedTab] = useState('inbox');
-  const [lastSync, setLastSync] = useState(null);
-  const [syncError, setSyncError] = useState(null);
+  const [lastSync, setLastSync] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
   const handleAuthenticate = () => {
