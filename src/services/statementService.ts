@@ -31,7 +31,7 @@ export const analyzeStatement = async (
   try {
     // Start progress
     onProgress(10);
-    console.log("Starting file upload process for analysis");
+    console.log("Starting file upload process for analysis", { fileName: file.name, fileType: file.type, fileSize: file.size });
     
     // Create a unique file name to avoid collisions
     const timeStamp = new Date().getTime();
@@ -94,7 +94,13 @@ export const analyzeStatement = async (
     onProgress(70);
     
     // Call the Supabase Edge Function to analyze the statement
-    console.log("Calling edge function with file:", fileName, "type:", file.type);
+    console.log("Calling edge function for file analysis", {
+      fileName,
+      fileType: file.type,
+      fileSize: file.size,
+      hasUrl: Boolean(fileUrl)
+    });
+    
     const { data: analysisData, error: analysisError } = await supabase.functions
       .invoke('analyze-statement', {
         body: { fileUrl, fileName, fileType: file.type },
@@ -103,12 +109,12 @@ export const analyzeStatement = async (
     console.log("Response from edge function:", analysisData, analysisError);
     
     if (analysisError) {
-      console.error('Error analyzing statement:', analysisError);
+      console.error('Error from analyze-statement function:', analysisError);
       throw new Error(`Failed to analyze statement: ${analysisError.message}`);
     }
     
     if (!analysisData) {
-      console.error('No analysis data returned');
+      console.error('No analysis data returned from function');
       throw new Error('Analysis failed: No data returned from the analysis function');
     }
     
@@ -123,7 +129,24 @@ export const analyzeStatement = async (
     return analysisData;
     
   } catch (error) {
-    console.error('Analysis error:', error);
-    throw error;
+    console.error('Statement analysis error:', error);
+    
+    // Return a failure response with N/A values
+    return {
+      success: false,
+      effectiveRate: "N/A",
+      monthlyVolume: "N/A",
+      chargebackRatio: "N/A",
+      pricingModel: "N/A",
+      fees: {
+        monthlyFee: "N/A",
+        pciFee: "N/A",
+        statementFee: "N/A",
+        batchFee: "N/A",
+        transactionFees: "N/A"
+      },
+      error: error instanceof Error ? error.message : 'Unknown error',
+      message: "There was an error analyzing your statement. Please try uploading a different file or format."
+    };
   }
 };

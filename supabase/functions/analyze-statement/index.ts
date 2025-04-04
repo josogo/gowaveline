@@ -87,7 +87,7 @@ serve(async (req) => {
 
     try {
       // Process with OpenAI
-      console.log("Processing with OpenAI API");
+      console.log("Processing with OpenAI API - starting");
       const analysisResult = await processWithOpenAI(fileBuffer, fileType);
       console.log("OpenAI analysis complete with result:", analysisResult);
 
@@ -173,6 +173,30 @@ async function processWithOpenAI(fileBuffer: ArrayBuffer, fileType: string): Pro
   }
   
   try {
+    // Test the OpenAI API with a simple request first
+    console.log("Testing OpenAI API connection with a simple request");
+    const testResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "user", content: "Hello, this is a test message. Please respond with 'OpenAI API is working.'" }
+        ]
+      })
+    });
+    
+    if (!testResponse.ok) {
+      const errorText = await testResponse.text();
+      console.error(`OpenAI API test failed: ${testResponse.status} ${errorText}`);
+      throw new Error(`OpenAI API test failed: ${testResponse.status} ${errorText}`);
+    } else {
+      console.log("OpenAI API test successful");
+    }
+    
     // Prepare the request payload for OpenAI
     const payload = {
       model: "gpt-4o", // Using GPT-4o which has vision capabilities for PDF analysis
@@ -208,7 +232,7 @@ async function processWithOpenAI(fileBuffer: ArrayBuffer, fileType: string): Pro
     };
     
     // Call OpenAI API
-    console.log("Sending request to OpenAI API");
+    console.log("Sending request to OpenAI API for document analysis");
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -225,7 +249,7 @@ async function processWithOpenAI(fileBuffer: ArrayBuffer, fileType: string): Pro
     }
     
     const responseData = await response.json();
-    console.log("OpenAI response received", responseData);
+    console.log("OpenAI response received:", responseData);
     
     // Extract the response content
     const aiResponse = responseData.choices[0].message.content;
@@ -244,8 +268,13 @@ async function processWithOpenAI(fileBuffer: ArrayBuffer, fileType: string): Pro
       // Try to find JSON block in markdown
       const jsonMatch = aiResponse.match(/```json\n([\s\S]*?)\n```/) || aiResponse.match(/```\n([\s\S]*?)\n```/);
       if (jsonMatch && jsonMatch[1]) {
-        analysisData = JSON.parse(jsonMatch[1]);
-        console.log("Successfully extracted and parsed JSON from markdown block");
+        try {
+          analysisData = JSON.parse(jsonMatch[1]);
+          console.log("Successfully extracted and parsed JSON from markdown block");
+        } catch (jsonError) {
+          console.error("Error parsing JSON from markdown block:", jsonError);
+          throw new Error("Failed to parse JSON from OpenAI response");
+        }
       } else {
         // Last attempt - try to extract key-value pairs from text
         console.log("No JSON block found, attempting to extract structured data from text");
