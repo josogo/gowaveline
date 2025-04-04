@@ -4,11 +4,15 @@ import { Button } from '@/components/ui/button';
 
 interface PartnerCTAProps {
   onPartnershipClick: () => void;
+  className?: string;
 }
 
-const PartnerCTA: React.FC<PartnerCTAProps> = ({ onPartnershipClick }) => {
+const PartnerCTA: React.FC<PartnerCTAProps> = ({ 
+  onPartnershipClick, 
+  className = '' 
+}) => {
   return (
-    <div className="bg-gradient-to-r from-orange-500 to-orange-400 rounded-lg shadow-md p-8 text-white">
+    <div className={`bg-gradient-to-r from-orange-500 to-orange-400 rounded-lg shadow-md p-8 text-white ${className}`}>
       <h3 className="text-xl font-bold mb-4">Partner With Us</h3>
       <p className="mb-6">
         Interested in our partner program? We offer competitive compensation and dedicated support for agents, ISOs, and software partners.

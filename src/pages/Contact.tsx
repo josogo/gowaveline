@@ -31,11 +31,7 @@ const Contact = () => {
             
             <div>
               <ContactInfo />
-              <PartnerCTA onPartnershipClick={() => {
-                scrollToForm();
-                // We don't need to use form.setValue here as it's now handled in the ContactForm component
-                // through the initialInquiryType and initialPartnerType props
-              }} />
+              <PartnerCTA onPartnershipClick={scrollToForm} />
             </div>
           </div>
         </section>
