@@ -1,11 +1,16 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import Features from '@/components/Features';
 import CallToAction from '@/components/CallToAction';
 
 const Index = () => {
+  useEffect(() => {
+    // Clear any previous analysis data when landing on the home page
+    localStorage.removeItem('statementAnalysis');
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />

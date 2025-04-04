@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -16,6 +17,9 @@ const Results = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Force clear localStorage if needed for testing
+    // localStorage.removeItem('statementAnalysis');
+    
     // Get the analysis data from localStorage
     const storedData = localStorage.getItem('statementAnalysis');
     
@@ -25,8 +29,15 @@ const Results = () => {
         console.log("Retrieved analysis data from localStorage:", parsedData);
         
         // Check if it's mock data and notify the user
-        if (parsedData.isMockData) {
-          toast.info("You are viewing demonstration data, not your actual statement analysis.");
+        if (parsedData.isMockData === true) {
+          toast.warning("You are viewing demonstration data, not your actual statement analysis. Please upload a statement for real analysis.");
+          // Option to redirect back to upload page
+          setTimeout(() => {
+            if (confirm("Would you like to upload a real statement instead of viewing sample data?")) {
+              localStorage.removeItem('statementAnalysis');
+              navigate('/');
+            }
+          }, 1000);
         }
         
         setAnalysis(parsedData);
@@ -40,9 +51,11 @@ const Results = () => {
       setError('No analysis data found. Please upload a merchant statement first.');
       setLoading(false);
     }
-  }, []);
+  }, [navigate]);
 
   const handleReturnHome = () => {
+    // Clear stored data before returning home
+    localStorage.removeItem('statementAnalysis');
     navigate('/');
   };
 

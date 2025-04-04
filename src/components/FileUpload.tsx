@@ -76,10 +76,10 @@ const FileUpload = () => {
       // Explicitly set isMockData flag to true
       localStorage.setItem('statementAnalysis', JSON.stringify({
         ...mockData,
-        isMockData: true
+        isMockData: true // Force this to true for mock data
       }));
       
-      toast.success("Using sample data for demonstration");
+      toast.warning("Using sample data for demonstration only");
       
       setTimeout(() => {
         navigate('/results');
@@ -94,6 +94,9 @@ const FileUpload = () => {
   
   const handleUpload = async () => {
     if (!file) return;
+    
+    // Clear any existing data from localStorage
+    localStorage.removeItem('statementAnalysis');
     
     setUploading(true);
     setProgress(0);
@@ -110,6 +113,11 @@ const FileUpload = () => {
       });
       
       console.log("Analysis data received:", analysisData);
+      
+      // Verify it's not mock data
+      if (analysisData.isMockData) {
+        toast.warning("Warning: The system used sample data instead of your actual statement.");
+      }
       
       // Store analysis data in localStorage for the results page to use
       localStorage.setItem('statementAnalysis', JSON.stringify(analysisData));

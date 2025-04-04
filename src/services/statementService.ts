@@ -18,7 +18,7 @@ export interface StatementAnalysis {
   chargebackRatio: string;
   pricingModel: string;
   fees: FeeStructure;
-  isMockData?: boolean; // Flag to indicate if this is mock data
+  isMockData: boolean; // Flag to indicate if this is mock data - always required
 }
 
 /**
@@ -105,7 +105,7 @@ export const analyzeStatement = async (
       .from('statements')
       .remove([fileName]);
     
-    // Ensure isMockData is explicitly set to false for real data
+    // Make sure isMockData is FALSE for real data
     return {
       ...analysisData,
       isMockData: false
@@ -152,6 +152,6 @@ export const useMockAnalysis = async (
       batchFee: "$0.25",
       transactionFees: "$0.10 per transaction"
     },
-    isMockData: true // Explicitly set to true for mock data
+    isMockData: true // Always true for mock data
   };
 };

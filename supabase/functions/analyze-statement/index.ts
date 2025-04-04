@@ -123,12 +123,12 @@ serve(async (req) => {
       );
     }
     
-    // Return the results with explicit isMockData = false
+    // Return the results with explicit isMockData = false for real data
     return new Response(
       JSON.stringify({ 
         success: true,
         ...analysisResult,
-        isMockData: false // Explicitly set isMockData to false
+        isMockData: false // Explicitly set to false for real data
       }),
       { headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
@@ -246,7 +246,7 @@ async function analyzeWithOpenAI(extractedText: string) {
       messages: [
         {
           role: "system",
-          content: "You are a financial analyst specialized in merchant processing statements. Extract the requested information precisely from the statement text."
+          content: "You are a financial analyst specialized in merchant processing statements. Extract the requested information precisely from the statement text. If certain data is not found, use 'N/A' as the value."
         },
         {
           role: "user",
@@ -256,6 +256,8 @@ async function analyzeWithOpenAI(extractedText: string) {
           3. Chargeback ratio (chargebacks divided by total volume, or if not available, provide an estimate)
           4. Pricing model (interchange-plus or tiered)
           5. List all fees (monthly fee, PCI fee, statement fee, batch fee, transaction fees, etc.)
+          
+          For any field you cannot find data for, use "N/A" instead of making up a value.
           
           Format your response as a JSON object with these exact fields:
           {
@@ -294,6 +296,8 @@ async function analyzeWithOpenAI(extractedText: string) {
   try {
     const analysisJSON = JSON.parse(result.choices[0].message.content);
     console.log("Parsed analysis result:", analysisJSON);
+    
+    // Ensure all fields are present, use "N/A" for anything missing
     return {
       effectiveRate: analysisJSON.effectiveRate || "N/A",
       monthlyVolume: analysisJSON.monthlyVolume || "N/A",
