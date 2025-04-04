@@ -8,11 +8,12 @@ interface UploadActionsProps {
   file: File | null;
   onSend: () => Promise<void>;
   onAnalyze: () => Promise<void>;
+  className?: string;
 }
 
-const UploadActions: React.FC<UploadActionsProps> = ({ uploading, file, onSend, onAnalyze }) => {
+const UploadActions: React.FC<UploadActionsProps> = ({ uploading, file, onSend, onAnalyze, className }) => {
   return (
-    <div className="flex gap-4 justify-end">
+    <div className={`flex gap-4 justify-end ${className}`}>
       <Button 
         onClick={onSend} 
         disabled={uploading || !file}
@@ -24,7 +25,7 @@ const UploadActions: React.FC<UploadActionsProps> = ({ uploading, file, onSend, 
       <Button 
         onClick={onAnalyze} 
         disabled={uploading || !file}
-        className="bg-gradient-to-r from-teal-500 to-teal-400 hover:from-teal-400 hover:to-teal-500 text-white"
+        className="bg-white text-[#0EA5E9] hover:bg-white/80"
       >
         {uploading ? (
           <>

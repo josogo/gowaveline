@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 
 interface DropZoneProps {
   onDrop: (acceptedFiles: File[]) => void;
+  className?: string;
 }
 
-const DropZone: React.FC<DropZoneProps> = ({ onDrop }) => {
+const DropZone: React.FC<DropZoneProps> = ({ onDrop, className }) => {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
     onDrop,
     maxFiles: 1,
@@ -24,21 +25,21 @@ const DropZone: React.FC<DropZoneProps> = ({ onDrop }) => {
     <div
       {...getRootProps()}
       className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-        isDragActive ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-primary/50'
-      }`}
+        isDragActive ? 'border-white bg-white/10' : 'border-white/60 hover:border-white'
+      } ${className}`}
     >
       <input {...getInputProps()} />
       <div className="flex flex-col items-center justify-center gap-4">
-        <UploadCloud className={`h-12 w-12 ${isDragActive ? 'text-primary' : 'text-gray-400'}`} />
+        <UploadCloud className={`h-12 w-12 ${isDragActive ? 'text-white' : 'text-white/80'}`} />
         <div className="space-y-2">
-          <p className="text-lg font-semibold">
+          <p className="text-lg font-semibold text-white">
             {isDragActive ? "Drop the file here" : "Drag & drop your merchant statement"}
           </p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-white/80">
             Supports PDF, CSV and Excel files (max 10MB).
           </p>
         </div>
-        <Button variant="outline">Browse files</Button>
+        <Button variant="outline" className="bg-white/20 text-white border-white hover:bg-white/30">Browse files</Button>
       </div>
     </div>
   );

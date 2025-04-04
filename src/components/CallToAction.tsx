@@ -8,12 +8,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import FileUpload from '@/components/file-upload';
 import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { Mail } from 'lucide-react';
 
 const CallToAction = () => {
   const navigate = useNavigate();
@@ -59,9 +61,12 @@ const CallToAction = () => {
                 Submit Statement
               </Button>
             </DialogTrigger>
-            <DialogContent className="w-[95%] max-w-[525px] h-auto max-h-[80vh] overflow-y-auto p-4 sm:p-6">
+            <DialogContent className="w-[95%] max-w-[525px] h-auto max-h-[80vh] overflow-y-auto p-4 sm:p-6 bg-[#0EA5E9] border-0">
               <DialogHeader>
-                <DialogTitle className="text-xl text-[#0EA5E9]">Upload Your Statement</DialogTitle>
+                <DialogTitle className="text-xl text-white">Upload Your Statement</DialogTitle>
+                <DialogDescription className="text-white/80">
+                  Fill in your information and upload your statement for analysis.
+                </DialogDescription>
               </DialogHeader>
               <div className="mt-4">
                 <Form {...form}>
@@ -71,9 +76,14 @@ const CallToAction = () => {
                       name="companyName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Company Name</FormLabel>
+                          <FormLabel className="text-white">Company Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="Your Company" {...field} required />
+                            <Input 
+                              placeholder="Your Company" 
+                              {...field} 
+                              required
+                              className="bg-white/90 border-white" 
+                            />
                           </FormControl>
                         </FormItem>
                       )}
@@ -83,9 +93,15 @@ const CallToAction = () => {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel className="text-white">Email</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="you@example.com" {...field} required />
+                            <Input 
+                              type="email" 
+                              placeholder="you@example.com" 
+                              {...field} 
+                              required
+                              className="bg-white/90 border-white" 
+                            />
                           </FormControl>
                         </FormItem>
                       )}
@@ -95,9 +111,14 @@ const CallToAction = () => {
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Phone Number</FormLabel>
+                          <FormLabel className="text-white">Phone Number</FormLabel>
                           <FormControl>
-                            <Input placeholder="(555) 123-4567" {...field} required />
+                            <Input 
+                              placeholder="(555) 123-4567" 
+                              {...field} 
+                              required
+                              className="bg-white/90 border-white" 
+                            />
                           </FormControl>
                         </FormItem>
                       )}
@@ -105,6 +126,23 @@ const CallToAction = () => {
                     <div className="pb-6">
                       <FileUpload contactInfo={form.getValues()} />
                     </div>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        const contactInfo = form.getValues();
+                        // Validate form
+                        if (!contactInfo.companyName || !contactInfo.email || !contactInfo.phone) {
+                          toast.error("Please fill in all required fields");
+                          return;
+                        }
+                        toast.success("Information submitted successfully!");
+                        setOpen(false);
+                      }}
+                      className="w-full bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-500 text-white py-2"
+                    >
+                      <Mail className="mr-2 h-4 w-4" />
+                      Send Information
+                    </Button>
                   </form>
                 </Form>
               </div>

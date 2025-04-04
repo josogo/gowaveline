@@ -20,9 +20,10 @@ type ContactInfo = {
 
 interface FileUploadProps {
   contactInfo?: ContactInfo;
+  className?: string;
 }
 
-const FileUpload: React.FC<FileUploadProps> = ({ contactInfo }) => {
+const FileUpload: React.FC<FileUploadProps> = ({ contactInfo, className }) => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -171,7 +172,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ contactInfo }) => {
   };
   
   return (
-    <div className="w-full">
+    <div className={`w-full ${className}`}>
       {!file ? (
         <DropZone onDrop={onDrop} />
       ) : (

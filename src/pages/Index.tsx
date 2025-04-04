@@ -6,6 +6,7 @@ import Hero from '@/components/Hero';
 import Features from '@/components/Features';
 import CallToAction from '@/components/CallToAction';
 import { Button } from '@/components/ui/button';
+import Footer from '@/components/Footer';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -24,13 +25,14 @@ const Index = () => {
         <Features />
         <CallToAction />
       </main>
+      <Footer />
       
       {/* Small admin button at the bottom */}
-      <div className="w-full flex justify-center py-4">
+      <div className="fixed bottom-4 left-0 w-full flex justify-center py-4 z-10">
         <Button
           variant="ghost"
           size="sm"
-          className="text-xs text-gray-400 opacity-30 hover:opacity-100 px-2 py-1 h-auto"
+          className="text-xs text-gray-400 opacity-30 hover:opacity-100 px-2 py-1 h-auto bg-white/70 backdrop-blur-sm"
           onClick={() => navigate('/admin/dashboard')}
         >
           Admin
