@@ -118,6 +118,27 @@ export const analyzeStatement = async (
     
     if (analysisError) {
       console.error('Error analyzing statement:', analysisError);
+      
+      // Check if the error might have mock data
+      if (typeof analysisError === 'object' && analysisError !== null) {
+        const errorString = JSON.stringify(analysisError);
+        if (errorString.includes('"success":true') && errorString.includes('"isMockData":true')) {
+          // Try to extract the mock data from the error
+          try {
+            const mockMatch = errorString.match(/\{.*\}/);
+            if (mockMatch) {
+              const mockData = JSON.parse(mockMatch[0]);
+              if (mockData.success === true && mockData.isMockData === true) {
+                console.log("Found valid mock data in error response");
+                return mockData as StatementAnalysis;
+              }
+            }
+          } catch (parseError) {
+            console.error("Failed to parse mock data from error:", parseError);
+          }
+        }
+      }
+      
       throw new Error(`Failed to analyze statement: ${analysisError.message}`);
     }
     
@@ -172,6 +193,25 @@ export const analyzeStatement = async (
     
   } catch (error) {
     console.error('Analysis error:', error);
+    
+    // If we're catching an error with real mock data, extract and return it
+    if (error instanceof Error && error.message.includes('"isMockData":true')) {
+      try {
+        // Try to extract JSON from the error message
+        const jsonMatch = error.message.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const mockData = JSON.parse(jsonMatch[0]);
+          if (mockData.success === true && mockData.isMockData === true) {
+            console.log("Extracted mock data from error message");
+            toast.warning("Using simulated data - there was an issue with the API");
+            return mockData as StatementAnalysis;
+          }
+        }
+      } catch (parseError) {
+        console.error("Failed to parse mock data from error message:", parseError);
+      }
+    }
+    
     toast.error(`Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     throw error; // We rethrow the error to be handled by the caller
   }

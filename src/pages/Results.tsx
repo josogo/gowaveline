@@ -32,7 +32,7 @@ const Results = () => {
         if (parsedData.isMockData === true) {
           console.warn("Mock data detected - displaying simulation notice");
           setIsMockData(true);
-          // We don't show an error toast here because we'll display a banner instead
+          toast.warning("Viewing simulated data for demonstration purposes");
         } else {
           console.log("Real analysis data found");
           setIsMockData(false);
@@ -103,8 +103,8 @@ const Results = () => {
                   <AlertTriangle className="h-4 w-4 text-amber-600" />
                   <AlertTitle className="text-amber-800">Simulation Mode</AlertTitle>
                   <AlertDescription className="text-amber-700">
-                    This is simulated data for testing purposes. The Gemini API encountered an issue processing your actual statement.
-                    Try uploading a different file format or contact support if the issue persists.
+                    This is simulated data for demonstration purposes. This is not based on your actual statement.
+                    For accurate results, please ensure your Gemini API key is correctly configured and try uploading a different file format.
                   </AlertDescription>
                 </Alert>
               </div>
