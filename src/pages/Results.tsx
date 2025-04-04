@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import Dashboard from '@/components/Dashboard';
 import CallToAction from '@/components/CallToAction';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Loader2, RefreshCw } from 'lucide-react';
+import { AlertCircle, Loader2, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatementAnalysis } from '@/services/statementService';
 import { toast } from "sonner";
@@ -28,11 +28,11 @@ const Results = () => {
         const parsedData = JSON.parse(storedData);
         console.log("Retrieved analysis data from localStorage:", parsedData);
         
-        // Check if this is fake data from the simulation
+        // Check if this is mock data from the simulation
         if (parsedData.isMockData === true) {
-          console.warn("Mock data detected - this should not happen now");
+          console.warn("Mock data detected - displaying simulation notice");
           setIsMockData(true);
-          toast.error("Error: Mock data detected. Please return to home and try again with a real statement.");
+          // We don't show an error toast here because we'll display a banner instead
         } else {
           console.log("Real analysis data found");
           setIsMockData(false);
@@ -73,33 +73,6 @@ const Results = () => {
     );
   }
 
-  // Special handling for mock data - we shouldn't see this but just in case
-  if (isMockData) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-1">
-          <div className="container mx-auto py-16 px-6">
-            <Alert variant="destructive" className="mb-6">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error: Mock Data Detected</AlertTitle>
-              <AlertDescription>
-                The system is showing mock data instead of analyzing your actual statement. 
-                This may indicate a problem with our analysis system.
-              </AlertDescription>
-            </Alert>
-            <div className="flex justify-center mt-8">
-              <Button onClick={handleReturnHome} className="flex items-center">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Return to Home & Try Again
-              </Button>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -123,6 +96,19 @@ const Results = () => {
                 We've analyzed your merchant statement and found several insights that could help you reduce costs.
               </p>
             </div>
+            
+            {isMockData && (
+              <div className="container mx-auto px-6 mb-8">
+                <Alert variant="warning" className="bg-amber-50 border-amber-200">
+                  <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  <AlertTitle className="text-amber-800">Simulation Mode</AlertTitle>
+                  <AlertDescription className="text-amber-700">
+                    This is simulated data for testing purposes. The Gemini API encountered an issue processing your actual statement.
+                    Try uploading a different file format or contact support if the issue persists.
+                  </AlertDescription>
+                </Alert>
+              </div>
+            )}
             
             {analysis && <Dashboard analysisData={analysis} />}
             <CallToAction />

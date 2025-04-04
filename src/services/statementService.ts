@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
 
@@ -48,15 +49,27 @@ export const analyzeStatement = async (
     console.log("Uploading file to Supabase storage");
     
     // Create the statements bucket if it doesn't exist
-    const { data: buckets } = await supabase.storage.listBuckets();
-    const statementsBucketExists = buckets?.some(bucket => bucket.name === 'statements');
+    let needToCreateBucket = false;
+    try {
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const statementsBucketExists = buckets?.some(bucket => bucket.name === 'statements');
+      needToCreateBucket = !statementsBucketExists;
+    } catch (error) {
+      console.error("Error checking buckets:", error);
+      needToCreateBucket = true;
+    }
     
-    if (!statementsBucketExists) {
+    if (needToCreateBucket) {
       console.log("Creating statements bucket");
-      await supabase.storage.createBucket('statements', {
-        public: false,
-        fileSizeLimit: 10485760, // 10MB
-      });
+      try {
+        await supabase.storage.createBucket('statements', {
+          public: false,
+          fileSizeLimit: 10485760, // 10MB
+        });
+      } catch (bucketError) {
+        console.warn("Bucket creation error (may already exist):", bucketError);
+        // Continue anyway, as the bucket might already exist but with an RLS permission issue
+      }
     }
     
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -113,6 +126,7 @@ export const analyzeStatement = async (
       throw new Error('Analysis failed: No data returned from the analysis function');
     }
     
+    // Handle errors that are returned with a success:false flag
     if (!analysisData.success) {
       console.error('Analysis unsuccessful:', analysisData.error || 'Unknown error');
       
@@ -131,29 +145,30 @@ export const analyzeStatement = async (
     console.log("Cleaning up uploaded file");
     await supabase.storage
       .from('statements')
-      .remove([fileName]);
+      .remove([fileName])
+      .catch(err => console.warn("Cleanup error (non-critical):", err));
     
-    // Force isMockData to FALSE for real data
-    const result: StatementAnalysis = {
-      ...analysisData,
-      isMockData: false
-    };
+    // If mock data is being returned, notify the user
+    if (analysisData.isMockData === true) {
+      console.warn("Mock data being returned from edge function");
+      toast.warning("Using simulated data for testing - the Gemini API encountered an issue processing your file.");
+    }
     
-    // Validate response data to ensure we're not getting mock data
+    // Validate response data
     const hasSomeRealData = 
-      result.effectiveRate !== "N/A" || 
-      result.monthlyVolume !== "N/A" || 
-      result.pricingModel !== "N/A" ||
-      result.chargebackRatio !== "N/A" || 
-      result.fees.monthlyFee !== "N/A" ||
-      result.fees.pciFee !== "N/A";
+      analysisData.effectiveRate !== "N/A" || 
+      analysisData.monthlyVolume !== "N/A" || 
+      analysisData.pricingModel !== "N/A" ||
+      analysisData.chargebackRatio !== "N/A" || 
+      analysisData.fees.monthlyFee !== "N/A" ||
+      analysisData.fees.pciFee !== "N/A";
       
-    if (!hasSomeRealData) {
+    if (!analysisData.isMockData && !hasSomeRealData) {
       console.warn("Analysis completed but no actual data was extracted from the statement");
       toast.warning("We couldn't extract any data from your statement. Please try a different file format or contact support.");
     }
     
-    return result;
+    return analysisData;
     
   } catch (error) {
     console.error('Analysis error:', error);

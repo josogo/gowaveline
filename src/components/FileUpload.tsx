@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Cloud, File, FileText, UploadCloud, X, AlertCircle, RefreshCw } from 'lucide-react';
@@ -92,20 +93,27 @@ const FileUpload = () => {
       
       localStorage.setItem('statementAnalysis', JSON.stringify(analysisData));
       
-      const noDataExtracted = 
-        analysisData.effectiveRate === "N/A" && 
-        analysisData.monthlyVolume === "N/A" && 
-        analysisData.pricingModel === "N/A" &&
-        analysisData.chargebackRatio === "N/A" && 
-        analysisData.fees.monthlyFee === "N/A" &&
-        analysisData.fees.pciFee === "N/A";
-        
-      if (noDataExtracted) {
-        toast.warning("We couldn't extract all data from your statement, but we'll show what we found.");
+      if (analysisData.isMockData) {
+        // If we got mock data, show a toast but still allow navigation to results
+        toast.warning("Using simulation mode. Upload a different file or try again later.");
       } else {
-        toast.success("Analysis complete!");
+        // Check if we got any meaningful data
+        const noDataExtracted = 
+          analysisData.effectiveRate === "N/A" && 
+          analysisData.monthlyVolume === "N/A" && 
+          analysisData.pricingModel === "N/A" &&
+          analysisData.chargebackRatio === "N/A" && 
+          analysisData.fees.monthlyFee === "N/A" &&
+          analysisData.fees.pciFee === "N/A";
+          
+        if (noDataExtracted) {
+          toast.warning("We couldn't extract all data from your statement, but we'll show what we found.");
+        } else {
+          toast.success("Analysis complete!");
+        }
       }
       
+      // Navigate to results in either case
       setTimeout(() => {
         navigate('/results');
       }, 1000);
