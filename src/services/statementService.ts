@@ -146,7 +146,7 @@ export const analyzeStatement = async (
         transactionFees: "N/A"
       },
       error: error instanceof Error ? error.message : 'Unknown error',
-      message: "There was an error analyzing your statement. Please try uploading a different file or format."
+      message: "We couldn't analyze your statement. For better results, you can email your statement for a custom analysis."
     };
   }
 };
