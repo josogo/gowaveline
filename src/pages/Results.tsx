@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -122,7 +121,7 @@ const Results = () => {
     navigate('/');
   };
 
-  const handleEmailSubmit = (data: FormValues) => {
+  const handleEmailSubmit = async (data: FormValues) => {
     // This would normally send the email to a backend service
     if (!statementFile) {
       toast.error("Please upload your statement file");
@@ -132,18 +131,45 @@ const Results = () => {
     console.log("Form data submitted:", data);
     console.log("File submitted:", statementFile);
     
-    // Here you would integrate with a service to send the email with the file and form data
-    // For example using EmailJS or sending to jordan@gowaveline.com
-    
-    // For now we'll just simulate a successful submission
-    toast.success("Your statement has been submitted for manual analysis");
-    setEmailSent(true);
-    setTimeout(() => {
-      setShowEmailDialog(false);
-      setEmailSent(false);
-      setStatementFile(null);
-      form.reset();
-    }, 2000);
+    try {
+      // Send email notification using our edge function
+      const response = await fetch('https://rqwrvkkfixrogxogunsk.supabase.co/functions/v1/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'statement',
+          subject: 'Manual Analysis Request',
+          data: {
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            businessName: data.businessName,
+            monthlyVolume: data.monthlyVolume,
+            fileName: statementFile.name,
+            fileType: statementFile.type,
+            fileSize: statementFile.size,
+          }
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to send email');
+      }
+      
+      toast.success("Your statement has been submitted for manual analysis");
+      setEmailSent(true);
+      setTimeout(() => {
+        setShowEmailDialog(false);
+        setEmailSent(false);
+        setStatementFile(null);
+        form.reset();
+      }, 2000);
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast.error('There was a problem submitting your information. Please try again.');
+    }
   };
 
   // Generate sample data for demonstration when real analysis fails

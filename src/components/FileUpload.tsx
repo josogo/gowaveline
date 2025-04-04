@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { File, FileText, UploadCloud, X, Loader2 } from 'lucide-react';
@@ -7,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { toast } from "sonner";
 import { useNavigate } from 'react-router-dom';
 import { analyzeStatement } from '@/services/statementService';
+import { supabase } from '@/integrations/supabase/client';
 
 type ContactInfo = {
   companyName?: string;
@@ -62,6 +62,37 @@ const FileUpload: React.FC<FileUploadProps> = ({ contactInfo }) => {
     setProgress(0);
   };
   
+  const sendEmailNotification = async (fileData: File, contactData?: ContactInfo) => {
+    try {
+      const response = await fetch('https://rqwrvkkfixrogxogunsk.supabase.co/functions/v1/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'statement',
+          subject: 'New Statement Analysis Request',
+          data: {
+            company: contactData?.companyName || 'No company provided',
+            email: contactData?.email || 'No email provided',
+            phone: contactData?.phone || 'No phone provided',
+            fileName: fileData.name,
+            fileType: fileData.type,
+            fileSize: fileData.size,
+          }
+        }),
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to send email notification');
+      } else {
+        console.log('Email notification sent successfully');
+      }
+    } catch (error) {
+      console.error('Error sending email notification:', error);
+    }
+  };
+  
   const handleUpload = async () => {
     if (!file) return;
     
@@ -75,12 +106,8 @@ const FileUpload: React.FC<FileUploadProps> = ({ contactInfo }) => {
       console.log("Analyzing file:", file.name, file.type);
       console.log("Contact info:", contactInfo);
       
-      // Here we would normally send the contact info to the backend
-      if (contactInfo?.email) {
-        // Send lead to email
-        console.log("Sending lead to jordan@gowaveline.com");
-        // In a real implementation, this would be an API call to send an email
-      }
+      // Send notification email
+      await sendEmailNotification(file, contactInfo);
       
       // Use a simpler progress callback
       const onProgressUpdate = (value: number) => {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { z } from 'zod';
@@ -43,6 +42,7 @@ type FormValues = z.infer<typeof formSchema>;
 const Contact = () => {
   const location = useLocation();
   const [isPartner, setIsPartner] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -65,12 +65,43 @@ const Contact = () => {
     }
   }, [location.state, form]);
   
-  const onSubmit = (data: FormValues) => {
-    console.log('Form submitted:', data);
+  const onSubmit = async (data: FormValues) => {
+    setIsSubmitting(true);
     
-    // In a real app, you would send this data to your backend
-    toast.success('Your message has been sent! We\'ll be in touch soon.');
-    form.reset();
+    try {
+      console.log('Form submitted:', data);
+      
+      // Send email notification using our edge function
+      const response = await fetch('https://rqwrvkkfixrogxogunsk.supabase.co/functions/v1/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'contact',
+          subject: `New Contact Form: ${data.inquiryType.toUpperCase()}`,
+          data: {
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            company: data.company,
+            message: data.message,
+          }
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to send email');
+      }
+      
+      toast.success('Your message has been sent! We\'ll be in touch soon.');
+      form.reset();
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast.error('There was a problem sending your message. Please try again later.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   const handleInquiryTypeChange = (value: string) => {
@@ -248,8 +279,14 @@ const Contact = () => {
                     <Button 
                       type="submit" 
                       className="w-full bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500"
+                      disabled={isSubmitting}
                     >
-                      Send Message
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                          Sending...
+                        </>
+                      ) : 'Send Message'}
                     </Button>
                   </form>
                 </Form>

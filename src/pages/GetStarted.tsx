@@ -83,25 +83,31 @@ const GetStarted = () => {
     setUploading(true);
     
     try {
-      // Prepare data to send via EmailJS
-      const templateParams = {
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        business_name: data.businessName,
-        website: data.website || 'Not provided',
-        monthly_volume: data.monthlyVolume,
-        has_statement: file ? 'Yes' : 'No',
-        file_name: file ? file.name : 'No file uploaded',
-        to_email: 'jordan@gowaveline.com' // This would be used in the EmailJS template
-      };
+      // Send email notification using our edge function
+      const response = await fetch('https://rqwrvkkfixrogxogunsk.supabase.co/functions/v1/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'getStarted',
+          subject: 'New Get Started Application',
+          data: {
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            businessName: data.businessName,
+            monthlyVolume: data.monthlyVolume,
+            fileName: file ? file.name : 'No file uploaded',
+            fileType: file ? file.type : 'N/A',
+            fileSize: file ? file.size : 0,
+          }
+        }),
+      });
       
-      // Here you would normally send the email with the file attachment
-      // For demo purposes, we'll just simulate a successful send
-      console.log('Sending lead data to jordan@gowaveline.com:', templateParams);
-      
-      // Simulating EmailJS send (you would need to implement the actual EmailJS configuration)
-      // await emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams, 'YOUR_PUBLIC_KEY');
+      if (!response.ok) {
+        throw new Error('Failed to send email');
+      }
       
       toast.success('Thank you for your interest!', {
         description: 'Your information has been sent. We will contact you shortly.',
