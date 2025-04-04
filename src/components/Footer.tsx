@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
@@ -66,7 +65,6 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
           <p className="text-muted-foreground text-sm">
             &copy; {currentYear} Gowaveline. All rights reserved.
           </p>
-          {/* Admin login with lock icon removed */}
         </div>
         <div className="flex space-x-6">
           <button onClick={() => handleNavigation('/privacy-policy')} className="text-muted-foreground hover:text-orange-500 text-sm">Privacy Policy</button>
@@ -83,17 +81,7 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
         </div>
       </div>
       
-      {/* Small admin button at very bottom */}
-      <div className="w-full flex justify-center mt-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-xs text-gray-400 opacity-40 hover:opacity-100"
-          onClick={() => handleNavigation('/admin/dashboard')}
-        >
-          Admin
-        </Button>
-      </div>
+      {/* Removed the duplicate small admin button that was here */}
     </footer>
   );
 };
