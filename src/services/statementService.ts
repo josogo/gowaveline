@@ -107,7 +107,7 @@ export const analyzeStatement = async (
   } catch (error) {
     console.error('Analysis error:', error);
     toast.error(`Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    throw error;
+    throw error; // Important: We rethrow the error instead of falling back to mock data
   }
 };
 

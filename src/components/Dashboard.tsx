@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 type AnalysisData = {
@@ -10,6 +10,7 @@ type AnalysisData = {
   monthlyVolume: string;
   chargebackRatio: string;
   pricingModel: string;
+  isMockData?: boolean;
   fees: {
     monthlyFee: string;
     pciFee: string;
@@ -22,6 +23,7 @@ type AnalysisData = {
 const Dashboard = () => {
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isMockData, setIsMockData] = useState(false);
 
   useEffect(() => {
     // Retrieve analysis data from localStorage
@@ -30,6 +32,7 @@ const Dashboard = () => {
       try {
         const parsedData = JSON.parse(storedData);
         setAnalysisData(parsedData);
+        setIsMockData(!!parsedData.isMockData);
       } catch (error) {
         console.error('Error parsing analysis data:', error);
       }
@@ -84,6 +87,16 @@ const Dashboard = () => {
 
   return (
     <div className="container mx-auto py-8 px-4">
+      {isMockData && (
+        <Alert className="mb-6 bg-amber-50 border-amber-200">
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertTitle className="text-amber-800">Demonstration Data</AlertTitle>
+          <AlertDescription className="text-amber-700">
+            You are viewing sample data for demonstration purposes. This is not based on your actual statement.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>
           <CardHeader className="pb-2">

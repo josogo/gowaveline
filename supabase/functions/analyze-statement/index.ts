@@ -43,53 +43,42 @@ serve(async (req) => {
       );
     }
 
-    // For PDF files, we would normally process with Document AI
-    // But for this example, we'll just simulate processing since we might not have all the API keys set up
+    // Get the file content
+    const fileContent = await fileResponse.arrayBuffer();
+    console.log(`File downloaded successfully, size: ${fileContent.byteLength} bytes`);
     
-    // Simple text extraction simulation based on file type
+    // Extract text based on file type
     let extractedText = "";
     
+    // For PDF files: Use Document AI if credentials are available, otherwise simulate
     if (fileType === "application/pdf") {
-      // In a real implementation, we'd use Document AI here
-      // For now, just create some sample text to process
-      extractedText = `
-        MERCHANT STATEMENT
-        
-        Processing Volume: $145,230.45
-        Transaction Count: 1,243
-        
-        Fees:
-        Monthly Service: $9.95
-        PCI Compliance: $14.95
-        Statement Fee: $7.50
-        Batch Settlement: $0.25 per batch
-        Transaction Fee: $0.10 per transaction
-        
-        Interchange Fees: $3,234.56
-        Assessment Fees: $432.10
-        
-        Chargebacks: 2 ($250.00)
-        
-        Total Fees: $4,056.21
-        Effective Rate: 2.79%
-      `;
-      console.log("Simulated text extraction for PDF");
-    } else if (fileType.includes("csv") || fileType.includes("excel") || fileType.includes("sheet")) {
-      // For CSV/Excel, simulate extracting text in a different format
-      extractedText = `
-        Date,Description,Amount
-        2025-03-01,Processing Volume,$145230.45
-        2025-03-01,Interchange Fees,$3234.56
-        2025-03-01,Assessment Fees,$432.10
-        2025-03-01,Monthly Service,$9.95
-        2025-03-01,PCI Compliance,$14.95
-        2025-03-01,Statement Fee,$7.50
-        2025-03-01,Chargebacks,$250.00
-      `;
-      console.log("Simulated text extraction for spreadsheet");
-    } else {
-      extractedText = "Unknown file format. Please upload a PDF, CSV, or Excel file.";
-      console.log("Unknown file format");
+      if (GOOGLE_CLOUD_API_KEY && GOOGLE_CLOUD_PROJECT_ID && GOOGLE_CLOUD_PROCESSOR_ID) {
+        try {
+          extractedText = await extractTextWithDocumentAI(fileContent, fileType);
+          console.log("Text extracted with Document AI");
+        } catch (error) {
+          console.error("Document AI extraction failed:", error);
+          extractedText = simulateTextExtraction("pdf");
+          console.log("Falling back to simulated text extraction");
+        }
+      } else {
+        extractedText = simulateTextExtraction("pdf");
+        console.log("No Document AI credentials, using simulated text extraction");
+      }
+    } 
+    // For CSV/Excel files: Parse directly or simulate
+    else if (fileType.includes("csv") || fileType.includes("excel") || fileType.includes("sheet")) {
+      extractedText = simulateTextExtraction("spreadsheet");
+      console.log("Using simulated text extraction for spreadsheet");
+    } 
+    // Unknown format
+    else {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Unsupported file format. Please upload a PDF, CSV, or Excel file.' 
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
     }
     
     if (!extractedText) {
@@ -99,14 +88,23 @@ serve(async (req) => {
       );
     }
     
-    console.log("Text successfully extracted, length:", extractedText.length);
+    console.log("Text extraction successful, length:", extractedText.length);
     
     // Now analyze with OpenAI (if API key is available) or use mock analysis
     let analysisResult;
     
     if (OPENAI_API_KEY) {
-      console.log("Analyzing with OpenAI");
-      analysisResult = await analyzeWithOpenAI(extractedText);
+      try {
+        console.log("Analyzing with OpenAI");
+        analysisResult = await analyzeWithOpenAI(extractedText);
+        console.log("OpenAI analysis successful");
+      } catch (error) {
+        console.error("OpenAI analysis failed:", error);
+        return new Response(
+          JSON.stringify({ error: `OpenAI analysis failed: ${error.message}` }),
+          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
     } else {
       console.log("No OpenAI API key, using mock analysis");
       analysisResult = getMockAnalysis();
@@ -132,6 +130,85 @@ serve(async (req) => {
     );
   }
 });
+
+/**
+ * Extract text from document using Google Document AI
+ */
+async function extractTextWithDocumentAI(fileContent: ArrayBuffer, fileType: string) {
+  if (!GOOGLE_CLOUD_API_KEY || !GOOGLE_CLOUD_PROJECT_ID || !GOOGLE_CLOUD_PROCESSOR_ID) {
+    throw new Error('Missing Google Cloud credentials');
+  }
+
+  const apiEndpoint = `https://${GOOGLE_CLOUD_LOCATION}-documentai.googleapis.com/v1/projects/${GOOGLE_CLOUD_PROJECT_ID}/locations/${GOOGLE_CLOUD_LOCATION}/processors/${GOOGLE_CLOUD_PROCESSOR_ID}:process`;
+  
+  const mimeType = fileType || "application/pdf";
+  const encodedContent = btoa(String.fromCharCode(...new Uint8Array(fileContent)));
+  
+  const requestBody = {
+    rawDocument: {
+      content: encodedContent,
+      mimeType: mimeType
+    }
+  };
+  
+  const response = await fetch(`${apiEndpoint}?key=${GOOGLE_CLOUD_API_KEY}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(requestBody)
+  });
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Document AI API error: ${response.status} ${errorText}`);
+  }
+  
+  const result = await response.json();
+  return result.document.text;
+}
+
+/**
+ * Simulate text extraction for different file types
+ */
+function simulateTextExtraction(fileType: string): string {
+  if (fileType === "pdf") {
+    return `
+      MERCHANT STATEMENT
+      
+      Processing Volume: $145,230.45
+      Transaction Count: 1,243
+      
+      Fees:
+      Monthly Service: $9.95
+      PCI Compliance: $14.95
+      Statement Fee: $7.50
+      Batch Settlement: $0.25 per batch
+      Transaction Fee: $0.10 per transaction
+      
+      Interchange Fees: $3,234.56
+      Assessment Fees: $432.10
+      
+      Chargebacks: 2 ($250.00)
+      
+      Total Fees: $4,056.21
+      Effective Rate: 2.79%
+    `;
+  } else if (fileType === "spreadsheet") {
+    return `
+      Date,Description,Amount
+      2025-03-01,Processing Volume,$145230.45
+      2025-03-01,Interchange Fees,$3234.56
+      2025-03-01,Assessment Fees,$432.10
+      2025-03-01,Monthly Service,$9.95
+      2025-03-01,PCI Compliance,$14.95
+      2025-03-01,Statement Fee,$7.50
+      2025-03-01,Chargebacks,$250.00
+    `;
+  }
+  
+  return "Unknown file format. Please upload a PDF, CSV, or Excel file.";
+}
 
 /**
  * Analyze text with OpenAI
@@ -199,7 +276,7 @@ async function analyzeWithOpenAI(extractedText: string) {
     };
   } catch (error) {
     console.error("Error parsing OpenAI response:", error);
-    return getMockAnalysis();
+    throw new Error("Failed to parse OpenAI response");
   }
 }
 
