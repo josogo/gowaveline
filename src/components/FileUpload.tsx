@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Cloud, File, FileText, UploadCloud, X } from 'lucide-react';
@@ -74,8 +75,26 @@ const FileUpload = () => {
       
     } catch (error) {
       console.error('Analysis error:', error);
-      toast.error("Failed to analyze statement. Please try again.");
-      setProgress(0);
+      toast.error("Failed to analyze statement. Using mock data instead.");
+      
+      // Use mock data as fallback
+      try {
+        const mockData = await useMockAnalysis((progressValue) => {
+          setProgress(progressValue);
+        });
+        
+        localStorage.setItem('statementAnalysis', JSON.stringify(mockData));
+        
+        toast.success("Mock analysis complete!");
+        
+        setTimeout(() => {
+          navigate('/results');
+        }, 1000);
+      } catch (fallbackError) {
+        console.error('Even mock analysis failed:', fallbackError);
+        toast.error("Something went wrong. Please try again later.");
+        setProgress(0);
+      }
     } finally {
       setUploading(false);
     }
