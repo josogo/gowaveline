@@ -1,7 +1,6 @@
-
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Cloud, File, FileText, UploadCloud, X, AlertCircle, RefreshCw, FileWarning } from 'lucide-react';
+import { Cloud, File, FileText, UploadCloud, X, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { toast } from "sonner";

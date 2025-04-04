@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Get environment variables
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || "";
@@ -68,12 +67,12 @@ serve(async (req) => {
       );
     }
 
-    // Extract and analyze with Gemini
-    console.log("Using Gemini API for both extraction and analysis");
+    // Process with Gemini
+    console.log("Using Gemini API for statement analysis");
     let analysisResult;
     
     try {
-      analysisResult = await analyzeWithGemini(fileContent, fileType);
+      analysisResult = await processWithGemini(fileContent, fileType);
       console.log("Gemini analysis successful", analysisResult);
     } catch (error) {
       console.error("Gemini analysis failed:", error);
@@ -87,7 +86,7 @@ serve(async (req) => {
       );
     }
     
-    // Return the results with explicit isMockData = false for real data
+    // Return the results
     return new Response(
       JSON.stringify({ 
         success: true,
@@ -110,15 +109,15 @@ serve(async (req) => {
 });
 
 /**
- * Analyze file with Google Gemini AI
- * This function handles both PDF extraction and merchant statement analysis
+ * Process file with Google Gemini AI
+ * This function handles both extraction and analysis in a single Gemini call
  */
-async function analyzeWithGemini(fileContent: ArrayBuffer, fileType: string) {
+async function processWithGemini(fileContent: ArrayBuffer, fileType: string) {
   if (!GEMINI_API_KEY) {
     throw new Error('Missing Gemini API key');
   }
 
-  // Only use a portion of the file if it's very large
+  // Limit file size to avoid Gemini API limitations
   const maxBytes = 1024 * 1024; // 1MB limit
   const contentToProcess = fileContent.byteLength > maxBytes 
     ? fileContent.slice(0, maxBytes) 
@@ -130,20 +129,22 @@ async function analyzeWithGemini(fileContent: ArrayBuffer, fileType: string) {
   try {
     // Convert file to base64 with proper error handling
     const uint8Array = new Uint8Array(contentToProcess);
-    let binary = '';
-    const chunkSize = 1024;
     
-    // Process in chunks to avoid call stack issues
+    // Process in smaller chunks to avoid call stack issues
+    const chunkSize = 8192; // 8KB chunks
+    let binary = '';
+    
     for (let i = 0; i < uint8Array.length; i += chunkSize) {
       const chunk = uint8Array.slice(i, i + chunkSize);
-      chunk.forEach(byte => {
-        binary += String.fromCharCode(byte);
-      });
+      for (let j = 0; j < chunk.length; j++) {
+        binary += String.fromCharCode(chunk[j]);
+      }
     }
     
     const base64File = btoa(binary);
     console.log(`Converted file to base64, length: ${base64File.length}`);
     
+    // Call the Gemini API directly
     const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${GEMINI_API_KEY}`;
     
     const promptText = `
@@ -259,7 +260,7 @@ ONLY respond with the JSON - no other text.`;
       throw new Error("Failed to parse Gemini response as JSON");
     }
   } catch (error) {
-    console.error('Error in analyzeWithGemini:', error);
+    console.error('Error in processWithGemini:', error);
     throw new Error(`Gemini analysis failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
