@@ -1,52 +1,41 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 interface FooterProps {
   className?: string;
 }
 
 const Footer: React.FC<FooterProps> = ({ className }) => {
+  const navigate = useNavigate();
+  
   return (
     <footer className={cn("bg-background border-t py-12 px-6", className)}>
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
           <div className="flex items-center space-x-2 mb-4">
-            <div className="h-8 w-8 rounded-md bg-gradient-to-br from-orange-500 to-teal-500"></div>
-            <span className="font-bold text-xl">Gowaveline</span>
+            <img 
+              src="/lovable-uploads/2d9abfe8-af53-43b1-9ce4-d5c73518ff44.png" 
+              alt="Waveline Logo" 
+              className="h-12 w-auto"
+            />
           </div>
           <p className="text-muted-foreground">
             Modern solutions for merchant statement analysis and processing fee optimization.
           </p>
-        </div>
-        
-        <div>
-          <h3 className="font-semibold text-lg mb-4">Product</h3>
-          <ul className="space-y-3">
-            <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Features</a></li>
-            <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a></li>
-            <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Case Studies</a></li>
-            <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Testimonials</a></li>
-          </ul>
+          <div className="mt-4">
+            <p className="text-muted-foreground">info@gowaveline.com</p>
+            <p className="text-muted-foreground">(805) 586-3591</p>
+          </div>
         </div>
         
         <div>
           <h3 className="font-semibold text-lg mb-4">Company</h3>
           <ul className="space-y-3">
-            <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">About</a></li>
-            <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Careers</a></li>
-            <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Blog</a></li>
-            <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Press</a></li>
-          </ul>
-        </div>
-        
-        <div>
-          <h3 className="font-semibold text-lg mb-4">Connect</h3>
-          <ul className="space-y-3">
-            <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Twitter</a></li>
-            <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">LinkedIn</a></li>
-            <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Facebook</a></li>
-            <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Contact</a></li>
+            <li><button onClick={() => navigate('/about')} className="text-muted-foreground hover:text-foreground transition-colors">About</button></li>
+            <li><button onClick={() => navigate('/case-studies')} className="text-muted-foreground hover:text-foreground transition-colors">Case Studies</button></li>
+            <li><button onClick={() => navigate('/blog')} className="text-muted-foreground hover:text-foreground transition-colors">Blog</button></li>
           </ul>
         </div>
       </div>
@@ -58,7 +47,6 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
         <div className="flex space-x-6">
           <a href="#" className="text-muted-foreground hover:text-foreground text-sm">Privacy Policy</a>
           <a href="#" className="text-muted-foreground hover:text-foreground text-sm">Terms of Service</a>
-          <a href="#" className="text-muted-foreground hover:text-foreground text-sm">Cookie Policy</a>
         </div>
       </div>
     </footer>

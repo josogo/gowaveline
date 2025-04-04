@@ -1,8 +1,19 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import FileUpload from '@/components/FileUpload';
 
 const CallToAction = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="relative py-16 px-6 overflow-hidden">
       {/* Background gradient */}
@@ -16,19 +27,24 @@ const CallToAction = () => {
           Upload your statement now and discover how much you could save with our detailed analysis and recommendations.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Button 
-            size="lg" 
-            className="bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-500 text-white px-8 py-6 text-lg rounded-md"
-          >
-            Analyze Statement
-          </Button>
-          <Button 
-            variant="outline" 
-            size="lg"
-            className="border-teal-500 text-teal-500 hover:bg-teal-50 px-8 py-6 text-lg"
-          >
-            Learn More
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button 
+                size="lg" 
+                className="bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-500 text-white px-8 py-6 text-lg rounded-md"
+              >
+                Submit Statement
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[525px]">
+              <DialogHeader>
+                <DialogTitle className="text-xl text-[#0EA5E9]">Upload Your Statement</DialogTitle>
+              </DialogHeader>
+              <div className="mt-4">
+                <FileUpload />
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>
