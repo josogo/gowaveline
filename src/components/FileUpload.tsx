@@ -1,6 +1,7 @@
+
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { File, FileText, UploadCloud, X, Loader2 } from 'lucide-react';
+import { File, FileText, UploadCloud, X, Loader2, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { toast } from "sonner";
@@ -146,6 +147,31 @@ const FileUpload: React.FC<FileUploadProps> = ({ contactInfo }) => {
       setProgress(0);
     }
   };
+
+  const handleSendStatement = async () => {
+    if (!file) return;
+    
+    toast.loading("Sending statement to WaveLine team...");
+    
+    try {
+      // Create form data to send the file
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('companyName', contactInfo?.companyName || 'Not provided');
+      formData.append('email', contactInfo?.email || 'Not provided');
+      formData.append('phone', contactInfo?.phone || 'Not provided');
+      
+      // Send notification email with attachment info
+      await sendEmailNotification(file, contactInfo);
+      
+      toast.success("Statement sent successfully to the WaveLine team!");
+      toast.dismiss();
+    } catch (error) {
+      console.error("Error sending statement:", error);
+      toast.error("Failed to send statement. Please try again or contact support.");
+      toast.dismiss();
+    }
+  };
   
   const getFileIcon = (fileType: string) => {
     if (fileType.includes('pdf')) return <FileText className="h-8 w-8 text-orange-500" />;
@@ -204,7 +230,15 @@ const FileUpload: React.FC<FileUploadProps> = ({ contactInfo }) => {
             </div>
           )}
           
-          <div className="flex justify-end">
+          <div className="flex gap-4 justify-end">
+            <Button 
+              onClick={handleSendStatement} 
+              disabled={uploading || !file}
+              className="bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-500 text-white"
+            >
+              <Mail className="mr-2 h-4 w-4" />
+              Send Statement
+            </Button>
             <Button 
               onClick={handleUpload} 
               disabled={uploading || !file}
