@@ -1,4 +1,5 @@
 
+import { createClient } from '@supabase/supabase-js';
 import { toast } from "sonner";
 
 // Types for analysis results
@@ -19,8 +20,15 @@ export interface StatementAnalysis {
   fees: FeeStructure;
 }
 
+// Initialize Supabase client - these environment variables are automatically available
+// when the app is connected to Supabase
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
 /**
- * Analyzes a merchant statement using backend services (Google Cloud Document AI and OpenAI)
+ * Analyzes a merchant statement using backend services via Supabase Edge Function
  * @param file The statement file to analyze
  * @param onProgress Callback function to report upload/processing progress
  * @returns Promise with analysis results
@@ -29,79 +37,64 @@ export const analyzeStatement = async (
   file: File,
   onProgress: (progress: number) => void
 ): Promise<StatementAnalysis> => {
-  // Create form data to send file
-  const formData = new FormData();
-  formData.append('file', file);
-  
   try {
-    // Configure fetch with progress reporting capability
-    const xhr = new XMLHttpRequest();
+    // First, we need to upload the file to Supabase Storage
+    onProgress(10); // Start progress
     
-    // Create a promise to handle the XHR response
-    const uploadPromise = new Promise<StatementAnalysis>((resolve, reject) => {
-      // Handle progress events
-      xhr.upload.addEventListener('progress', (event) => {
-        if (event.lengthComputable) {
-          const progressPercent = Math.round((event.loaded / event.total) * 100);
-          onProgress(progressPercent > 90 ? 90 : progressPercent); // Cap at 90% until processing completes
-        }
+    // Create a unique file name to avoid collisions
+    const timeStamp = new Date().getTime();
+    const fileName = `${timeStamp}_${file.name}`;
+    
+    // Upload file to Supabase Storage in a 'statements' bucket
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('statements')
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false
       });
-      
-      xhr.onload = function() {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const response = JSON.parse(xhr.responseText);
-            onProgress(100); // Set progress to 100% when complete
-            resolve(response);
-          } catch (error) {
-            reject(new Error('Invalid response format'));
-          }
-        } else {
-          reject(new Error(`HTTP Error: ${xhr.status}`));
-        }
-      };
-      
-      xhr.onerror = () => reject(new Error('Network error occurred'));
-      xhr.ontimeout = () => reject(new Error('Request timed out'));
-    });
     
-    // In a production app, this would be a real endpoint:
-    // const API_ENDPOINT = 'https://api.yourdomain.com/analyze-statement';
+    if (uploadError) {
+      console.error('Error uploading file:', uploadError);
+      throw new Error(`Failed to upload file: ${uploadError.message}`);
+    }
     
-    // For development purposes, we'll use a mock API for now:
-    const API_ENDPOINT = 'https://mock-api-endpoint.com/analyze-statement';
+    onProgress(50); // Update progress after upload
     
-    xhr.open('POST', API_ENDPOINT, true);
-    xhr.timeout = 120000; // 2 minute timeout
-    xhr.send(formData);
+    // Get the file URL to pass to the Edge Function
+    const { data: urlData } = await supabase.storage
+      .from('statements')
+      .createSignedUrl(fileName, 60 * 60); // URL valid for 1 hour
     
-    // While waiting for the real API implementation, we'll simulate a response
-    // Remove this in production and use the real uploadPromise
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    onProgress(95); // Simulate processing
+    if (!urlData || !urlData.signedUrl) {
+      throw new Error('Failed to get signed URL for the uploaded file');
+    }
     
-    // Mock successful response - this would come from the API in production
-    const mockData: StatementAnalysis = {
-      success: true,
-      effectiveRate: '2.95%',
-      monthlyVolume: '$125,780',
-      chargebackRatio: '0.15%',
-      pricingModel: 'Tiered',
-      fees: {
-        monthlyFee: '$9.95',
-        pciFee: '$14.95',
-        statementFee: '$7.50',
-        batchFee: '$0.25',
-        transactionFees: '$0.10 per transaction'
-      }
-    };
+    const fileUrl = urlData.signedUrl;
+    onProgress(60); // Update progress after getting URL
     
-    return mockData;
+    // Call the Supabase Edge Function to analyze the statement
+    const { data: analysisData, error: analysisError } = await supabase.functions
+      .invoke('analyze-statement', {
+        body: { fileUrl, fileName, fileType: file.type },
+      });
     
-    // In production, use this instead of the mock:
-    // return await uploadPromise;
+    if (analysisError) {
+      console.error('Error analyzing statement:', analysisError);
+      throw new Error(`Failed to analyze statement: ${analysisError.message}`);
+    }
+    
+    onProgress(100); // Analysis complete
+    
+    // Clean up the uploaded file after analysis (optional)
+    await supabase.storage
+      .from('statements')
+      .remove([fileName]);
+    
+    return analysisData;
+    
   } catch (error) {
     console.error('Analysis error:', error);
+    toast.error(`Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     throw error;
   }
 };
