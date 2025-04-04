@@ -9,16 +9,17 @@ import { AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatementAnalysis } from '@/services/statementService';
 import { toast } from "sonner";
+import DemoDataAlert from '@/components/dashboard/DemoDataAlert';
 
 const Results = () => {
   const [analysis, setAnalysis] = useState<StatementAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isMockData, setIsMockData] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Force clear localStorage if needed for testing
-    // localStorage.removeItem('statementAnalysis');
+    console.log("Results page loaded - checking for analysis data");
     
     // Get the analysis data from localStorage
     const storedData = localStorage.getItem('statementAnalysis');
@@ -28,16 +29,23 @@ const Results = () => {
         const parsedData = JSON.parse(storedData);
         console.log("Retrieved analysis data from localStorage:", parsedData);
         
-        // Check if it's mock data and notify the user
+        // Explicitly check for mock data flag
         if (parsedData.isMockData === true) {
-          toast.warning("You are viewing demonstration data, not your actual statement analysis. Please upload a statement for real analysis.");
-          // Option to redirect back to upload page
+          console.warn("Mock data detected - setting isMockData state to true");
+          setIsMockData(true);
+          toast.warning("You are viewing demonstration data, not your actual statement analysis.");
+          
+          // Ask if they want to upload a real statement
           setTimeout(() => {
             if (confirm("Would you like to upload a real statement instead of viewing sample data?")) {
+              console.log("User chose to upload a real statement - clearing localStorage and navigating to home");
               localStorage.removeItem('statementAnalysis');
               navigate('/');
             }
           }, 1000);
+        } else {
+          console.log("This appears to be real analysis data");
+          setIsMockData(false);
         }
         
         setAnalysis(parsedData);
@@ -48,6 +56,7 @@ const Results = () => {
         setLoading(false);
       }
     } else {
+      console.warn("No analysis data found in localStorage");
       setError('No analysis data found. Please upload a merchant statement first.');
       setLoading(false);
     }
@@ -55,6 +64,7 @@ const Results = () => {
 
   const handleReturnHome = () => {
     // Clear stored data before returning home
+    console.log("Clearing analysis data and returning to home page");
     localStorage.removeItem('statementAnalysis');
     navigate('/');
   };
@@ -93,9 +103,23 @@ const Results = () => {
             <div className="bg-gradient-to-b from-orange-50 to-transparent py-12 px-6 text-center">
               <h1 className="text-3xl md:text-4xl font-bold mb-4">Your Statement Analysis</h1>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                We've analyzed your merchant statement and found several insights that could help you reduce costs.
+                {isMockData 
+                  ? "This is sample demonstration data, not based on your actual statement."
+                  : "We've analyzed your merchant statement and found several insights that could help you reduce costs."}
               </p>
+              
+              {isMockData && (
+                <Button 
+                  onClick={handleReturnHome}
+                  variant="outline"
+                  className="mt-4"
+                >
+                  Upload Real Statement
+                </Button>
+              )}
             </div>
+            
+            {isMockData && <DemoDataAlert />}
             
             {analysis && <Dashboard analysisData={analysis} />}
             <CallToAction />

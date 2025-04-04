@@ -64,8 +64,9 @@ const FileUpload = () => {
   };
   
   const useFallbackData = async () => {
+    console.log("User explicitly requested to use mock data");
     setUsingMockData(true);
-    setDebugInfo("Using mock data as fallback");
+    setDebugInfo("Using mock data as fallback - DEMONSTRATION ONLY");
     setUploading(true);
     
     try {
@@ -73,13 +74,16 @@ const FileUpload = () => {
         setProgress(progressValue);
       });
       
-      // Explicitly set isMockData flag to true
-      localStorage.setItem('statementAnalysis', JSON.stringify({
+      // Double-check the isMockData flag is true for mock data
+      const dataToStore = {
         ...mockData,
         isMockData: true // Force this to true for mock data
-      }));
+      };
       
-      toast.warning("Using sample data for demonstration only");
+      console.log("Storing mock data in localStorage with isMockData=true:", dataToStore);
+      localStorage.setItem('statementAnalysis', JSON.stringify(dataToStore));
+      
+      toast.warning("Using sample data for demonstration purposes only");
       
       setTimeout(() => {
         navigate('/results');
@@ -96,6 +100,7 @@ const FileUpload = () => {
     if (!file) return;
     
     // Clear any existing data from localStorage
+    console.log("Clearing any existing analysis data from localStorage");
     localStorage.removeItem('statementAnalysis');
     
     setUploading(true);
@@ -112,11 +117,13 @@ const FileUpload = () => {
         setProgress(progressValue);
       });
       
-      console.log("Analysis data received:", analysisData);
+      console.log("Analysis data received, isMockData=", analysisData.isMockData);
       
       // Verify it's not mock data
       if (analysisData.isMockData) {
+        console.warn("Warning: Server returned mock data instead of real analysis");
         toast.warning("Warning: The system used sample data instead of your actual statement.");
+        setDebugInfo("Server returned mock data - DEMONSTRATION ONLY");
       }
       
       // Store analysis data in localStorage for the results page to use

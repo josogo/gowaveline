@@ -34,7 +34,7 @@ export const analyzeStatement = async (
   try {
     // Start progress
     onProgress(10);
-    console.log("Starting file upload process");
+    console.log("Starting file upload process for real analysis");
     
     // Create a unique file name to avoid collisions
     const timeStamp = new Date().getTime();
@@ -105,7 +105,7 @@ export const analyzeStatement = async (
       .from('statements')
       .remove([fileName]);
     
-    // Make sure isMockData is FALSE for real data
+    // Force isMockData to FALSE for real data
     return {
       ...analysisData,
       isMockData: false
@@ -125,6 +125,8 @@ export const analyzeStatement = async (
 export const useMockAnalysis = async (
   onProgress: (progress: number) => void
 ): Promise<StatementAnalysis> => {
+  console.log("Using mock analysis data - explicitly marked as mock");
+  
   // Simulate API delays for a more realistic experience
   const simulateStep = async (progress: number, delay: number) => {
     onProgress(progress);

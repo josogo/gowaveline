@@ -7,7 +7,8 @@ import CallToAction from '@/components/CallToAction';
 
 const Index = () => {
   useEffect(() => {
-    // Clear any previous analysis data when landing on the home page
+    // Immediately clear any previous analysis data when landing on the home page
+    console.log("Index page loaded - clearing localStorage");
     localStorage.removeItem('statementAnalysis');
   }, []);
 
