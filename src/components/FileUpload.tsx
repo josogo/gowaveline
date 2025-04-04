@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Cloud, File, FileText, UploadCloud, X, AlertCircle, RefreshCw, FileWarning } from 'lucide-react';
@@ -14,7 +15,6 @@ const FileUpload = () => {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
-  const [pdfWarning, setPdfWarning] = useState(false);
   const navigate = useNavigate();
 
   React.useEffect(() => {
@@ -28,16 +28,11 @@ const FileUpload = () => {
     
     setError(null);
     setDebugInfo(null);
-    setPdfWarning(false);
     
     const allowedTypes = ['application/pdf', 'text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
     if (!allowedTypes.includes(selectedFile.type)) {
       toast.error("Please upload a PDF, CSV, or Excel file");
       return;
-    }
-    
-    if (selectedFile.type.includes('pdf')) {
-      setPdfWarning(true);
     }
     
     if (selectedFile.size > 10 * 1024 * 1024) {
@@ -64,7 +59,6 @@ const FileUpload = () => {
     setProgress(0);
     setError(null);
     setDebugInfo(null);
-    setPdfWarning(false);
   };
   
   const resetApp = () => {
@@ -74,7 +68,6 @@ const FileUpload = () => {
     setError(null);
     setDebugInfo(null);
     setUploading(false);
-    setPdfWarning(false);
     toast.info("Application reset. Please upload a new statement.");
   };
   
@@ -121,17 +114,15 @@ const FileUpload = () => {
     } catch (error) {
       console.error('Analysis error:', error);
       
-      const isPdfError = 
-        file.type.includes('pdf') && 
+      const isGeminiError = 
         error instanceof Error && 
         (
-          error.message.includes('PDF processing') || 
           error.message.includes('Gemini') ||
           error.message.includes('Edge Function returned a non-2xx status code')
         );
       
-      if (isPdfError) {
-        setError("PDF processing requires Gemini API configuration. Please try uploading a CSV or Excel file instead.");
+      if (isGeminiError) {
+        setError("Processing requires Gemini API configuration. Please check that your Gemini API key is configured correctly.");
         setDebugInfo("The system needs the Gemini API key to be configured in Supabase Edge Function Secrets.");
       } else {
         setError(error instanceof Error ? error.message : 'Unknown error');
@@ -168,7 +159,7 @@ const FileUpload = () => {
                 {isDragActive ? "Drop the file here" : "Drag & drop your merchant statement"}
               </p>
               <p className="text-sm text-muted-foreground">
-                Supports CSV and Excel files (max 10MB). PDF support coming soon.
+                Supports PDF, CSV and Excel files (max 10MB).
               </p>
             </div>
             <Button variant="outline">Browse files</Button>
@@ -194,16 +185,6 @@ const FileUpload = () => {
               <X className="h-5 w-5 text-gray-500" />
             </button>
           </div>
-          
-          {pdfWarning && (
-            <Alert className="bg-yellow-50 border-yellow-200">
-              <FileWarning className="h-4 w-4 text-yellow-500" />
-              <AlertTitle>PDF Processing</AlertTitle>
-              <AlertDescription>
-                PDF processing requires Google Gemini API configuration. For best results, please upload a CSV or Excel file if available.
-              </AlertDescription>
-            </Alert>
-          )}
           
           {uploading && !error && (
             <div className="space-y-2">

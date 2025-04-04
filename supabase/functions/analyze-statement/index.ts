@@ -3,7 +3,6 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Get environment variables
-const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") || "";
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || "";
 
 // CORS headers for browser requests
@@ -56,104 +55,35 @@ serve(async (req) => {
     const fileContent = await fileResponse.arrayBuffer();
     console.log(`File downloaded successfully, size: ${fileContent.byteLength} bytes`);
     
-    // Extract text based on file type
-    let extractedText = "";
-    
-    if (fileType.includes("pdf")) {
-      if (GEMINI_API_KEY) {
-        try {
-          console.log("Attempting Gemini API extraction for PDF");
-          extractedText = await extractTextWithGeminiFixed(fileContent, fileType);
-          console.log("Gemini extraction successful");
-        } catch (error) {
-          console.error("Gemini extraction failed:", error);
-          return new Response(
-            JSON.stringify({
-              success: false, 
-              error: `PDF processing error: ${error instanceof Error ? error.message : String(error)}.`,
-              message: "There was an issue processing your PDF with Gemini. Please try uploading a CSV or Excel file instead."
-            }),
-            { status: 422, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-          );
-        }
-      } else {
-        console.error("Gemini API key not configured");
-        return new Response(
-          JSON.stringify({ 
-            success: false,
-            error: 'Gemini API key not configured',
-            message: "The system needs a Google Gemini API key to process PDF files. Please add your Gemini API key in Supabase Edge Function Secrets."
-          }),
-          { status: 422, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
-      }
-    } 
-    else if (fileType.includes("csv") || fileType.includes("excel") || fileType.includes("sheet")) {
-      console.log("Processing spreadsheet file");
-      const text = new TextDecoder().decode(fileContent);
-      extractedText = text;
-      if (!text || text.trim().length === 0) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: 'Failed to extract text from spreadsheet' 
-          }),
-          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
-      }
-      console.log("Extracted text from spreadsheet, length:", extractedText.length);
-    } 
-    else {
-      console.error("Unsupported file format:", fileType);
+    // Check if Gemini API key is available
+    if (!GEMINI_API_KEY) {
+      console.error("Gemini API key not configured");
       return new Response(
         JSON.stringify({ 
           success: false,
-          error: 'Unsupported file format. Please upload a PDF, CSV, or Excel file.' 
+          error: 'Gemini API key not configured',
+          message: "The system needs a Google Gemini API key to process files. Please add your Gemini API key in Supabase Edge Function Secrets."
         }),
-        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        { status: 422, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
-    
-    if (!extractedText || extractedText.trim().length === 0) {
-      console.error("Failed to extract text from document");
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Failed to extract text from document' 
-        }),
-        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
-    }
-    
-    console.log("Text extraction successful, length:", extractedText.length);
-    console.log("Sample text:", extractedText.substring(0, 200) + "...");
-    
-    // Now analyze with OpenAI
+
+    // Extract and analyze with Gemini
+    console.log("Using Gemini API for both extraction and analysis");
     let analysisResult;
     
-    if (OPENAI_API_KEY) {
-      try {
-        console.log("Analyzing with OpenAI");
-        analysisResult = await analyzeWithOpenAI(extractedText);
-        console.log("OpenAI analysis successful", analysisResult);
-      } catch (error) {
-        console.error("OpenAI analysis failed:", error);
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: `OpenAI analysis failed: ${error instanceof Error ? error.message : String(error)}` 
-          }),
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
-      }
-    } else {
-      console.error("Missing OpenAI API key");
+    try {
+      analysisResult = await analyzeWithGemini(fileContent, fileType);
+      console.log("Gemini analysis successful", analysisResult);
+    } catch (error) {
+      console.error("Gemini analysis failed:", error);
       return new Response(
         JSON.stringify({
-          success: false,
-          error: "OpenAI API key is required for statement analysis" 
+          success: false, 
+          error: `Gemini processing error: ${error instanceof Error ? error.message : String(error)}.`,
+          message: "There was an issue processing your file with Gemini API."
         }),
-        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        { status: 422, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
     
@@ -180,21 +110,21 @@ serve(async (req) => {
 });
 
 /**
- * Fixed version of the function to extract text from PDF using Google Gemini AI
- * This version implements improved error handling and memory management
+ * Analyze file with Google Gemini AI
+ * This function handles both PDF extraction and merchant statement analysis
  */
-async function extractTextWithGeminiFixed(fileContent: ArrayBuffer, fileType: string) {
+async function analyzeWithGemini(fileContent: ArrayBuffer, fileType: string) {
   if (!GEMINI_API_KEY) {
     throw new Error('Missing Gemini API key');
   }
 
-  // Only use a portion of the PDF if it's very large to avoid the stack overflow
+  // Only use a portion of the file if it's very large
   const maxBytes = 1024 * 1024; // 1MB limit
   const contentToProcess = fileContent.byteLength > maxBytes 
     ? fileContent.slice(0, maxBytes) 
     : fileContent;
   
-  console.log(`Processing PDF content, size: ${contentToProcess.byteLength} bytes ` + 
+  console.log(`Processing content with Gemini, size: ${contentToProcess.byteLength} bytes ` + 
     (fileContent.byteLength > maxBytes ? "(truncated due to size)" : ""));
   
   try {
@@ -216,12 +146,41 @@ async function extractTextWithGeminiFixed(fileContent: ArrayBuffer, fileType: st
     
     const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${GEMINI_API_KEY}`;
     
+    const promptText = `
+You are a financial analyst specialized in merchant processing statements. 
+Extract and analyze the following information from this merchant statement and present your findings in JSON format:
+
+1. Calculate the effective rate: this is the total fees divided by total volume. If you cannot find the total volume, look for total sales or total processed amount.
+2. Monthly processing volume: Look for the total sales or processed amount for the month.
+3. Chargeback ratio: Look for number of chargebacks divided by total transactions, or similar metric.
+4. Pricing model: Look for terms like "interchange-plus" or "tiered" or "flat rate".
+5. List all monthly fees found in the statement (monthly fee, PCI fee, statement fee, batch fee, transaction fees, etc.)
+
+DO NOT INVENT VALUES. If you cannot find data for any field, use "N/A" instead of making up a value.
+
+Format your response as a valid JSON object with these exact fields:
+{
+  "effectiveRate": "X.XX%" or "N/A",
+  "monthlyVolume": "$XXX,XXX.XX" or "N/A", 
+  "chargebackRatio": "0.XX%" or "N/A",
+  "pricingModel": "Type found in statement" or "N/A",
+  "fees": {
+    "monthlyFee": "$XX.XX" or "N/A",
+    "pciFee": "$XX.XX" or "N/A",
+    "statementFee": "$X.XX" or "N/A",
+    "batchFee": "$X.XX" or "N/A", 
+    "transactionFees": "description" or "N/A"
+  }
+}
+
+ONLY respond with the JSON - no other text.`;
+    
     const requestBody = {
       contents: [
         {
           parts: [
             {
-              text: "Extract all text content from this document, which is a merchant processing statement. Focus on capturing numerical information, fees, charges, and all visible text. Format the extraction as plain text."
+              text: promptText
             },
             {
               inline_data: {
@@ -256,166 +215,51 @@ async function extractTextWithGeminiFixed(fileContent: ArrayBuffer, fileType: st
     const result = await response.json();
     console.log("Received response from Gemini API");
     
-    if (result.candidates && result.candidates.length > 0 && result.candidates[0].content.parts.length > 0) {
-      const extractedText = result.candidates[0].content.parts[0].text;
-      console.log(`Successfully extracted text, length: ${extractedText.length}`);
-      return extractedText;
+    if (!result.candidates || result.candidates.length === 0 || !result.candidates[0].content.parts.length) {
+      throw new Error('Gemini API returned no content');
     }
     
-    throw new Error('Gemini API returned no text content');
-  } catch (error) {
-    console.error('Error in extractTextWithGeminiFixed:', error);
-    throw new Error(`Gemini text extraction failed: ${error instanceof Error ? error.message : String(error)}`);
-  }
-}
-
-/**
- * The original extractTextWithGemini function is kept for reference but not used
- */
-async function extractTextWithGemini(fileContent: ArrayBuffer, fileType: string) {
-  if (!GEMINI_API_KEY) {
-    throw new Error('Missing Gemini API key');
-  }
-
-  // Convert file to base64
-  const base64File = btoa(String.fromCharCode(...new Uint8Array(fileContent)));
-  
-  const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${GEMINI_API_KEY}`;
-  
-  const requestBody = {
-    contents: [
-      {
-        parts: [
-          {
-            text: "Extract all text content from this document, which is a merchant processing statement. Focus on capturing numerical information, fees, charges, and all visible text. Format the extraction as plain text."
-          },
-          {
-            inline_data: {
-              mime_type: fileType,
-              data: base64File
-            }
-          }
-        ]
-      }
-    ],
-    generation_config: {
-      temperature: 0.1,
-      max_output_tokens: 8192
+    const rawText = result.candidates[0].content.parts[0].text;
+    console.log("Raw Gemini response:", rawText);
+    
+    // Extract JSON from the response
+    // The response might contain text like ```json{...}``` or just plain JSON
+    let jsonText = rawText;
+    
+    // Try to extract JSON if it's wrapped in markdown code blocks
+    const jsonMatch = rawText.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+    if (jsonMatch && jsonMatch[1]) {
+      jsonText = jsonMatch[1];
     }
-  };
-  
-  const response = await fetch(apiEndpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(requestBody)
-  });
-  
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Gemini API error: ${response.status} ${errorText}`);
-  }
-  
-  const result = await response.json();
-  
-  if (result.candidates && result.candidates.length > 0 && result.candidates[0].content.parts.length > 0) {
-    return result.candidates[0].content.parts[0].text;
-  }
-  
-  throw new Error('Gemini API returned no text content');
-}
-
-/**
- * Analyze text with OpenAI
- */
-async function analyzeWithOpenAI(extractedText: string) {
-  if (!OPENAI_API_KEY) {
-    throw new Error('Missing OpenAI API key');
-  }
-
-  console.log("Sending text to OpenAI for analysis");
-  const openaiUrl = 'https://api.openai.com/v1/chat/completions';
-  
-  const response = await fetch(openaiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${OPENAI_API_KEY}`
-    },
-    body: JSON.stringify({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: "You are a financial analyst specialized in merchant processing statements. Extract the requested information precisely from the statement text. You MUST ONLY extract actual numbers from the statement. If you cannot find a specific piece of information, use 'N/A' as the value. Never generate data that doesn't exist in the statement."
-        },
-        {
-          role: "user",
-          content: `Extract the following information from this merchant statement: 
-          
-          1. Calculate the effective rate: this is the total fees divided by total volume. If you cannot find the total volume, look for total sales or total processed amount.
-          2. Monthly processing volume: Look for the total sales or processed amount for the month. Do not make up a value if not found.
-          3. Chargeback ratio: Look for number of chargebacks divided by total transactions, or similar metric.
-          4. Pricing model: Look for terms like "interchange-plus" or "tiered" or "flat rate".
-          5. List all monthly fees found in the statement (monthly fee, PCI fee, statement fee, batch fee, transaction fees, etc.)
-          
-          DO NOT INVENT VALUES. If you cannot find data for any field, use "N/A" instead of making up a value.
-          
-          Format your response as a JSON object with these exact fields:
-          {
-            "effectiveRate": "X.XX%" or "N/A",
-            "monthlyVolume": "$XXX,XXX.XX" or "N/A",
-            "chargebackRatio": "0.XX%" or "N/A",
-            "pricingModel": "Type found in statement" or "N/A",
-            "fees": {
-              "monthlyFee": "$XX.XX" or "N/A",
-              "pciFee": "$XX.XX" or "N/A",
-              "statementFee": "$X.XX" or "N/A",
-              "batchFee": "$X.XX" or "N/A",
-              "transactionFees": "description" or "N/A"
-            }
-          }
-          
-          Here's the statement text to analyze:
-          
-          ${extractedText}`
+    
+    // Clean up any remaining markdown or text
+    jsonText = jsonText.replace(/```json|```/g, '').trim();
+    
+    try {
+      const analysisData = JSON.parse(jsonText);
+      console.log("Parsed analysis data:", analysisData);
+      
+      // Ensure all required fields are present
+      return {
+        effectiveRate: analysisData.effectiveRate || "N/A",
+        monthlyVolume: analysisData.monthlyVolume || "N/A",
+        chargebackRatio: analysisData.chargebackRatio || "N/A",
+        pricingModel: analysisData.pricingModel || "N/A",
+        fees: {
+          monthlyFee: analysisData.fees?.monthlyFee || "N/A",
+          pciFee: analysisData.fees?.pciFee || "N/A",
+          statementFee: analysisData.fees?.statementFee || "N/A",
+          batchFee: analysisData.fees?.batchFee || "N/A",
+          transactionFees: analysisData.fees?.transactionFees || "N/A"
         }
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.1, // Lower temperature for more accurate extraction
-    })
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error("OpenAI API error response:", errorText);
-    throw new Error(`OpenAI API error: ${response.status} ${errorText}`);
-  }
-
-  const result = await response.json();
-  console.log("OpenAI response received"); 
-  
-  try {
-    const analysisJSON = JSON.parse(result.choices[0].message.content);
-    console.log("Parsed analysis result:", analysisJSON);
-    
-    // Ensure all fields are present, use "N/A" for anything missing
-    return {
-      effectiveRate: analysisJSON.effectiveRate || "N/A",
-      monthlyVolume: analysisJSON.monthlyVolume || "N/A",
-      chargebackRatio: analysisJSON.chargebackRatio || "N/A",
-      pricingModel: analysisJSON.pricingModel || "N/A",
-      fees: {
-        monthlyFee: analysisJSON.fees?.monthlyFee || "N/A",
-        pciFee: analysisJSON.fees?.pciFee || "N/A",
-        statementFee: analysisJSON.fees?.statementFee || "N/A",
-        batchFee: analysisJSON.fees?.batchFee || "N/A",
-        transactionFees: analysisJSON.fees?.transactionFees || "N/A"
-      }
-    };
+      };
+    } catch (error) {
+      console.error("Error parsing Gemini JSON response:", error);
+      console.log("Failed JSON content:", jsonText);
+      throw new Error("Failed to parse Gemini response as JSON");
+    }
   } catch (error) {
-    console.error("Error parsing OpenAI response:", error, "Raw response:", result.choices[0].message.content);
-    throw new Error("Failed to parse OpenAI response");
+    console.error('Error in analyzeWithGemini:', error);
+    throw new Error(`Gemini analysis failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 }

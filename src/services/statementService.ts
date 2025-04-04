@@ -24,7 +24,7 @@ export interface StatementAnalysis {
 }
 
 /**
- * Analyzes a merchant statement using backend services via Supabase Edge Function
+ * Analyzes a merchant statement using Gemini AI via Supabase Edge Function
  * @param file The statement file to analyze
  * @param onProgress Callback function to report upload/processing progress
  * @returns Promise with analysis results
@@ -39,7 +39,7 @@ export const analyzeStatement = async (
     
     // Start progress
     onProgress(10);
-    console.log("Starting file upload process for real analysis");
+    console.log("Starting file upload process for analysis with Gemini");
     
     // Create a unique file name to avoid collisions
     const timeStamp = new Date().getTime();
@@ -83,7 +83,7 @@ export const analyzeStatement = async (
     onProgress(60); // Update progress after getting URL
     
     // Call the Supabase Edge Function to analyze the statement
-    console.log("Calling edge function to analyze statement");
+    console.log("Calling edge function to analyze statement with Gemini");
     const { data: analysisData, error: analysisError } = await supabase.functions
       .invoke('analyze-statement', {
         body: { fileUrl, fileName, fileType: file.type },
@@ -93,12 +93,6 @@ export const analyzeStatement = async (
     
     if (analysisError) {
       console.error('Error analyzing statement:', analysisError);
-      
-      // Special handling for PDF processing errors (422 status)
-      if (file.type.includes('pdf') && analysisError.message.includes('non-2xx status code')) {
-        throw new Error('PDF processing is currently unavailable. Please try uploading a CSV or Excel file instead.');
-      }
-      
       throw new Error(`Failed to analyze statement: ${analysisError.message}`);
     }
     
