@@ -12,10 +12,7 @@ const Navbar: React.FC<NavbarProps> = ({ className }) => {
   const navigate = useNavigate();
 
   const handleGetStarted = () => {
-    // Clear any previous analysis data
-    localStorage.removeItem('statementAnalysis');
-    // Navigate to home page
-    navigate('/');
+    navigate('/get-started');
   };
 
   return (
@@ -33,8 +30,9 @@ const Navbar: React.FC<NavbarProps> = ({ className }) => {
       <div className="hidden md:flex items-center space-x-6">
         <Button variant="link" className="text-[#0EA5E9]" onClick={() => navigate('/')}>Home</Button>
         <Button variant="link" className="text-[#0EA5E9]" onClick={() => navigate('/industries')}>Industries</Button>
-        <Button variant="link" className="text-[#0EA5E9]" onClick={() => navigate('/')}>Features</Button>
-        <Button variant="link" className="text-[#0EA5E9]" onClick={() => navigate('/')}>Contact</Button>
+        <Button variant="link" className="text-[#0EA5E9]" onClick={() => navigate('/services')}>Services</Button>
+        <Button variant="link" className="text-[#0EA5E9]" onClick={() => navigate('/about')}>About Us</Button>
+        <Button variant="link" className="text-[#0EA5E9]" onClick={() => navigate('/contact')}>Contact</Button>
       </div>
       
       <div>

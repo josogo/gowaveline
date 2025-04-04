@@ -7,7 +7,7 @@
   :root {
     /* Keeping the original light theme values but updating primary/secondary */
     --background: 0 0% 100%;
-    --foreground: 199 89% 48%; /* Ocean blue foreground instead of black */
+    --foreground: 199 89% 48%; /* Ocean blue foreground */
 
     --card: 0 0% 100%;
     --card-foreground: 199 89% 48%; /* Ocean blue card foreground */

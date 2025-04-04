@@ -13,16 +13,40 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useDropzone } from 'react-dropzone';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+const formSchema = z.object({
+  name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
+  email: z.string().email({ message: 'Please enter a valid email address.' }),
+  phone: z.string().min(10, { message: 'Please enter a valid phone number.' }),
+  businessName: z.string().min(2, { message: 'Business name is required.' }),
+  monthlyVolume: z.string().min(1, { message: 'Please enter your desired monthly volume.' }),
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 const Results = () => {
   const [analysis, setAnalysis] = useState<StatementAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
-  const [email, setEmail] = useState('');
   const [emailSent, setEmailSent] = useState(false);
   const [statementFile, setStatementFile] = useState<File | null>(null);
   const navigate = useNavigate();
+  
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      phone: '',
+      businessName: '',
+      monthlyVolume: '',
+    },
+  });
 
   const onDrop = React.useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -98,22 +122,27 @@ const Results = () => {
     navigate('/');
   };
 
-  const handleEmailSubmit = () => {
+  const handleEmailSubmit = (data: FormValues) => {
     // This would normally send the email to a backend service
     if (!statementFile) {
       toast.error("Please upload your statement file");
       return;
     }
     
-    console.log("Email submitted:", email);
+    console.log("Form data submitted:", data);
     console.log("File submitted:", statementFile);
     
+    // Here you would integrate with a service to send the email with the file and form data
+    // For example using EmailJS or a backend API
+    
+    // For now we'll just simulate a successful submission
     toast.success("Your statement has been submitted for manual analysis");
     setEmailSent(true);
     setTimeout(() => {
       setShowEmailDialog(false);
       setEmailSent(false);
       setStatementFile(null);
+      form.reset();
     }, 2000);
   };
 
@@ -143,7 +172,7 @@ const Results = () => {
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
-            <p className="text-lg">Loading analysis results...</p>
+            <p className="text-lg text-[#0EA5E9]">Loading analysis results...</p>
           </div>
         </main>
       </div>
@@ -164,7 +193,7 @@ const Results = () => {
             
             <div className="mt-8 bg-orange-50 border border-orange-100 rounded-lg p-6">
               <h2 className="text-xl font-semibold mb-4 text-[#0EA5E9]">Can't analyze your statement?</h2>
-              <p className="mb-4">
+              <p className="mb-4 text-[#0EA5E9]">
                 Some statements have formats that are difficult to analyze automatically. 
                 We'd be happy to analyze your statement manually and provide you with detailed insights within 24 hours.
               </p>
@@ -174,10 +203,10 @@ const Results = () => {
                 <Dashboard analysisData={getSampleAnalysis()} />
               </div>
               
-              <div className="flex justify-center">
+              <div className="flex justify-center mt-8">
                 <Button 
                   onClick={() => setShowEmailDialog(true)}
-                  className="bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-500 flex items-center gap-2"
+                  className="bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-500 text-white flex items-center gap-2 mx-auto"
                 >
                   <Mail className="h-4 w-4" />
                   Email Your Statement For Manual Analysis
@@ -216,95 +245,163 @@ const Results = () => {
       </main>
       
       <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle className="text-[#0EA5E9]">Submit for Manual Analysis</DialogTitle>
             <DialogDescription>
-              Upload your statement and enter your email address. We'll analyze your statement manually 
-              and get back to you within 24 hours.
+              Please provide your information and upload your statement. We'll analyze it manually 
+              and get back to you within 24 hours with detailed insights.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            {/* File Upload Area */}
-            <div className="grid gap-2">
-              <Label htmlFor="statement" className="text-left">
-                Your Statement
-              </Label>
-              <div 
-                {...getRootProps()} 
-                className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
-                  isDragActive ? 'border-[#0EA5E9] bg-[#0EA5E9]/5' : 'border-gray-300 hover:border-[#0EA5E9]/50'
-                }`}
-              >
-                <input {...getInputProps()} />
-                <div className="flex flex-col items-center justify-center gap-2">
-                  <Upload className={`h-8 w-8 ${isDragActive ? 'text-[#0EA5E9]' : 'text-gray-400'}`} />
-                  <div>
-                    {statementFile ? (
-                      <p className="text-sm font-medium">{statementFile.name}</p>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        {isDragActive ? "Drop file here" : "Drag & drop or click to upload"}
-                      </p>
-                    )}
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleEmailSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-[#0EA5E9]">Full Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Your name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[#0EA5E9]">Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="your@email.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[#0EA5E9]">Phone Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="(123) 456-7890" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="businessName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-[#0EA5E9]">Business Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Your business name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="monthlyVolume"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-[#0EA5E9]">Desired Monthly Volume</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. $50,000" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {/* File Upload Area */}
+              <div className="space-y-2">
+                <Label htmlFor="statement" className="text-[#0EA5E9]">
+                  Your Statement
+                </Label>
+                <div 
+                  {...getRootProps()} 
+                  className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
+                    isDragActive ? 'border-[#0EA5E9] bg-[#0EA5E9]/5' : 'border-gray-300 hover:border-[#0EA5E9]/50'
+                  }`}
+                >
+                  <input {...getInputProps()} />
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <Upload className={`h-8 w-8 ${isDragActive ? 'text-[#0EA5E9]' : 'text-gray-400'}`} />
+                    <div>
+                      {statementFile ? (
+                        <p className="text-sm font-medium text-[#0EA5E9]">{statementFile.name}</p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          {isDragActive ? "Drop file here" : "Drag & drop or click to upload your statement"}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
+                {statementFile && (
+                  <p className="text-xs text-muted-foreground text-right">
+                    {(statementFile.size / (1024 * 1024)).toFixed(2)} MB
+                  </p>
+                )}
               </div>
-              {statementFile && (
-                <p className="text-xs text-muted-foreground text-right">
-                  {(statementFile.size / (1024 * 1024)).toFixed(2)} MB
-                </p>
-              )}
-            </div>
-
-            {/* Email Input */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="email" className="text-right">
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="col-span-3"
-                placeholder="your@email.com"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            {emailSent ? (
-              <div className="flex items-center text-green-600">
-                <svg
-                  className="w-5 h-5 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M5 13l4 4L19 7"
-                  ></path>
-                </svg>
-                Submitted successfully!
-              </div>
-            ) : (
-              <Button 
-                onClick={handleEmailSubmit} 
-                disabled={!email.includes('@') || !statementFile}
-                className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/80"
-              >
-                Submit for Analysis
-              </Button>
-            )}
-          </DialogFooter>
+              
+              <DialogFooter className="pt-4">
+                {emailSent ? (
+                  <div className="flex items-center text-green-600">
+                    <svg
+                      className="w-5 h-5 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M5 13l4 4L19 7"
+                      ></path>
+                    </svg>
+                    Submitted successfully!
+                  </div>
+                ) : (
+                  <Button 
+                    type="submit"
+                    disabled={!statementFile || form.formState.isSubmitting}
+                    className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/80"
+                  >
+                    {form.formState.isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      'Submit for Analysis'
+                    )}
+                  </Button>
+                )}
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>
   );
-}
+};
 
 export default Results;
