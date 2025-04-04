@@ -3,7 +3,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LockKeyhole, Shield } from 'lucide-react';
+import { LockKeyhole, Shield, Mail } from 'lucide-react';
 
 interface FooterProps {
   className?: string;
@@ -89,6 +89,18 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
             Admin
           </Button>
         </div>
+      </div>
+      
+      {/* Small admin button at very bottom */}
+      <div className="w-full flex justify-center mt-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs text-gray-400 opacity-40 hover:opacity-100"
+          onClick={() => handleNavigation('/admin/dashboard')}
+        >
+          Admin
+        </Button>
       </div>
     </footer>
   );
