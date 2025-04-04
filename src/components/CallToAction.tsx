@@ -27,6 +27,16 @@ const CallToAction = () => {
     }
   });
 
+  const handleSubmit = async (data) => {
+    try {
+      toast.success("Your information has been submitted!");
+      setOpen(false);
+      // Form submission is handled in the FileUpload component
+    } catch (error) {
+      toast.error("Failed to submit. Please try again.");
+    }
+  };
+
   return (
     <div className="relative py-16 px-6 overflow-hidden">
       {/* Background gradient */}
@@ -55,7 +65,7 @@ const CallToAction = () => {
               </DialogHeader>
               <div className="mt-4">
                 <Form {...form}>
-                  <form className="space-y-4">
+                  <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
                     <FormField
                       control={form.control}
                       name="companyName"

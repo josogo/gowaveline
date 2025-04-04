@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { z } from 'zod';
@@ -353,8 +352,7 @@ const Contact = () => {
                     setIsPartner(true);
                     document.querySelector('form')?.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  variant="outline"
-                  className="w-full text-white border-white hover:bg-orange-600"
+                  className="w-full bg-transparent border-2 border-white text-white hover:bg-orange-600"
                 >
                   Learn More About Partnerships
                 </Button>

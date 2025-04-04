@@ -30,7 +30,7 @@ const Partners = () => {
             </p>
             <Button 
               onClick={() => navigate('/contact')}
-              className="bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 text-white px-8 py-6 text-lg rounded-md"
+              className="bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-500 text-white px-8 py-6 text-lg rounded-md"
             >
               Become a Partner Today
             </Button>

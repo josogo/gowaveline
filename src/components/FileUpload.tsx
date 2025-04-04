@@ -152,24 +152,60 @@ const FileUpload: React.FC<FileUploadProps> = ({ contactInfo }) => {
     if (!file) return;
     
     toast.loading("Sending statement to WaveLine team...");
+    setUploading(true);
     
     try {
-      // Create form data to send the file
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('companyName', contactInfo?.companyName || 'Not provided');
-      formData.append('email', contactInfo?.email || 'Not provided');
-      formData.append('phone', contactInfo?.phone || 'Not provided');
+      // Create a storage bucket for statements if it doesn't exist
+      try {
+        const { data: buckets } = await supabase.storage.listBuckets();
+        const statementsBucketExists = buckets?.some(bucket => bucket.name === 'statements');
+        
+        if (!statementsBucketExists) {
+          await supabase.storage.createBucket('statements', {
+            public: false,
+            fileSizeLimit: 10485760, // 10MB
+          });
+        }
+      } catch (error) {
+        console.warn("Bucket error (may already exist):", error);
+      }
+      
+      // Upload file to Supabase Storage
+      const timeStamp = new Date().getTime();
+      const fileName = `${timeStamp}_${file.name}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('statements')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+      
+      if (uploadError) {
+        throw new Error(`Failed to upload file: ${uploadError.message}`);
+      }
+      
+      // Get file URL
+      const { data: urlData } = await supabase.storage
+        .from('statements')
+        .createSignedUrl(fileName, 60 * 60 * 24 * 7); // URL valid for 7 days
+      
+      const fileUrl = urlData?.signedUrl || '';
       
       // Send notification email with attachment info
       await sendEmailNotification(file, contactInfo);
       
       toast.success("Statement sent successfully to the WaveLine team!");
       toast.dismiss();
+      
+      setUploading(false);
+      removeFile();
+      
     } catch (error) {
       console.error("Error sending statement:", error);
       toast.error("Failed to send statement. Please try again or contact support.");
       toast.dismiss();
+      setUploading(false);
     }
   };
   

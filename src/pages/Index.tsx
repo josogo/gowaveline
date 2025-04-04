@@ -26,11 +26,11 @@ const Index = () => {
       </main>
       
       {/* Small admin button at the bottom */}
-      <div className="w-full flex justify-center py-6">
+      <div className="w-full flex justify-center py-4">
         <Button
           variant="ghost"
           size="sm"
-          className="text-xs text-gray-400 opacity-40 hover:opacity-100"
+          className="text-xs text-gray-400 opacity-30 hover:opacity-100 px-2 py-1 h-auto"
           onClick={() => navigate('/admin/dashboard')}
         >
           Admin
