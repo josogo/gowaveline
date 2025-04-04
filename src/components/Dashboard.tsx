@@ -1,136 +1,261 @@
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowDown, ArrowUp, BarChart3, CreditCard, DollarSign, Percent } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
+type AnalysisData = {
+  effectiveRate: string;
+  monthlyVolume: string;
+  chargebackRatio: string;
+  pricingModel: string;
+  fees: {
+    monthlyFee: string;
+    pciFee: string;
+    statementFee: string;
+    batchFee: string;
+    transactionFees: string;
+  };
+};
 
 const Dashboard = () => {
-  // Placeholder data for the dashboard
-  const analysisData = {
-    effectiveRate: 2.95,
-    processingVolume: 125750,
-    chargebackRatio: 0.12,
-    pricingModel: "Tiered",
-    monthlyFees: 24.90,
-    totalFees: 3710.56,
-    savingsPotential: 925.25,
-  };
+  const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  return (
-    <div className="py-10 px-6 max-w-7xl mx-auto">
-      <h2 className="text-3xl font-bold mb-8">Statement Analysis Results</h2>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-        {/* Summary Cards */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center">
-              <Percent className="mr-2 h-5 w-5 text-orange-500" />
-              Effective Rate
-            </CardTitle>
-            <CardDescription>Total fees / total volume</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-orange-500">{analysisData.effectiveRate}%</div>
-            <p className="text-sm text-muted-foreground mt-1">Industry average: 2.3-2.5%</p>
-          </CardContent>
-          <CardFooter className="pt-0">
-            <div className="flex items-center text-red-500 text-sm">
-              <ArrowUp className="h-4 w-4 mr-1" />
-              <span>0.45% higher than average</span>
-            </div>
-          </CardFooter>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center">
-              <DollarSign className="mr-2 h-5 w-5 text-teal-500" />
-              Processing Volume
-            </CardTitle>
-            <CardDescription>Total monthly sales</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-teal-500">
-              ${analysisData.processingVolume.toLocaleString()}
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">Last month: $118,245</p>
-          </CardContent>
-          <CardFooter className="pt-0">
-            <div className="flex items-center text-green-500 text-sm">
-              <ArrowUp className="h-4 w-4 mr-1" />
-              <span>6.3% increase from last month</span>
-            </div>
-          </CardFooter>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center">
-              <CreditCard className="mr-2 h-5 w-5 text-orange-500" />
-              Pricing Model
-            </CardTitle>
-            <CardDescription>Your current pricing structure</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-orange-500">{analysisData.pricingModel}</div>
-            <p className="text-sm text-muted-foreground mt-1">Recommended: Interchange Plus</p>
-          </CardContent>
-          <CardFooter className="pt-0">
-            <div className="flex items-center text-amber-500 text-sm">
-              <BarChart3 className="h-4 w-4 mr-1" />
-              <span>Consider switching for better rates</span>
-            </div>
-          </CardFooter>
-        </Card>
-      </div>
-      
-      <div className="mb-10">
-        <h3 className="text-xl font-semibold mb-4">Fee Breakdown</h3>
-        <div className="glass-card p-6">
-          <div className="text-center mb-6">
-            <p className="text-lg mb-2">You're being charged a <span className="font-semibold">${analysisData.monthlyFees.toFixed(2)}</span> monthly fee</p>
-            <p className="text-muted-foreground">This includes a $9.95 statement fee and a $14.95 PCI compliance fee</p>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="h-10 bg-gray-100 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-orange-500 to-orange-400 flex items-center pl-3"
-                style={{ width: '65%' }}
-              >
-                <span className="text-white text-sm font-medium">Transaction Fees (65%)</span>
-              </div>
-            </div>
-            
-            <div className="h-10 bg-gray-100 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-teal-500 to-teal-400 flex items-center pl-3"
-                style={{ width: '22%' }}
-              >
-                <span className="text-white text-sm font-medium">Interchange Fees (22%)</span>
-              </div>
-            </div>
-            
-            <div className="h-10 bg-gray-100 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-amber-500 to-amber-400 flex items-center pl-3"
-                style={{ width: '13%' }}
-              >
-                <span className="text-white text-sm font-medium">Monthly Fees (13%)</span>
-              </div>
-            </div>
-          </div>
+  useEffect(() => {
+    // Retrieve analysis data from localStorage
+    const storedData = localStorage.getItem('statementAnalysis');
+    if (storedData) {
+      try {
+        const parsedData = JSON.parse(storedData);
+        setAnalysisData(parsedData);
+      } catch (error) {
+        console.error('Error parsing analysis data:', error);
+      }
+    }
+    setLoading(false);
+  }, []);
+
+  // Example fee breakdown data for visualization
+  const feeBreakdown = [
+    { name: 'Processing Fees', value: 78 },
+    { name: 'Monthly Fee', value: 8 },
+    { name: 'PCI Fee', value: 12 },
+    { name: 'Other Fees', value: 2 },
+  ];
+
+  const feeColors = ['#f97316', '#14b8a6', '#22c55e', '#64748b'];
+
+  // Monthly transaction data
+  const monthlyData = [
+    { month: 'Jan', volume: 98000 },
+    { month: 'Feb', volume: 107000 },
+    { month: 'Mar', volume: 125000 },
+    { month: 'Apr', volume: 118000 },
+    { month: 'May', volume: 130000 },
+    { month: 'Jun', volume: 125780 },
+  ];
+
+  if (loading) {
+    return (
+      <div className="container mx-auto py-8">
+        <div className="text-center py-12">
+          <div className="animate-pulse h-8 w-60 bg-gray-200 rounded mb-4 mx-auto"></div>
+          <div className="animate-pulse h-4 w-96 bg-gray-200 rounded mx-auto"></div>
         </div>
       </div>
-      
-      <div className="text-center my-12">
-        <h3 className="text-2xl font-bold mb-4">Savings Opportunity</h3>
-        <p className="text-xl mb-6">You could save approximately <span className="font-bold text-teal-500">${analysisData.savingsPotential.toLocaleString()}</span> per year</p>
-        <Button className="bg-gradient-to-r from-teal-500 to-teal-400 hover:from-teal-400 hover:to-teal-500 text-white px-8 py-6 text-lg rounded-md">
-          Get Personalized Recommendations
-        </Button>
+    );
+  }
+
+  if (!analysisData) {
+    return (
+      <div className="container mx-auto py-8">
+        <Alert variant="destructive" className="max-w-xl mx-auto">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>No analysis data found</AlertTitle>
+          <AlertDescription>
+            Please upload a merchant statement from the home page to see the analysis.
+          </AlertDescription>
+        </Alert>
       </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto py-8 px-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium">Effective Rate</CardTitle>
+            <CardDescription>Overall processing cost</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-orange-500">{analysisData.effectiveRate}</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Industry average is 2.5-3.0%
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium">Monthly Volume</CardTitle>
+            <CardDescription>Total processed amount</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-teal-500">{analysisData.monthlyVolume}</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Last month: $118,450
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium">Pricing Model</CardTitle>
+            <CardDescription>Your pricing structure</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-orange-500">{analysisData.pricingModel}</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Interchange-plus typically saves 15-30%
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium">Chargeback Ratio</CardTitle>
+            <CardDescription>Disputes percentage</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-teal-500">{analysisData.chargebackRatio}</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Well below industry average (0.60%)
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Fee Structure */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Fee Breakdown</CardTitle>
+            <CardDescription>
+              Visual representation of your fee distribution
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={feeBreakdown}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {feeBreakdown.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={feeColors[index % feeColors.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Processing Volume</CardTitle>
+            <CardDescription>
+              Your monthly transaction volume for the past 6 months
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={monthlyData}
+                margin={{
+                  top: 5,
+                  right: 30,
+                  left: 20,
+                  bottom: 5,
+                }}
+              >
+                <XAxis dataKey="month" />
+                <YAxis tickFormatter={(value) => `$${value/1000}k`} />
+                <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, 'Volume']} />
+                <Bar dataKey="volume" fill="#f97316" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Fee Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Fee Details</CardTitle>
+          <CardDescription>
+            Breakdown of all fees from your merchant statement
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="bg-orange-50 p-4 rounded-lg">
+                <h3 className="font-medium">Monthly Fee</h3>
+                <p className="text-2xl font-bold text-orange-500">{analysisData.fees.monthlyFee}</p>
+                <p className="text-sm text-muted-foreground mt-1">Account maintenance fee</p>
+              </div>
+              
+              <div className="bg-teal-50 p-4 rounded-lg">
+                <h3 className="font-medium">PCI Compliance Fee</h3>
+                <p className="text-2xl font-bold text-teal-500">{analysisData.fees.pciFee}</p>
+                <p className="text-sm text-muted-foreground mt-1">Security compliance cost</p>
+              </div>
+              
+              <div className="bg-orange-50 p-4 rounded-lg">
+                <h3 className="font-medium">Statement Fee</h3>
+                <p className="text-2xl font-bold text-orange-500">{analysisData.fees.statementFee}</p>
+                <p className="text-sm text-muted-foreground mt-1">Paper statement charge</p>
+              </div>
+              
+              <div className="bg-teal-50 p-4 rounded-lg">
+                <h3 className="font-medium">Batch Fee</h3>
+                <p className="text-2xl font-bold text-teal-500">{analysisData.fees.batchFee}</p>
+                <p className="text-sm text-muted-foreground mt-1">Per batch settlement</p>
+              </div>
+              
+              <div className="bg-orange-50 p-4 rounded-lg">
+                <h3 className="font-medium">Transaction Fees</h3>
+                <p className="text-2xl font-bold text-orange-500">{analysisData.fees.transactionFees}</p>
+                <p className="text-sm text-muted-foreground mt-1">Per transaction cost</p>
+              </div>
+              
+              <div className="bg-teal-50 p-4 rounded-lg">
+                <h3 className="font-medium">Potential Savings</h3>
+                <p className="text-2xl font-bold text-teal-500">$175-$320</p>
+                <p className="text-sm text-muted-foreground mt-1">Estimated monthly savings</p>
+              </div>
+            </div>
+            
+            <div className="mt-6 p-4 border border-orange-200 bg-orange-50 rounded-lg">
+              <h3 className="font-medium text-orange-800">Analysis Summary</h3>
+              <p className="mt-2">
+                Based on your {analysisData.pricingModel} pricing model with an effective rate of {analysisData.effectiveRate}, we estimate you could save approximately 15-25% on your processing costs by switching to an interchange-plus pricing model. Additionally, some of your non-processing fees like PCI compliance ({analysisData.fees.pciFee}) and statement fee ({analysisData.fees.statementFee}) are higher than the industry standard.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

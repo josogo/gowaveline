@@ -5,11 +5,13 @@ import { Cloud, File, FileText, UploadCloud, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { toast } from "sonner";
+import { useNavigate } from 'react-router-dom';
 
 const FileUpload = () => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const navigate = useNavigate();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const selectedFile = acceptedFiles[0];
@@ -48,24 +50,88 @@ const FileUpload = () => {
     setProgress(0);
   };
   
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!file) return;
     
     setUploading(true);
     
-    // Simulate upload progress
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setUploading(false);
-          // Redirect to results page or show results
-          toast.success("File uploaded successfully!");
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 300);
+    try {
+      // Create form data to send file
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Simulate progress updates - in a real implementation, you might use 
+      // XMLHttpRequest with progress events
+      const progressInterval = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 85) {
+            clearInterval(progressInterval);
+            return 85;
+          }
+          return prev + 5;
+        });
+      }, 300);
+      
+      // For now, we're using a mock API endpoint
+      // In a production app, replace with your actual API endpoint
+      try {
+        // Simulating API call with a timeout
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        // In a real scenario, you would be making an actual API call:
+        // const response = await fetch('https://your-api.com/analyze', {
+        //   method: 'POST',
+        //   body: formData,
+        // });
+        // 
+        // if (!response.ok) {
+        //   throw new Error('Failed to upload file');
+        // }
+        // 
+        // const data = await response.json();
+        
+        clearInterval(progressInterval);
+        setProgress(100);
+        
+        // Mock successful response
+        const mockData = {
+          success: true,
+          effectiveRate: '2.95%',
+          monthlyVolume: '$125,780',
+          chargebackRatio: '0.15%',
+          pricingModel: 'Tiered',
+          fees: {
+            monthlyFee: '$9.95',
+            pciFee: '$14.95',
+            statementFee: '$7.50',
+            batchFee: '$0.25',
+            transactionFees: '$0.10 per transaction'
+          }
+        };
+        
+        // Store analysis data in localStorage for the results page to use
+        localStorage.setItem('statementAnalysis', JSON.stringify(mockData));
+        
+        toast.success("Analysis complete!");
+        
+        // Navigate to results page after a short delay
+        setTimeout(() => {
+          navigate('/results');
+        }, 1000);
+        
+      } catch (error) {
+        console.error('API Error:', error);
+        toast.error("Failed to analyze statement. Please try again.");
+        clearInterval(progressInterval);
+        setProgress(0);
+      }
+      
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error("An error occurred during upload");
+    } finally {
+      setUploading(false);
+    }
   };
   
   const getFileIcon = (fileType: string) => {
@@ -133,7 +199,7 @@ const FileUpload = () => {
               disabled={uploading || !file}
               className="bg-gradient-to-r from-teal-500 to-teal-400 hover:from-teal-400 hover:to-teal-500 text-white"
             >
-              {uploading ? 'Uploading...' : 'Analyze Statement'}
+              {uploading ? 'Analyzing...' : 'Analyze Statement'}
             </Button>
           </div>
         </div>
