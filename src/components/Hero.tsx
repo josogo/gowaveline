@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import FileUpload from '@/components/FileUpload';
 import { useNavigate } from 'react-router-dom';
+import AnimatedText from '@/components/AnimatedText';
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -10,24 +11,30 @@ const Hero = () => {
   return (
     <div className="relative px-6 lg:px-8 py-16 md:py-24">
       <div className="mx-auto max-w-5xl">
-        <div className="text-center animate-fade-in">
+        <div className="text-center">
           <div className="flex justify-center mb-8">
-            <img 
-              src="/lovable-uploads/2d9abfe8-af53-43b1-9ce4-d5c73518ff44.png" 
-              alt="Waveline Logo" 
-              className="h-24 md:h-32 w-auto"
-            />
+            <AnimatedText type="scale" className="hover:scale-105 transition-transform duration-300">
+              <img 
+                src="/lovable-uploads/2d9abfe8-af53-43b1-9ce4-d5c73518ff44.png" 
+                alt="Waveline Logo" 
+                className="h-24 md:h-32 w-auto"
+              />
+            </AnimatedText>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground sm:text-6xl">
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-orange-400">
-              Analyze
-            </span>{" "}
-            your merchant statements in seconds
-          </h1>
-          <p className="mt-6 text-lg leading-8 text-muted-foreground">
-            Get detailed insights into your processing fees, identify hidden charges, and understand your effective rate with our intelligent statement analyzer.
-          </p>
-          <div className="mt-10 flex items-center justify-center gap-x-6">
+          <AnimatedText type="slide" delay={100}>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground sm:text-6xl">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-orange-400">
+                Analyze
+              </span>{" "}
+              your merchant statements in seconds
+            </h1>
+          </AnimatedText>
+          <AnimatedText type="fade" delay={200}>
+            <p className="mt-6 text-lg leading-8 text-muted-foreground">
+              Get detailed insights into your processing fees, identify hidden charges, and understand your effective rate with our intelligent statement analyzer.
+            </p>
+          </AnimatedText>
+          <AnimatedText type="slide" delay={300} className="mt-10 flex items-center justify-center gap-x-6">
             <Button 
               onClick={() => navigate('/about')}
               className="px-6 py-3 text-white font-semibold text-lg rounded-lg bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-500 shadow-lg"
@@ -41,13 +48,13 @@ const Hero = () => {
             >
               View demo
             </Button>
-          </div>
+          </AnimatedText>
         </div>
         
-        <div className="mt-16 glass-card p-8 animate-slide-up">
+        <AnimatedText type="fade" delay={400} className="mt-16 glass-card p-8">
           <h2 className="text-2xl font-semibold text-center mb-6 text-[#0EA5E9]">Upload Your Statement</h2>
           <FileUpload />
-        </div>
+        </AnimatedText>
       </div>
     </div>
   );

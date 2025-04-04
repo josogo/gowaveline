@@ -1,10 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Check, Info, Loader2, Mail, LogIn, 
-  Settings, LogOut, RefreshCw, Trash 
+  Settings, LogOut, RefreshCw, Trash, AlertCircle
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -74,13 +74,98 @@ const GmailIntegration = () => {
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [googleAuthUrl, setGoogleAuthUrl] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
+
+  // Check for OAuth callback on component mount
+  useEffect(() => {
+    // Check for auth code in URL (would be part of the OAuth flow)
+    const urlParams = new URLSearchParams(window.location.search);
+    const authCode = urlParams.get('code');
+    
+    if (authCode) {
+      handleGoogleAuthCallback(authCode);
+    }
+    
+    // Check if we already have a stored token
+    const storedToken = localStorage.getItem('gmail_access_token');
+    const storedProfile = localStorage.getItem('gmail_user_profile');
+    
+    if (storedToken && storedProfile) {
+      setIsAuthenticated(true);
+      try {
+        setUserProfile(JSON.parse(storedProfile));
+      } catch (e) {
+        console.error('Error parsing stored profile:', e);
+      }
+    }
+  }, []);
+
+  const handleGoogleAuthCallback = async (authCode: string) => {
+    setIsLoading(true);
+    
+    try {
+      // In a real implementation, this would exchange the code for tokens
+      console.log('Received auth code:', authCode);
+      
+      // Simulate token exchange
+      setTimeout(() => {
+        // Mock user data
+        const mockProfile = {
+          email: 'admin@gowaveline.com',
+          name: 'Admin User',
+          picture: 'https://github.com/shadcn.png'
+        };
+        
+        // Store token and profile
+        localStorage.setItem('gmail_access_token', 'mock-token-' + Date.now());
+        localStorage.setItem('gmail_user_profile', JSON.stringify(mockProfile));
+        
+        setUserProfile(mockProfile);
+        setIsAuthenticated(true);
+        setIsLoading(false);
+        
+        // Clean up the URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
+        toast.success('Successfully authenticated with Google');
+      }, 1500);
+    } catch (error) {
+      console.error('Error handling auth callback:', error);
+      setIsLoading(false);
+      toast.error('Authentication failed');
+    }
+  };
 
   const handleAuthenticate = () => {
     setIsLoading(true);
-    // Simulate OAuth2 authentication flow
+    
+    // In a real implementation, this would redirect to the Google OAuth consent screen
+    // For now, we'll simulate it with a demo URL
+    
+    // Generate a mock OAuth URL (in a real app, this would be a Google URL)
+    const mockOAuthUrl = `/admin/gmail-integration?mock_oauth=true&timestamp=${Date.now()}`;
+    
+    // In a real implementation, we would redirect to Google
+    // window.location.href = googleAuthUrl;
+    
+    // For demo purposes, simulate the OAuth flow
     setTimeout(() => {
+      // Simulate successful OAuth and callback
+      const mockProfile = {
+        email: 'admin@gowaveline.com',
+        name: 'Admin User',
+        picture: 'https://github.com/shadcn.png'
+      };
+      
+      // Store token and profile
+      localStorage.setItem('gmail_access_token', 'mock-token-' + Date.now());
+      localStorage.setItem('gmail_user_profile', JSON.stringify(mockProfile));
+      
+      setUserProfile(mockProfile);
       setIsAuthenticated(true);
       setIsLoading(false);
+      
       toast.success("Successfully connected to Gmail");
     }, 2000);
   };
@@ -89,7 +174,10 @@ const GmailIntegration = () => {
     setIsLoading(true);
     // Simulate logout
     setTimeout(() => {
+      localStorage.removeItem('gmail_access_token');
+      localStorage.removeItem('gmail_user_profile');
       setIsAuthenticated(false);
+      setUserProfile(null);
       setIsLoading(false);
       toast.info("Disconnected from Gmail");
     }, 1000);
@@ -176,16 +264,51 @@ const GmailIntegration = () => {
             <p className="text-muted-foreground mb-6 text-center max-w-md">
               Connect your Gmail account to automatically sync customer emails and attachments.
             </p>
-            <Button 
-              onClick={handleAuthenticate} 
-              disabled={isLoading}
-              className="gap-2"
-            >
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogIn className="h-4 w-4" />}
-              Connect Gmail Account
-            </Button>
+            <div className="space-y-4">
+              <Button 
+                onClick={handleAuthenticate} 
+                disabled={isLoading}
+                className="gap-2 w-64"
+              >
+                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogIn className="h-4 w-4" />}
+                Connect Gmail Account
+              </Button>
+              
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">or</p>
+              </div>
+              
+              <Button 
+                onClick={handleAuthenticate}
+                variant="outline" 
+                disabled={isLoading}
+                className="gap-2 w-64 bg-white hover:bg-gray-50 border border-gray-300"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24">
+                  <path
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    fill="#4285F4"
+                  />
+                  <path
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    fill="#34A853"
+                  />
+                  <path
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    fill="#FBBC05"
+                  />
+                  <path
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    fill="#EA4335"
+                  />
+                  <path d="M1 1h22v22H1z" fill="none" />
+                </svg>
+                Sign in with Google
+              </Button>
+            </div>
             
             <Alert className="mt-8">
+              <AlertCircle className="h-4 w-4" />
               <AlertTitle>Demo Mode</AlertTitle>
               <AlertDescription>
                 This is a demo interface. In production, this would connect to Gmail via OAuth2 and the Gmail API to fetch and process real emails.
@@ -197,11 +320,14 @@ const GmailIntegration = () => {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src="https://github.com/shadcn.png" alt="Admin" />
-                  <AvatarFallback>WL</AvatarFallback>
+                  {userProfile?.picture ? (
+                    <AvatarImage src={userProfile.picture} alt={userProfile.name || 'User'} />
+                  ) : (
+                    <AvatarFallback>{userProfile?.name?.charAt(0) || 'U'}</AvatarFallback>
+                  )}
                 </Avatar>
                 <div>
-                  <p className="text-sm font-medium">admin@gowaveline.com</p>
+                  <p className="text-sm font-medium">{userProfile?.email || 'admin@gowaveline.com'}</p>
                   <p className="text-xs text-muted-foreground">Connected</p>
                 </div>
               </div>

@@ -122,4 +122,25 @@
   .ocean-blue-bg {
     @apply bg-[#0EA5E9];
   }
+  
+  /* Animation Classes */
+  .animate-in {
+    @apply opacity-100 translate-y-0 scale-100;
+  }
+  
+  .hover-grow {
+    @apply transition-transform duration-300 hover:scale-105;
+  }
+  
+  .hover-bright {
+    @apply transition-all duration-300 hover:brightness-110;
+  }
+  
+  .text-glow {
+    text-shadow: 0 0 15px rgba(255, 159, 90, 0.7);
+  }
+  
+  .text-glow-blue {
+    text-shadow: 0 0 15px rgba(14, 165, 233, 0.7);
+  }
 }

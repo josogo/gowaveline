@@ -6,6 +6,7 @@ import Hero from '@/components/Hero';
 import Features from '@/components/Features';
 import CallToAction from '@/components/CallToAction';
 import { Button } from '@/components/ui/button';
+import AnimatedText from '@/components/AnimatedText';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -21,8 +22,12 @@ const Index = () => {
       <Navbar />
       <main className="flex-1">
         <Hero />
-        <Features />
-        <CallToAction />
+        <AnimatedText type="fade" delay={500}>
+          <Features />
+        </AnimatedText>
+        <AnimatedText type="fade" delay={600}>
+          <CallToAction />
+        </AnimatedText>
       </main>
       
       {/* Small admin button at the bottom */}

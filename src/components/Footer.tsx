@@ -3,7 +3,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LockKeyhole, Shield, Mail } from 'lucide-react';
+import { Shield, Mail } from 'lucide-react';
 
 interface FooterProps {
   className?: string;
@@ -66,15 +66,7 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
           <p className="text-muted-foreground text-sm">
             &copy; {currentYear} Gowaveline. All rights reserved.
           </p>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-muted-foreground hover:text-orange-500 flex items-center gap-1 text-xs"
-            onClick={() => handleNavigation('/admin/login')}
-          >
-            <LockKeyhole className="h-3 w-3" />
-            Admin Login
-          </Button>
+          {/* Admin login with lock icon removed */}
         </div>
         <div className="flex space-x-6">
           <button onClick={() => handleNavigation('/privacy-policy')} className="text-muted-foreground hover:text-orange-500 text-sm">Privacy Policy</button>
