@@ -51,7 +51,7 @@ const Dashboard: React.FC<DashboardProps> = ({ analysisData }) => {
   const isPdfProcessingIssue = 
     hasNoRealData && analysisData.error && 
     (analysisData.error.includes('PDF processing') || 
-     analysisData.error.includes('Document AI') ||
+     analysisData.error.includes('Gemini') ||
      analysisData.message?.includes('PDF'));
 
   return (
@@ -75,23 +75,17 @@ const Dashboard: React.FC<DashboardProps> = ({ analysisData }) => {
           <AlertTitle>PDF Processing Configuration Required</AlertTitle>
           <AlertDescription className="mt-2">
             <p className="mb-2">
-              To enable PDF processing, you need to set up Google Document AI credentials:
+              To enable PDF processing, you need to set up Google Gemini API:
             </p>
             <ol className="list-decimal ml-5 space-y-1 mb-3">
-              <li>Create a Google Cloud project at <a href="https://console.cloud.google.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Google Cloud Console</a></li>
-              <li>Enable the Document AI API</li>
-              <li>Create a Document AI processor (Document OCR type)</li>
-              <li>Generate an API key with Document AI permissions</li>
-              <li>Add the following secrets to your Supabase Edge Functions:</li>
+              <li>Get a Google API key that has access to Gemini Pro Vision API</li>
+              <li>Add the API key to your Supabase Edge Functions Secrets</li>
             </ol>
             <ul className="font-mono text-sm bg-blue-100 p-3 rounded-md mb-3">
-              <li>GOOGLE_CLOUD_PROJECT_ID</li>
-              <li>GOOGLE_CLOUD_LOCATION (usually "us")</li>
-              <li>GOOGLE_CLOUD_PROCESSOR_ID</li>
-              <li>GOOGLE_CLOUD_API_KEY</li>
+              <li>GEMINI_API_KEY</li>
             </ul>
             <p className="text-sm">
-              Until these are configured, the system will be limited to processing CSV and Excel files only.
+              Until this is configured, the system will be limited to processing CSV and Excel files only.
             </p>
             <div className="mt-3">
               <Button variant="outline" size="sm" className="flex items-center gap-1" asChild>
@@ -139,7 +133,7 @@ const Dashboard: React.FC<DashboardProps> = ({ analysisData }) => {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mb-8">
-        <Alert variant="info" className="bg-blue-50 border-blue-200 text-blue-800 p-4 rounded-md">
+        <Alert variant="default" className="bg-blue-50 border-blue-200 text-blue-800 p-4 rounded-md">
           <h3 className="font-medium mb-2">Statement Data</h3>
           <p>
             We've extracted all the information we could find in your statement. 

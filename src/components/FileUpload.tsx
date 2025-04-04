@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Cloud, File, FileText, UploadCloud, X, AlertCircle, RefreshCw, FileWarning } from 'lucide-react';
@@ -18,7 +17,6 @@ const FileUpload = () => {
   const [pdfWarning, setPdfWarning] = useState(false);
   const navigate = useNavigate();
 
-  // Clear localStorage on component mount
   React.useEffect(() => {
     localStorage.removeItem('statementAnalysis');
   }, []);
@@ -28,24 +26,20 @@ const FileUpload = () => {
     
     if (!selectedFile) return;
     
-    // Reset states when a new file is selected
     setError(null);
     setDebugInfo(null);
     setPdfWarning(false);
     
-    // Check file type
     const allowedTypes = ['application/pdf', 'text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
     if (!allowedTypes.includes(selectedFile.type)) {
       toast.error("Please upload a PDF, CSV, or Excel file");
       return;
     }
     
-    // Set PDF warning if it's a PDF file
     if (selectedFile.type.includes('pdf')) {
       setPdfWarning(true);
     }
     
-    // Check file size (limit to 10MB)
     if (selectedFile.size > 10 * 1024 * 1024) {
       toast.error("File size should be less than 10MB");
       return;
@@ -87,7 +81,6 @@ const FileUpload = () => {
   const handleUpload = async () => {
     if (!file) return;
     
-    // Clear any existing data from localStorage
     console.log("Clearing any existing analysis data from localStorage");
     localStorage.removeItem('statementAnalysis');
     
@@ -99,17 +92,14 @@ const FileUpload = () => {
     try {
       console.log("Starting file analysis:", file.name, file.type);
       
-      // Use our service to analyze the statement
       const analysisData = await analyzeStatement(file, (progressValue) => {
         setProgress(progressValue);
       });
       
       console.log("Analysis data received, isMockData=", analysisData.isMockData);
       
-      // Store analysis data in localStorage for the results page to use
       localStorage.setItem('statementAnalysis', JSON.stringify(analysisData));
       
-      // Check if we got any actual data back
       const noDataExtracted = 
         analysisData.effectiveRate === "N/A" && 
         analysisData.monthlyVolume === "N/A" && 
@@ -124,7 +114,6 @@ const FileUpload = () => {
         toast.success("Analysis complete!");
       }
       
-      // Navigate to results page after a short delay
       setTimeout(() => {
         navigate('/results');
       }, 1000);
@@ -132,26 +121,23 @@ const FileUpload = () => {
     } catch (error) {
       console.error('Analysis error:', error);
       
-      // Check if it's a PDF processing error
       const isPdfError = 
         file.type.includes('pdf') && 
         error instanceof Error && 
         (
           error.message.includes('PDF processing') || 
-          error.message.includes('Document AI') ||
+          error.message.includes('Gemini') ||
           error.message.includes('Edge Function returned a non-2xx status code')
         );
       
       if (isPdfError) {
-        setError("PDF processing is currently unavailable. Please try uploading a CSV or Excel file instead.");
-        setDebugInfo("The system is not configured to process PDF files. This requires Google Document AI credentials to be set up.");
+        setError("PDF processing requires Gemini API configuration. Please try uploading a CSV or Excel file instead.");
+        setDebugInfo("The system needs the Gemini API key to be configured in Supabase Edge Function Secrets.");
       } else {
-        // Set detailed error information
         setError(error instanceof Error ? error.message : 'Unknown error');
         setDebugInfo(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
       
-      // Reset progress
       setProgress(0);
       setUploading(false);
     }
@@ -212,9 +198,9 @@ const FileUpload = () => {
           {pdfWarning && (
             <Alert className="bg-yellow-50 border-yellow-200">
               <FileWarning className="h-4 w-4 text-yellow-500" />
-              <AlertTitle>PDF Processing Limited</AlertTitle>
+              <AlertTitle>PDF Processing</AlertTitle>
               <AlertDescription>
-                PDF processing may not work correctly. For best results, please upload a CSV or Excel file if available.
+                PDF processing requires Google Gemini API configuration. For best results, please upload a CSV or Excel file if available.
               </AlertDescription>
             </Alert>
           )}

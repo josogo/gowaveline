@@ -4,10 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Get environment variables
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") || "";
-const GOOGLE_CLOUD_PROJECT_ID = Deno.env.get("GOOGLE_CLOUD_PROJECT_ID") || "";
-const GOOGLE_CLOUD_LOCATION = Deno.env.get("GOOGLE_CLOUD_LOCATION") || "us";
-const GOOGLE_CLOUD_PROCESSOR_ID = Deno.env.get("GOOGLE_CLOUD_PROCESSOR_ID") || "";
-const GOOGLE_CLOUD_API_KEY = Deno.env.get("GOOGLE_CLOUD_API_KEY") || "";
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || "";
 
 // CORS headers for browser requests
 const corsHeaders = {
@@ -63,29 +60,29 @@ serve(async (req) => {
     let extractedText = "";
     
     if (fileType.includes("pdf")) {
-      if (GOOGLE_CLOUD_API_KEY && GOOGLE_CLOUD_PROJECT_ID && GOOGLE_CLOUD_PROCESSOR_ID) {
+      if (GEMINI_API_KEY) {
         try {
-          console.log("Attempting Document AI extraction");
-          extractedText = await extractTextWithDocumentAI(fileContent, fileType);
-          console.log("Document AI extraction successful");
+          console.log("Attempting Gemini API extraction for PDF");
+          extractedText = await extractTextWithGemini(fileContent, fileType);
+          console.log("Gemini extraction successful");
         } catch (error) {
-          console.error("Document AI extraction failed:", error);
+          console.error("Gemini extraction failed:", error);
           return new Response(
             JSON.stringify({
               success: false, 
               error: `PDF processing error: ${error instanceof Error ? error.message : String(error)}.`,
-              message: "The system is currently unable to process PDF files. Please try uploading a CSV or Excel file instead."
+              message: "There was an issue processing your PDF with Gemini. Please try uploading a CSV or Excel file instead."
             }),
             { status: 422, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
           );
         }
       } else {
-        console.error("Document AI credentials not configured");
+        console.error("Gemini API key not configured");
         return new Response(
           JSON.stringify({ 
             success: false,
-            error: 'Document AI credentials not configured',
-            message: "The system is currently unable to process PDF files. Please try uploading a CSV or Excel file instead, or contact support to enable PDF processing."
+            error: 'Gemini API key not configured',
+            message: "The system needs a Google Gemini API key to process PDF files. Please add your Gemini API key in Supabase Edge Function Secrets."
           }),
           { status: 422, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
         );
@@ -183,26 +180,41 @@ serve(async (req) => {
 });
 
 /**
- * Extract text from document using Google Document AI
+ * Extract text from PDF using Google Gemini AI
  */
-async function extractTextWithDocumentAI(fileContent: ArrayBuffer, fileType: string) {
-  if (!GOOGLE_CLOUD_API_KEY || !GOOGLE_CLOUD_PROJECT_ID || !GOOGLE_CLOUD_PROCESSOR_ID) {
-    throw new Error('Missing Google Cloud credentials');
+async function extractTextWithGemini(fileContent: ArrayBuffer, fileType: string) {
+  if (!GEMINI_API_KEY) {
+    throw new Error('Missing Gemini API key');
   }
 
-  const apiEndpoint = `https://${GOOGLE_CLOUD_LOCATION}-documentai.googleapis.com/v1/projects/${GOOGLE_CLOUD_PROJECT_ID}/locations/${GOOGLE_CLOUD_LOCATION}/processors/${GOOGLE_CLOUD_PROCESSOR_ID}:process`;
+  // Convert file to base64
+  const base64File = btoa(String.fromCharCode(...new Uint8Array(fileContent)));
   
-  const mimeType = fileType || "application/pdf";
-  const encodedContent = btoa(String.fromCharCode(...new Uint8Array(fileContent)));
+  const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${GEMINI_API_KEY}`;
   
   const requestBody = {
-    rawDocument: {
-      content: encodedContent,
-      mimeType: mimeType
+    contents: [
+      {
+        parts: [
+          {
+            text: "Extract all text content from this document, which is a merchant processing statement. Focus on capturing numerical information, fees, charges, and all visible text. Format the extraction as plain text."
+          },
+          {
+            inline_data: {
+              mime_type: fileType,
+              data: base64File
+            }
+          }
+        ]
+      }
+    ],
+    generation_config: {
+      temperature: 0.1,
+      max_output_tokens: 8192
     }
   };
   
-  const response = await fetch(`${apiEndpoint}?key=${GOOGLE_CLOUD_API_KEY}`, {
+  const response = await fetch(apiEndpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -212,11 +224,16 @@ async function extractTextWithDocumentAI(fileContent: ArrayBuffer, fileType: str
   
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Document AI API error: ${response.status} ${errorText}`);
+    throw new Error(`Gemini API error: ${response.status} ${errorText}`);
   }
   
   const result = await response.json();
-  return result.document.text;
+  
+  if (result.candidates && result.candidates.length > 0 && result.candidates[0].content.parts.length > 0) {
+    return result.candidates[0].content.parts[0].text;
+  }
+  
+  throw new Error('Gemini API returned no text content');
 }
 
 /**
