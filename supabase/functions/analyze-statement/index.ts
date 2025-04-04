@@ -28,7 +28,19 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           success: false,
-          error: 'Missing file URL' 
+          effectiveRate: "N/A",
+          monthlyVolume: "N/A",
+          chargebackRatio: "N/A",
+          pricingModel: "N/A",
+          fees: {
+            monthlyFee: "N/A",
+            pciFee: "N/A",
+            statementFee: "N/A",
+            batchFee: "N/A",
+            transactionFees: "N/A"
+          },
+          error: 'Missing file URL',
+          message: 'Please upload a file to analyze.'
         }),
         { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
@@ -65,6 +77,7 @@ serve(async (req) => {
     const fileResponse = await fetch(fileUrl);
     
     if (!fileResponse.ok) {
+      console.error(`Failed to download file: ${fileResponse.status} ${fileResponse.statusText}`);
       throw new Error(`Failed to download file: ${fileResponse.status} ${fileResponse.statusText}`);
     }
     
@@ -76,7 +89,7 @@ serve(async (req) => {
       // Process with OpenAI
       console.log("Processing with OpenAI API");
       const analysisResult = await processWithOpenAI(fileBuffer, fileType);
-      console.log("OpenAI analysis complete");
+      console.log("OpenAI analysis complete with result:", analysisResult);
 
       return new Response(
         JSON.stringify({ 
@@ -89,7 +102,7 @@ serve(async (req) => {
     } catch (aiError) {
       console.error("OpenAI analysis failed:", aiError);
       
-      // Return N/A for all fields instead of mock data
+      // Return N/A for all fields
       return new Response(
         JSON.stringify({ 
           success: false,
@@ -105,7 +118,7 @@ serve(async (req) => {
             transactionFees: "N/A"
           },
           error: aiError instanceof Error ? aiError.message : 'Unknown error in AI processing',
-          message: "Unable to extract data from your statement. The PDF might be in a format that's difficult to analyze."
+          message: "Unable to extract data from your statement. The file might be in a format that's difficult to analyze."
         }),
         { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
@@ -113,7 +126,7 @@ serve(async (req) => {
     
   } catch (error) {
     console.error('Error in edge function:', error);
-    // Return N/A values instead of mock data
+    // Return N/A values
     return new Response(
       JSON.stringify({ 
         success: false,
@@ -216,6 +229,7 @@ async function processWithOpenAI(fileBuffer: ArrayBuffer, fileType: string): Pro
     
     // Extract the response content
     const aiResponse = responseData.choices[0].message.content;
+    console.log("AI response content:", aiResponse);
     
     // Parse the response from OpenAI
     // We need to extract the JSON part from the possibly markdown-formatted response
@@ -223,6 +237,7 @@ async function processWithOpenAI(fileBuffer: ArrayBuffer, fileType: string): Pro
     try {
       // Try to parse the whole response as JSON
       analysisData = JSON.parse(aiResponse);
+      console.log("Successfully parsed entire response as JSON");
     } catch (e) {
       console.log("Couldn't parse entire response as JSON, looking for JSON block");
       
@@ -230,10 +245,31 @@ async function processWithOpenAI(fileBuffer: ArrayBuffer, fileType: string): Pro
       const jsonMatch = aiResponse.match(/```json\n([\s\S]*?)\n```/) || aiResponse.match(/```\n([\s\S]*?)\n```/);
       if (jsonMatch && jsonMatch[1]) {
         analysisData = JSON.parse(jsonMatch[1]);
+        console.log("Successfully extracted and parsed JSON from markdown block");
       } else {
-        // If we can't parse the response, throw an error
-        throw new Error("Failed to parse OpenAI response into valid JSON format");
+        // Last attempt - try to extract key-value pairs from text
+        console.log("No JSON block found, attempting to extract structured data from text");
+        
+        // Simple extraction of key-value pairs
+        analysisData = {
+          effectiveRate: extractValue(aiResponse, "effectiveRate", "N/A"),
+          monthlyVolume: extractValue(aiResponse, "monthlyVolume", "N/A"),
+          chargebackRatio: extractValue(aiResponse, "chargebackRatio", "N/A"),
+          pricingModel: extractValue(aiResponse, "pricingModel", "N/A"),
+          fees: {
+            monthlyFee: extractValue(aiResponse, "monthlyFee", "N/A"),
+            pciFee: extractValue(aiResponse, "pciFee", "N/A"),
+            statementFee: extractValue(aiResponse, "statementFee", "N/A"),
+            batchFee: extractValue(aiResponse, "batchFee", "N/A"),
+            transactionFees: extractValue(aiResponse, "transactionFees", "N/A")
+          }
+        };
+        console.log("Extracted structured data from text:", analysisData);
       }
+    }
+    
+    if (!analysisData) {
+      throw new Error("Failed to parse OpenAI response into a usable format");
     }
     
     // Validate and format the response
@@ -251,9 +287,19 @@ async function processWithOpenAI(fileBuffer: ArrayBuffer, fileType: string): Pro
       }
     };
     
+    console.log("Final formatted response:", formattedResponse);
     return formattedResponse;
   } catch (error) {
     console.error("Error in processWithOpenAI:", error);
     throw error;
   }
+}
+
+/**
+ * Helper function to extract values from text response
+ */
+function extractValue(text: string, key: string, defaultValue: string): string {
+  const regex = new RegExp(`${key}[:\\s]+"?([^"\n,]+)"?`, 'i');
+  const match = text.match(regex);
+  return match ? match[1].trim() : defaultValue;
 }

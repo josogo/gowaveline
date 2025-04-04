@@ -17,7 +17,6 @@ export interface StatementAnalysis {
   chargebackRatio: string;
   pricingModel: string;
   fees: FeeStructure;
-  isMockData: boolean;
   error?: string;
   message?: string;
 }
@@ -95,7 +94,7 @@ export const analyzeStatement = async (
     onProgress(70);
     
     // Call the Supabase Edge Function to analyze the statement
-    console.log("Calling edge function");
+    console.log("Calling edge function with file:", fileName, "type:", file.type);
     const { data: analysisData, error: analysisError } = await supabase.functions
       .invoke('analyze-statement', {
         body: { fileUrl, fileName, fileType: file.type },

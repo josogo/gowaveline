@@ -38,12 +38,14 @@ const Results = () => {
         setLoading(false);
         
         // Show appropriate toast based on data quality
-        const hasRealData = 
+        const hasAnyRealData = 
           parsedData.effectiveRate !== "N/A" || 
           parsedData.monthlyVolume !== "N/A" || 
-          parsedData.pricingModel !== "N/A";
+          parsedData.pricingModel !== "N/A" || 
+          parsedData.fees.monthlyFee !== "N/A" ||
+          parsedData.fees.pciFee !== "N/A";
         
-        if (!hasRealData) {
+        if (!hasAnyRealData) {
           toast.warning("Limited data extracted. Try uploading a clearer PDF or CSV version.");
         }
       } catch (err) {

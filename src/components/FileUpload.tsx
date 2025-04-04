@@ -76,10 +76,19 @@ const FileUpload = () => {
       // Store the data and navigate to results
       localStorage.setItem('statementAnalysis', JSON.stringify(analysisData));
       
-      if (analysisData.isMockData) {
-        toast.warning("Using simulation mode. This is sample data for demonstration purposes.");
+      if (!analysisData.success) {
+        toast.error(analysisData.message || "Analysis failed. Please try a different file format.");
       } else {
-        toast.success("Analysis complete!");
+        const hasAnyData = 
+          analysisData.effectiveRate !== "N/A" || 
+          analysisData.monthlyVolume !== "N/A" || 
+          analysisData.pricingModel !== "N/A";
+        
+        if (hasAnyData) {
+          toast.success("Analysis complete!");
+        } else {
+          toast.warning("Limited data extracted. Try uploading a clearer PDF or CSV version.");
+        }
       }
       
       // Navigate to results page
@@ -89,6 +98,7 @@ const FileUpload = () => {
       console.error("Upload error:", error);
       toast.error("There was a problem analyzing your statement. Please try again.");
       setUploading(false);
+      setProgress(0);
     }
   };
   
