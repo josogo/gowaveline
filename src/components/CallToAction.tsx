@@ -34,7 +34,7 @@ const CallToAction = () => {
       
       <div className="relative max-w-5xl mx-auto text-center">
         <h2 className="text-3xl md:text-4xl font-bold mb-6">
-          Ready to Optimize Your Processing Costs?
+          Ready To Optimize Your Processing Costs?
         </h2>
         <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
           Upload your statement now and discover how much you could save with our detailed analysis and recommendations.
@@ -49,7 +49,7 @@ const CallToAction = () => {
                 Submit Statement
               </Button>
             </DialogTrigger>
-            <DialogContent className="w-[95%] max-w-[525px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-[95%] max-w-[525px] h-auto max-h-[80vh] overflow-y-auto p-4 sm:p-6">
               <DialogHeader>
                 <DialogTitle className="text-xl text-[#0EA5E9]">Upload Your Statement</DialogTitle>
               </DialogHeader>
