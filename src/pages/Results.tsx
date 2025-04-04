@@ -133,7 +133,7 @@ const Results = () => {
     console.log("File submitted:", statementFile);
     
     // Here you would integrate with a service to send the email with the file and form data
-    // For example using EmailJS or a backend API
+    // For example using EmailJS or sending to jordan@gowaveline.com
     
     // For now we'll just simulate a successful submission
     toast.success("Your statement has been submitted for manual analysis");
@@ -171,7 +171,7 @@ const Results = () => {
         <Navbar />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
+            <Loader2 className="h-10 w-10 animate-spin text-[#0EA5E9] mx-auto mb-4" />
             <p className="text-lg text-[#0EA5E9]">Loading analysis results...</p>
           </div>
         </main>
@@ -206,15 +206,15 @@ const Results = () => {
               <div className="flex justify-center mt-8">
                 <Button 
                   onClick={() => setShowEmailDialog(true)}
-                  className="bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-500 text-white flex items-center gap-2 mx-auto"
+                  className="bg-gradient-to-r from-[#0EA5E9] to-[#0EA5E9]/80 hover:from-[#0EA5E9]/80 hover:to-[#0EA5E9] text-white text-lg py-6 px-8 rounded-lg shadow-lg flex items-center gap-2 mx-auto"
                 >
-                  <Mail className="h-4 w-4" />
-                  Email Your Statement For Manual Analysis
+                  <Mail className="h-5 w-5" />
+                  Complimentary Statement Analysis
                 </Button>
               </div>
               
               <div className="mt-4 text-center">
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-[#0EA5E9]/80">
                   Most statements don't show monthly volume clearly, which is why our automatic analysis might miss it.
                   Our manual analysis can find this data and more.
                 </p>
@@ -233,7 +233,7 @@ const Results = () => {
           <>
             <div className="bg-gradient-to-b from-orange-50 to-transparent py-12 px-6 text-center">
               <h1 className="text-3xl md:text-4xl font-bold mb-4 text-[#0EA5E9]">Your Statement Analysis</h1>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-xl text-[#0EA5E9]/80 max-w-2xl mx-auto">
                 We've analyzed your merchant statement and extracted the available data.
               </p>
             </div>
@@ -263,7 +263,7 @@ const Results = () => {
                   <FormItem>
                     <FormLabel className="text-[#0EA5E9]">Full Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Your name" {...field} />
+                      <Input placeholder="Your name" className="border-[#0EA5E9]/20 focus-visible:ring-[#0EA5E9]" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -278,7 +278,7 @@ const Results = () => {
                     <FormItem>
                       <FormLabel className="text-[#0EA5E9]">Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="your@email.com" {...field} />
+                        <Input placeholder="your@email.com" className="border-[#0EA5E9]/20 focus-visible:ring-[#0EA5E9]" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -292,7 +292,7 @@ const Results = () => {
                     <FormItem>
                       <FormLabel className="text-[#0EA5E9]">Phone Number</FormLabel>
                       <FormControl>
-                        <Input placeholder="(123) 456-7890" {...field} />
+                        <Input placeholder="(123) 456-7890" className="border-[#0EA5E9]/20 focus-visible:ring-[#0EA5E9]" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -307,7 +307,7 @@ const Results = () => {
                   <FormItem>
                     <FormLabel className="text-[#0EA5E9]">Business Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Your business name" {...field} />
+                      <Input placeholder="Your business name" className="border-[#0EA5E9]/20 focus-visible:ring-[#0EA5E9]" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -321,7 +321,7 @@ const Results = () => {
                   <FormItem>
                     <FormLabel className="text-[#0EA5E9]">Desired Monthly Volume</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. $50,000" {...field} />
+                      <Input placeholder="e.g. $50,000" className="border-[#0EA5E9]/20 focus-visible:ring-[#0EA5E9]" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

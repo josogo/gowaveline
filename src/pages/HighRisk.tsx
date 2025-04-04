@@ -1,0 +1,175 @@
+
+import React from 'react';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { CreditCard, ShieldCheck, AlertTriangle, DollarSign, BarChart, Building, Globe } from 'lucide-react';
+
+const HighRisk = () => {
+  const navigate = useNavigate();
+
+  const industries = [
+    {
+      title: "CBD & Cannabis",
+      description: "Legal CBD and cannabis businesses face unique payment processing challenges. We provide compliant solutions that keep your business running smoothly.",
+      icon: <AlertTriangle className="h-10 w-10 text-[#0EA5E9]" />,
+    },
+    {
+      title: "Firearms & Ammunition",
+      description: "Gun shops and firearm dealers need specialized processing. Our team understands the regulatory landscape and can help you navigate payment solutions.",
+      icon: <ShieldCheck className="h-10 w-10 text-[#0EA5E9]" />,
+    },
+    {
+      title: "Adult Content & Dating",
+      description: "Adult websites, content creators, and dating platforms require discreet, reliable payment processing that traditional banks often deny.",
+      icon: <CreditCard className="h-10 w-10 text-[#0EA5E9]" />,
+    },
+    {
+      title: "Cryptocurrency & Digital Assets",
+      description: "Crypto exchanges, NFT marketplaces, and blockchain startups need payment solutions that bridge traditional finance and digital assets.",
+      icon: <DollarSign className="h-10 w-10 text-[#0EA5E9]" />,
+    },
+    {
+      title: "Peptides & Nutraceuticals",
+      description: "Research chemicals, peptides, and supplement companies face high decline rates with conventional processors. Our solutions minimize this risk.",
+      icon: <BarChart className="h-10 w-10 text-[#0EA5E9]" />,
+    },
+    {
+      title: "Startups & New Ventures",
+      description: "Early-stage companies with limited processing history often struggle to secure merchant accounts. We specialize in helping startups establish payment infrastructure.",
+      icon: <Building className="h-10 w-10 text-[#0EA5E9]" />,
+    },
+    {
+      title: "AI & Emerging Technologies",
+      description: "AI services, virtual companions, and cutting-edge tech companies need payment solutions that understand their unique business models.",
+      icon: <Globe className="h-10 w-10 text-[#0EA5E9]" />,
+    },
+    {
+      title: "Tobacco & E-cigarettes",
+      description: "Vape shops, tobacco retailers, and e-cigarette manufacturers require specialized processing solutions to overcome regulatory hurdles.",
+      icon: <AlertTriangle className="h-10 w-10 text-[#0EA5E9]" />,
+    },
+  ];
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <main className="flex-1">
+        <div className="bg-gradient-to-b from-orange-50 to-transparent py-16 px-6">
+          <div className="max-w-5xl mx-auto text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-8 text-[#0EA5E9]">High Risk Payment Processing Solutions</h1>
+            <p className="text-xl text-[#0EA5E9] mb-8 max-w-3xl mx-auto">
+              When traditional payment processors say "no," Waveline says "let's find a way." We specialize in providing reliable merchant services to businesses in high-risk industries.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row justify-center gap-4 mt-10">
+              <Button 
+                onClick={() => navigate('/')}
+                className="px-6 py-3 text-white font-semibold text-lg rounded-lg bg-gradient-to-r from-[#0EA5E9] to-[#0EA5E9]/80 hover:from-[#0EA5E9]/80 hover:to-[#0EA5E9] shadow-lg"
+              >
+                Analyze Statement
+              </Button>
+              <Button 
+                onClick={() => navigate('/contact')}
+                variant="outline" 
+                className="px-6 py-3 border-[#0EA5E9] text-[#0EA5E9] font-semibold text-lg"
+              >
+                Contact Us
+              </Button>
+            </div>
+          </div>
+        </div>
+        
+        <div className="py-16 px-6 bg-white">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-3xl font-bold mb-12 text-center text-[#0EA5E9]">Industries We Serve</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {industries.map((industry, index) => (
+                <div 
+                  key={index} 
+                  className="bg-white rounded-lg shadow-lg p-8 border border-gray-100 hover:shadow-xl transition-shadow"
+                >
+                  <div className="mb-4">
+                    {industry.icon}
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3 text-[#0EA5E9]">{industry.title}</h3>
+                  <p className="text-[#0EA5E9]/80 mb-6">{industry.description}</p>
+                  <Button 
+                    variant="link" 
+                    className="text-[#0EA5E9] p-0 font-medium"
+                    onClick={() => navigate('/contact')}
+                  >
+                    Get a solution →
+                  </Button>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-16 p-8 bg-gradient-to-r from-[#0EA5E9]/10 to-[#0EA5E9]/5 rounded-xl text-center">
+              <h3 className="text-2xl font-bold mb-4 text-[#0EA5E9]">Don't See Your Industry?</h3>
+              <p className="text-[#0EA5E9] mb-6 max-w-2xl mx-auto">
+                We work with many other high-risk industries not listed here. If you're struggling to find payment processing for your business, we likely have a solution.
+              </p>
+              <Button 
+                onClick={() => navigate('/contact')}
+                className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/90 text-white"
+              >
+                Discuss Your Needs
+              </Button>
+            </div>
+          </div>
+        </div>
+        
+        <div className="py-16 px-6 bg-gray-50">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-3xl font-bold mb-6 text-[#0EA5E9]">Why Choose Waveline for High-Risk Processing?</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10 text-left">
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h3 className="text-xl font-semibold mb-3 text-[#0EA5E9]">Industry Expertise</h3>
+                <p className="text-[#0EA5E9]/80">
+                  Our team has decades of combined experience working with businesses in high-risk verticals. We understand your unique challenges.
+                </p>
+              </div>
+              
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h3 className="text-xl font-semibold mb-3 text-[#0EA5E9]">Multiple Banking Relationships</h3>
+                <p className="text-[#0EA5E9]/80">
+                  We maintain strong partnerships with domestic and offshore banks that specialize in high-risk merchant accounts.
+                </p>
+              </div>
+              
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h3 className="text-xl font-semibold mb-3 text-[#0EA5E9]">Competitive Rates</h3>
+                <p className="text-[#0EA5E9]/80">
+                  We work to secure the most favorable terms possible, even for businesses in challenging industries.
+                </p>
+              </div>
+              
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h3 className="text-xl font-semibold mb-3 text-[#0EA5E9]">Chargeback Protection</h3>
+                <p className="text-[#0EA5E9]/80">
+                  Our solutions include advanced fraud detection and chargeback mitigation tools specifically designed for high-risk businesses.
+                </p>
+              </div>
+            </div>
+            
+            <div className="mt-12">
+              <Button 
+                onClick={() => navigate('/')}
+                className="bg-gradient-to-r from-[#0EA5E9] to-[#0EA5E9]/80 hover:from-[#0EA5E9]/80 hover:to-[#0EA5E9] text-white"
+              >
+                Analyze Your Statement
+              </Button>
+            </div>
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+};
+
+export default HighRisk;

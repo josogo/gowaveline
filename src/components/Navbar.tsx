@@ -31,13 +31,14 @@ const Navbar: React.FC<NavbarProps> = ({ className }) => {
         <Button variant="link" className="text-[#0EA5E9]" onClick={() => navigate('/')}>Home</Button>
         <Button variant="link" className="text-[#0EA5E9]" onClick={() => navigate('/industries')}>Industries</Button>
         <Button variant="link" className="text-[#0EA5E9]" onClick={() => navigate('/services')}>Services</Button>
+        <Button variant="link" className="text-[#0EA5E9]" onClick={() => navigate('/high-risk')}>High Risk</Button>
         <Button variant="link" className="text-[#0EA5E9]" onClick={() => navigate('/about')}>About Us</Button>
         <Button variant="link" className="text-[#0EA5E9]" onClick={() => navigate('/contact')}>Contact</Button>
       </div>
       
       <div>
         <Button 
-          className="bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-500 text-white rounded-md"
+          className="bg-gradient-to-r from-[#0EA5E9] to-[#0EA5E9]/80 hover:from-[#0EA5E9]/80 hover:to-[#0EA5E9] text-white rounded-md"
           onClick={handleGetStarted}
         >
           Get Started
