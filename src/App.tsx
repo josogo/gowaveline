@@ -31,33 +31,35 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
-      <TooltipProvider>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/results" element={<Results />} />
-          <Route path="/industries" element={<Industries />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/services" element={<Services />} />
-          <Route path="/get-started" element={<GetStarted />} />
-          <Route path="/high-risk" element={<HighRisk />} />
-          <Route path="/case-studies" element={<CaseStudies />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/comparison" element={<Comparison />} />
-          <Route path="/partners" element={<Partners />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/team-management" element={<TeamManagement />} />
-          <Route path="/admin/deals" element={<Deals />} />
-          <Route path="/admin/gmail-integration" element={<GmailIntegration />} />
-          <Route path="/admin/commission-tracking" element={<CommissionTracking />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <Toaster />
-        <Sonner />
-      </TooltipProvider>
+      <React.StrictMode>
+        <TooltipProvider>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/results" element={<Results />} />
+            <Route path="/industries" element={<Industries />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/get-started" element={<GetStarted />} />
+            <Route path="/high-risk" element={<HighRisk />} />
+            <Route path="/case-studies" element={<CaseStudies />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/comparison" element={<Comparison />} />
+            <Route path="/partners" element={<Partners />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/team-management" element={<TeamManagement />} />
+            <Route path="/admin/deals" element={<Deals />} />
+            <Route path="/admin/gmail-integration" element={<GmailIntegration />} />
+            <Route path="/admin/commission-tracking" element={<CommissionTracking />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Toaster />
+          <Sonner />
+        </TooltipProvider>
+      </React.StrictMode>
     </BrowserRouter>
   </QueryClientProvider>
 );
