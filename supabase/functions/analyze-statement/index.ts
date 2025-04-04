@@ -63,7 +63,7 @@ serve(async (req) => {
       if (GEMINI_API_KEY) {
         try {
           console.log("Attempting Gemini API extraction for PDF");
-          extractedText = await extractTextWithGemini(fileContent, fileType);
+          extractedText = await extractTextWithGeminiFixed(fileContent, fileType);
           console.log("Gemini extraction successful");
         } catch (error) {
           console.error("Gemini extraction failed:", error);
@@ -180,7 +180,97 @@ serve(async (req) => {
 });
 
 /**
- * Extract text from PDF using Google Gemini AI
+ * Fixed version of the function to extract text from PDF using Google Gemini AI
+ * This version implements improved error handling and memory management
+ */
+async function extractTextWithGeminiFixed(fileContent: ArrayBuffer, fileType: string) {
+  if (!GEMINI_API_KEY) {
+    throw new Error('Missing Gemini API key');
+  }
+
+  // Only use a portion of the PDF if it's very large to avoid the stack overflow
+  const maxBytes = 1024 * 1024; // 1MB limit
+  const contentToProcess = fileContent.byteLength > maxBytes 
+    ? fileContent.slice(0, maxBytes) 
+    : fileContent;
+  
+  console.log(`Processing PDF content, size: ${contentToProcess.byteLength} bytes ` + 
+    (fileContent.byteLength > maxBytes ? "(truncated due to size)" : ""));
+  
+  try {
+    // Convert file to base64 with proper error handling
+    const uint8Array = new Uint8Array(contentToProcess);
+    let binary = '';
+    const chunkSize = 1024;
+    
+    // Process in chunks to avoid call stack issues
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.slice(i, i + chunkSize);
+      chunk.forEach(byte => {
+        binary += String.fromCharCode(byte);
+      });
+    }
+    
+    const base64File = btoa(binary);
+    console.log(`Converted file to base64, length: ${base64File.length}`);
+    
+    const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${GEMINI_API_KEY}`;
+    
+    const requestBody = {
+      contents: [
+        {
+          parts: [
+            {
+              text: "Extract all text content from this document, which is a merchant processing statement. Focus on capturing numerical information, fees, charges, and all visible text. Format the extraction as plain text."
+            },
+            {
+              inline_data: {
+                mime_type: fileType,
+                data: base64File
+              }
+            }
+          ]
+        }
+      ],
+      generation_config: {
+        temperature: 0.1,
+        max_output_tokens: 4096
+      }
+    };
+    
+    console.log("Sending request to Gemini API");
+    const response = await fetch(apiEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Gemini API error response: ${response.status}`, errorText);
+      throw new Error(`Gemini API error: ${response.status} ${errorText}`);
+    }
+    
+    const result = await response.json();
+    console.log("Received response from Gemini API");
+    
+    if (result.candidates && result.candidates.length > 0 && result.candidates[0].content.parts.length > 0) {
+      const extractedText = result.candidates[0].content.parts[0].text;
+      console.log(`Successfully extracted text, length: ${extractedText.length}`);
+      return extractedText;
+    }
+    
+    throw new Error('Gemini API returned no text content');
+  } catch (error) {
+    console.error('Error in extractTextWithGeminiFixed:', error);
+    throw new Error(`Gemini text extraction failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+/**
+ * The original extractTextWithGemini function is kept for reference but not used
  */
 async function extractTextWithGemini(fileContent: ArrayBuffer, fileType: string) {
   if (!GEMINI_API_KEY) {
