@@ -21,6 +21,10 @@ import Comparison from "./pages/Comparison";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import Partners from "./pages/Partners";
+import TeamManagement from "./pages/admin/TeamManagement";
+import Deals from "./pages/admin/Deals";
+import GmailIntegration from "./pages/admin/GmailIntegration";
+import CommissionTracking from "./pages/admin/CommissionTracking";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +48,10 @@ const App = () => (
           <Route path="/partners" element={<Partners />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/team-management" element={<TeamManagement />} />
+          <Route path="/admin/deals" element={<Deals />} />
+          <Route path="/admin/gmail-integration" element={<GmailIntegration />} />
+          <Route path="/admin/commission-tracking" element={<CommissionTracking />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
