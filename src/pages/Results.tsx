@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import Dashboard from '@/components/Dashboard';
 import CallToAction from '@/components/CallToAction';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Loader2, RefreshCw, AlertTriangle } from 'lucide-react';
+import { AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatementAnalysis } from '@/services/statementService';
 import { toast } from "sonner";
@@ -14,7 +14,6 @@ const Results = () => {
   const [analysis, setAnalysis] = useState<StatementAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isMockData, setIsMockData] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -28,18 +27,25 @@ const Results = () => {
         const parsedData = JSON.parse(storedData);
         console.log("Retrieved analysis data from localStorage:", parsedData);
         
-        // Check if this is mock data from the simulation
-        if (parsedData.isMockData === true) {
-          console.warn("Mock data detected - displaying simulation notice");
-          setIsMockData(true);
-          toast.warning("Viewing simulated data for demonstration purposes");
-        } else {
-          console.log("Real analysis data found");
-          setIsMockData(false);
+        if (!parsedData.success) {
+          console.error("Analysis was not successful:", parsedData.error || "Unknown error");
+          setError(parsedData.message || "There was a problem analyzing your statement. Please try again with a different file format.");
+          setLoading(false);
+          return;
         }
         
         setAnalysis(parsedData);
         setLoading(false);
+        
+        // Show appropriate toast based on data quality
+        const hasRealData = 
+          parsedData.effectiveRate !== "N/A" || 
+          parsedData.monthlyVolume !== "N/A" || 
+          parsedData.pricingModel !== "N/A";
+        
+        if (!hasRealData) {
+          toast.warning("Limited data extracted. Try uploading a clearer PDF or CSV version.");
+        }
       } catch (err) {
         console.error('Error parsing stored analysis data:', err);
         setError('Error retrieving analysis data. Please try uploading your statement again.');
@@ -56,6 +62,11 @@ const Results = () => {
     // Clear stored data before returning home
     console.log("Clearing analysis data and returning to home page");
     localStorage.removeItem('statementAnalysis');
+    navigate('/');
+  };
+
+  const handleTryAgain = () => {
+    console.log("Returning to upload page");
     navigate('/');
   };
 
@@ -84,7 +95,11 @@ const Results = () => {
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
-            <div className="flex justify-center mt-8">
+            <div className="flex justify-center mt-8 gap-4">
+              <Button onClick={handleTryAgain} variant="outline">
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Try Again
+              </Button>
               <Button onClick={handleReturnHome}>Return to Home</Button>
             </div>
           </div>
@@ -93,22 +108,9 @@ const Results = () => {
             <div className="bg-gradient-to-b from-orange-50 to-transparent py-12 px-6 text-center">
               <h1 className="text-3xl md:text-4xl font-bold mb-4">Your Statement Analysis</h1>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                We've analyzed your merchant statement and found several insights that could help you reduce costs.
+                We've analyzed your merchant statement and extracted the available data.
               </p>
             </div>
-            
-            {isMockData && (
-              <div className="container mx-auto px-6 mb-8">
-                <Alert variant="warning" className="bg-amber-50 border-amber-200">
-                  <AlertTriangle className="h-4 w-4 text-amber-600" />
-                  <AlertTitle className="text-amber-800">Simulation Mode</AlertTitle>
-                  <AlertDescription className="text-amber-700">
-                    This is simulated data for demonstration purposes. This is not based on your actual statement.
-                    For accurate results, please ensure your OpenAI API key is correctly configured and try uploading a different file format.
-                  </AlertDescription>
-                </Alert>
-              </div>
-            )}
             
             {analysis && <Dashboard analysisData={analysis} />}
             <CallToAction />

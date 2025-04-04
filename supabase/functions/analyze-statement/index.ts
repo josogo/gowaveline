@@ -39,13 +39,22 @@ serve(async (req) => {
     // Check if OpenAI API key is available
     if (!OPENAI_API_KEY) {
       console.error("OpenAI API key not configured");
-      const mockData = generateMockData();
       return new Response(
         JSON.stringify({ 
-          success: true,
-          ...mockData,
-          isMockData: true,
-          message: "Using simulated data. The system needs an OpenAI API key to process files."
+          success: false,
+          effectiveRate: "N/A",
+          monthlyVolume: "N/A",
+          chargebackRatio: "N/A",
+          pricingModel: "N/A",
+          fees: {
+            monthlyFee: "N/A",
+            pciFee: "N/A",
+            statementFee: "N/A",
+            batchFee: "N/A",
+            transactionFees: "N/A"
+          },
+          error: "OpenAI API key is not configured. Please add your API key in settings.",
+          message: "Unable to analyze without an OpenAI API key."
         }),
         { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
@@ -73,7 +82,6 @@ serve(async (req) => {
         JSON.stringify({ 
           success: true,
           ...analysisResult,
-          isMockData: false,
           message: "Analysis complete using OpenAI."
         }),
         { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
@@ -81,15 +89,23 @@ serve(async (req) => {
     } catch (aiError) {
       console.error("OpenAI analysis failed:", aiError);
       
-      // Fallback to mock data if AI processing fails
-      const mockData = generateMockData();
+      // Return N/A for all fields instead of mock data
       return new Response(
         JSON.stringify({ 
-          success: true,
-          ...mockData,
-          isMockData: true,
+          success: false,
+          effectiveRate: "N/A",
+          monthlyVolume: "N/A",
+          chargebackRatio: "N/A",
+          pricingModel: "N/A",
+          fees: {
+            monthlyFee: "N/A",
+            pciFee: "N/A",
+            statementFee: "N/A",
+            batchFee: "N/A",
+            transactionFees: "N/A"
+          },
           error: aiError instanceof Error ? aiError.message : 'Unknown error in AI processing',
-          message: "Using simulated data due to an error in processing your file with OpenAI."
+          message: "Unable to extract data from your statement. The PDF might be in a format that's difficult to analyze."
         }),
         { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
@@ -97,15 +113,23 @@ serve(async (req) => {
     
   } catch (error) {
     console.error('Error in edge function:', error);
-    // Return a proper error response with mock data as fallback
-    const mockData = generateMockData();
+    // Return N/A values instead of mock data
     return new Response(
       JSON.stringify({ 
-        success: true,
-        ...mockData,
-        isMockData: true,
+        success: false,
+        effectiveRate: "N/A",
+        monthlyVolume: "N/A",
+        chargebackRatio: "N/A",
+        pricingModel: "N/A",
+        fees: {
+          monthlyFee: "N/A",
+          pciFee: "N/A",
+          statementFee: "N/A",
+          batchFee: "N/A",
+          transactionFees: "N/A"
+        },
         error: error instanceof Error ? error.message : 'Unknown error',
-        message: "Using simulated data due to an error in processing your request."
+        message: "An error occurred while processing your request."
       }),
       { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
@@ -144,19 +168,20 @@ async function processWithOpenAI(fileBuffer: ArrayBuffer, fileType: string): Pro
           role: "system",
           content: `You are a financial analysis assistant specialized in analyzing merchant processing statements. 
           Extract and calculate key metrics such as effective rate, monthly volume, pricing model, and fee structure. 
+          If you cannot determine a specific value with confidence, use "N/A" instead of guessing.
           Return your analysis in a structured format with exactly these fields:
-          - effectiveRate (format: "X.XX%")
-          - monthlyVolume (format: "$X,XXX.XX")
-          - chargebackRatio (format: "0.XX%")
-          - pricingModel (e.g., "Tiered", "Interchange-plus", etc.)
-          - fees (an object with monthlyFee, pciFee, statementFee, batchFee, and transactionFees)`
+          - effectiveRate (format: "X.XX%" or "N/A")
+          - monthlyVolume (format: "$X,XXX.XX" or "N/A")
+          - chargebackRatio (format: "0.XX%" or "N/A")
+          - pricingModel (e.g., "Tiered", "Interchange-plus", etc. or "N/A")
+          - fees (an object with monthlyFee, pciFee, statementFee, batchFee, and transactionFees, all can be "N/A")`
         },
         {
           role: "user",
           content: [
             { 
               type: "text", 
-              text: "Please analyze this merchant statement and extract the key metrics." 
+              text: "Please analyze this merchant statement and extract the key metrics. If you cannot find a specific value, use N/A. Do not invent data." 
             },
             {
               type: "image_url",
@@ -231,23 +256,4 @@ async function processWithOpenAI(fileBuffer: ArrayBuffer, fileType: string): Pro
     console.error("Error in processWithOpenAI:", error);
     throw error;
   }
-}
-
-/**
- * Generate realistic mock data for testing the UI
- */
-function generateMockData() {
-  return {
-    effectiveRate: "2.45%",
-    monthlyVolume: "$42,850.75",
-    chargebackRatio: "0.05%",
-    pricingModel: "Tiered",
-    fees: {
-      monthlyFee: "$25.00",
-      pciFee: "$19.95",
-      statementFee: "$9.95",
-      batchFee: "$0.25",
-      transactionFees: "$0.10 per transaction + 1.85% for qualified cards"
-    }
-  };
 }
