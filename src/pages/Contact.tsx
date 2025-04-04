@@ -1,304 +1,329 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Mail, Phone, Send, MapPin, Clock, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
+import { Mail, Phone, MapPin, Clock } from 'lucide-react';
 
 const formSchema = z.object({
-  name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
-  email: z.string().email({ message: 'Please enter a valid email address.' }),
-  phone: z.string().min(10, { message: 'Please enter a valid phone number.' }),
-  business: z.string().min(2, { message: 'Business name is required.' }),
-  message: z.string().min(10, { message: 'Message must be at least 10 characters.' }),
+  name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
+  email: z.string().email({ message: 'Please enter a valid email address' }),
+  phone: z.string().min(10, { message: 'Please enter a valid phone number' }),
+  company: z.string().optional(),
+  inquiryType: z.string(),
+  partnerType: z.string().optional(),
+  message: z.string().min(10, { message: 'Message must be at least 10 characters' }),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 const Contact = () => {
+  const location = useLocation();
+  const [isPartner, setIsPartner] = useState(false);
+  
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
       email: '',
       phone: '',
-      business: '',
+      company: '',
+      inquiryType: location.state?.partnerType ? 'partnership' : 'general',
+      partnerType: location.state?.partnerType || '',
       message: '',
     },
   });
-
-  const onSubmit = async (data: FormValues) => {
-    console.log('Form data submitted:', data);
+  
+  useEffect(() => {
+    if (location.state?.partnerType) {
+      form.setValue('inquiryType', 'partnership');
+      form.setValue('partnerType', location.state.partnerType);
+      setIsPartner(true);
+    }
+  }, [location.state, form]);
+  
+  const onSubmit = (data: FormValues) => {
+    console.log('Form submitted:', data);
     
-    // Here you would typically send the data to your backend
-    // For now, just showing a success toast
-    toast.success('Your message has been sent!', {
-      description: 'We will get back to you as soon as possible.',
-    });
-    
+    // In a real app, you would send this data to your backend
+    toast.success('Your message has been sent! We\'ll be in touch soon.');
     form.reset();
   };
-
+  
+  const handleInquiryTypeChange = (value: string) => {
+    setIsPartner(value === 'partnership');
+    if (value !== 'partnership') {
+      form.setValue('partnerType', '');
+    }
+  };
+  
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex flex-col min-h-screen">
       <Navbar />
-      <main className="flex-1">
+      
+      <div className="flex-1">
         {/* Hero Section */}
-        <div className="bg-gradient-to-b from-orange-50 to-transparent py-16 px-6">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6 text-[#0EA5E9]">Get in Touch</h1>
-            <p className="text-xl text-[#0EA5E9] mb-8 max-w-2xl mx-auto">
-              Have questions about payment processing? Looking for a better solution? We're here to help you navigate the complex world of payments.
+        <section className="bg-gradient-to-b from-orange-50 to-transparent py-16 px-6 md:px-12">
+          <div className="max-w-7xl mx-auto text-center">
+            <h1 className="text-4xl md:text-5xl font-bold text-orange-500 mb-6">
+              Contact Us
+            </h1>
+            <p className="text-xl text-[#0EA5E9] max-w-3xl mx-auto">
+              Have questions about our services? Need a personalized quote? Want to join our partner network? We're here to help!
             </p>
-            
-            <div className="flex flex-col md:flex-row items-center justify-center gap-8 mb-12">
-              <div className="flex items-center text-[#0EA5E9] group">
-                <div className="bg-[#0EA5E9]/10 p-3 rounded-full mr-3 group-hover:bg-[#0EA5E9] group-hover:text-white transition-colors">
-                  <Mail className="h-6 w-6" />
-                </div>
-                <a href="mailto:info@gowaveline.com" className="text-xl hover:underline">info@gowaveline.com</a>
-              </div>
-              
-              <div className="flex items-center text-[#0EA5E9] group">
-                <div className="bg-[#0EA5E9]/10 p-3 rounded-full mr-3 group-hover:bg-[#0EA5E9] group-hover:text-white transition-colors">
-                  <Phone className="h-6 w-6" />
-                </div>
-                <a href="tel:8055863591" className="text-xl hover:underline">(805) 586-3591</a>
-              </div>
-            </div>
           </div>
-        </div>
+        </section>
         
-        {/* Contact Form and Info */}
-        <div className="py-12 px-6 bg-white">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex flex-col lg:flex-row gap-12">
-              {/* Form */}
-              <div className="lg:w-2/3">
-                <div className="bg-white shadow-xl rounded-xl p-8 border border-gray-100">
-                  <h2 className="text-2xl font-bold mb-6 text-[#0EA5E9]">Send Us a Message</h2>
-                  
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                          control={form.control}
-                          name="name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-[#0EA5E9]">Full Name</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Your name" className="border-[#0EA5E9]/20 focus-visible:ring-[#0EA5E9]" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-[#0EA5E9]">Email</FormLabel>
-                              <FormControl>
-                                <Input type="email" placeholder="your@email.com" className="border-[#0EA5E9]/20 focus-visible:ring-[#0EA5E9]" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                          control={form.control}
-                          name="phone"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-[#0EA5E9]">Phone Number</FormLabel>
-                              <FormControl>
-                                <Input placeholder="(123) 456-7890" className="border-[#0EA5E9]/20 focus-visible:ring-[#0EA5E9]" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="business"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-[#0EA5E9]">Business Name</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Your business" className="border-[#0EA5E9]/20 focus-visible:ring-[#0EA5E9]" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      
+        <section className="py-12 px-6 md:px-12">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-lg shadow-md p-8">
+                <h2 className="text-2xl font-bold text-orange-500 mb-6">Send Us a Message</h2>
+                
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <FormField
                         control={form.control}
-                        name="message"
+                        name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-[#0EA5E9]">Message</FormLabel>
+                            <FormLabel>Full Name</FormLabel>
                             <FormControl>
-                              <Textarea 
-                                placeholder="How can we help you?" 
-                                className="min-h-[150px] resize-y border-[#0EA5E9]/20 focus-visible:ring-[#0EA5E9]"
-                                {...field} 
-                              />
+                              <Input placeholder="John Doe" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                       
-                      <Button 
-                        type="submit" 
-                        className="w-full bg-gradient-to-r from-[#0EA5E9] to-[#0EA5E9]/80 hover:from-[#0EA5E9]/80 hover:to-[#0EA5E9] text-white py-6 text-lg"
-                      >
-                        <Send className="mr-2 h-5 w-5" />
-                        Send Message
-                      </Button>
-                    </form>
-                  </Form>
-                </div>
-              </div>
-              
-              {/* Contact Info */}
-              <div className="lg:w-1/3">
-                <div className="bg-[#0EA5E9]/5 rounded-xl p-8 h-full">
-                  <h3 className="text-xl font-bold mb-6 text-[#0EA5E9]">Contact Information</h3>
-                  
-                  <div className="space-y-6">
-                    <div className="flex items-start">
-                      <div className="bg-[#0EA5E9]/10 p-2 rounded-full mr-4 mt-1">
-                        <Mail className="h-5 w-5 text-[#0EA5E9]" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-[#0EA5E9]">Email Us</h4>
-                        <a href="mailto:info@gowaveline.com" className="text-[#0EA5E9]/80 hover:text-[#0EA5E9]">
-                          info@gowaveline.com
-                        </a>
-                      </div>
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email Address</FormLabel>
+                            <FormControl>
+                              <Input placeholder="you@example.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
                     
-                    <div className="flex items-start">
-                      <div className="bg-[#0EA5E9]/10 p-2 rounded-full mr-4 mt-1">
-                        <Phone className="h-5 w-5 text-[#0EA5E9]" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-[#0EA5E9]">Call Us</h4>
-                        <a href="tel:8055863591" className="text-[#0EA5E9]/80 hover:text-[#0EA5E9]">
-                          (805) 586-3591
-                        </a>
-                      </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone Number</FormLabel>
+                            <FormControl>
+                              <Input placeholder="(123) 456-7890" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="company"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Company (Optional)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Your Company" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
                     
-                    <div className="flex items-start">
-                      <div className="bg-[#0EA5E9]/10 p-2 rounded-full mr-4 mt-1">
-                        <MapPin className="h-5 w-5 text-[#0EA5E9]" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-[#0EA5E9]">Office</h4>
-                        <p className="text-[#0EA5E9]/80">
-                          California, United States
-                        </p>
-                      </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="inquiryType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Inquiry Type</FormLabel>
+                            <Select 
+                              onValueChange={(value) => {
+                                field.onChange(value);
+                                handleInquiryTypeChange(value);
+                              }} 
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select an inquiry type" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="general">General Inquiry</SelectItem>
+                                <SelectItem value="quote">Request a Quote</SelectItem>
+                                <SelectItem value="support">Customer Support</SelectItem>
+                                <SelectItem value="partnership">Partnership Opportunity</SelectItem>
+                                <SelectItem value="statement">Statement Analysis</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      {isPartner && (
+                        <FormField
+                          control={form.control}
+                          name="partnerType"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Partner Type</FormLabel>
+                              <Select 
+                                onValueChange={field.onChange} 
+                                defaultValue={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select partner type" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="agent">Agent</SelectItem>
+                                  <SelectItem value="iso">ISO / MSP</SelectItem>
+                                  <SelectItem value="isv">ISV / Software Partner</SelectItem>
+                                  <SelectItem value="other">Other Partnership</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
                     </div>
                     
-                    <div className="flex items-start">
-                      <div className="bg-[#0EA5E9]/10 p-2 rounded-full mr-4 mt-1">
-                        <Clock className="h-5 w-5 text-[#0EA5E9]" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-[#0EA5E9]">Business Hours</h4>
-                        <p className="text-[#0EA5E9]/80">
-                          Monday - Friday: 9AM - 5PM PST
-                        </p>
-                      </div>
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="message"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Message</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="How can we help you?" 
+                              className="min-h-[120px]" 
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     
-                    <div className="flex items-start">
-                      <div className="bg-[#0EA5E9]/10 p-2 rounded-full mr-4 mt-1">
-                        <Globe className="h-5 w-5 text-[#0EA5E9]" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-[#0EA5E9]">Service Areas</h4>
-                        <p className="text-[#0EA5E9]/80">
-                          United States, Canada, Europe, and Global Processing Solutions
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-8 p-6 bg-[#0EA5E9] rounded-lg text-white">
-                    <h4 className="font-semibold mb-2">Need Immediate Assistance?</h4>
-                    <p className="mb-4 text-white/90">
-                      For urgent matters, please call us directly for the fastest response.
-                    </p>
-                    <a 
-                      href="tel:8055863591" 
-                      className="inline-block bg-white text-[#0EA5E9] px-4 py-2 rounded-lg font-medium hover:bg-opacity-90 transition-colors"
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500"
                     >
-                      Call Now
-                    </a>
+                      Send Message
+                    </Button>
+                  </form>
+                </Form>
+              </div>
+            </div>
+            
+            <div>
+              <div className="bg-white rounded-lg shadow-md p-8 mb-8">
+                <h2 className="text-2xl font-bold text-orange-500 mb-6">Contact Information</h2>
+                
+                <div className="space-y-6">
+                  <div className="flex items-start space-x-4">
+                    <Mail className="w-6 h-6 text-orange-500 mt-1" />
+                    <div>
+                      <h3 className="font-medium text-[#0EA5E9]">Email Us</h3>
+                      <p className="text-gray-600">info@gowaveline.com</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-4">
+                    <Phone className="w-6 h-6 text-orange-500 mt-1" />
+                    <div>
+                      <h3 className="font-medium text-[#0EA5E9]">Call Us</h3>
+                      <p className="text-gray-600">(805) 586-3591</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-4">
+                    <MapPin className="w-6 h-6 text-orange-500 mt-1" />
+                    <div>
+                      <h3 className="font-medium text-[#0EA5E9]">Office Location</h3>
+                      <p className="text-gray-600">
+                        5100 California Ave<br />
+                        Suite 200<br />
+                        Bakersfield, CA 93309
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-4">
+                    <Clock className="w-6 h-6 text-orange-500 mt-1" />
+                    <div>
+                      <h3 className="font-medium text-[#0EA5E9]">Business Hours</h3>
+                      <p className="text-gray-600">
+                        Monday - Friday<br />
+                        9:00 AM - 5:00 PM PST
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* FAQ Section */}
-        <div className="py-16 px-6 bg-gray-50">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-10 text-[#0EA5E9]">Frequently Asked Questions</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-3 text-[#0EA5E9]">How quickly can you set up a merchant account?</h3>
-                <p className="text-[#0EA5E9]/80">
-                  For standard businesses, we can typically have you processing in 1-3 business days. High-risk businesses may take 5-7 days, depending on your industry and specific circumstances.
-                </p>
-              </div>
               
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-3 text-[#0EA5E9]">Do you work with high-risk industries?</h3>
-                <p className="text-[#0EA5E9]/80">
-                  Yes! We specialize in providing payment processing for businesses considered high-risk by traditional processors. Contact us to discuss your specific industry needs.
+              <div className="bg-gradient-to-r from-orange-500 to-orange-400 rounded-lg shadow-md p-8 text-white">
+                <h3 className="text-xl font-bold mb-4">Partner With Us</h3>
+                <p className="mb-6">
+                  Interested in our partner program? We offer competitive compensation and dedicated support for agents, ISOs, and software partners.
                 </p>
-              </div>
-              
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-3 text-[#0EA5E9]">What information do I need to apply?</h3>
-                <p className="text-[#0EA5E9]/80">
-                  You'll need basic business information, processing history (if available), and identification documents. We'll guide you through the exact requirements based on your business type.
-                </p>
-              </div>
-              
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-3 text-[#0EA5E9]">Can you help lower my current processing rates?</h3>
-                <p className="text-[#0EA5E9]/80">
-                  In most cases, yes! Upload your current statement for a free analysis, and we'll show you exactly how much you could save by switching to Waveline.
-                </p>
+                <Button 
+                  onClick={() => {
+                    form.setValue('inquiryType', 'partnership');
+                    setIsPartner(true);
+                    document.querySelector('form')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  variant="outline"
+                  className="w-full text-white border-white hover:bg-orange-600"
+                >
+                  Learn More About Partnerships
+                </Button>
               </div>
             </div>
           </div>
-        </div>
-      </main>
+        </section>
+      </div>
+      
       <Footer />
     </div>
   );
