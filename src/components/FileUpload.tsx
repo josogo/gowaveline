@@ -12,6 +12,7 @@ const FileUpload = () => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [debugInfo, setDebugInfo] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -33,6 +34,7 @@ const FileUpload = () => {
     }
     
     setFile(selectedFile);
+    setDebugInfo(null);
   }, []);
   
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
@@ -49,6 +51,7 @@ const FileUpload = () => {
   const removeFile = () => {
     setFile(null);
     setProgress(0);
+    setDebugInfo(null);
   };
   
   const handleUpload = async () => {
@@ -56,12 +59,23 @@ const FileUpload = () => {
     
     setUploading(true);
     setProgress(0);
+    setDebugInfo(null);
     
     try {
+      console.log("Starting file analysis:", file.name, file.type);
+      
       // Use our service to analyze the statement
       const analysisData = await analyzeStatement(file, (progressValue) => {
         setProgress(progressValue);
       });
+      
+      console.log("Analysis data received:", analysisData);
+      
+      // Check if we received valid analysis data
+      if (!analysisData || !analysisData.success) {
+        setDebugInfo("Analysis returned invalid data");
+        throw new Error("Analysis returned invalid data");
+      }
       
       // Store analysis data in localStorage for the results page to use
       localStorage.setItem('statementAnalysis', JSON.stringify(analysisData));
@@ -75,6 +89,7 @@ const FileUpload = () => {
       
     } catch (error) {
       console.error('Analysis error:', error);
+      setDebugInfo(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       toast.error("Failed to analyze statement. Using mock data instead.");
       
       // Use mock data as fallback
@@ -156,6 +171,13 @@ const FileUpload = () => {
             <div className="space-y-2">
               <Progress value={progress} className="h-2" />
               <p className="text-sm text-right text-muted-foreground">{progress}%</p>
+            </div>
+          )}
+          
+          {debugInfo && (
+            <div className="p-3 bg-orange-50 border border-orange-200 rounded-md text-sm text-orange-700">
+              <p className="font-medium">Debug Information:</p>
+              <p className="font-mono text-xs mt-1 break-all">{debugInfo}</p>
             </div>
           )}
           
