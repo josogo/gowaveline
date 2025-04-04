@@ -1,45 +1,16 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { AlertCircle, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { StatementAnalysis } from '@/services/statementService';
 
-type AnalysisData = {
-  effectiveRate: string;
-  monthlyVolume: string;
-  chargebackRatio: string;
-  pricingModel: string;
-  isMockData?: boolean;
-  fees: {
-    monthlyFee: string;
-    pciFee: string;
-    statementFee: string;
-    batchFee: string;
-    transactionFees: string;
-  };
-};
+interface DashboardProps {
+  analysisData: StatementAnalysis;
+}
 
-const Dashboard = () => {
-  const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isMockData, setIsMockData] = useState(false);
-
-  useEffect(() => {
-    // Retrieve analysis data from localStorage
-    const storedData = localStorage.getItem('statementAnalysis');
-    if (storedData) {
-      try {
-        const parsedData = JSON.parse(storedData);
-        setAnalysisData(parsedData);
-        setIsMockData(!!parsedData.isMockData);
-      } catch (error) {
-        console.error('Error parsing analysis data:', error);
-      }
-    }
-    setLoading(false);
-  }, []);
-
+const Dashboard: React.FC<DashboardProps> = ({ analysisData }) => {
   // Example fee breakdown data for visualization
   const feeBreakdown = [
     { name: 'Processing Fees', value: 78 },
@@ -60,38 +31,13 @@ const Dashboard = () => {
     { month: 'Jun', volume: 125780 },
   ];
 
-  if (loading) {
-    return (
-      <div className="container mx-auto py-8">
-        <div className="text-center py-12">
-          <div className="animate-pulse h-8 w-60 bg-gray-200 rounded mb-4 mx-auto"></div>
-          <div className="animate-pulse h-4 w-96 bg-gray-200 rounded mx-auto"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!analysisData) {
-    return (
-      <div className="container mx-auto py-8">
-        <Alert variant="destructive" className="max-w-xl mx-auto">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>No analysis data found</AlertTitle>
-          <AlertDescription>
-            Please upload a merchant statement from the home page to see the analysis.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto py-8 px-4">
-      {isMockData && (
-        <Alert className="mb-6 bg-amber-50 border-amber-200">
-          <AlertTriangle className="h-4 w-4 text-amber-600" />
-          <AlertTitle className="text-amber-800">Demonstration Data</AlertTitle>
-          <AlertDescription className="text-amber-700">
+      {analysisData.isMockData && (
+        <Alert variant="warning" className="mb-6">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Demonstration Data</AlertTitle>
+          <AlertDescription>
             You are viewing sample data for demonstration purposes. This is not based on your actual statement.
           </AlertDescription>
         </Alert>
