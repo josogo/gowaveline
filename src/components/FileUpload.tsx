@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Cloud, File, FileText, UploadCloud, X } from 'lucide-react';
@@ -6,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { toast } from "sonner";
 import { useNavigate } from 'react-router-dom';
+import { analyzeStatement, StatementAnalysis } from '@/services/statementService';
 
 const FileUpload = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -54,81 +54,28 @@ const FileUpload = () => {
     if (!file) return;
     
     setUploading(true);
+    setProgress(0);
     
     try {
-      // Create form data to send file
-      const formData = new FormData();
-      formData.append('file', file);
+      // Use our service to analyze the statement
+      const analysisData = await analyzeStatement(file, (progressValue) => {
+        setProgress(progressValue);
+      });
       
-      // Simulate progress updates - in a real implementation, you might use 
-      // XMLHttpRequest with progress events
-      const progressInterval = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 85) {
-            clearInterval(progressInterval);
-            return 85;
-          }
-          return prev + 5;
-        });
-      }, 300);
+      // Store analysis data in localStorage for the results page to use
+      localStorage.setItem('statementAnalysis', JSON.stringify(analysisData));
       
-      // For now, we're using a mock API endpoint
-      // In a production app, replace with your actual API endpoint
-      try {
-        // Simulating API call with a timeout
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        
-        // In a real scenario, you would be making an actual API call:
-        // const response = await fetch('https://your-api.com/analyze', {
-        //   method: 'POST',
-        //   body: formData,
-        // });
-        // 
-        // if (!response.ok) {
-        //   throw new Error('Failed to upload file');
-        // }
-        // 
-        // const data = await response.json();
-        
-        clearInterval(progressInterval);
-        setProgress(100);
-        
-        // Mock successful response
-        const mockData = {
-          success: true,
-          effectiveRate: '2.95%',
-          monthlyVolume: '$125,780',
-          chargebackRatio: '0.15%',
-          pricingModel: 'Tiered',
-          fees: {
-            monthlyFee: '$9.95',
-            pciFee: '$14.95',
-            statementFee: '$7.50',
-            batchFee: '$0.25',
-            transactionFees: '$0.10 per transaction'
-          }
-        };
-        
-        // Store analysis data in localStorage for the results page to use
-        localStorage.setItem('statementAnalysis', JSON.stringify(mockData));
-        
-        toast.success("Analysis complete!");
-        
-        // Navigate to results page after a short delay
-        setTimeout(() => {
-          navigate('/results');
-        }, 1000);
-        
-      } catch (error) {
-        console.error('API Error:', error);
-        toast.error("Failed to analyze statement. Please try again.");
-        clearInterval(progressInterval);
-        setProgress(0);
-      }
+      toast.success("Analysis complete!");
+      
+      // Navigate to results page after a short delay
+      setTimeout(() => {
+        navigate('/results');
+      }, 1000);
       
     } catch (error) {
-      console.error('Upload error:', error);
-      toast.error("An error occurred during upload");
+      console.error('Analysis error:', error);
+      toast.error("Failed to analyze statement. Please try again.");
+      setProgress(0);
     } finally {
       setUploading(false);
     }
