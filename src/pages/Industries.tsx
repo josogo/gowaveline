@@ -33,8 +33,8 @@ const industries = [
   },
   {
     name: "Cryptocurrency",
-    description: "Innovative payment solutions for crypto businesses",
-    features: ["Crypto-to-fiat processing", "Low chargeback options", "International transactions"]
+    description: "Innovative payment solutions for crypto businesses and exchanges",
+    features: ["Crypto-to-fiat processing", "Low chargeback options", "International transactions", "Regulatory compliance expertise"]
   },
   {
     name: "AI & Technology",

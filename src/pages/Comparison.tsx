@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
+import FileUpload from '@/components/FileUpload';
 import { 
   Dialog, 
   DialogContent,
@@ -14,9 +15,22 @@ import { useNavigate } from 'react-router-dom';
 const Comparison = () => {
   const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [contactInfo, setContactInfo] = useState({
+    companyName: '',
+    email: '',
+    phone: '',
+  });
   
   const showDemo = () => {
     setDialogOpen(true);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setContactInfo(prev => ({
+      ...prev,
+      [id]: value
+    }));
   };
   
   return (
@@ -71,18 +85,6 @@ const Comparison = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-b">
-                      <td className="p-4 font-medium">Processing Fees</td>
-                      <td className="p-4 text-center bg-green-50">Interchange + 0.1% - 0.3%</td>
-                      <td className="p-4 text-center">2.9% + $0.30</td>
-                      <td className="p-4 text-center">2.4% - 2.9% + $0.30</td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="p-4 font-medium">Monthly Fee</td>
-                      <td className="p-4 text-center bg-green-50">$10-$20</td>
-                      <td className="p-4 text-center">$0</td>
-                      <td className="p-4 text-center">$29-$299 (platform fee)</td>
-                    </tr>
                     <tr className="border-b">
                       <td className="p-4 font-medium">Account Type</td>
                       <td className="p-4 text-center bg-green-50">Dedicated Merchant Account</td>
@@ -187,18 +189,55 @@ const Comparison = () => {
               </div>
             </div>
             
-            {/* CTA Section */}
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-6 text-[#0EA5E9]">Ready to Lower Your Processing Costs?</h2>
-              <p className="text-xl mb-8 max-w-3xl mx-auto text-gray-600">
-                Submit your current merchant statement for a free analysis and see how much you could save by switching to Waveline.
+            {/* Free Analysis Section */}
+            <div className="bg-gradient-to-r from-[#0EA5E9]/10 to-[#0EA5E9]/5 rounded-xl p-8 mb-20">
+              <h2 className="text-3xl font-bold mb-6 text-center text-[#0EA5E9]">Get Your Free Savings Analysis</h2>
+              <p className="text-lg text-center mb-8 max-w-3xl mx-auto text-gray-600">
+                Upload your current merchant statement for a free analysis and see how much you could save by switching to Waveline.
               </p>
-              <Button 
-                className="bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-500 text-white px-8 py-3 text-lg"
-                onClick={showDemo}
-              >
-                Get Your Free Analysis
-              </Button>
+              
+              <div className="max-w-2xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-1">
+                      Company Name
+                    </label>
+                    <input
+                      type="text"
+                      id="companyName"
+                      value={contactInfo.companyName}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0EA5E9]"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      value={contactInfo.email}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0EA5E9]"
+                    />
+                  </div>
+                </div>
+                <div className="mb-6">
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                    Phone Number
+                  </label>
+                  <input
+                    type="text"
+                    id="phone"
+                    value={contactInfo.phone}
+                    onChange={handleInputChange}
+                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0EA5E9]"
+                  />
+                </div>
+                
+                <FileUpload contactInfo={contactInfo} />
+              </div>
             </div>
           </div>
         </div>
