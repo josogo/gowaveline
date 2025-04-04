@@ -16,7 +16,7 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
         <div>
           <div className="flex items-center space-x-2 mb-4">
             <img 
-              src="/lovable-uploads/2d9abfe8-af53-43b1-9ce4-d5c73518ff44.png" 
+              src="/lovable-uploads/13e5ff13-2a8e-45f3-b1bc-ed972c3308ba.png" 
               alt="Waveline Logo" 
               className="h-12 w-auto"
             />

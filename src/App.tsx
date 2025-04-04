@@ -15,6 +15,7 @@ import Services from "./pages/Services";
 import GetStarted from "./pages/GetStarted";
 import HighRisk from "./pages/HighRisk";
 import CaseStudies from "./pages/CaseStudies";
+import Blog from "./pages/Blog";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/get-started" element={<GetStarted />} />
           <Route path="/high-risk" element={<HighRisk />} />
           <Route path="/case-studies" element={<CaseStudies />} />
+          <Route path="/blog" element={<Blog />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

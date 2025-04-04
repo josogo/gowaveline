@@ -1,6 +1,7 @@
 
 import React from 'react';
 import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2 } from 'lucide-react';
 
@@ -54,6 +55,71 @@ const industries = [
     name: "Nutraceuticals",
     description: "Payment solutions for supplement and nutraceutical companies",
     features: ["Subscription management", "High-volume processing", "Chargeback protection"]
+  },
+  {
+    name: "Extended Warranty",
+    description: "Processing solutions for extended warranty service providers",
+    features: ["Recurring billing", "Automated payment handling", "Customer retention tools"]
+  },
+  {
+    name: "Financial Aid Consulting",
+    description: "Secure payment options for financial advisory services",
+    features: ["Compliance with regulations", "Subscription models", "Secure client payment portals"]
+  },
+  {
+    name: "Fine & Fashion Jewelry",
+    description: "Payment solutions for high-value jewelry retailers",
+    features: ["High-ticket transaction processing", "Chargeback protection", "Fraud prevention"]
+  },
+  {
+    name: "Functional Foods",
+    description: "Processing for specialty food and health products",
+    features: ["Subscription billing", "Multi-channel integration", "Industry-specific solutions"]
+  },
+  {
+    name: "Herbal Supplements",
+    description: "Payment solutions for herbal product merchants",
+    features: ["Regulatory compliance", "Subscription management", "Multi-currency support"]
+  },
+  {
+    name: "Insurance Brokerage",
+    description: "Processing solutions for insurance premium payments",
+    features: ["Recurring billing", "Compliance support", "Payment plans integration"]
+  },
+  {
+    name: "Liquor Sales",
+    description: "Age-verified payment processing for alcohol retailers",
+    features: ["Age verification", "Regulatory compliance", "Multi-location support"]
+  },
+  {
+    name: "Magazine Sales",
+    description: "Subscription processing for print and digital publications",
+    features: ["Recurring billing", "Easy cancellation management", "Multi-platform support"]
+  },
+  {
+    name: "Match Making Services",
+    description: "Payment solutions for dating and matchmaking platforms",
+    features: ["Subscription management", "Trial period handling", "Global payment support"]
+  },
+  {
+    name: "Mobile App Software",
+    description: "In-app purchase and subscription processing",
+    features: ["API integration", "Recurring billing", "Analytics and metrics"]
+  },
+  {
+    name: "Mobile Payments",
+    description: "Solutions for contactless and mobile payment technologies",
+    features: ["NFC integration", "QR code payments", "Cross-platform support"]
+  },
+  {
+    name: "Multi Level Marketing",
+    description: "Processing solutions for MLM and direct sales businesses",
+    features: ["Commission distribution", "Multi-tier payment handling", "International support"]
+  },
+  {
+    name: "Nootropics",
+    description: "Payment processing for cognitive enhancement products",
+    features: ["High-risk expertise", "Subscription billing", "Regulatory compliance"]
   }
 ];
 
@@ -92,6 +158,7 @@ const Industries = () => {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 };

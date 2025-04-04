@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -10,9 +10,22 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import FileUpload from '@/components/FileUpload';
+import { Input } from "@/components/ui/input";
+import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 const CallToAction = () => {
   const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  
+  const form = useForm({
+    defaultValues: {
+      companyName: "",
+      email: "",
+      phone: ""
+    }
+  });
 
   return (
     <div className="relative py-16 px-6 overflow-hidden">
@@ -27,7 +40,7 @@ const CallToAction = () => {
           Upload your statement now and discover how much you could save with our detailed analysis and recommendations.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Dialog>
+          <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button 
                 size="lg" 
@@ -41,7 +54,47 @@ const CallToAction = () => {
                 <DialogTitle className="text-xl text-[#0EA5E9]">Upload Your Statement</DialogTitle>
               </DialogHeader>
               <div className="mt-4">
-                <FileUpload />
+                <Form {...form}>
+                  <form className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="companyName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Company Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Your Company" {...field} required />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="you@example.com" {...field} required />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone Number</FormLabel>
+                          <FormControl>
+                            <Input placeholder="(555) 123-4567" {...field} required />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FileUpload contactInfo={form.getValues()} />
+                  </form>
+                </Form>
               </div>
             </DialogContent>
           </Dialog>

@@ -8,7 +8,17 @@ import { toast } from "sonner";
 import { useNavigate } from 'react-router-dom';
 import { analyzeStatement } from '@/services/statementService';
 
-const FileUpload = () => {
+type ContactInfo = {
+  companyName?: string;
+  email?: string;
+  phone?: string;
+};
+
+interface FileUploadProps {
+  contactInfo?: ContactInfo;
+}
+
+const FileUpload: React.FC<FileUploadProps> = ({ contactInfo }) => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -63,6 +73,14 @@ const FileUpload = () => {
     
     try {
       console.log("Analyzing file:", file.name, file.type);
+      console.log("Contact info:", contactInfo);
+      
+      // Here we would normally send the contact info to the backend
+      if (contactInfo?.email) {
+        // Send lead to email
+        console.log("Sending lead to jordan@gowaveline.com");
+        // In a real implementation, this would be an API call to send an email
+      }
       
       // Use a simpler progress callback
       const onProgressUpdate = (value: number) => {

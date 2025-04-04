@@ -10,8 +10,10 @@ import {
   Terminal, 
   Globe, 
   ShieldAlert, 
-  BarChart4, 
-  Bitcoin
+  Bitcoin,
+  FileCheck,
+  Shield,
+  Building
 } from 'lucide-react';
 
 const Services = () => {
@@ -53,6 +55,24 @@ const Services = () => {
       description: "Embrace the future of payments with our cryptocurrency payment processing and integration services.",
       icon: Bitcoin,
       color: "from-yellow-500 to-yellow-400"
+    },
+    {
+      title: "ACH/eCheck Processing",
+      description: "Seamless electronic check processing solutions with quick settlement times and reduced processing costs.",
+      icon: FileCheck,
+      color: "from-indigo-500 to-indigo-400"
+    },
+    {
+      title: "Chargeback Mitigation Tools",
+      description: "Advanced systems to prevent, contest, and manage chargebacks, protecting your revenue and merchant account status.",
+      icon: Shield,
+      color: "from-red-500 to-red-400"
+    },
+    {
+      title: "Automated Compliance Programs",
+      description: "Stay ahead of regulatory requirements with our automated compliance monitoring and reporting tools.",
+      icon: Building,
+      color: "from-emerald-500 to-emerald-400"
     }
   ];
 
@@ -80,7 +100,7 @@ const Services = () => {
                   <h3 className="text-xl font-bold mb-4 text-[#0EA5E9]">{service.title}</h3>
                   <p className="text-[#0EA5E9] mb-6">{service.description}</p>
                   <Button 
-                    onClick={() => navigate('/get-started')}
+                    onClick={() => navigate('/')}
                     variant="outline" 
                     className="w-full border-[#0EA5E9] text-[#0EA5E9] hover:bg-[#0EA5E9] hover:text-white"
                   >
@@ -92,7 +112,7 @@ const Services = () => {
             
             <div className="mt-16">
               <Button 
-                onClick={() => navigate('/get-started')}
+                onClick={() => navigate('/')}
                 className="px-8 py-6 text-lg bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-500 text-white"
               >
                 Get Started Today
