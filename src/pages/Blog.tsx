@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Calendar, Tag, User, Clock } from 'lucide-react';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 interface BlogPost {
   id: number;
@@ -520,6 +521,7 @@ const blogPosts: BlogPost[] = [
 const Blog = () => {
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const navigate = useNavigate();
 
   const openPost = (post: BlogPost) => {
     setSelectedPost(post);
