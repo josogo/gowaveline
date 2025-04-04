@@ -123,7 +123,7 @@ serve(async (req) => {
       );
     }
     
-    // Return the results
+    // Return the results with explicit isMockData = false
     return new Response(
       JSON.stringify({ 
         success: true,

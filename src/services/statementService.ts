@@ -105,7 +105,7 @@ export const analyzeStatement = async (
       .from('statements')
       .remove([fileName]);
     
-    // Make sure isMockData is explicitly set to false
+    // Ensure isMockData is explicitly set to false for real data
     return {
       ...analysisData,
       isMockData: false
@@ -138,7 +138,7 @@ export const useMockAnalysis = async (
   await simulateStep(85, 700);  // Finalizing
   await simulateStep(100, 500); // Complete
   
-  // Return mock data
+  // Return mock data - explicitly marked as mock data
   return {
     success: true,
     effectiveRate: "2.95%",
@@ -152,6 +152,6 @@ export const useMockAnalysis = async (
       batchFee: "$0.25",
       transactionFees: "$0.10 per transaction"
     },
-    isMockData: true
+    isMockData: true // Explicitly set to true for mock data
   };
 };

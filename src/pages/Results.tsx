@@ -9,6 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatementAnalysis } from '@/services/statementService';
+import { toast } from "sonner";
 
 const Results = () => {
   const [analysis, setAnalysis] = useState<StatementAnalysis | null>(null);
@@ -24,6 +25,12 @@ const Results = () => {
       try {
         const parsedData = JSON.parse(storedData);
         console.log("Retrieved analysis data from localStorage:", parsedData);
+        
+        // Check if it's mock data and notify the user
+        if (parsedData.isMockData) {
+          toast.info("You are viewing demonstration data, not your actual statement analysis.");
+        }
+        
         setAnalysis(parsedData);
         setLoading(false);
       } catch (err) {
