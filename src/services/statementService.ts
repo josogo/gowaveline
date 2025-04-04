@@ -32,6 +32,9 @@ export const analyzeStatement = async (
   onProgress: (progress: number) => void
 ): Promise<StatementAnalysis> => {
   try {
+    // Clear any previous data
+    localStorage.removeItem('statementAnalysis');
+    
     // Start progress
     onProgress(10);
     console.log("Starting file upload process for real analysis");
@@ -116,44 +119,4 @@ export const analyzeStatement = async (
     toast.error(`Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     throw error; // We rethrow the error to be handled by the caller
   }
-};
-
-/**
- * A fallback function that simulates the statement analysis process
- * Used when uploading or processing fails and the user specifically requests mock data
- */
-export const useMockAnalysis = async (
-  onProgress: (progress: number) => void
-): Promise<StatementAnalysis> => {
-  console.log("Using mock analysis data - explicitly marked as mock");
-  
-  // Simulate API delays for a more realistic experience
-  const simulateStep = async (progress: number, delay: number) => {
-    onProgress(progress);
-    await new Promise(resolve => setTimeout(resolve, delay));
-  };
-  
-  // Simulate the analysis process
-  await simulateStep(10, 500);  // Starting
-  await simulateStep(30, 800);  // Processing
-  await simulateStep(60, 1000); // Analyzing
-  await simulateStep(85, 700);  // Finalizing
-  await simulateStep(100, 500); // Complete
-  
-  // Return mock data - explicitly marked as mock data
-  return {
-    success: true,
-    effectiveRate: "2.95%",
-    monthlyVolume: "$125,780",
-    chargebackRatio: "0.15%",
-    pricingModel: "Tiered",
-    fees: {
-      monthlyFee: "$9.95",
-      pciFee: "$14.95",
-      statementFee: "$7.50",
-      batchFee: "$0.25",
-      transactionFees: "$0.10 per transaction"
-    },
-    isMockData: true // Always true for mock data
-  };
 };

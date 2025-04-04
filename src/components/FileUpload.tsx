@@ -1,12 +1,12 @@
 
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Cloud, File, FileText, UploadCloud, X, AlertCircle } from 'lucide-react';
+import { Cloud, File, FileText, UploadCloud, X, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { toast } from "sonner";
 import { useNavigate } from 'react-router-dom';
-import { analyzeStatement, useMockAnalysis, StatementAnalysis } from '@/services/statementService';
+import { analyzeStatement, StatementAnalysis } from '@/services/statementService';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const FileUpload = () => {
@@ -14,9 +14,13 @@ const FileUpload = () => {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [usingMockData, setUsingMockData] = useState(false);
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  // Clear localStorage on component mount
+  React.useEffect(() => {
+    localStorage.removeItem('statementAnalysis');
+  }, []);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const selectedFile = acceptedFiles[0];
@@ -26,7 +30,6 @@ const FileUpload = () => {
     // Reset states when a new file is selected
     setError(null);
     setDebugInfo(null);
-    setUsingMockData(false);
     
     // Check file type
     const allowedTypes = ['application/pdf', 'text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
@@ -60,40 +63,16 @@ const FileUpload = () => {
     setProgress(0);
     setError(null);
     setDebugInfo(null);
-    setUsingMockData(false);
   };
   
-  const useFallbackData = async () => {
-    console.log("User explicitly requested to use mock data");
-    setUsingMockData(true);
-    setDebugInfo("Using mock data as fallback - DEMONSTRATION ONLY");
-    setUploading(true);
-    
-    try {
-      const mockData = await useMockAnalysis((progressValue) => {
-        setProgress(progressValue);
-      });
-      
-      // Double-check the isMockData flag is true for mock data
-      const dataToStore = {
-        ...mockData,
-        isMockData: true // Force this to true for mock data
-      };
-      
-      console.log("Storing mock data in localStorage with isMockData=true:", dataToStore);
-      localStorage.setItem('statementAnalysis', JSON.stringify(dataToStore));
-      
-      toast.warning("Using sample data for demonstration purposes only");
-      
-      setTimeout(() => {
-        navigate('/results');
-      }, 1000);
-    } catch (fallbackError) {
-      console.error('Mock analysis failed:', fallbackError);
-      toast.error("Something went wrong. Please try again later.");
-      setProgress(0);
-      setUploading(false);
-    }
+  const resetApp = () => {
+    localStorage.removeItem('statementAnalysis');
+    setFile(null);
+    setProgress(0);
+    setError(null);
+    setDebugInfo(null);
+    setUploading(false);
+    toast.info("Application reset. Please upload a new statement.");
   };
   
   const handleUpload = async () => {
@@ -107,7 +86,6 @@ const FileUpload = () => {
     setProgress(0);
     setError(null);
     setDebugInfo(null);
-    setUsingMockData(false);
     
     try {
       console.log("Starting file analysis:", file.name, file.type);
@@ -118,13 +96,6 @@ const FileUpload = () => {
       });
       
       console.log("Analysis data received, isMockData=", analysisData.isMockData);
-      
-      // Verify it's not mock data
-      if (analysisData.isMockData) {
-        console.warn("Warning: Server returned mock data instead of real analysis");
-        toast.warning("Warning: The system used sample data instead of your actual statement.");
-        setDebugInfo("Server returned mock data - DEMONSTRATION ONLY");
-      }
       
       // Store analysis data in localStorage for the results page to use
       localStorage.setItem('statementAnalysis', JSON.stringify(analysisData));
@@ -218,17 +189,18 @@ const FileUpload = () => {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={useFallbackData}
+                    onClick={resetApp}
                     className="mr-2"
                   >
-                    Use Sample Data
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Reset Application
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm" 
                     onClick={removeFile}
                   >
-                    Try Again
+                    Try New File
                   </Button>
                 </div>
               </AlertDescription>
@@ -239,11 +211,6 @@ const FileUpload = () => {
             <div className="p-3 bg-orange-50 border border-orange-200 rounded-md text-sm text-orange-700">
               <p className="font-medium">Debug Information:</p>
               <p className="font-mono text-xs mt-1 break-all">{debugInfo}</p>
-              {usingMockData && (
-                <p className="mt-2 text-sm font-semibold text-orange-800">
-                  Using demonstration data - not your actual statement
-                </p>
-              )}
             </div>
           )}
           
@@ -262,13 +229,13 @@ const FileUpload = () => {
                   variant="outline"
                   onClick={removeFile}
                 >
-                  Try Again
+                  Try New File
                 </Button>
                 <Button
-                  onClick={useFallbackData}
+                  onClick={resetApp}
                   className="bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-500 text-white"
                 >
-                  Use Sample Data
+                  Reset Application
                 </Button>
               </div>
             )}

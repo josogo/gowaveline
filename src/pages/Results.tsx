@@ -5,11 +5,10 @@ import Navbar from '@/components/Navbar';
 import Dashboard from '@/components/Dashboard';
 import CallToAction from '@/components/CallToAction';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatementAnalysis } from '@/services/statementService';
 import { toast } from "sonner";
-import DemoDataAlert from '@/components/dashboard/DemoDataAlert';
 
 const Results = () => {
   const [analysis, setAnalysis] = useState<StatementAnalysis | null>(null);
@@ -29,22 +28,13 @@ const Results = () => {
         const parsedData = JSON.parse(storedData);
         console.log("Retrieved analysis data from localStorage:", parsedData);
         
-        // Explicitly check for mock data flag
+        // Check if this is fake data from the simulation
         if (parsedData.isMockData === true) {
-          console.warn("Mock data detected - setting isMockData state to true");
+          console.warn("Mock data detected - this should not happen now");
           setIsMockData(true);
-          toast.warning("You are viewing demonstration data, not your actual statement analysis.");
-          
-          // Ask if they want to upload a real statement
-          setTimeout(() => {
-            if (confirm("Would you like to upload a real statement instead of viewing sample data?")) {
-              console.log("User chose to upload a real statement - clearing localStorage and navigating to home");
-              localStorage.removeItem('statementAnalysis');
-              navigate('/');
-            }
-          }, 1000);
+          toast.error("Error: Mock data detected. Please return to home and try again with a real statement.");
         } else {
-          console.log("This appears to be real analysis data");
+          console.log("Real analysis data found");
           setIsMockData(false);
         }
         
@@ -83,6 +73,33 @@ const Results = () => {
     );
   }
 
+  // Special handling for mock data - we shouldn't see this but just in case
+  if (isMockData) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1">
+          <div className="container mx-auto py-16 px-6">
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error: Mock Data Detected</AlertTitle>
+              <AlertDescription>
+                The system is showing mock data instead of analyzing your actual statement. 
+                This may indicate a problem with our analysis system.
+              </AlertDescription>
+            </Alert>
+            <div className="flex justify-center mt-8">
+              <Button onClick={handleReturnHome} className="flex items-center">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Return to Home & Try Again
+              </Button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -103,23 +120,9 @@ const Results = () => {
             <div className="bg-gradient-to-b from-orange-50 to-transparent py-12 px-6 text-center">
               <h1 className="text-3xl md:text-4xl font-bold mb-4">Your Statement Analysis</h1>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                {isMockData 
-                  ? "This is sample demonstration data, not based on your actual statement."
-                  : "We've analyzed your merchant statement and found several insights that could help you reduce costs."}
+                We've analyzed your merchant statement and found several insights that could help you reduce costs.
               </p>
-              
-              {isMockData && (
-                <Button 
-                  onClick={handleReturnHome}
-                  variant="outline"
-                  className="mt-4"
-                >
-                  Upload Real Statement
-                </Button>
-              )}
             </div>
-            
-            {isMockData && <DemoDataAlert />}
             
             {analysis && <Dashboard analysisData={analysis} />}
             <CallToAction />

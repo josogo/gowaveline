@@ -64,19 +64,31 @@ serve(async (req) => {
           console.log("Document AI extraction successful");
         } catch (error) {
           console.error("Document AI extraction failed:", error);
-          extractedText = simulateTextExtraction("pdf");
-          console.log("Falling back to PDF text simulation");
+          // We're not using simulation anymore
+          return new Response(
+            JSON.stringify({ error: `Document AI extraction failed: ${error instanceof Error ? error.message : String(error)}` }),
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+          );
         }
       } else {
         console.log("No Document AI credentials available");
-        extractedText = simulateTextExtraction("pdf");
-        console.log("Using PDF text simulation");
+        // Return an error instead of using simulated data
+        return new Response(
+          JSON.stringify({ error: 'Document AI credentials not configured. Unable to process PDF.' }),
+          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
       }
     } 
     else if (fileType.includes("csv") || fileType.includes("excel") || fileType.includes("sheet")) {
       console.log("Processing spreadsheet file");
       const text = new TextDecoder().decode(fileContent);
-      extractedText = text || simulateTextExtraction("spreadsheet");
+      extractedText = text;
+      if (!text || text.trim().length === 0) {
+        return new Response(
+          JSON.stringify({ error: 'Failed to extract text from spreadsheet' }),
+          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
       console.log("Extracted text from spreadsheet, length:", extractedText.length);
     } 
     else {
@@ -107,7 +119,7 @@ serve(async (req) => {
       try {
         console.log("Analyzing with OpenAI");
         analysisResult = await analyzeWithOpenAI(extractedText);
-        console.log("OpenAI analysis successful");
+        console.log("OpenAI analysis successful", analysisResult);
       } catch (error) {
         console.error("OpenAI analysis failed:", error);
         return new Response(
@@ -183,48 +195,6 @@ async function extractTextWithDocumentAI(fileContent: ArrayBuffer, fileType: str
 }
 
 /**
- * Simulate text extraction for different file types
- */
-function simulateTextExtraction(fileType: string): string {
-  if (fileType === "pdf") {
-    return `
-      MERCHANT STATEMENT
-      
-      Processing Volume: $145,230.45
-      Transaction Count: 1,243
-      
-      Fees:
-      Monthly Service: $9.95
-      PCI Compliance: $14.95
-      Statement Fee: $7.50
-      Batch Settlement: $0.25 per batch
-      Transaction Fee: $0.10 per transaction
-      
-      Interchange Fees: $3,234.56
-      Assessment Fees: $432.10
-      
-      Chargebacks: 2 ($250.00)
-      
-      Total Fees: $4,056.21
-      Effective Rate: 2.79%
-    `;
-  } else if (fileType === "spreadsheet") {
-    return `
-      Date,Description,Amount
-      2025-03-01,Processing Volume,$145230.45
-      2025-03-01,Interchange Fees,$3234.56
-      2025-03-01,Assessment Fees,$432.10
-      2025-03-01,Monthly Service,$9.95
-      2025-03-01,PCI Compliance,$14.95
-      2025-03-01,Statement Fee,$7.50
-      2025-03-01,Chargebacks,$250.00
-    `;
-  }
-  
-  return "Unknown file format. Please upload a PDF, CSV, or Excel file.";
-}
-
-/**
  * Analyze text with OpenAI
  */
 async function analyzeWithOpenAI(extractedText: string) {
@@ -246,41 +216,42 @@ async function analyzeWithOpenAI(extractedText: string) {
       messages: [
         {
           role: "system",
-          content: "You are a financial analyst specialized in merchant processing statements. Extract the requested information precisely from the statement text. If certain data is not found, use 'N/A' as the value."
+          content: "You are a financial analyst specialized in merchant processing statements. Extract the requested information precisely from the statement text. You MUST ONLY extract actual numbers from the statement. If you cannot find a specific piece of information, use 'N/A' as the value. Never generate data that doesn't exist in the statement."
         },
         {
           role: "user",
           content: `Extract the following information from this merchant statement: 
-          1. Effective rate (total fees divided by total volume)
-          2. Monthly processing volume
-          3. Chargeback ratio (chargebacks divided by total volume, or if not available, provide an estimate)
-          4. Pricing model (interchange-plus or tiered)
-          5. List all fees (monthly fee, PCI fee, statement fee, batch fee, transaction fees, etc.)
           
-          For any field you cannot find data for, use "N/A" instead of making up a value.
+          1. Calculate the effective rate: this is the total fees divided by total volume. If you cannot find the total volume, look for total sales or total processed amount.
+          2. Monthly processing volume: Look for the total sales or processed amount for the month. Do not make up a value if not found.
+          3. Chargeback ratio: Look for number of chargebacks divided by total transactions, or similar metric.
+          4. Pricing model: Look for terms like "interchange-plus" or "tiered" or "flat rate".
+          5. List all monthly fees found in the statement (monthly fee, PCI fee, statement fee, batch fee, transaction fees, etc.)
+          
+          DO NOT INVENT VALUES. If you cannot find data for any field, use "N/A" instead of making up a value.
           
           Format your response as a JSON object with these exact fields:
           {
-            "effectiveRate": "X.XX%",
-            "monthlyVolume": "$XXX,XXX.XX",
-            "chargebackRatio": "0.XX%",
-            "pricingModel": "Type",
+            "effectiveRate": "X.XX%" or "N/A",
+            "monthlyVolume": "$XXX,XXX.XX" or "N/A",
+            "chargebackRatio": "0.XX%" or "N/A",
+            "pricingModel": "Type found in statement" or "N/A",
             "fees": {
-              "monthlyFee": "$XX.XX",
-              "pciFee": "$XX.XX",
-              "statementFee": "$X.XX",
-              "batchFee": "$X.XX",
-              "transactionFees": "description"
+              "monthlyFee": "$XX.XX" or "N/A",
+              "pciFee": "$XX.XX" or "N/A",
+              "statementFee": "$X.XX" or "N/A",
+              "batchFee": "$X.XX" or "N/A",
+              "transactionFees": "description" or "N/A"
             }
           }
           
-          Here's the statement:
+          Here's the statement text to analyze:
           
           ${extractedText}`
         }
       ],
       response_format: { type: "json_object" },
-      temperature: 0.2,
+      temperature: 0.1, // Lower temperature for more accurate extraction
     })
   });
 
