@@ -1,12 +1,15 @@
 
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import Features from '@/components/Features';
 import CallToAction from '@/components/CallToAction';
-import Footer from '@/components/Footer';
+import { Button } from '@/components/ui/button';
 
 const Index = () => {
+  const navigate = useNavigate();
+  
   useEffect(() => {
     // Immediately clear any previous analysis data when landing on the home page
     console.log("Index page loaded - clearing localStorage");
@@ -21,7 +24,18 @@ const Index = () => {
         <Features />
         <CallToAction />
       </main>
-      <Footer />
+      
+      {/* Small admin button at the bottom */}
+      <div className="w-full flex justify-center py-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs text-gray-400 opacity-40 hover:opacity-100"
+          onClick={() => navigate('/admin/dashboard')}
+        >
+          Admin
+        </Button>
+      </div>
     </div>
   );
 };
