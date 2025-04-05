@@ -25,7 +25,7 @@ const UploadActions: React.FC<UploadActionsProps> = ({ uploading, file, onSend, 
       <Button 
         onClick={onAnalyze} 
         disabled={uploading || !file}
-        className="bg-white text-[#0EA5E9] hover:bg-white/80"
+        className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/80 text-white"
       >
         {uploading ? (
           <>

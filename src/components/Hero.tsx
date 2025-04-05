@@ -59,8 +59,8 @@ const Hero = () => {
           </div>
         </div>
         
-        {/* Modified to remove animation delay and ensure visibility */}
-        <div className="mt-16 glass-card p-8">
+        {/* Use a regular div with additional styling to ensure visibility */}
+        <div className="mt-16 bg-white shadow-lg rounded-lg p-8 border border-gray-200">
           <h2 className="text-2xl font-semibold text-center mb-6 text-[#0EA5E9]">Upload Your Statement</h2>
           <FileUpload />
         </div>
