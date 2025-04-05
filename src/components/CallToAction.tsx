@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Mail, FileCheck } from 'lucide-react';
+import { Mail } from 'lucide-react';
 
 const CallToAction = () => {
   const navigate = useNavigate();
@@ -61,11 +61,11 @@ const CallToAction = () => {
                 Submit Statement
               </Button>
             </DialogTrigger>
-            <DialogContent className="w-[95%] max-w-[525px] h-auto max-h-[80vh] overflow-y-auto p-4 sm:p-6 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white border-0 rounded-lg shadow-lg">
+            <DialogContent className="w-[95%] max-w-[525px] h-auto max-h-[80vh] overflow-y-auto p-4 sm:p-6 bg-[#0EA5E9] border-0">
               <DialogHeader>
-                <DialogTitle className="text-xl text-orange-500">Upload Your Statement</DialogTitle>
-                <DialogDescription className="text-orange-500">
-                  Fill out your information and upload your statement to see how much you could be saving monthly
+                <DialogTitle className="text-xl text-white">Upload Your Statement</DialogTitle>
+                <DialogDescription className="text-white/80">
+                  Fill in your information and upload your statement for analysis.
                 </DialogDescription>
               </DialogHeader>
               <div className="mt-4">
@@ -76,13 +76,13 @@ const CallToAction = () => {
                       name="companyName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700">Company Name</FormLabel>
+                          <FormLabel className="text-white">Company Name</FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="Your Company" 
                               {...field} 
                               required
-                              className="border-gray-300" 
+                              className="bg-white/90 border-white" 
                             />
                           </FormControl>
                         </FormItem>
@@ -93,14 +93,14 @@ const CallToAction = () => {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700">Email</FormLabel>
+                          <FormLabel className="text-white">Email</FormLabel>
                           <FormControl>
                             <Input 
                               type="email" 
                               placeholder="you@example.com" 
                               {...field} 
                               required
-                              className="border-gray-300" 
+                              className="bg-white/90 border-white" 
                             />
                           </FormControl>
                         </FormItem>
@@ -111,13 +111,13 @@ const CallToAction = () => {
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700">Phone Number</FormLabel>
+                          <FormLabel className="text-white">Phone Number</FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="(555) 123-4567" 
                               {...field} 
                               required
-                              className="border-gray-300" 
+                              className="bg-white/90 border-white" 
                             />
                           </FormControl>
                         </FormItem>
@@ -126,41 +126,23 @@ const CallToAction = () => {
                     <div className="pb-6">
                       <FileUpload contactInfo={form.getValues()} />
                     </div>
-                    <div className="flex justify-center gap-4">
-                      <Button
-                        type="button"
-                        onClick={() => {
-                          const contactInfo = form.getValues();
-                          // Validate form
-                          if (!contactInfo.companyName || !contactInfo.email || !contactInfo.phone) {
-                            toast.error("Please fill in all required fields");
-                            return;
-                          }
-                          toast.success("Information submitted successfully!");
-                          setOpen(false);
-                        }}
-                        className="bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-500 text-white py-2"
-                      >
-                        <Mail className="mr-2 h-4 w-4" />
-                        Send Information
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={() => {
-                          const contactInfo = form.getValues();
-                          // Validate form
-                          if (!contactInfo.companyName || !contactInfo.email || !contactInfo.phone) {
-                            toast.error("Please fill in all required fields");
-                            return;
-                          }
-                          navigate('/results');
-                        }}
-                        className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/80 text-white py-2"
-                      >
-                        <FileCheck className="mr-2 h-4 w-4" />
-                        See Savings
-                      </Button>
-                    </div>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        const contactInfo = form.getValues();
+                        // Validate form
+                        if (!contactInfo.companyName || !contactInfo.email || !contactInfo.phone) {
+                          toast.error("Please fill in all required fields");
+                          return;
+                        }
+                        toast.success("Information submitted successfully!");
+                        setOpen(false);
+                      }}
+                      className="w-full bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-500 text-white py-2"
+                    >
+                      <Mail className="mr-2 h-4 w-4" />
+                      Send Information
+                    </Button>
                   </form>
                 </Form>
               </div>
