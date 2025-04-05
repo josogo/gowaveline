@@ -59,10 +59,11 @@ const Hero = () => {
           </div>
         </div>
         
-        <AnimatedText className="mt-16 glass-card p-8">
+        {/* Modified to remove animation delay and ensure visibility */}
+        <div className="mt-16 glass-card p-8">
           <h2 className="text-2xl font-semibold text-center mb-6 text-[#0EA5E9]">Upload Your Statement</h2>
           <FileUpload />
-        </AnimatedText>
+        </div>
       </div>
     </div>
   );

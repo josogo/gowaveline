@@ -18,7 +18,7 @@ const AnimatedText: React.FC<AnimatedTextProps> = ({
   const elementRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Simpler animation approach - immediately show content with a short delay
+    // Simpler animation approach - immediately show content
     const timer = setTimeout(() => {
       if (elementRef.current) {
         elementRef.current.classList.add('animate-in');
@@ -33,8 +33,9 @@ const AnimatedText: React.FC<AnimatedTextProps> = ({
       ref={elementRef}
       className={cn(
         'transition-all duration-500',
+        // Make content fully visible by default, not faded
         {
-          'opacity-80': type === 'fade',
+          'opacity-100': type === 'fade',
           'translate-y-0': type === 'slide',
           'scale-100': type === 'scale',
         },
