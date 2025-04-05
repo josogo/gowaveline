@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
@@ -25,7 +24,7 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
         <div>
           <div className="flex items-center mb-6">
             <img 
-              src="/lovable-uploads/74908437-0419-4c1a-9716-e1b015056d4d.png" 
+              src="/lovable-uploads/db137242-a816-462b-8d10-96fde441aaa3.png" 
               alt="Waveline Logo" 
               className="h-32 w-auto"
             />
@@ -81,6 +80,8 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
           </Button>
         </div>
       </div>
+      
+      {/* Removed the duplicate small admin button that was here */}
     </footer>
   );
 };
