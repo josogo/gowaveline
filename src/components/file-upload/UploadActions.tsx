@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Mail, Loader2 } from 'lucide-react';
+import { Mail, Loader2, FileCheck, CheckCircle } from 'lucide-react';
 
 interface UploadActionsProps {
   uploading: boolean;
@@ -41,7 +41,12 @@ const UploadActions: React.FC<UploadActionsProps> = ({ uploading, file, onSend, 
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Analyzing...
           </>
-        ) : 'Analyze Statement'}
+        ) : (
+          <>
+            <FileCheck className="mr-2 h-4 w-4" />
+            Analyze Statement
+          </>
+        )}
       </Button>
     </div>
   );
