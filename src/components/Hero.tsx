@@ -14,13 +14,12 @@ const Hero = () => {
     <div className="relative px-6 lg:px-8 py-16 md:py-24">
       <div className="mx-auto max-w-5xl">
         <div className="text-center">
-          <div className="flex flex-col items-center mb-8">
+          <div className="flex justify-center mb-8">
             <img 
               src="/lovable-uploads/2d9abfe8-af53-43b1-9ce4-d5c73518ff44.png" 
               alt="Waveline Logo" 
               className="h-24 md:h-32 w-auto hover:scale-105 transition-transform duration-300"
             />
-            <h2 className="text-[#0EA5E9] text-2xl md:text-3xl font-bold mt-2">waveline</h2>
           </div>
           
           {isMobile ? (
