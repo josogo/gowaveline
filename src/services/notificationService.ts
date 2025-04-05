@@ -27,7 +27,8 @@ export async function sendEmailNotification(fileData: File, contactData?: {
     });
     
     if (!response.ok) {
-      console.error('Failed to send email notification');
+      const errorData = await response.json();
+      console.error('Failed to send email notification:', errorData);
       return false;
     } else {
       console.log('Email notification sent successfully');

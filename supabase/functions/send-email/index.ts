@@ -88,11 +88,14 @@ const handler = async (req: Request): Promise<Response> => {
       `;
     }
 
+    // Using Resend's default domain instead of a custom domain that needs verification
     const emailResponse = await resend.emails.send({
-      from: "WaveLine <noreply@gowaveline.com>",
+      from: "WaveLine <onboarding@resend.dev>",  // Using Resend's default domain
       to: ["info@gowaveline.com"],
       subject: subject,
       html: htmlContent,
+      // Add a reply-to with the submitter's email if available
+      ...(data.email ? { reply_to: data.email } : {})
     });
 
     console.log("Email sent successfully:", emailResponse);

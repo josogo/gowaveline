@@ -72,11 +72,13 @@ const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType, initialPa
         }),
       });
       
-      const result = await response.json();
-      
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to send email');
+        const errorData = await response.json();
+        console.error('Email sending failed:', errorData);
+        throw new Error(errorData.error?.message || 'Failed to send email');
       }
+      
+      const result = await response.json();
       
       toast.success('Your message has been sent! We\'ll be in touch soon.');
       form.reset();

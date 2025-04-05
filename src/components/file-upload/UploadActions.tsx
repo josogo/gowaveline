@@ -19,8 +19,17 @@ const UploadActions: React.FC<UploadActionsProps> = ({ uploading, file, onSend, 
         disabled={uploading || !file}
         className="bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-500 text-white"
       >
-        <Mail className="mr-2 h-4 w-4" />
-        Send Statement
+        {uploading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Sending...
+          </>
+        ) : (
+          <>
+            <Mail className="mr-2 h-4 w-4" />
+            Send Statement
+          </>
+        )}
       </Button>
       <Button 
         onClick={onAnalyze} 
