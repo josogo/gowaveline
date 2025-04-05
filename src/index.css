@@ -2,145 +2,87 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
+ 
 @layer base {
   :root {
-    /* Keeping the original light theme values but updating primary/secondary */
     --background: 0 0% 100%;
-    --foreground: 199 89% 48%; /* Ocean blue foreground */
-
-    --card: 0 0% 100%;
-    --card-foreground: 199 89% 48%; /* Ocean blue card foreground */
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 199 89% 48%; /* Ocean blue popover foreground */
-
-    /* Orange as primary */
-    --primary: 24 100% 67%;
-    --primary-foreground: 210 40% 98%;
-
-    /* Teal as secondary */
-    --secondary: 188 57% 49%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
+    --foreground: 222.2 47.4% 11.2%;
+ 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 188 57% 95%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 47.4% 11.2%;
+ 
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 47.4% 11.2%;
+ 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 24 100% 67%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-    
-    /* Ocean blue custom color */
-    --ocean-blue: 199 89% 48%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 199 89% 48%; /* Ocean blue foreground in dark mode */
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 199 89% 48%; /* Ocean blue card foreground in dark mode */
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 199 89% 48%; /* Ocean blue popover foreground in dark mode */
-
-    --primary: 24 100% 67%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 188 57% 49%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
+ 
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+ 
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+ 
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+ 
+    --destructive: 0 100% 50%;
     --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 24 100% 67%;
-    
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+ 
+    --ring: 215 20.2% 65.1%;
+ 
+    --radius: 0.5rem;
+  }
+ 
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+ 
+    --muted: 223 47% 11%;
+    --muted-foreground: 215.4 16.3% 56.9%;
+ 
+    --popover: 224 71% 4%;
+    --popover-foreground: 215 20.2% 65.1%;
+ 
+    --card: 224 71% 4%;
+    --card-foreground: 213 31% 91%;
+ 
+    --border: 216 34% 17%;
+    --input: 216 34% 17%;
+ 
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 1.2%;
+ 
+    --secondary: 222.2 47.4% 11.2%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --accent: 216 34% 17%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --ring: 216 34% 17%;
+ 
+    --radius: 0.5rem;
   }
 }
-
+ 
 @layer base {
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-@layer components {
-  .glass-card {
-    @apply bg-white/90 backdrop-blur-sm border border-white/20 shadow-lg rounded-lg;
-  }
-  
-  .gradient-orange {
-    @apply bg-gradient-to-r from-orange-500 to-orange-400;
-  }
-  
-  .gradient-teal {
-    @apply bg-gradient-to-r from-teal-500 to-teal-400;
-  }
-  
-  .ocean-blue-text {
-    @apply text-[#0EA5E9];
-  }
-  
-  .ocean-blue-bg {
-    @apply bg-[#0EA5E9];
-  }
-  
-  /* Animation Classes */
-  .animate-in {
-    @apply opacity-100 translate-y-0 scale-100;
-  }
-  
-  .hover-grow {
-    @apply transition-transform duration-300 hover:scale-105;
-  }
-  
-  .hover-bright {
-    @apply transition-all duration-300 hover:brightness-110;
-  }
-  
-  .text-glow {
-    text-shadow: 0 0 15px rgba(255, 159, 90, 0.7);
-  }
-  
-  .text-glow-blue {
-    text-shadow: 0 0 15px rgba(14, 165, 233, 0.7);
-  }
+/* Dialog positioning fix */
+.dialog-scroll-container {
+  max-height: 70vh;
+  overflow-y: auto;
 }

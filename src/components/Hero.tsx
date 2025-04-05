@@ -14,9 +14,9 @@ const Hero = () => {
     <div className="relative px-6 lg:px-8 py-16 md:py-24">
       <div className="mx-auto max-w-5xl">
         <div className="text-center">
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-4">
             <img 
-              src="/lovable-uploads/2d9abfe8-af53-43b1-9ce4-d5c73518ff44.png" 
+              src="/lovable-uploads/db137242-a816-462b-8d10-96fde441aaa3.png" 
               alt="Waveline Logo" 
               className="h-24 md:h-32 w-auto hover:scale-105 transition-transform duration-300"
             />

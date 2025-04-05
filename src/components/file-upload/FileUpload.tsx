@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
@@ -98,6 +99,23 @@ const FileUpload: React.FC<FileUploadProps> = ({ contactInfo, className }) => {
         }
       }
       
+      // Save to Supabase if contact info is available
+      if (contactInfo?.email && contactInfo?.phone && contactInfo?.companyName) {
+        const { error } = await supabase
+          .from('leads')
+          .insert({
+            business_name: contactInfo.companyName,
+            email: contactInfo.email,
+            phone_number: contactInfo.phone,
+            processing_volume: analysisData.monthlyVolume !== "N/A" ? analysisData.monthlyVolume : "Unknown",
+            website: null // Optional field
+          });
+
+        if (error) {
+          console.error("Error saving to database:", error);
+        }
+      }
+      
       // Navigate to results page
       navigate('/results');
       
@@ -152,6 +170,23 @@ const FileUpload: React.FC<FileUploadProps> = ({ contactInfo, className }) => {
         .createSignedUrl(fileName, 60 * 60 * 24 * 7); // URL valid for 7 days
       
       const fileUrl = urlData?.signedUrl || '';
+      
+      // Save to Supabase leads if contact info is available
+      if (contactInfo?.email && contactInfo?.phone && contactInfo?.companyName) {
+        const { error } = await supabase
+          .from('leads')
+          .insert({
+            business_name: contactInfo.companyName,
+            email: contactInfo.email,
+            phone_number: contactInfo.phone,
+            processing_volume: "Statement submitted directly",
+            website: null // Optional field
+          });
+
+        if (error) {
+          console.error("Error saving to database:", error);
+        }
+      }
       
       // Send notification email with attachment info
       await sendEmailNotification(file, contactInfo);

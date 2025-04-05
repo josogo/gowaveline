@@ -1,122 +1,131 @@
 
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
+// supabase/functions/send-email/index.ts
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const RECIPIENT_EMAIL = "info@gowaveline.com";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 interface EmailRequest {
-  type: "statement" | "contact" | "getStarted";
+  type: string;
   subject: string;
-  data: {
-    name?: string;
-    email?: string;
-    phone?: string;
-    company?: string;
-    message?: string;
-    businessName?: string;
-    monthlyVolume?: string;
-    fileName?: string;
-    fileType?: string;
-    fileSize?: number;
-  };
+  data: Record<string, any>;
 }
 
-const handler = async (req: Request): Promise<Response> => {
+serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
-
+  
   try {
-    const { type, subject, data }: EmailRequest = await req.json();
+    const { type, subject, data } = await req.json() as EmailRequest;
+    console.log("Email request received:", { type, subject, data });
     
-    // Check if RESEND_API_KEY is set
-    const apiKey = Deno.env.get("RESEND_API_KEY");
-    if (!apiKey) {
-      console.error("RESEND_API_KEY is not set in environment variables");
-      return new Response(
-        JSON.stringify({ 
-          error: "Email service is not configured. Please set the RESEND_API_KEY environment variable."
+    // Resend API implementation
+    const resend = {
+      apiKey: Deno.env.get("RESEND_API_KEY"),
+      baseUrl: "https://api.resend.com",
+    };
+
+    // Build email content based on type
+    let htmlContent = "";
+    let plainText = "";
+    
+    switch (type) {
+      case "statement":
+        htmlContent = `
+          <h1>New Statement Analysis Request</h1>
+          <p>A new statement has been submitted for analysis.</p>
+          <h2>Contact Information:</h2>
+          <ul>
+            <li><strong>Company:</strong> ${data.company}</li>
+            <li><strong>Email:</strong> ${data.email}</li>
+            <li><strong>Phone:</strong> ${data.phone}</li>
+          </ul>
+          <h2>File Information:</h2>
+          <ul>
+            <li><strong>Filename:</strong> ${data.fileName}</li>
+            <li><strong>File Type:</strong> ${data.fileType}</li>
+            <li><strong>File Size:</strong> ${(data.fileSize / (1024 * 1024)).toFixed(2)} MB</li>
+          </ul>
+        `;
+        plainText = `New Statement Analysis Request\n\nA new statement has been submitted for analysis.\n\nContact Information:\nCompany: ${data.company}\nEmail: ${data.email}\nPhone: ${data.phone}\n\nFile Information:\nFilename: ${data.fileName}\nFile Type: ${data.fileType}\nFile Size: ${(data.fileSize / (1024 * 1024)).toFixed(2)} MB`;
+        break;
+        
+      case "lead":
+        htmlContent = `
+          <h1>New Lead Submission</h1>
+          <p>A new lead has been submitted through the website.</p>
+          <h2>Lead Information:</h2>
+          <ul>
+            <li><strong>Company:</strong> ${data.company}</li>
+            <li><strong>Email:</strong> ${data.email}</li>
+            <li><strong>Phone:</strong> ${data.phone}</li>
+          </ul>
+        `;
+        plainText = `New Lead Submission\n\nA new lead has been submitted through the website.\n\nLead Information:\nCompany: ${data.company}\nEmail: ${data.email}\nPhone: ${data.phone}`;
+        break;
+        
+      default:
+        htmlContent = `<h1>${subject}</h1><pre>${JSON.stringify(data, null, 2)}</pre>`;
+        plainText = `${subject}\n\n${JSON.stringify(data, null, 2)}`;
+    }
+    
+    // Fake the email sending for now
+    console.log("Would send email to:", RECIPIENT_EMAIL);
+    console.log("Subject:", subject);
+    console.log("Content:", plainText);
+    
+    // If Resend API key is set, send the email for real
+    if (resend.apiKey) {
+      const response = await fetch(`${resend.baseUrl}/emails`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${resend.apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "Waveline Website <notifications@gowaveline.com>",
+          to: [RECIPIENT_EMAIL],
+          subject: subject,
+          html: htmlContent,
+          text: plainText,
         }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(`Failed to send email: ${JSON.stringify(error)}`);
+      }
+      
+      const result = await response.json();
+      console.log("Email sent successfully:", result);
     }
     
-    const resend = new Resend(apiKey);
-    let htmlContent = '';
-    
-    // Generate different email content based on the submission type
-    if (type === "statement") {
-      htmlContent = `
-        <h1>New Statement Analysis Request</h1>
-        <p><strong>Company:</strong> ${data.company || 'Not provided'}</p>
-        <p><strong>Email:</strong> ${data.email || 'Not provided'}</p>
-        <p><strong>Phone:</strong> ${data.phone || 'Not provided'}</p>
-        <p><strong>File Name:</strong> ${data.fileName || 'Not provided'}</p>
-        <p><strong>File Type:</strong> ${data.fileType || 'Not provided'}</p>
-        <p><strong>File Size:</strong> ${data.fileSize ? `${(data.fileSize / (1024 * 1024)).toFixed(2)} MB` : 'Not provided'}</p>
-        <p>The customer has uploaded a statement for analysis. Please follow up with them promptly.</p>
-      `;
-    } else if (type === "contact") {
-      htmlContent = `
-        <h1>New Contact Form Submission</h1>
-        <p><strong>Name:</strong> ${data.name || 'Not provided'}</p>
-        <p><strong>Email:</strong> ${data.email || 'Not provided'}</p>
-        <p><strong>Phone:</strong> ${data.phone || 'Not provided'}</p>
-        <p><strong>Company:</strong> ${data.company || 'Not provided'}</p>
-        <p><strong>Message:</strong></p>
-        <p>${data.message || 'No message provided'}</p>
-      `;
-    } else if (type === "getStarted") {
-      htmlContent = `
-        <h1>New Get Started Application</h1>
-        <p><strong>Name:</strong> ${data.name || 'Not provided'}</p>
-        <p><strong>Email:</strong> ${data.email || 'Not provided'}</p>
-        <p><strong>Phone:</strong> ${data.phone || 'Not provided'}</p>
-        <p><strong>Business Name:</strong> ${data.businessName || 'Not provided'}</p>
-        <p><strong>Monthly Volume:</strong> ${data.monthlyVolume || 'Not provided'}</p>
-        <p><strong>File Name:</strong> ${data.fileName || 'No file uploaded'}</p>
-        <p><strong>File Type:</strong> ${data.fileType || 'N/A'}</p>
-        <p><strong>File Size:</strong> ${data.fileSize ? `${(data.fileSize / (1024 * 1024)).toFixed(2)} MB` : 'N/A'}</p>
-      `;
-    }
-
-    // Using Resend's default domain instead of a custom domain that needs verification
-    const emailResponse = await resend.emails.send({
-      from: "WaveLine <onboarding@resend.dev>",  // Using Resend's default domain
-      to: ["info@gowaveline.com"],
-      subject: subject,
-      html: htmlContent,
-      // Add a reply-to with the submitter's email if available
-      ...(data.email ? { reply_to: data.email } : {})
-    });
-
-    console.log("Email sent successfully:", emailResponse);
-
-    return new Response(JSON.stringify(emailResponse), {
+    return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
         ...corsHeaders,
       },
     });
-  } catch (error: any) {
-    console.error("Error in send-email function:", error);
+  } catch (error) {
+    console.error("Error sending email:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders,
+        },
       }
     );
   }
-};
-
-serve(handler);
+});

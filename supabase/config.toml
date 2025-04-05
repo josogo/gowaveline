@@ -5,43 +5,17 @@ project_id = "rqwrvkkfixrogxogunsk"
 enabled = true
 port = 54321
 schemas = ["public", "storage", "graphql_public"]
-extra_search_path = ["public", "extensions"]
-max_rows = 1000
 
 [db]
 port = 54322
-shadow_port = 54320
-major_version = 15
-
-[studio]
-enabled = true
-port = 54323
-api_url = "http://localhost"
-
-[inbucket]
-enabled = true
-port = 54324
-smtp_port = 54325
-pop3_port = 54326
 
 [storage]
 enabled = true
 
 [auth]
 enabled = true
-site_url = "http://localhost:3000"
+site_url = "http://localhost:5173"
 
-[realtime]
-enabled = true
-
-[analytics]
-enabled = false
-port = 54327
-vector_port = 54328
-backend = "postgres"
-
-[functions.analyze-statement]
-verify_jwt = false
-
+[functions]
 [functions.send-email]
 verify_jwt = false
