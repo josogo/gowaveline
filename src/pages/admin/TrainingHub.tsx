@@ -8,7 +8,7 @@ import {
   TabsList, 
   TabsTrigger 
 } from '@/components/ui/tabs';
-import { extendedGlossaryTerms } from '@/data/lessonContent';
+import { extendedGlossaryTerms } from '@/data';
 import { 
   GlossarySection,
   ResourcesSection,
