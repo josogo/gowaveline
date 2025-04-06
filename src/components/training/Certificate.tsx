@@ -19,11 +19,12 @@ const Certificate: React.FC<CertificateProps> = ({ name, lessonTitle, date, scor
     day: 'numeric'
   });
   
+  // Modified to use only supported badge variants
   const getBadgeVariant = (score: number) => {
-    if (score >= 90) return 'success';
-    if (score >= 75) return 'info';
-    if (score >= 60) return 'warning';
-    return 'destructive';
+    if (score >= 90) return "secondary"; // Was "success"
+    if (score >= 75) return "default";   // Was "info"
+    if (score >= 60) return "outline";   // Was "warning"
+    return "destructive";                // Already valid variant
   };
   
   return (
