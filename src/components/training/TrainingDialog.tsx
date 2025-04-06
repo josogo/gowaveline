@@ -2,7 +2,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Lesson, ModuleDetail } from '@/components/training';
-import { lessonContents } from '@/data/lessonContent';
+import { lessonContents } from '@/data';
 import { getModuleContent } from '@/data/moduleContent';
 
 interface TrainingDialogProps {
