@@ -16,8 +16,8 @@ interface EmailData {
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
 // Use this email for testing - this should be your verified email in Resend
 const TEST_EMAIL = "jordan@gowaveline.com";
-// Set to true to use the test email for all recipients during development
-const USE_TEST_EMAIL = true;
+// Set to false to use actual recipient emails in production
+const USE_TEST_EMAIL = false;
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -133,9 +133,7 @@ serve(async (req) => {
       console.log(`Attempting to send email to: ${recipient}`);
       
       // Set up the from email address - for production this should be from your verified domain
-      const fromEmail = USE_TEST_EMAIL 
-        ? "Waveline Test <onboarding@resend.dev>"
-        : "Waveline <onboarding@resend.dev>"; 
+      const fromEmail = "Waveline <info@gowaveline.com>";
       
       const emailResponse = await fetch("https://api.resend.com/emails", {
         method: "POST",
