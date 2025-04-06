@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { TeamMember } from './TeamMemberForm';
 
 interface TeamMembersTableProps {
@@ -24,6 +25,7 @@ const TeamMembersTable: React.FC<TeamMembersTableProps> = ({ members, onEdit, on
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-12"></TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Email</TableHead>
             <TableHead className="hidden md:table-cell">Phone</TableHead>
@@ -37,6 +39,17 @@ const TeamMembersTable: React.FC<TeamMembersTableProps> = ({ members, onEdit, on
           {members.length > 0 ? (
             members.map((member) => (
               <TableRow key={member.id}>
+                <TableCell>
+                  <Avatar>
+                    {member.profilePicture ? (
+                      <AvatarImage src={member.profilePicture} alt={member.name} />
+                    ) : (
+                      <AvatarFallback className="bg-[#0EA5E9]/10 text-[#0EA5E9]">
+                        {member.name.split(' ').map(n => n[0]).join('')}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                </TableCell>
                 <TableCell className="font-medium">{member.name}</TableCell>
                 <TableCell>{member.email}</TableCell>
                 <TableCell className="hidden md:table-cell">{member.phone}</TableCell>
@@ -70,7 +83,7 @@ const TeamMembersTable: React.FC<TeamMembersTableProps> = ({ members, onEdit, on
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-6">
+              <TableCell colSpan={8} className="text-center py-6">
                 No team members found
               </TableCell>
             </TableRow>

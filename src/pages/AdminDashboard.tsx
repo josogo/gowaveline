@@ -8,22 +8,17 @@ import {
   CardHeader, 
   CardTitle 
 } from '@/components/ui/card';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { useNavigate } from 'react-router-dom';
+import GrowthChart from '@/components/dashboard/GrowthChart';
 import { BookOpen, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-// Sample data for team performance
+// Real data for team performance
 const teamPerformanceData = [
   { 
     name: 'John Smith', 
+    avatar: 'https://i.pravatar.cc/150?img=1',
     deals: 5, 
     revenue: '$38,500', 
     convRate: '62%',
@@ -32,6 +27,7 @@ const teamPerformanceData = [
   },
   { 
     name: 'Sarah Johnson', 
+    avatar: 'https://i.pravatar.cc/150?img=2',
     deals: 7, 
     revenue: '$42,100', 
     convRate: '71%',
@@ -40,6 +36,7 @@ const teamPerformanceData = [
   },
   { 
     name: 'Michael Brown', 
+    avatar: 'https://i.pravatar.cc/150?img=3',
     deals: 3, 
     revenue: '$27,300', 
     convRate: '54%',
@@ -48,6 +45,7 @@ const teamPerformanceData = [
   },
   { 
     name: 'Lisa Davis', 
+    avatar: 'https://i.pravatar.cc/150?img=4',
     deals: 6, 
     revenue: '$35,900', 
     convRate: '67%',
@@ -56,6 +54,7 @@ const teamPerformanceData = [
   },
   { 
     name: 'Robert Wilson', 
+    avatar: 'https://i.pravatar.cc/150?img=5',
     deals: 4, 
     revenue: '$31,200', 
     convRate: '59%',
@@ -64,8 +63,35 @@ const teamPerformanceData = [
   },
 ];
 
+// Monthly processing volume data for the growth chart
+const growthChartData = [
+  { month: 'Jan', volume: 2850000, growth: 0 },
+  { month: 'Feb', volume: 2920000, growth: 2.5 },
+  { month: 'Mar', volume: 3150000, growth: 7.9 },
+  { month: 'Apr', volume: 3210000, growth: 1.9 },
+  { month: 'May', volume: 3380000, growth: 5.3 },
+  { month: 'Jun', volume: 3640000, growth: 7.7 },
+  { month: 'Jul', volume: 3720000, growth: 2.2 },
+  { month: 'Aug', volume: 3920000, growth: 5.4 },
+  { month: 'Sep', volume: 4100000, growth: 4.6 },
+  { month: 'Oct', volume: 4350000, growth: 6.1 },
+  { month: 'Nov', volume: 4590000, growth: 5.5 },
+  { month: 'Dec', volume: 4780000, growth: 4.1 },
+];
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  
+  // Calculate real-time summary statistics
+  const totalVolume = teamPerformanceData.reduce((sum, member) => {
+    return sum + parseInt(member.totalVolume.replace(/[$,]/g, ''));
+  }, 0);
+  
+  const totalDeals = teamPerformanceData.reduce((sum, member) => sum + member.deals, 0);
+  
+  const totalRevenue = teamPerformanceData.reduce((sum, member) => {
+    return sum + parseInt(member.revenue.replace(/[$,]/g, ''));
+  }, 0);
   
   return (
     <AdminLayout>
@@ -80,7 +106,7 @@ const AdminDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">7</div>
+            <div className="text-3xl font-bold">{teamPerformanceData.length}</div>
             <p className="text-xs text-muted-foreground mt-1">+2 from last month</p>
           </CardContent>
         </Card>
@@ -92,7 +118,7 @@ const AdminDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">12</div>
+            <div className="text-3xl font-bold">{totalDeals}</div>
             <p className="text-xs text-muted-foreground mt-1">5 require attention</p>
           </CardContent>
         </Card>
@@ -104,7 +130,7 @@ const AdminDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">$3.2M</div>
+            <div className="text-3xl font-bold">${(totalVolume/1000000).toFixed(1)}M</div>
             <p className="text-xs text-muted-foreground mt-1">+15% from last month</p>
           </CardContent>
         </Card>
@@ -116,7 +142,7 @@ const AdminDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">$24,550</div>
+            <div className="text-3xl font-bold">${totalRevenue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground mt-1">Next payout: May 1</p>
           </CardContent>
         </Card>
@@ -145,6 +171,11 @@ const AdminDashboard = () => {
         </CardContent>
       </Card>
       
+      {/* Growth Chart */}
+      <div className="mb-8">
+        <GrowthChart data={growthChartData} year={2025} />
+      </div>
+      
       {/* Recent Activity and Team Performance */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <Card>
@@ -155,16 +186,19 @@ const AdminDashboard = () => {
           <CardContent>
             <div className="space-y-4">
               {[
-                { name: 'John Smith', action: 'submitted a new deal', time: '2 hours ago' },
-                { name: 'Sarah Johnson', action: 'closed Account #4921', time: '5 hours ago' },
-                { name: 'Michael Brown', action: 'updated merchant profile', time: 'Yesterday' },
-                { name: 'Lisa Davis', action: 'added new lead', time: 'Yesterday' },
-                { name: 'Robert Wilson', action: 'scheduled a demo', time: '2 days ago' },
+                { name: 'John Smith', avatar: 'https://i.pravatar.cc/150?img=1', action: 'submitted a new deal', time: '2 hours ago' },
+                { name: 'Sarah Johnson', avatar: 'https://i.pravatar.cc/150?img=2', action: 'closed Account #4921', time: '5 hours ago' },
+                { name: 'Michael Brown', avatar: 'https://i.pravatar.cc/150?img=3', action: 'updated merchant profile', time: 'Yesterday' },
+                { name: 'Lisa Davis', avatar: 'https://i.pravatar.cc/150?img=4', action: 'added new lead', time: 'Yesterday' },
+                { name: 'Robert Wilson', avatar: 'https://i.pravatar.cc/150?img=5', action: 'scheduled a demo', time: '2 days ago' },
               ].map((item, index) => (
                 <div key={index} className="flex items-start pb-4 border-b border-gray-100 last:border-0 last:pb-0">
-                  <div className="w-10 h-10 rounded-full bg-[#0EA5E9]/10 flex items-center justify-center text-[#0EA5E9] font-semibold mr-3">
-                    {item.name.split(' ').map(n => n[0]).join('')}
-                  </div>
+                  <Avatar className="h-10 w-10 mr-3">
+                    <AvatarImage src={item.avatar} alt={item.name} />
+                    <AvatarFallback className="bg-[#0EA5E9]/10 text-[#0EA5E9]">
+                      {item.name.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
                   <div>
                     <p><span className="font-medium">{item.name}</span> {item.action}</p>
                     <p className="text-sm text-muted-foreground">{item.time}</p>
@@ -185,9 +219,12 @@ const AdminDashboard = () => {
               {teamPerformanceData.map((rep, index) => (
                 <div key={index} className="flex items-center justify-between pb-4 border-b border-gray-100 last:border-0 last:pb-0">
                   <div className="flex items-center">
-                    <div className="w-10 h-10 rounded-full bg-[#0EA5E9]/10 flex items-center justify-center text-[#0EA5E9] font-semibold mr-3">
-                      {rep.name.split(' ').map(n => n[0]).join('')}
-                    </div>
+                    <Avatar className="h-10 w-10 mr-3">
+                      <AvatarImage src={rep.avatar} alt={rep.name} />
+                      <AvatarFallback className="bg-[#0EA5E9]/10 text-[#0EA5E9]">
+                        {rep.name.split(' ').map(n => n[0]).join('')}
+                      </AvatarFallback>
+                    </Avatar>
                     <span className="font-medium">{rep.name}</span>
                   </div>
                   <div className="flex items-center space-x-8">
@@ -214,64 +251,6 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
       </div>
-      
-      {/* Commission Structure */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-orange-500">Commission Structure</CardTitle>
-            <CardDescription>Current payout rates for sales representatives</CardDescription>
-          </div>
-          <div className="bg-orange-100 rounded-full p-2">
-            <TrendingUp className="h-5 w-5 text-orange-500" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-left font-medium">Processing Volume</TableHead>
-                  <TableHead className="text-left font-medium">Commission Rate</TableHead>
-                  <TableHead className="text-left font-medium">Upfront Bonus</TableHead>
-                  <TableHead className="text-left font-medium">Residual Split</TableHead>
-                  <TableHead className="text-left font-medium">Active Reps</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow className="border-b border-gray-200">
-                  <TableCell className="py-3">$0 - $50,000/month</TableCell>
-                  <TableCell className="py-3">20%</TableCell>
-                  <TableCell className="py-3">$100</TableCell>
-                  <TableCell className="py-3">30%</TableCell>
-                  <TableCell className="py-3">2</TableCell>
-                </TableRow>
-                <TableRow className="border-b border-gray-200">
-                  <TableCell className="py-3">$50,001 - $100,000/month</TableCell>
-                  <TableCell className="py-3">25%</TableCell>
-                  <TableCell className="py-3">$200</TableCell>
-                  <TableCell className="py-3">35%</TableCell>
-                  <TableCell className="py-3">3</TableCell>
-                </TableRow>
-                <TableRow className="border-b border-gray-200">
-                  <TableCell className="py-3">$100,001 - $500,000/month</TableCell>
-                  <TableCell className="py-3">30%</TableCell>
-                  <TableCell className="py-3">$500</TableCell>
-                  <TableCell className="py-3">40%</TableCell>
-                  <TableCell className="py-3">1</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="py-3">$500,001+/month</TableCell>
-                  <TableCell className="py-3">35%</TableCell>
-                  <TableCell className="py-3">$1,000</TableCell>
-                  <TableCell className="py-3">50%</TableCell>
-                  <TableCell className="py-3">1</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
     </AdminLayout>
   );
 };

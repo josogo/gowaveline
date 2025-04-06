@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -24,6 +24,8 @@ import {
 import {
   DialogFooter
 } from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Upload, UserCircle } from 'lucide-react';
 
 // Define the form schema for team member
 const formSchema = z.object({
@@ -32,7 +34,8 @@ const formSchema = z.object({
   phone: z.string().min(10, { message: "Please enter a valid phone number." }),
   role: z.string().min(1, { message: "Role is required." }),
   commissionSplit: z.string().min(1, { message: "Commission split is required." }),
-  processingVolume: z.string().min(1, { message: "Processing volume is required." })
+  processingVolume: z.string().min(1, { message: "Processing volume is required." }),
+  profilePicture: z.string().optional()
 });
 
 export type TeamMemberFormData = z.infer<typeof formSchema>;
@@ -44,6 +47,8 @@ interface TeamMemberFormProps {
 }
 
 const TeamMemberForm: React.FC<TeamMemberFormProps> = ({ onSubmit, editingMember }) => {
+  const [profileImageUrl, setProfileImageUrl] = useState<string>("");
+  
   const form = useForm<TeamMemberFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -52,7 +57,8 @@ const TeamMemberForm: React.FC<TeamMemberFormProps> = ({ onSubmit, editingMember
       phone: "",
       role: "",
       commissionSplit: "",
-      processingVolume: ""
+      processingVolume: "",
+      profilePicture: ""
     },
   });
 
@@ -64,8 +70,13 @@ const TeamMemberForm: React.FC<TeamMemberFormProps> = ({ onSubmit, editingMember
         phone: editingMember.phone,
         role: editingMember.role,
         commissionSplit: editingMember.commissionSplit,
-        processingVolume: editingMember.processingVolume
+        processingVolume: editingMember.processingVolume,
+        profilePicture: editingMember.profilePicture || ""
       });
+      
+      if (editingMember.profilePicture) {
+        setProfileImageUrl(editingMember.profilePicture);
+      }
     } else {
       form.reset({
         name: "",
@@ -73,14 +84,70 @@ const TeamMemberForm: React.FC<TeamMemberFormProps> = ({ onSubmit, editingMember
         phone: "",
         role: "",
         commissionSplit: "",
-        processingVolume: ""
+        processingVolume: "",
+        profilePicture: ""
       });
+      setProfileImageUrl("");
     }
   }, [editingMember, form]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const imageUrl = URL.createObjectURL(file);
+      setProfileImageUrl(imageUrl);
+      
+      // Convert to base64 to store in form
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        form.setValue("profilePicture", reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="flex flex-col items-center mb-4">
+          <FormField
+            control={form.control}
+            name="profilePicture"
+            render={() => (
+              <FormItem className="flex flex-col items-center">
+                <FormLabel className="cursor-pointer">
+                  <div className="relative">
+                    <Avatar className="w-24 h-24 border-2 border-dashed border-gray-300 hover:border-[#0EA5E9] transition-colors">
+                      {profileImageUrl ? (
+                        <AvatarImage src={profileImageUrl} alt="Profile picture" />
+                      ) : (
+                        <AvatarFallback className="bg-gray-100 text-gray-400">
+                          <UserCircle className="w-12 h-12" />
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div className="absolute bottom-0 right-0 bg-[#0EA5E9] rounded-full p-1">
+                      <Upload className="h-4 w-4 text-white" />
+                    </div>
+                  </div>
+                </FormLabel>
+                <FormControl>
+                  <Input 
+                    type="file" 
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageChange}
+                  />
+                </FormControl>
+                <FormDescription className="text-xs text-center">
+                  Click to upload profile picture
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        
         <FormField
           control={form.control}
           name="name"
