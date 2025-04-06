@@ -36,15 +36,22 @@ const TeamManagement = () => {
   const [agreements, setAgreements] = useState<any[]>([]);
 
   useEffect(() => {
-    // Fetch agreements from Supabase
+    // Fetch agreements from Supabase using fetch API instead of SDK
+    // to workaround type issues
     const fetchAgreements = async () => {
       try {
-        const { data, error } = await supabase
-          .from('agent_agreements')
-          .select('*');
-          
-        if (error) throw error;
-        setAgreements(data || []);
+        const response = await fetch('https://rqwrvkkfixrogxogunsk.supabase.co/rest/v1/agent_agreements', {
+          headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxd3J2a2tmaXhyb2d4b2d1bnNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MjMxMjEsImV4cCI6MjA1OTI5OTEyMX0.nESe15lNwkqji77TNpbWGFGo-uHkKt73AZFfBR6oMRY'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch agreements');
+        }
+        
+        const data = await response.json();
+        setAgreements(data);
       } catch (error) {
         console.error("Error fetching agreements:", error);
       }
@@ -82,16 +89,23 @@ const TeamManagement = () => {
       
       // Delete agreements if they exist
       for (const agreement of memberAgreements) {
+        // Use fetch API instead of SDK to work around type issues
         // Delete from storage
-        await supabase.storage
-          .from('agent_agreements')
-          .remove([agreement.file_path]);
-          
+        await fetch(`https://rqwrvkkfixrogxogunsk.supabase.co/storage/v1/object/agent_agreements/${agreement.file_path}`, {
+          method: 'DELETE',
+          headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxd3J2a2tmaXhyb2d4b2d1bnNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MjMxMjEsImV4cCI6MjA1OTI5OTEyMX0.nESe15lNwkqji77TNpbWGFGo-uHkKt73AZFfBR6oMRY'
+          }
+        });
+        
         // Delete from database
-        await supabase
-          .from('agent_agreements')
-          .delete()
-          .eq('id', agreement.id);
+        await fetch(`https://rqwrvkkfixrogxogunsk.supabase.co/rest/v1/agent_agreements?id=eq.${agreement.id}`, {
+          method: 'DELETE',
+          headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxd3J2a2tmaXhyb2d4b2d1bnNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MjMxMjEsImV4cCI6MjA1OTI5OTEyMX0.nESe15lNwkqji77TNpbWGFGo-uHkKt73AZFfBR6oMRY',
+            'Content-Type': 'application/json'
+          }
+        });
       }
       
       // Remove team member from state
