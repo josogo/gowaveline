@@ -10,7 +10,7 @@ const corsHeaders = {
 interface EmailData {
   type: string;
   subject: string;
-  data: Record<string, string | number>;
+  data: Record<string, string | number | boolean>;
 }
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
@@ -71,14 +71,23 @@ serve(async (req) => {
       // Get Started form submission logic
       console.log("Processing get started submission");
       htmlContent = `
-        <h1>New Get Started Submission</h1>
+        <h1>New Get Started Application</h1>
         <p><strong>Name:</strong> ${data.name}</p>
         <p><strong>Email:</strong> ${data.email}</p>
         <p><strong>Phone:</strong> ${data.phone}</p>
-        <p><strong>Business:</strong> ${data.business}</p>
-        <p><strong>Processing Volume:</strong> ${data.volume}</p>
+        <p><strong>Business:</strong> ${data.businessName}</p>
+        <p><strong>Website:</strong> ${data.website || 'Not provided'}</p>
+        <p><strong>Monthly Volume:</strong> ${data.monthlyVolume}</p>
+        
+        ${data.hasAttachment ? `
+        <h2>Attached Statement</h2>
+        <p><strong>File:</strong> ${data.fileName}</p>
+        <p><strong>File Type:</strong> ${data.fileType}</p>
+        <p><strong>File Size:</strong> ${(Number(data.fileSize) / (1024 * 1024)).toFixed(2)} MB</p>
+        <p><a href="${data.fileUrl}" target="_blank">Download Statement</a> (link valid for 7 days)</p>
+        ` : '<p>No statement file was uploaded.</p>'}
       `;
-      recipient = 'info@gowaveline.com';
+      recipient = data.recipient ? String(data.recipient) : 'info@gowaveline.com';
       
     } else if (type === 'quiz') {
       // Quiz results submission logic

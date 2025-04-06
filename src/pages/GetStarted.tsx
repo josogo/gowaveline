@@ -11,7 +11,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { useDropzone } from 'react-dropzone';
 import { File, FileText, UploadCloud, X, Loader2 } from 'lucide-react';
-import emailjs from '@emailjs/browser';
+import { supabase } from '@/integrations/supabase/client';
+import { sendGetStartedFormNotification } from '@/services/notificationService';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -83,39 +84,74 @@ const GetStarted = () => {
     setUploading(true);
     
     try {
-      // Send email notification using our edge function
-      const response = await fetch('https://rqwrvkkfixrogxogunsk.supabase.co/functions/v1/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'getStarted',
-          subject: 'New Get Started Application',
-          data: {
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            businessName: data.businessName,
-            monthlyVolume: data.monthlyVolume,
-            fileName: file ? file.name : 'No file uploaded',
-            fileType: file ? file.type : 'N/A',
-            fileSize: file ? file.size : 0,
-          }
-        }),
-      });
+      let fileUrl = '';
       
-      if (!response.ok) {
-        throw new Error('Failed to send email');
+      // If there's a file, upload it to Supabase Storage first
+      if (file) {
+        // Create a storage bucket for statements if it doesn't exist
+        try {
+          const { data: buckets } = await supabase.storage.listBuckets();
+          const statementsBucketExists = buckets?.some(bucket => bucket.name === 'statements');
+          
+          if (!statementsBucketExists) {
+            await supabase.storage.createBucket('statements', {
+              public: false,
+              fileSizeLimit: 10485760, // 10MB
+            });
+          }
+        } catch (error) {
+          console.warn("Bucket error (may already exist):", error);
+        }
+        
+        // Upload file to Supabase Storage
+        const timeStamp = new Date().getTime();
+        const fileName = `getstarted_${timeStamp}_${file.name}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('statements')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+        
+        if (uploadError) {
+          console.error("File upload error:", uploadError);
+          toast.error("Failed to upload your statement file");
+        } else {
+          // Get file URL
+          const { data: urlData } = await supabase.storage
+            .from('statements')
+            .createSignedUrl(fileName, 60 * 60 * 24 * 7); // URL valid for 7 days
+          
+          fileUrl = urlData?.signedUrl || '';
+        }
       }
       
-      toast.success('Thank you for your interest!', {
-        description: 'Your information has been sent. We will contact you shortly.',
+      // Send form data and file information
+      const success = await sendGetStartedFormNotification({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        businessName: data.businessName,
+        website: data.website,
+        monthlyVolume: data.monthlyVolume,
+        fileName: file ? file.name : undefined,
+        fileType: file ? file.type : undefined,
+        fileSize: file ? file.size : undefined,
+        fileUrl: fileUrl,
       });
       
-      // Reset the form
-      form.reset();
-      setFile(null);
+      if (success) {
+        toast.success('Thank you for your interest!', {
+          description: 'Your information has been sent. We will contact you shortly.',
+        });
+        
+        // Reset the form
+        form.reset();
+        setFile(null);
+      } else {
+        throw new Error('Failed to send your information');
+      }
     } catch (error) {
       console.error('Error submitting form:', error);
       toast.error('There was a problem submitting your information. Please try again.');

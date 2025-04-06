@@ -89,3 +89,64 @@ export async function sendContactFormNotification(contactData: {
     return false;
   }
 }
+
+export async function sendGetStartedFormNotification(formData: {
+  name: string;
+  email: string;
+  phone: string;
+  businessName: string;
+  website?: string;
+  monthlyVolume: string;
+  fileName?: string;
+  fileType?: string;
+  fileSize?: number;
+  fileUrl?: string;
+}) {
+  try {
+    // First save to Supabase
+    const { error: dbError } = await supabase.from('leads').insert({
+      business_name: formData.businessName,
+      email: formData.email,
+      phone_number: formData.phone,
+      processing_volume: formData.monthlyVolume,
+      website: formData.website || null
+    });
+
+    if (dbError) {
+      console.error('Error saving lead to database:', dbError);
+    }
+
+    // Send email notification using edge function
+    const { data, error } = await supabase.functions.invoke('send-email', {
+      body: JSON.stringify({
+        type: 'getStarted',
+        subject: 'New Get Started Application',
+        data: {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          businessName: formData.businessName,
+          website: formData.website || 'Not provided',
+          monthlyVolume: formData.monthlyVolume,
+          hasAttachment: !!formData.fileName,
+          fileName: formData.fileName || 'No file uploaded',
+          fileType: formData.fileType || 'N/A',
+          fileSize: formData.fileSize || 0,
+          fileUrl: formData.fileUrl || 'No file URL',
+          recipient: 'info@gowaveline.com'
+        }
+      }),
+    });
+    
+    if (error) {
+      console.error('Error invoking send-email function:', error);
+      return false;
+    }
+    
+    console.log('Get Started form notification sent successfully', data);
+    return true;
+  } catch (error) {
+    console.error('Error sending get started form notification:', error);
+    return false;
+  }
+}
