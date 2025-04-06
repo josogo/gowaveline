@@ -11,7 +11,7 @@ const GMAIL_SCOPES = [
   'https://www.googleapis.com/auth/gmail.modify',
 ];
 
-// This would come from environment variables in a production app
+// Redirect URI should match what you set in Google Cloud Console
 const REDIRECT_URI = window.location.origin + '/admin/gmail-integration';
 
 interface TokenResponse {
@@ -27,8 +27,7 @@ interface TokenResponse {
  */
 export const getGmailAuthUrl = async (): Promise<string> => {
   try {
-    // In a real implementation, we would get the client ID from the server
-    // Here we're getting it from Supabase Edge Function to avoid exposing it
+    // We're getting the client ID from the Supabase Edge Function to avoid exposing it
     const { data, error } = await supabase.functions.invoke('get-gmail-credentials', {
       body: { action: 'getClientId' }
     });
@@ -70,7 +69,6 @@ export const getGmailAuthUrl = async (): Promise<string> => {
 export const exchangeCodeForTokens = async (code: string): Promise<TokenResponse> => {
   try {
     // Exchange the code for tokens using Supabase Edge Function
-    // This is more secure than doing it client-side
     const { data, error } = await supabase.functions.invoke('get-gmail-credentials', {
       body: { 
         action: 'exchangeCode',
@@ -171,7 +169,7 @@ export const sendGmailEmail = async (
 };
 
 /**
- * Store Gmail tokens in the database
+ * Store Gmail tokens in local storage
  */
 export const storeGmailTokens = async (
   userId: string,
@@ -181,7 +179,7 @@ export const storeGmailTokens = async (
   email: string
 ): Promise<void> => {
   try {
-    // In a real application, you would store these in a database table
+    // In a production application, you would store these in a database table
     // For demo purposes, we're using localStorage
     const tokens = {
       accessToken,
@@ -199,7 +197,7 @@ export const storeGmailTokens = async (
 };
 
 /**
- * Get stored Gmail tokens
+ * Get stored Gmail tokens from local storage
  */
 export const getStoredGmailTokens = (): {
   accessToken: string;
@@ -231,14 +229,14 @@ export const clearGmailTokens = (): void => {
 };
 
 /**
- * Store Gmail user profile
+ * Store Gmail user profile in local storage
  */
 export const storeUserProfile = (profile: any): void => {
   localStorage.setItem('gmail_user_profile', JSON.stringify(profile));
 };
 
 /**
- * Get stored Gmail user profile
+ * Get stored Gmail user profile from local storage
  */
 export const getStoredUserProfile = (): any => {
   try {

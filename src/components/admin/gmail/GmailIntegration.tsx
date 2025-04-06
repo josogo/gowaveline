@@ -24,59 +24,10 @@ import {
   getStoredUserProfile
 } from '@/services/gmailService';
 
-// Mock emails for demonstration
-const mockEmails = [
-  {
-    id: 'email1',
-    from: 'john.smith@example.com',
-    subject: 'Merchant statement review',
-    body: 'Hello, I\'ve attached my merchant statement for review. Looking forward to your analysis.',
-    date: '2025-04-02T14:30:00',
-    read: false,
-    hasAttachment: true
-  },
-  {
-    id: 'email2',
-    from: 'sales@competitor.com',
-    subject: 'Special offer for payment processing',
-    body: 'We\'d like to offer you our special rate of 2.4% + $0.10 per transaction.',
-    date: '2025-04-01T09:15:00',
-    read: true,
-    hasAttachment: false
-  },
-  {
-    id: 'email3',
-    from: 'support@acmecorp.com',
-    subject: 'Re: Processing fee inquiry',
-    body: 'Thank you for your inquiry about our processing fees. Our current rates are competitive in the market.',
-    date: '2025-03-31T16:45:00',
-    read: true,
-    hasAttachment: false
-  },
-  {
-    id: 'email4',
-    from: 'sarah.jones@bigretail.com',
-    subject: 'Need help with statement',
-    body: 'Hi there, I\'m trying to understand my current processing fees. Can you help?',
-    date: '2025-03-30T11:20:00',
-    read: false,
-    hasAttachment: true
-  },
-  {
-    id: 'email5',
-    from: 'michael.rodriguez@smallbusiness.org',
-    subject: 'Looking to switch processors',
-    body: 'We\'re currently with Stripe but are looking for better rates. What can you offer us?',
-    date: '2025-03-29T13:10:00',
-    read: true,
-    hasAttachment: false
-  }
-];
-
 const GmailIntegration = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [emails, setEmails] = useState(mockEmails);
+  const [emails, setEmails] = useState([]);
   const [selectedTab, setSelectedTab] = useState('inbox');
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -115,7 +66,6 @@ const GmailIntegration = () => {
           setUserProfile(storedProfile);
           
           // In a real app, check if token is expired and refresh if needed
-          // For demo purposes, we'll assume token is valid
         }
       }
     };
@@ -154,14 +104,77 @@ const GmailIntegration = () => {
       setIsAuthenticated(true);
       toast.success('Successfully connected to Gmail');
       
-      // Fetch emails (in a real app)
-      // await fetchEmails(tokens.access_token);
+      // Fetch emails
+      await fetchEmails(tokens.access_token);
     } catch (error) {
       console.error('Error handling auth callback:', error);
       toast.error('Authentication failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const fetchEmails = async (accessToken: string) => {
+    setIsSyncing(true);
+    try {
+      const gmailEmails = await getGmailEmails(accessToken);
+      
+      // Process raw Gmail API response to a more usable format
+      const processedEmails = processGmailEmails(gmailEmails);
+      setEmails(processedEmails);
+      
+      setLastSync(new Date().toLocaleString());
+      setSyncError(null);
+    } catch (error) {
+      console.error('Error fetching emails:', error);
+      setSyncError((error instanceof Error) ? error.message : 'Unknown error');
+      toast.error('Failed to fetch emails: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Process Gmail API response to a more usable format
+  const processGmailEmails = (gmailMessages: any[]) => {
+    return gmailMessages.map(message => {
+      // Extract headers
+      const headers = message.payload.headers;
+      const subject = headers.find((h: any) => h.name === 'Subject')?.value || '(No subject)';
+      const from = headers.find((h: any) => h.name === 'From')?.value || 'unknown@example.com';
+      const dateHeader = headers.find((h: any) => h.name === 'Date')?.value;
+      const date = dateHeader ? new Date(dateHeader).toISOString() : new Date().toISOString();
+      
+      // Check for attachments
+      const hasAttachment = message.payload.parts?.some((part: any) => part.filename && part.filename.length > 0) || false;
+      
+      // Extract body
+      let body = '';
+      if (message.payload.body?.data) {
+        // Body is base64 encoded
+        body = atob(message.payload.body.data.replace(/-/g, '+').replace(/_/g, '/'));
+      } else if (message.payload.parts) {
+        // Try to find text part
+        const textPart = message.payload.parts.find((part: any) => 
+          part.mimeType === 'text/plain' || part.mimeType === 'text/html'
+        );
+        if (textPart?.body?.data) {
+          body = atob(textPart.body.data.replace(/-/g, '+').replace(/_/g, '/'));
+        }
+      }
+      
+      // Strip HTML tags for plain text preview
+      body = body.replace(/<[^>]*>/g, ' ');
+      
+      return {
+        id: message.id,
+        from,
+        subject,
+        body,
+        date,
+        read: !message.labelIds?.includes('UNREAD'),
+        hasAttachment
+      };
+    });
   };
 
   const handleAuthenticate = async () => {
@@ -188,6 +201,7 @@ const GmailIntegration = () => {
       clearGmailTokens();
       setIsAuthenticated(false);
       setUserProfile(null);
+      setEmails([]);
       toast.info("Disconnected from Gmail");
     } catch (error) {
       console.error('Error during logout:', error);
@@ -201,26 +215,13 @@ const GmailIntegration = () => {
     setIsLoading(true);
     
     try {
-      // In a real app, fetch emails from Gmail API
-      // For demo purposes, we'll use mock data
       const tokens = getStoredGmailTokens();
       
       if (!tokens?.accessToken) {
         throw new Error("No access token available");
       }
       
-      // Uncomment this to use real Gmail API (requires enabling it in Google Cloud Console)
-      // const gmailEmails = await getGmailEmails(tokens.accessToken);
-      // setEmails(processGmailEmails(gmailEmails));
-      
-      // For demo purposes, use mock emails with randomized read status
-      const updatedEmails = mockEmails.map(email => ({
-        ...email,
-        read: Math.random() > 0.3
-      }));
-      setEmails(updatedEmails);
-      
-      setLastSync(new Date().toLocaleString());
+      await fetchEmails(tokens.accessToken);
       toast.success("Emails refreshed");
     } catch (error) {
       console.error('Error refreshing emails:', error);
@@ -254,11 +255,7 @@ const GmailIntegration = () => {
       }
       
       // Send email using Gmail API
-      // Uncomment to use real Gmail API (requires setup in Google Cloud Console)
-      // await sendGmailEmail(tokens.accessToken, formData.to, formData.subject, formData.body);
-      
-      // For demo purposes
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await sendGmailEmail(tokens.accessToken, formData.to, formData.subject, formData.body);
       
       toast.success("Email sent successfully");
       setIsComposeOpen(false);
@@ -278,10 +275,13 @@ const GmailIntegration = () => {
     setIsSyncing(true);
     
     try {
-      // In a real app, fetch emails from Gmail API
-      await handleRefresh();
-      setLastSync(new Date().toLocaleString());
-      setSyncError(null);
+      const tokens = getStoredGmailTokens();
+      
+      if (!tokens?.accessToken) {
+        throw new Error("No access token available");
+      }
+      
+      await fetchEmails(tokens.accessToken);
     } catch (error) {
       console.error('Error syncing emails:', error);
       setSyncError((error instanceof Error) ? error.message : 'Unknown error');

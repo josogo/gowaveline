@@ -75,6 +75,7 @@ serve(async (req) => {
         throw new Error("Invalid action");
     }
   } catch (error) {
+    console.error("Error in get-gmail-credentials:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {

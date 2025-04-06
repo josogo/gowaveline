@@ -28,6 +28,8 @@ serve(async (req) => {
           maxResults: String(maxResults || 10),
         });
 
+        console.log("Fetching Gmail messages with access token");
+        
         // Get list of messages
         const response = await fetch(
           `https://gmail.googleapis.com/gmail/v1/users/me/messages?${queryParams.toString()}`,
@@ -44,10 +46,13 @@ serve(async (req) => {
         }
 
         const messagesList = await response.json();
+        console.log(`Retrieved ${messagesList.messages?.length || 0} messages`);
         
         // Get details for each message
         const messages = [];
         for (const message of messagesList.messages || []) {
+          console.log(`Fetching details for message: ${message.id}`);
+          
           const detailsResponse = await fetch(
             `https://gmail.googleapis.com/gmail/v1/users/me/messages/${message.id}`,
             {
@@ -60,9 +65,13 @@ serve(async (req) => {
           if (detailsResponse.ok) {
             const messageDetails = await detailsResponse.json();
             messages.push(messageDetails);
+          } else {
+            console.error(`Failed to get details for message ${message.id}`);
           }
         }
 
+        console.log(`Successfully processed ${messages.length} messages`);
+        
         return new Response(
           JSON.stringify({ messages }),
           {
@@ -76,6 +85,8 @@ serve(async (req) => {
           throw new Error("To, subject, and body are required");
         }
 
+        console.log(`Sending email to ${to} with subject: ${subject}`);
+        
         // Compose email
         const emailLines = [
           `To: ${to}`,
@@ -114,6 +125,8 @@ serve(async (req) => {
         }
 
         const result = await response.json();
+        console.log("Email sent successfully");
+        
         return new Response(
           JSON.stringify(result),
           {
@@ -126,6 +139,7 @@ serve(async (req) => {
         throw new Error("Invalid action");
     }
   } catch (error) {
+    console.error("Error in gmail-api function:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
