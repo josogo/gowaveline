@@ -9,6 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      contact_submissions: {
+        Row: {
+          company: string | null
+          created_at: string
+          email: string
+          id: string
+          message: string | null
+          name: string | null
+          phone: string | null
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          message?: string | null
+          name?: string | null
+          phone?: string | null
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string | null
+          name?: string | null
+          phone?: string | null
+        }
+        Relationships: []
+      }
       form_data: {
         Row: {
           created_at: string
@@ -63,6 +93,69 @@ export type Database = {
           phone_number?: string
           processing_volume?: string
           website?: string | null
+        }
+        Relationships: []
+      }
+      lesson_progress: {
+        Row: {
+          completed: boolean
+          created_at: string
+          id: string
+          last_accessed: string
+          lesson_id: number
+          user_id: string | null
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          last_accessed?: string
+          lesson_id: number
+          user_id?: string | null
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          last_accessed?: string
+          lesson_id?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      quiz_results: {
+        Row: {
+          correct_answers: number
+          created_at: string
+          id: string
+          incorrect_answers: number
+          lesson_id: number
+          percentage: number
+          score: number
+          total_questions: number
+          user_id: string | null
+        }
+        Insert: {
+          correct_answers: number
+          created_at?: string
+          id?: string
+          incorrect_answers: number
+          lesson_id: number
+          percentage: number
+          score: number
+          total_questions: number
+          user_id?: string | null
+        }
+        Update: {
+          correct_answers?: number
+          created_at?: string
+          id?: string
+          incorrect_answers?: number
+          lesson_id?: number
+          percentage?: number
+          score?: number
+          total_questions?: number
+          user_id?: string | null
         }
         Relationships: []
       }
