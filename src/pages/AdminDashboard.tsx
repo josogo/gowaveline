@@ -17,8 +17,52 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+
+// Sample data for team performance
+const teamPerformanceData = [
+  { 
+    name: 'John Smith', 
+    deals: 5, 
+    revenue: '$38,500', 
+    convRate: '62%',
+    totalVolume: '$425,000',
+    commissionSplit: '35%'
+  },
+  { 
+    name: 'Sarah Johnson', 
+    deals: 7, 
+    revenue: '$42,100', 
+    convRate: '71%',
+    totalVolume: '$520,000',
+    commissionSplit: '35%' 
+  },
+  { 
+    name: 'Michael Brown', 
+    deals: 3, 
+    revenue: '$27,300', 
+    convRate: '54%',
+    totalVolume: '$310,000', 
+    commissionSplit: '30%'
+  },
+  { 
+    name: 'Lisa Davis', 
+    deals: 6, 
+    revenue: '$35,900', 
+    convRate: '67%',
+    totalVolume: '$410,000',
+    commissionSplit: '35%'
+  },
+  { 
+    name: 'Robert Wilson', 
+    deals: 4, 
+    revenue: '$31,200', 
+    convRate: '59%',
+    totalVolume: '$290,000',
+    commissionSplit: '30%'
+  },
+];
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -138,13 +182,7 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[
-                { name: 'John Smith', deals: 5, revenue: '$38,500', convRate: '62%' },
-                { name: 'Sarah Johnson', deals: 7, revenue: '$42,100', convRate: '71%' },
-                { name: 'Michael Brown', deals: 3, revenue: '$27,300', convRate: '54%' },
-                { name: 'Lisa Davis', deals: 6, revenue: '$35,900', convRate: '67%' },
-                { name: 'Robert Wilson', deals: 4, revenue: '$31,200', convRate: '59%' },
-              ].map((rep, index) => (
+              {teamPerformanceData.map((rep, index) => (
                 <div key={index} className="flex items-center justify-between pb-4 border-b border-gray-100 last:border-0 last:pb-0">
                   <div className="flex items-center">
                     <div className="w-10 h-10 rounded-full bg-[#0EA5E9]/10 flex items-center justify-center text-[#0EA5E9] font-semibold mr-3">
@@ -162,8 +200,12 @@ const AdminDashboard = () => {
                       <p className="font-medium">{rep.revenue}</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-xs text-muted-foreground">Conv.</p>
-                      <p className="font-medium">{rep.convRate}</p>
+                      <p className="text-xs text-muted-foreground">Vol.</p>
+                      <p className="font-medium">${rep.totalVolume.replace('$', '')}</p>
+                    </div>
+                    <div className="text-center hidden md:block">
+                      <p className="text-xs text-muted-foreground">Split</p>
+                      <p className="font-medium">{rep.commissionSplit}</p>
                     </div>
                   </div>
                 </div>
@@ -175,9 +217,14 @@ const AdminDashboard = () => {
       
       {/* Commission Structure */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-orange-500">Commission Structure</CardTitle>
-          <CardDescription>Current payout rates for sales representatives</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-orange-500">Commission Structure</CardTitle>
+            <CardDescription>Current payout rates for sales representatives</CardDescription>
+          </div>
+          <div className="bg-orange-100 rounded-full p-2">
+            <TrendingUp className="h-5 w-5 text-orange-500" />
+          </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -188,6 +235,7 @@ const AdminDashboard = () => {
                   <TableHead className="text-left font-medium">Commission Rate</TableHead>
                   <TableHead className="text-left font-medium">Upfront Bonus</TableHead>
                   <TableHead className="text-left font-medium">Residual Split</TableHead>
+                  <TableHead className="text-left font-medium">Active Reps</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -196,24 +244,28 @@ const AdminDashboard = () => {
                   <TableCell className="py-3">20%</TableCell>
                   <TableCell className="py-3">$100</TableCell>
                   <TableCell className="py-3">30%</TableCell>
+                  <TableCell className="py-3">2</TableCell>
                 </TableRow>
                 <TableRow className="border-b border-gray-200">
                   <TableCell className="py-3">$50,001 - $100,000/month</TableCell>
                   <TableCell className="py-3">25%</TableCell>
                   <TableCell className="py-3">$200</TableCell>
                   <TableCell className="py-3">35%</TableCell>
+                  <TableCell className="py-3">3</TableCell>
                 </TableRow>
                 <TableRow className="border-b border-gray-200">
                   <TableCell className="py-3">$100,001 - $500,000/month</TableCell>
                   <TableCell className="py-3">30%</TableCell>
                   <TableCell className="py-3">$500</TableCell>
                   <TableCell className="py-3">40%</TableCell>
+                  <TableCell className="py-3">1</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell className="py-3">$500,001+/month</TableCell>
                   <TableCell className="py-3">35%</TableCell>
                   <TableCell className="py-3">$1,000</TableCell>
                   <TableCell className="py-3">50%</TableCell>
+                  <TableCell className="py-3">1</TableCell>
                 </TableRow>
               </TableBody>
             </Table>

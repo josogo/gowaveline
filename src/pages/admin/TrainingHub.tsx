@@ -26,7 +26,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { Book, BookOpen, Search, PlayCircle, FileText, MessageCircle, CheckCircle, Filter } from 'lucide-react';
 import { lessonContents, extendedGlossaryTerms } from '@/data/lessonContent';
-import { Lesson, TrainingModule } from '@/components/training';
+import { getModuleContent, moduleContentMap } from '@/data/moduleContent';
+import { Lesson, TrainingModule, ModuleDetail } from '@/components/training';
 
 // Simplified version of lessons for the card display
 const lessons = lessonContents.map(lesson => ({
@@ -195,6 +196,7 @@ const TrainingHub = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<number | null>(null);
+  const [selectedModule, setSelectedModule] = useState<number | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   
   // Filter glossary terms based on search
@@ -205,13 +207,13 @@ const TrainingHub = () => {
   
   const handleOpenLesson = (index: number) => {
     setSelectedLesson(index);
+    setSelectedModule(null);
     setIsDialogOpen(true);
   };
 
   const handleOpenModule = (moduleId: number) => {
-    // For now, just show the first lesson's content
-    // In a real implementation, this would show module-specific content
-    setSelectedLesson(0);
+    setSelectedModule(moduleId);
+    setSelectedLesson(null);
     setIsDialogOpen(true);
   };
 
@@ -431,16 +433,24 @@ const TrainingHub = () => {
         </Tabs>
       </div>
       
-      {/* Lesson Dialog */}
+      {/* Lesson/Module Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] p-6 overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Lesson</DialogTitle>
+            <DialogTitle>
+              {selectedLesson !== null ? "Lesson" : "Training Module"}
+            </DialogTitle>
           </DialogHeader>
           {selectedLesson !== null && (
             <Lesson 
               lesson={lessonContents[selectedLesson]} 
               onClose={() => setIsDialogOpen(false)} 
+            />
+          )}
+          {selectedModule !== null && moduleContentMap[selectedModule] && (
+            <ModuleDetail
+              module={moduleContentMap[selectedModule]}
+              onClose={() => setIsDialogOpen(false)}
             />
           )}
         </DialogContent>

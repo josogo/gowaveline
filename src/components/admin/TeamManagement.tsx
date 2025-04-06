@@ -38,8 +38,15 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Plus, Edit, Trash2, User, Mail, Phone } from 'lucide-react';
+import { Plus, Edit, Trash2, User, Mail, Phone, Percent } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Define the form schema for team member
 const formSchema = z.object({
@@ -47,17 +54,19 @@ const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   phone: z.string().min(10, { message: "Please enter a valid phone number." }),
   role: z.string().min(1, { message: "Role is required." }),
+  commissionSplit: z.string().min(1, { message: "Commission split is required." }),
+  processingVolume: z.string().min(1, { message: "Processing volume is required." })
 });
 
 type TeamMember = z.infer<typeof formSchema> & { id: string };
 
 const TeamManagement = () => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
-    { id: '1', name: 'John Smith', email: 'john@gowaveline.com', phone: '555-123-4567', role: 'Sales Representative' },
-    { id: '2', name: 'Sarah Johnson', email: 'sarah@gowaveline.com', phone: '555-987-6543', role: 'Account Manager' },
-    { id: '3', name: 'Michael Brown', email: 'michael@gowaveline.com', phone: '555-456-7890', role: 'Sales Representative' },
-    { id: '4', name: 'Lisa Davis', email: 'lisa@gowaveline.com', phone: '555-789-0123', role: 'Sales Representative' },
-    { id: '5', name: 'Robert Wilson', email: 'robert@gowaveline.com', phone: '555-321-6540', role: 'Account Manager' },
+    { id: '1', name: 'John Smith', email: 'john@gowaveline.com', phone: '555-123-4567', role: 'Sales Representative', commissionSplit: '35%', processingVolume: '425,000' },
+    { id: '2', name: 'Sarah Johnson', email: 'sarah@gowaveline.com', phone: '555-987-6543', role: 'Account Manager', commissionSplit: '35%', processingVolume: '520,000' },
+    { id: '3', name: 'Michael Brown', email: 'michael@gowaveline.com', phone: '555-456-7890', role: 'Sales Representative', commissionSplit: '30%', processingVolume: '310,000' },
+    { id: '4', name: 'Lisa Davis', email: 'lisa@gowaveline.com', phone: '555-789-0123', role: 'Sales Representative', commissionSplit: '35%', processingVolume: '410,000' },
+    { id: '5', name: 'Robert Wilson', email: 'robert@gowaveline.com', phone: '555-321-6540', role: 'Account Manager', commissionSplit: '30%', processingVolume: '290,000' },
   ]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
@@ -70,6 +79,8 @@ const TeamManagement = () => {
       email: "",
       phone: "",
       role: "",
+      commissionSplit: "",
+      processingVolume: ""
     },
   });
 
@@ -80,6 +91,8 @@ const TeamManagement = () => {
         email: editingMember.email,
         phone: editingMember.phone,
         role: editingMember.role,
+        commissionSplit: editingMember.commissionSplit,
+        processingVolume: editingMember.processingVolume
       });
     } else {
       form.reset({
@@ -87,6 +100,8 @@ const TeamManagement = () => {
         email: "",
         phone: "",
         role: "",
+        commissionSplit: "",
+        processingVolume: ""
       });
     }
   }, [editingMember, form]);
@@ -201,13 +216,64 @@ const TeamManagement = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Role</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Sales Representative" {...field} />
-                          </FormControl>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select role" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Sales Representative">Sales Representative</SelectItem>
+                              <SelectItem value="Account Manager">Account Manager</SelectItem>
+                              <SelectItem value="Sales Manager">Sales Manager</SelectItem>
+                              <SelectItem value="Team Lead">Team Lead</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="commissionSplit"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Commission Split</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select %" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="30%">30%</SelectItem>
+                                <SelectItem value="35%">35%</SelectItem>
+                                <SelectItem value="40%">40%</SelectItem>
+                                <SelectItem value="50%">50%</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormDescription className="text-xs">
+                              Based on volume tier
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="processingVolume"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Processing Volume</FormLabel>
+                            <FormControl>
+                              <Input placeholder="100,000" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                     <DialogFooter>
                       <Button type="submit" className="bg-[#0EA5E9]">
                         {editingMember ? 'Update' : 'Add Member'}
@@ -236,6 +302,8 @@ const TeamManagement = () => {
                   <TableHead>Email</TableHead>
                   <TableHead className="hidden md:table-cell">Phone</TableHead>
                   <TableHead>Role</TableHead>
+                  <TableHead>Commission</TableHead>
+                  <TableHead className="hidden md:table-cell">Volume</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -247,6 +315,13 @@ const TeamManagement = () => {
                       <TableCell>{member.email}</TableCell>
                       <TableCell className="hidden md:table-cell">{member.phone}</TableCell>
                       <TableCell>{member.role}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <Percent className="h-3 w-3 mr-1 text-orange-500" />
+                          <span>{member.commissionSplit}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">${member.processingVolume}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
@@ -269,7 +344,7 @@ const TeamManagement = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-6">
+                    <TableCell colSpan={7} className="text-center py-6">
                       No team members found
                     </TableCell>
                   </TableRow>
