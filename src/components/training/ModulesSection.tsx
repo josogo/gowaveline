@@ -3,18 +3,19 @@ import React from 'react';
 import { Filter } from 'lucide-react';
 import { TrainingModule } from '@/components/training';
 
-interface ModuleData {
+// Update the interface to accept readonly arrays
+export interface ModuleData {
   id: number;
   title: string;
   description: string;
   category: string;
   duration: string;
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
-  topics: string[];
+  topics: readonly string[] | string[];
 }
 
 interface ModulesSectionProps {
-  modules: ModuleData[];
+  modules: readonly ModuleData[] | ModuleData[];
   categoryFilter: string | null;
   setCategoryFilter: (category: string | null) => void;
   onOpenModule: (moduleId: number) => void;

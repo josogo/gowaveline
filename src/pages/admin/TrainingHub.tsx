@@ -18,8 +18,8 @@ import {
   LessonsSection,
   ModulesSection
 } from '@/components/training';
+import type { ModuleData } from '@/components/training/ModulesSection';
 
-// Simplified version of lessons for the card display
 const lessons = lessonContents.map(lesson => ({
   id: lesson.id,
   title: lesson.title,
@@ -28,8 +28,7 @@ const lessons = lessonContents.map(lesson => ({
   topics: lesson.topics
 }));
 
-// Additional training modules based on blog content
-const additionalModules = [
+const additionalModules: ModuleData[] = [
   {
     id: 6,
     title: "Understanding Interchange Fees",
@@ -180,7 +179,7 @@ const additionalModules = [
       "Competitive comparison strategies"
     ]
   }
-] as const;
+];
 
 const TrainingHub = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -189,7 +188,6 @@ const TrainingHub = () => {
   const [selectedModule, setSelectedModule] = useState<number | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   
-  // Filter glossary terms based on search
   const filteredGlossaryTerms = extendedGlossaryTerms.filter(term => 
     term.term.toLowerCase().includes(searchTerm.toLowerCase()) || 
     term.definition.toLowerCase().includes(searchTerm.toLowerCase())
@@ -228,12 +226,10 @@ const TrainingHub = () => {
             <TabsTrigger value="resources">Resources</TabsTrigger>
           </TabsList>
           
-          {/* Lessons Tab */}
           <TabsContent value="lessons" className="space-y-6">
             <LessonsSection lessons={lessons} onOpenLesson={handleOpenLesson} />
           </TabsContent>
           
-          {/* Modules Tab */}
           <TabsContent value="modules" className="space-y-6">
             <ModulesSection 
               modules={additionalModules}
@@ -243,7 +239,6 @@ const TrainingHub = () => {
             />
           </TabsContent>
           
-          {/* Glossary Tab */}
           <TabsContent value="glossary">
             <GlossarySection 
               searchTerm={searchTerm}
@@ -252,14 +247,12 @@ const TrainingHub = () => {
             />
           </TabsContent>
           
-          {/* Resources Tab */}
           <TabsContent value="resources">
             <ResourcesSection />
           </TabsContent>
         </Tabs>
       </div>
       
-      {/* Lesson/Module Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] p-6 overflow-y-auto">
           <DialogHeader>
