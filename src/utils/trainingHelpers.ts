@@ -1,6 +1,5 @@
 
-import { lessonContents } from '@/data/lessonContent';
-import { extendedGlossaryTerms } from '@/data/lessonContent';
+import { lessonContents, extendedGlossaryTerms } from '@/data/lessonContent';
 
 // Process lesson data for display
 export function prepareLessonData() {
