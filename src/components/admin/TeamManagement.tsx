@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -8,57 +8,18 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Plus, Edit, Trash2, User, Mail, Phone, Percent } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-// Define the form schema for team member
-const formSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  email: z.string().email({ message: "Please enter a valid email address." }),
-  phone: z.string().min(10, { message: "Please enter a valid phone number." }),
-  role: z.string().min(1, { message: "Role is required." }),
-  commissionSplit: z.string().min(1, { message: "Commission split is required." }),
-  processingVolume: z.string().min(1, { message: "Processing volume is required." })
-});
-
-type TeamMember = z.infer<typeof formSchema> & { id: string };
+import { TeamMemberForm, TeamMembersTable, TeamSearch } from './team';
+import type { TeamMember } from './team';
 
 const TeamManagement = () => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
@@ -72,41 +33,7 @@ const TeamManagement = () => {
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      role: "",
-      commissionSplit: "",
-      processingVolume: ""
-    },
-  });
-
-  useEffect(() => {
-    if (editingMember) {
-      form.reset({
-        name: editingMember.name,
-        email: editingMember.email,
-        phone: editingMember.phone,
-        role: editingMember.role,
-        commissionSplit: editingMember.commissionSplit,
-        processingVolume: editingMember.processingVolume
-      });
-    } else {
-      form.reset({
-        name: "",
-        email: "",
-        phone: "",
-        role: "",
-        commissionSplit: "",
-        processingVolume: ""
-      });
-    }
-  }, [editingMember, form]);
-
-  const handleAddEdit = (values: z.infer<typeof formSchema>) => {
+  const handleAddEdit = (values: Omit<TeamMember, 'id'>) => {
     if (editingMember) {
       // Edit existing team member
       setTeamMembers(prev => 
@@ -136,6 +63,10 @@ const TeamManagement = () => {
   const handleEdit = (member: TeamMember) => {
     setEditingMember(member);
     setIsDialogOpen(true);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
   };
 
   const filteredMembers = teamMembers.filter(member => 
@@ -169,189 +100,18 @@ const TeamManagement = () => {
                       : 'Fill in the information below to add a new team member.'}
                   </DialogDescription>
                 </DialogHeader>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(handleAddEdit)} className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Full Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="John Smith" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email Address</FormLabel>
-                          <FormControl>
-                            <Input placeholder="name@gowaveline.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone Number</FormLabel>
-                          <FormControl>
-                            <Input placeholder="555-123-4567" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="role"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Role</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select role" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="Sales Representative">Sales Representative</SelectItem>
-                              <SelectItem value="Account Manager">Account Manager</SelectItem>
-                              <SelectItem value="Sales Manager">Sales Manager</SelectItem>
-                              <SelectItem value="Team Lead">Team Lead</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="commissionSplit"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Commission Split</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select %" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="30%">30%</SelectItem>
-                                <SelectItem value="35%">35%</SelectItem>
-                                <SelectItem value="40%">40%</SelectItem>
-                                <SelectItem value="50%">50%</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormDescription className="text-xs">
-                              Based on volume tier
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="processingVolume"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Processing Volume</FormLabel>
-                            <FormControl>
-                              <Input placeholder="100,000" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    <DialogFooter>
-                      <Button type="submit" className="bg-[#0EA5E9]">
-                        {editingMember ? 'Update' : 'Add Member'}
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </Form>
+                <TeamMemberForm onSubmit={handleAddEdit} editingMember={editingMember} />
               </DialogContent>
             </Dialog>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center mb-6">
-            <Input
-              placeholder="Search team members..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="max-w-sm"
-            />
-          </div>
-          <div className="border rounded-lg overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead className="hidden md:table-cell">Phone</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Commission</TableHead>
-                  <TableHead className="hidden md:table-cell">Volume</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredMembers.length > 0 ? (
-                  filteredMembers.map((member) => (
-                    <TableRow key={member.id}>
-                      <TableCell className="font-medium">{member.name}</TableCell>
-                      <TableCell>{member.email}</TableCell>
-                      <TableCell className="hidden md:table-cell">{member.phone}</TableCell>
-                      <TableCell>{member.role}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <Percent className="h-3 w-3 mr-1 text-orange-500" />
-                          <span>{member.commissionSplit}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">${member.processingVolume}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleEdit(member)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            onClick={() => handleDelete(member.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-6">
-                      No team members found
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+          <TeamSearch searchQuery={searchQuery} onSearchChange={handleSearchChange} />
+          <TeamMembersTable 
+            members={filteredMembers}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
         </CardContent>
       </Card>
     </div>
