@@ -16,8 +16,10 @@ export async function saveQuizResult(quizResult: QuizResult) {
     const { data: { user } } = await supabase.auth.getUser();
     
     // Save the quiz result to Supabase
+    // We're using any type here because the TypeScript definitions haven't been updated yet
+    // with the quiz_results table
     const { data, error } = await supabase
-      .from('quiz_results')
+      .from('quiz_results' as any)
       .insert({
         user_id: user?.id || null, // Will be null for non-authenticated users
         lesson_id: quizResult.lessonId,
@@ -26,7 +28,7 @@ export async function saveQuizResult(quizResult: QuizResult) {
         percentage: quizResult.percentage,
         correct_answers: quizResult.correctAnswers,
         incorrect_answers: quizResult.incorrectAnswers
-      });
+      } as any);
     
     if (error) {
       console.error('Error saving quiz result:', error);
@@ -69,8 +71,9 @@ export async function updateLessonProgress(lessonId: number, completed: boolean 
     }
     
     // Check if a record already exists
+    // Using any type because the TypeScript definitions haven't been updated yet
     const { data: existingProgress } = await supabase
-      .from('lesson_progress')
+      .from('lesson_progress' as any)
       .select()
       .eq('user_id', user.id)
       .eq('lesson_id', lessonId)
@@ -79,11 +82,11 @@ export async function updateLessonProgress(lessonId: number, completed: boolean 
     if (existingProgress) {
       // Update existing record
       const { error } = await supabase
-        .from('lesson_progress')
+        .from('lesson_progress' as any)
         .update({
           completed: completed,
           last_accessed: new Date().toISOString()
-        })
+        } as any)
         .eq('id', existingProgress.id);
       
       if (error) {
@@ -93,12 +96,12 @@ export async function updateLessonProgress(lessonId: number, completed: boolean 
     } else {
       // Insert new record
       const { error } = await supabase
-        .from('lesson_progress')
+        .from('lesson_progress' as any)
         .insert({
           user_id: user.id,
           lesson_id: lessonId,
           completed: completed,
-        });
+        } as any);
       
       if (error) {
         console.error('Error inserting lesson progress:', error);
