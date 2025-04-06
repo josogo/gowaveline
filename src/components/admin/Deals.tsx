@@ -649,12 +649,12 @@ const Deals = () => {
               />
             </div>
             
-            <Select value={statusFilter || ""} onValueChange={(value) => setStatusFilter(value || null)}>
+            <Select value={statusFilter || "all"} onValueChange={(value) => setStatusFilter(value === "all" ? null : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Statuses</SelectItem>
+                <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="Pending">Pending</SelectItem>
                 <SelectItem value="Negotiating">Negotiating</SelectItem>
                 <SelectItem value="Won">Won</SelectItem>
@@ -662,24 +662,24 @@ const Deals = () => {
               </SelectContent>
             </Select>
             
-            <Select value={priorityFilter || ""} onValueChange={(value) => setPriorityFilter(value || null)}>
+            <Select value={priorityFilter || "all"} onValueChange={(value) => setPriorityFilter(value === "all" ? null : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Priority" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Priorities</SelectItem>
+                <SelectItem value="all">All Priorities</SelectItem>
                 <SelectItem value="High">High</SelectItem>
                 <SelectItem value="Medium">Medium</SelectItem>
                 <SelectItem value="Low">Low</SelectItem>
               </SelectContent>
             </Select>
             
-            <Select value={repFilter || ""} onValueChange={(value) => setRepFilter(value || null)}>
+            <Select value={repFilter || "all"} onValueChange={(value) => setRepFilter(value === "all" ? null : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Sales Rep" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Representatives</SelectItem>
+                <SelectItem value="all">All Representatives</SelectItem>
                 {salesReps.map(rep => (
                   <SelectItem key={rep.id} value={rep.id}>
                     {rep.name}
