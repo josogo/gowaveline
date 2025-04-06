@@ -27,6 +27,7 @@ import Deals from "./pages/admin/Deals";
 import GmailIntegration from "./pages/admin/GmailIntegration";
 import CommissionTracking from "./pages/admin/CommissionTracking";
 import TrainingHub from "./pages/admin/TrainingHub";
+import ContactManagement from "./pages/admin/ContactManagement";
 import FAQ from "./pages/FAQ";
 
 // Scroll to top component that will be used inside the router
@@ -62,6 +63,7 @@ const AppRoutes = () => {
         <Route path="/admin/gmail-integration" element={<GmailIntegration />} />
         <Route path="/admin/commission-tracking" element={<CommissionTracking />} />
         <Route path="/admin/training-hub" element={<TrainingHub />} />
+        <Route path="/admin/contacts" element={<ContactManagement />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>

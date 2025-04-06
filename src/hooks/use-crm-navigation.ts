@@ -21,6 +21,7 @@ export const useCrmNavigation = () => {
   const navigateToGmail = () => navigateTo('/admin/gmail-integration');
   const navigateToCommissions = () => navigateTo('/admin/commission-tracking');
   const navigateToTraining = () => navigateTo('/admin/training-hub');
+  const navigateToContacts = () => navigateTo('/admin/contacts');
   
   return {
     navigateTo,
@@ -29,6 +30,7 @@ export const useCrmNavigation = () => {
     navigateToDeals,
     navigateToGmail,
     navigateToCommissions,
-    navigateToTraining
+    navigateToTraining,
+    navigateToContacts
   };
 };
