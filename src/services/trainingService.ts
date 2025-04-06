@@ -72,39 +72,50 @@ export async function updateLessonProgress(lessonId: number, completed: boolean 
     
     // Check if a record already exists
     // Using any type because the TypeScript definitions haven't been updated yet
-    const { data: existingProgress } = await supabase
+    const { data: existingProgress, error: selectError } = await supabase
       .from('lesson_progress' as any)
-      .select()
+      .select('*')
       .eq('user_id', user.id)
       .eq('lesson_id', lessonId)
       .single();
     
+    if (selectError) {
+      console.error('Error checking for existing lesson progress:', selectError);
+      // If it's not found, we'll create a new record
+      if (selectError.code === 'PGRST116') {
+        // Insert new record
+        const { error: insertError } = await supabase
+          .from('lesson_progress' as any)
+          .insert({
+            user_id: user.id,
+            lesson_id: lessonId,
+            completed: completed,
+          } as any);
+        
+        if (insertError) {
+          console.error('Error inserting lesson progress:', insertError);
+          return false;
+        }
+        
+        console.log('New lesson progress created successfully');
+        return true;
+      }
+      return false;
+    }
+    
+    // If we got here, a record exists, so update it
     if (existingProgress) {
       // Update existing record
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('lesson_progress' as any)
         .update({
           completed: completed,
           last_accessed: new Date().toISOString()
         } as any)
-        .eq('id', existingProgress.id);
+        .eq('id', (existingProgress as any).id);
       
-      if (error) {
-        console.error('Error updating lesson progress:', error);
-        return false;
-      }
-    } else {
-      // Insert new record
-      const { error } = await supabase
-        .from('lesson_progress' as any)
-        .insert({
-          user_id: user.id,
-          lesson_id: lessonId,
-          completed: completed,
-        } as any);
-      
-      if (error) {
-        console.error('Error inserting lesson progress:', error);
+      if (updateError) {
+        console.error('Error updating lesson progress:', updateError);
         return false;
       }
     }
