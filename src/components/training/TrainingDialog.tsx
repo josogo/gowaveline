@@ -3,7 +3,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Lesson, ModuleDetail } from '@/components/training';
 import { lessonContents } from '@/data/lessonContent';
-import { moduleContentMap } from '@/data/moduleContent';
+import { getModuleContent } from '@/data/moduleContent';
 
 interface TrainingDialogProps {
   isOpen: boolean;
@@ -18,6 +18,9 @@ const TrainingDialog: React.FC<TrainingDialogProps> = ({
   selectedLesson,
   selectedModule
 }) => {
+  // Get module content if a module is selected
+  const moduleContent = selectedModule !== null ? getModuleContent(selectedModule) : undefined;
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="max-w-4xl max-h-[90vh] p-6 overflow-y-auto">
@@ -32,9 +35,9 @@ const TrainingDialog: React.FC<TrainingDialogProps> = ({
             onClose={() => setIsOpen(false)} 
           />
         )}
-        {selectedModule !== null && moduleContentMap[selectedModule] && (
+        {selectedModule !== null && moduleContent && (
           <ModuleDetail
-            module={moduleContentMap[selectedModule]}
+            module={moduleContent}
             onClose={() => setIsOpen(false)}
           />
         )}

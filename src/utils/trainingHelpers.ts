@@ -1,5 +1,6 @@
 
 import { lessonContents } from '@/data/lessonContent';
+import { extendedGlossaryTerms } from '@/data/lessonContent';
 
 // Process lesson data for display
 export function prepareLessonData() {
@@ -13,7 +14,7 @@ export function prepareLessonData() {
 }
 
 // Filter glossary terms based on search
-export function filterGlossaryTerms(terms: Array<{term: string, definition: string}>, searchTerm: string) {
+export function filterGlossaryTerms(terms: typeof extendedGlossaryTerms, searchTerm: string) {
   return terms.filter(term => 
     term.term.toLowerCase().includes(searchTerm.toLowerCase()) || 
     term.definition.toLowerCase().includes(searchTerm.toLowerCase())
