@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import HighRiskHero from '@/components/high-risk/HighRiskHero';
 import IndustriesSection from '@/components/high-risk/IndustriesSection';
 import BenefitsSection from '@/components/high-risk/BenefitsSection';
+import ImageCarousel from '@/components/high-risk/ImageCarousel';
 
 const HighRisk = () => {
   return (
@@ -14,6 +15,7 @@ const HighRisk = () => {
         <HighRiskHero />
         <IndustriesSection />
         <BenefitsSection />
+        <ImageCarousel />
       </main>
       <Footer />
     </div>
