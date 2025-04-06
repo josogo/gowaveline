@@ -55,7 +55,7 @@ const DropZone: React.FC<DropZoneProps> = ({ onDrop, className }) => {
           className="bg-white text-primary border-primary hover:bg-primary/5"
           onClick={(e) => {
             e.stopPropagation();
-            const input = document.querySelector('input[type="file"]');
+            const input = document.querySelector('input[type="file"]') as HTMLInputElement;
             if (input) {
               input.click();
             }
