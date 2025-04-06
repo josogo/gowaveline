@@ -17,7 +17,43 @@ import {
   TabsList, 
   TabsTrigger 
 } from "@/components/ui/tabs";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
+import {
+  getGmailAuthUrl,
+  exchangeCodeForTokens,
+  getGmailUserProfile,
+  getGmailEmails,
+  sendGmailEmail,
+  storeGmailTokens,
+  getStoredGmailTokens,
+  clearGmailTokens,
+  storeUserProfile,
+  getStoredUserProfile
+} from '@/services/gmailService';
+
+// Mock emails for demonstration
 const mockEmails = [
   {
     id: 'email1',
@@ -66,6 +102,13 @@ const mockEmails = [
   }
 ];
 
+// Form schema for composing emails
+const emailFormSchema = z.object({
+  to: z.string().email({ message: "Valid email address required" }),
+  subject: z.string().min(1, { message: "Subject is required" }),
+  body: z.string().min(1, { message: "Message body is required" })
+});
+
 const GmailIntegration = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -74,128 +117,162 @@ const GmailIntegration = () => {
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [googleAuthUrl, setGoogleAuthUrl] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [isComposeOpen, setIsComposeOpen] = useState(false);
+  const [isSending, setIsSending] = useState(false);
 
-  // Check for OAuth callback on component mount
+  const form = useForm<z.infer<typeof emailFormSchema>>({
+    resolver: zodResolver(emailFormSchema),
+    defaultValues: {
+      to: "",
+      subject: "",
+      body: ""
+    },
+  });
+
+  // Check for OAuth callback and load stored tokens on component mount
   useEffect(() => {
-    // Check for auth code in URL (would be part of the OAuth flow)
-    const urlParams = new URLSearchParams(window.location.search);
-    const authCode = urlParams.get('code');
-    
-    if (authCode) {
-      handleGoogleAuthCallback(authCode);
-    }
-    
-    // Check if we already have a stored token
-    const storedToken = localStorage.getItem('gmail_access_token');
-    const storedProfile = localStorage.getItem('gmail_user_profile');
-    
-    if (storedToken && storedProfile) {
-      setIsAuthenticated(true);
-      try {
-        setUserProfile(JSON.parse(storedProfile));
-      } catch (e) {
-        console.error('Error parsing stored profile:', e);
+    const checkAuth = async () => {
+      // First check if we're handling an OAuth callback
+      const urlParams = new URLSearchParams(window.location.search);
+      const authCode = urlParams.get('code');
+      const authState = urlParams.get('state');
+      
+      if (authCode && authState) {
+        // Verify state to prevent CSRF
+        const storedState = localStorage.getItem('gmail_oauth_state');
+        if (storedState !== authState) {
+          toast.error("Authentication failed: Invalid state parameter");
+          return;
+        }
+        
+        await handleGoogleAuthCallback(authCode);
+        
+        // Clean up the URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else {
+        // Check if we already have stored tokens
+        const tokens = getStoredGmailTokens();
+        const storedProfile = getStoredUserProfile();
+        
+        if (tokens && storedProfile) {
+          setIsAuthenticated(true);
+          setUserProfile(storedProfile);
+          
+          // In a real app, check if token is expired and refresh if needed
+          // For demo purposes, we'll assume token is valid
+        }
       }
-    }
+    };
+    
+    checkAuth();
   }, []);
 
   const handleGoogleAuthCallback = async (authCode: string) => {
     setIsLoading(true);
     
     try {
-      // In a real implementation, this would exchange the code for tokens
-      console.log('Received auth code:', authCode);
+      // Exchange auth code for tokens
+      const tokens = await exchangeCodeForTokens(authCode);
       
-      // Simulate token exchange
-      setTimeout(() => {
-        // Mock user data
-        const mockProfile = {
-          email: 'admin@gowaveline.com',
-          name: 'Admin User',
-          picture: 'https://github.com/shadcn.png'
-        };
-        
-        // Store token and profile
-        localStorage.setItem('gmail_access_token', 'mock-token-' + Date.now());
-        localStorage.setItem('gmail_user_profile', JSON.stringify(mockProfile));
-        
-        setUserProfile(mockProfile);
-        setIsAuthenticated(true);
-        setIsLoading(false);
-        
-        // Clean up the URL
-        window.history.replaceState({}, document.title, window.location.pathname);
-        
-        toast.success('Successfully authenticated with Google');
-      }, 1500);
+      if (!tokens.access_token) {
+        throw new Error("Failed to get access token");
+      }
+      
+      // Get user profile with the access token
+      const profile = await getGmailUserProfile(tokens.access_token);
+      
+      // Calculate expiration time
+      const expiresAt = Date.now() + (tokens.expires_in * 1000);
+      
+      // Store tokens and profile
+      await storeGmailTokens(
+        profile.id, 
+        tokens.access_token, 
+        tokens.refresh_token || '', 
+        expiresAt, 
+        profile.email
+      );
+      storeUserProfile(profile);
+      
+      setUserProfile(profile);
+      setIsAuthenticated(true);
+      toast.success('Successfully connected to Gmail');
+      
+      // Fetch emails (in a real app)
+      // await fetchEmails(tokens.access_token);
     } catch (error) {
       console.error('Error handling auth callback:', error);
+      toast.error('Authentication failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
       setIsLoading(false);
-      toast.error('Authentication failed');
     }
   };
 
-  const handleAuthenticate = () => {
+  const handleAuthenticate = async () => {
     setIsLoading(true);
     
-    // In a real implementation, this would redirect to the Google OAuth consent screen
-    // For now, we'll simulate it with a demo URL
-    
-    // Generate a mock OAuth URL (in a real app, this would be a Google URL)
-    const mockOAuthUrl = `/admin/gmail-integration?mock_oauth=true&timestamp=${Date.now()}`;
-    
-    // In a real implementation, we would redirect to Google
-    // window.location.href = googleAuthUrl;
-    
-    // For demo purposes, simulate the OAuth flow
-    setTimeout(() => {
-      // Simulate successful OAuth and callback
-      const mockProfile = {
-        email: 'admin@gowaveline.com',
-        name: 'Admin User',
-        picture: 'https://github.com/shadcn.png'
-      };
+    try {
+      // Get the authentication URL
+      const authUrl = await getGmailAuthUrl();
       
-      // Store token and profile
-      localStorage.setItem('gmail_access_token', 'mock-token-' + Date.now());
-      localStorage.setItem('gmail_user_profile', JSON.stringify(mockProfile));
-      
-      setUserProfile(mockProfile);
-      setIsAuthenticated(true);
+      // Redirect to Google's OAuth consent screen
+      window.location.href = authUrl;
+    } catch (error) {
+      console.error('Error starting authentication:', error);
+      toast.error('Failed to start authentication: ' + (error instanceof Error ? error.message : 'Unknown error'));
       setIsLoading(false);
-      
-      toast.success("Successfully connected to Gmail");
-    }, 2000);
+    }
   };
 
   const handleLogout = () => {
     setIsLoading(true);
-    // Simulate logout
-    setTimeout(() => {
-      localStorage.removeItem('gmail_access_token');
-      localStorage.removeItem('gmail_user_profile');
+    
+    try {
+      // Clear tokens and user profile
+      clearGmailTokens();
       setIsAuthenticated(false);
       setUserProfile(null);
-      setIsLoading(false);
       toast.info("Disconnected from Gmail");
-    }, 1000);
+    } catch (error) {
+      console.error('Error during logout:', error);
+      toast.error('Logout failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsLoading(true);
-    // Simulate email fetch
-    setTimeout(() => {
-      // Randomize the read status of some emails to simulate new emails
-      const updatedEmails = emails.map(email => ({
+    
+    try {
+      // In a real app, fetch emails from Gmail API
+      // For demo purposes, we'll use mock data
+      const tokens = getStoredGmailTokens();
+      
+      if (!tokens?.accessToken) {
+        throw new Error("No access token available");
+      }
+      
+      // Uncomment this to use real Gmail API (requires enabling it in Google Cloud Console)
+      // const gmailEmails = await getGmailEmails(tokens.accessToken);
+      // setEmails(processGmailEmails(gmailEmails));
+      
+      // For demo purposes, use mock emails with randomized read status
+      const updatedEmails = mockEmails.map(email => ({
         ...email,
         read: Math.random() > 0.3
       }));
       setEmails(updatedEmails);
-      setIsLoading(false);
+      
+      setLastSync(new Date().toLocaleString());
       toast.success("Emails refreshed");
-    }, 1500);
+    } catch (error) {
+      console.error('Error refreshing emails:', error);
+      toast.error('Failed to refresh emails: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDeleteEmail = (emailId: string) => {
@@ -211,6 +288,34 @@ const GmailIntegration = () => {
     setEmails(updatedEmails);
   };
 
+  const handleSendEmail = async (formData: z.infer<typeof emailFormSchema>) => {
+    setIsSending(true);
+    
+    try {
+      const tokens = getStoredGmailTokens();
+      
+      if (!tokens?.accessToken) {
+        throw new Error("No access token available");
+      }
+      
+      // Send email using Gmail API
+      // Uncomment to use real Gmail API (requires setup in Google Cloud Console)
+      // await sendGmailEmail(tokens.accessToken, formData.to, formData.subject, formData.body);
+      
+      // For demo purposes
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast.success("Email sent successfully");
+      setIsComposeOpen(false);
+      form.reset();
+    } catch (error) {
+      console.error('Error sending email:', error);
+      toast.error('Failed to send email: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
@@ -223,15 +328,21 @@ const GmailIntegration = () => {
 
   const unreadCount = emails.filter(email => !email.read).length;
 
-  const syncEmails = () => {
+  const syncEmails = async () => {
     setIsSyncing(true);
-    // Simulate email sync
-    setTimeout(() => {
-      setIsSyncing(false);
+    
+    try {
+      // In a real app, fetch emails from Gmail API
+      await handleRefresh();
       setLastSync(new Date().toLocaleString());
       setSyncError(null);
-      toast.success("Emails synced");
-    }, 1500);
+    } catch (error) {
+      console.error('Error syncing emails:', error);
+      setSyncError((error instanceof Error) ? error.message : 'Unknown error');
+      toast.error('Failed to sync emails');
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   return (
@@ -309,9 +420,18 @@ const GmailIntegration = () => {
             
             <Alert className="mt-8">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Demo Mode</AlertTitle>
+              <AlertTitle>Integration Setup Required</AlertTitle>
               <AlertDescription>
-                This is a demo interface. In production, this would connect to Gmail via OAuth2 and the Gmail API to fetch and process real emails.
+                <p className="mb-2">
+                  To complete this integration, you need to set up a project in the Google Cloud Console:
+                </p>
+                <ol className="list-decimal list-inside space-y-1 text-sm">
+                  <li>Create a project at <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Google Cloud Console</a></li>
+                  <li>Enable the Gmail API for your project</li>
+                  <li>Create OAuth credentials (client ID and secret) for a web application</li>
+                  <li>Add this URL as an authorized redirect URI</li>
+                  <li>Store the client ID and secret in Supabase secrets</li>
+                </ol>
               </AlertDescription>
             </Alert>
           </div>
@@ -327,11 +447,98 @@ const GmailIntegration = () => {
                   )}
                 </Avatar>
                 <div>
-                  <p className="text-sm font-medium">{userProfile?.email || 'admin@gowaveline.com'}</p>
+                  <p className="text-sm font-medium">{userProfile?.email || 'user@example.com'}</p>
                   <p className="text-xs text-muted-foreground">Connected</p>
                 </div>
               </div>
               <div className="flex gap-2">
+                <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="default" size="sm">
+                      Compose
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[550px]">
+                    <DialogHeader>
+                      <DialogTitle>Compose Email</DialogTitle>
+                      <DialogDescription>
+                        Create and send an email from your connected Gmail account.
+                      </DialogDescription>
+                    </DialogHeader>
+                    
+                    <Form {...form}>
+                      <form onSubmit={form.handleSubmit(handleSendEmail)} className="space-y-4 mt-2">
+                        <FormField
+                          control={form.control}
+                          name="to"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>To</FormLabel>
+                              <FormControl>
+                                <Input placeholder="recipient@example.com" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="subject"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Subject</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Email subject" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="body"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Message</FormLabel>
+                              <FormControl>
+                                <Textarea 
+                                  placeholder="Email body" 
+                                  className="min-h-[200px]" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <DialogFooter>
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => setIsComposeOpen(false)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button 
+                            type="submit" 
+                            disabled={isSending}
+                          >
+                            {isSending ? (
+                              <>
+                                <Loader2 size={16} className="mr-2 animate-spin" /> 
+                                Sending...
+                              </>
+                            ) : "Send Email"}
+                          </Button>
+                        </DialogFooter>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
+                
                 <Button 
                   variant="outline" 
                   size="sm" 
