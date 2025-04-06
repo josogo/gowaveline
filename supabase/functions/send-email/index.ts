@@ -22,6 +22,20 @@ serve(async (req) => {
   }
 
   try {
+    // Check if RESEND_API_KEY is configured
+    if (!RESEND_API_KEY) {
+      console.error("RESEND_API_KEY is not configured");
+      return new Response(
+        JSON.stringify({ 
+          error: "Email service is not properly configured. RESEND_API_KEY is missing." 
+        }),
+        { 
+          status: 500, 
+          headers: { "Content-Type": "application/json", ...corsHeaders } 
+        }
+      );
+    }
+
     const { type, subject, data } = await req.json() as EmailData;
 
     // For now, we're just logging the data
@@ -88,6 +102,7 @@ serve(async (req) => {
         ` : '<p>No statement file was uploaded.</p>'}
       `;
       recipient = data.recipient ? String(data.recipient) : 'info@gowaveline.com';
+      console.log(`GetStarted form - sending to recipient: ${recipient}`);
       
     } else if (type === 'quiz') {
       // Quiz results submission logic
@@ -104,41 +119,49 @@ serve(async (req) => {
     }
 
     // Use RESEND API to send the email
-    if (RESEND_API_KEY) {
-      try {
-        const emailResponse = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${RESEND_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            from: "Waveline <onboarding@resend.dev>",
-            to: [recipient],
-            subject: subject,
-            html: htmlContent || `<p>New ${type} submission received:</p>
-                  <pre>${JSON.stringify(data, null, 2)}</pre>`,
-          }),
-        });
-        
-        const responseData = await emailResponse.json();
-        console.log("Email sent with Resend:", responseData);
-      } catch (error) {
-        console.error("Error sending with Resend:", error);
+    try {
+      console.log(`Attempting to send email to: ${recipient}`);
+      const emailResponse = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "Waveline <onboarding@resend.dev>",
+          to: [recipient],
+          subject: subject,
+          html: htmlContent || `<p>New ${type} submission received:</p>
+                <pre>${JSON.stringify(data, null, 2)}</pre>`,
+        }),
+      });
+      
+      const responseData = await emailResponse.json();
+      console.log("Email sent with Resend:", responseData);
+      
+      if (!emailResponse.ok) {
+        throw new Error(`Resend API returned ${emailResponse.status}: ${JSON.stringify(responseData)}`);
       }
-    } else {
-      console.log("RESEND_API_KEY not available, email not sent");
-    }
 
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { 
-        "Content-Type": "application/json",
-        ...corsHeaders,
-      },
-    });
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: `Email sent successfully to ${recipient}` 
+      }), {
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders,
+        },
+      });
+    } catch (error) {
+      console.error("Error sending with Resend:", error);
+      throw new Error(`Failed to send email: ${error.message}`);
+    }
   } catch (error) {
     console.error("Error processing request:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      success: false 
+    }), {
       status: 500,
       headers: { 
         "Content-Type": "application/json",
