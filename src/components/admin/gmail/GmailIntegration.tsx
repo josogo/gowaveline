@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,7 +21,7 @@ import {
   clearGmailTokens,
   storeUserProfile,
   getStoredUserProfile
-} from '@/services/gmailService';
+} from '@/services/gmail';
 
 const GmailIntegration = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -36,16 +35,13 @@ const GmailIntegration = () => {
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
-  // Check for OAuth callback and load stored tokens on component mount
   useEffect(() => {
     const checkAuth = async () => {
-      // First check if we're handling an OAuth callback
       const urlParams = new URLSearchParams(window.location.search);
       const authCode = urlParams.get('code');
       const authState = urlParams.get('state');
       
       if (authCode && authState) {
-        // Verify state to prevent CSRF
         const storedState = localStorage.getItem('gmail_oauth_state');
         if (storedState !== authState) {
           toast.error("Authentication failed: Invalid state parameter");
@@ -54,18 +50,14 @@ const GmailIntegration = () => {
         
         await handleGoogleAuthCallback(authCode);
         
-        // Clean up the URL
         window.history.replaceState({}, document.title, window.location.pathname);
       } else {
-        // Check if we already have stored tokens
         const tokens = getStoredGmailTokens();
         const storedProfile = getStoredUserProfile();
         
         if (tokens && storedProfile) {
           setIsAuthenticated(true);
           setUserProfile(storedProfile);
-          
-          // In a real app, check if token is expired and refresh if needed
         }
       }
     };
@@ -77,20 +69,16 @@ const GmailIntegration = () => {
     setIsLoading(true);
     
     try {
-      // Exchange auth code for tokens
       const tokens = await exchangeCodeForTokens(authCode);
       
       if (!tokens.access_token) {
         throw new Error("Failed to get access token");
       }
       
-      // Get user profile with the access token
       const profile = await getGmailUserProfile(tokens.access_token);
       
-      // Calculate expiration time
       const expiresAt = Date.now() + (tokens.expires_in * 1000);
       
-      // Store tokens and profile
       await storeGmailTokens(
         profile.id, 
         tokens.access_token, 
@@ -104,7 +92,6 @@ const GmailIntegration = () => {
       setIsAuthenticated(true);
       toast.success('Successfully connected to Gmail');
       
-      // Fetch emails
       await fetchEmails(tokens.access_token);
     } catch (error) {
       console.error('Error handling auth callback:', error);
@@ -119,7 +106,6 @@ const GmailIntegration = () => {
     try {
       const gmailEmails = await getGmailEmails(accessToken);
       
-      // Process raw Gmail API response to a more usable format
       const processedEmails = processGmailEmails(gmailEmails);
       setEmails(processedEmails);
       
@@ -134,26 +120,20 @@ const GmailIntegration = () => {
     }
   };
 
-  // Process Gmail API response to a more usable format
   const processGmailEmails = (gmailMessages: any[]) => {
     return gmailMessages.map(message => {
-      // Extract headers
       const headers = message.payload.headers;
       const subject = headers.find((h: any) => h.name === 'Subject')?.value || '(No subject)';
       const from = headers.find((h: any) => h.name === 'From')?.value || 'unknown@example.com';
       const dateHeader = headers.find((h: any) => h.name === 'Date')?.value;
       const date = dateHeader ? new Date(dateHeader).toISOString() : new Date().toISOString();
       
-      // Check for attachments
       const hasAttachment = message.payload.parts?.some((part: any) => part.filename && part.filename.length > 0) || false;
       
-      // Extract body
       let body = '';
       if (message.payload.body?.data) {
-        // Body is base64 encoded
         body = atob(message.payload.body.data.replace(/-/g, '+').replace(/_/g, '/'));
       } else if (message.payload.parts) {
-        // Try to find text part
         const textPart = message.payload.parts.find((part: any) => 
           part.mimeType === 'text/plain' || part.mimeType === 'text/html'
         );
@@ -162,7 +142,6 @@ const GmailIntegration = () => {
         }
       }
       
-      // Strip HTML tags for plain text preview
       body = body.replace(/<[^>]*>/g, ' ');
       
       return {
@@ -181,10 +160,8 @@ const GmailIntegration = () => {
     setIsLoading(true);
     
     try {
-      // Get the authentication URL
       const authUrl = await getGmailAuthUrl();
       
-      // Redirect to Google's OAuth consent screen
       window.location.href = authUrl;
     } catch (error) {
       console.error('Error starting authentication:', error);
@@ -197,7 +174,6 @@ const GmailIntegration = () => {
     setIsLoading(true);
     
     try {
-      // Clear tokens and user profile
       clearGmailTokens();
       setIsAuthenticated(false);
       setUserProfile(null);
@@ -254,7 +230,6 @@ const GmailIntegration = () => {
         throw new Error("No access token available");
       }
       
-      // Send email using Gmail API
       await sendGmailEmail(tokens.accessToken, formData.to, formData.subject, formData.body);
       
       toast.success("Email sent successfully");
