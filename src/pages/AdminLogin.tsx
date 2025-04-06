@@ -39,7 +39,6 @@ const AdminLogin = () => {
   const onSubmit = async (values: LoginValues) => {
     setIsLoading(true);
     try {
-      // In a real application, this would be an API call to authenticate
       console.log('Login attempt with:', values);
       
       // For demonstration purposes, we'll use a mock login
@@ -54,7 +53,13 @@ const AdminLogin = () => {
         }));
         
         toast.success('Login successful!');
-        navigate('/admin/dashboard');
+        
+        // Use setTimeout to ensure state updates complete before navigation
+        setTimeout(() => {
+          navigate('/admin/dashboard');
+          // Ensure scroll to top on navigation
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 100);
       } else {
         toast.error('Invalid email or password');
       }
@@ -74,7 +79,10 @@ const AdminLogin = () => {
             src="/lovable-uploads/db137242-a816-462b-8d10-96fde441aaa3.png" 
             alt="Waveline Logo" 
             className="h-16 mx-auto mb-6"
-            onClick={() => navigate('/')}
+            onClick={() => {
+              navigate('/');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
             style={{ cursor: 'pointer' }}
           />
           <h1 className="text-2xl font-bold text-[#0EA5E9]">Admin Portal</h1>
@@ -144,7 +152,10 @@ const AdminLogin = () => {
             <Button 
               variant="link" 
               className="text-sm text-gray-600"
-              onClick={() => navigate('/')}
+              onClick={() => {
+                navigate('/');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
             >
               Back to Home
             </Button>
