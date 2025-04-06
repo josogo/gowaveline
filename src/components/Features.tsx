@@ -32,8 +32,8 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
       <div className="mb-4 inline-flex p-3 rounded-lg bg-primary/10 text-primary">
         {icon}
       </div>
-      <h3 className="text-xl font-semibold mb-2">{title}</h3>
-      <p className="text-muted-foreground">{description}</p>
+      <h3 className="text-xl font-semibold mb-2 text-[#0EA5E9]">{title}</h3>
+      <p className="text-orange-500">{description}</p>
     </div>
   );
 };
@@ -42,8 +42,8 @@ const Features = () => {
   return (
     <div className="py-20 px-6 md:px-10 max-w-7xl mx-auto">
       <div className="text-center mb-16">
-        <h2 className="text-3xl md:text-4xl font-bold mb-4">Powerful Statement Analysis</h2>
-        <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+        <h2 className="text-3xl md:text-4xl font-bold mb-4 text-[#0EA5E9]">Powerful Statement Analysis</h2>
+        <p className="text-xl text-orange-500 max-w-3xl mx-auto">
           Our advanced analytics engine breaks down your merchant statements to provide actionable insights.
         </p>
       </div>
