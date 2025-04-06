@@ -16,11 +16,22 @@ type ContactInfo = {
   phone?: string;
 };
 
-interface FileUploadProps {
+export interface FileUploadProps {
   contactInfo?: ContactInfo;
+  // Add new props needed for AgreementUploadModal
+  accept?: string;
+  maxFiles?: number;
+  maxSize?: number;
+  onFilesChange?: (acceptedFiles: File[]) => void;
 }
 
-const FileUpload: React.FC<FileUploadProps> = ({ contactInfo }) => {
+const FileUpload: React.FC<FileUploadProps> = ({ 
+  contactInfo,
+  accept,
+  maxFiles = 1,
+  maxSize = 10 * 1024 * 1024, // 10MB default
+  onFilesChange
+}) => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -38,26 +49,48 @@ const FileUpload: React.FC<FileUploadProps> = ({ contactInfo }) => {
       return;
     }
     
-    const allowedTypes = ['application/pdf', 'text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
-    if (!allowedTypes.includes(selectedFile.type)) {
+    const allowedTypes = accept ? accept.split(',') : ['application/pdf', 'text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+    
+    // Check if the file type is valid based on MIME type or extension
+    const isTypeValid = allowedTypes.some(type => {
+      // Check MIME type
+      if (selectedFile.type && type.includes('/') && selectedFile.type.match(new RegExp(type.replace('*', '.*')))) {
+        return true;
+      }
+      // Check extension
+      if (type.startsWith('.') && selectedFile.name.toLowerCase().endsWith(type.toLowerCase())) {
+        return true;
+      }
+      return false;
+    });
+    
+    if (!isTypeValid) {
       console.log("File type not allowed:", selectedFile.type);
-      toast.error("Please upload a PDF, CSV, or Excel file");
+      toast.error("Please upload a file with the correct format");
       return;
     }
     
-    if (selectedFile.size > 10 * 1024 * 1024) {
+    if (selectedFile.size > maxSize) {
       console.log("File too large:", selectedFile.size);
-      toast.error("File size should be less than 10MB");
+      toast.error(`File size should be less than ${(maxSize / (1024 * 1024)).toFixed(1)}MB`);
       return;
     }
     
     console.log("File accepted:", selectedFile.name);
     setFile(selectedFile);
-  }, []);
+    
+    // Call the onFilesChange prop if it exists
+    if (onFilesChange) {
+      onFilesChange(acceptedFiles);
+    }
+  }, [accept, maxSize, onFilesChange]);
   
   const removeFile = () => {
     setFile(null);
     setProgress(0);
+    if (onFilesChange) {
+      onFilesChange([]);
+    }
   };
   
   const handleUpload = async () => {
@@ -179,7 +212,10 @@ const FileUpload: React.FC<FileUploadProps> = ({ contactInfo }) => {
   return (
     <div className="w-full">
       {!file ? (
-        <DropZone onDrop={onDrop} />
+        <DropZone 
+          onDrop={onDrop}
+          accept={accept}
+        />
       ) : (
         <div className="space-y-4">
           <FileDisplay 
@@ -190,12 +226,14 @@ const FileUpload: React.FC<FileUploadProps> = ({ contactInfo }) => {
           
           <UploadProgress progress={progress} uploading={uploading} />
           
-          <UploadActions 
-            uploading={uploading} 
-            file={file} 
-            onSend={handleSendStatement} 
-            onAnalyze={handleUpload}
-          />
+          {!onFilesChange && (
+            <UploadActions 
+              uploading={uploading} 
+              file={file} 
+              onSend={handleSendStatement} 
+              onAnalyze={handleUpload}
+            />
+          )}
         </div>
       )}
     </div>
