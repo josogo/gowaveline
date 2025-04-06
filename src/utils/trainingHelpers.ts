@@ -17,6 +17,8 @@ export function prepareLessonData() {
 export function filterGlossaryTerms(terms: typeof extendedGlossaryTerms, searchTerm: string) {
   return terms.filter(term => 
     term.term.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    term.definition.toLowerCase().includes(searchTerm.toLowerCase())
+    term.definition.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    term.example.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (term.simpleDefinition && term.simpleDefinition.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 }

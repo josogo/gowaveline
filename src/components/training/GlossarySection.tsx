@@ -5,15 +5,17 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 
+interface GlossaryTerm {
+  term: string;
+  definition: string;
+  example: string;
+  simpleDefinition?: string;
+}
+
 interface GlossarySectionProps {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
-  filteredGlossaryTerms: Array<{
-    term: string;
-    definition: string;
-    example: string;
-    simpleDefinition?: string;
-  }>;
+  filteredGlossaryTerms: GlossaryTerm[];
 }
 
 const GlossarySection: React.FC<GlossarySectionProps> = ({
