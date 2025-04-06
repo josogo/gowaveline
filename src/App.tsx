@@ -73,18 +73,21 @@ const AppRoutes = () => {
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <BrowserRouter>
-      <React.StrictMode>
-        <TooltipProvider>
-          <AppRoutes />
-        </TooltipProvider>
-        <Toaster />
-        <Sonner />
-      </React.StrictMode>
-    </BrowserRouter>
-  </QueryClientProvider>
-);
+// Fix the app component to ensure proper hook ordering
+const App = () => {
+  return (
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <TooltipProvider>
+            <AppRoutes />
+            <Toaster />
+            <Sonner />
+          </TooltipProvider>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </React.StrictMode>
+  );
+};
 
 export default App;
