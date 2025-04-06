@@ -9,6 +9,93 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      agent_agreements: {
+        Row: {
+          agent_id: string
+          agreement_type: string
+          created_at: string
+          effective_date: string | null
+          expiration_date: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+        }
+        Insert: {
+          agent_id: string
+          agreement_type: string
+          created_at?: string
+          effective_date?: string | null
+          expiration_date?: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id?: string
+        }
+        Update: {
+          agent_id?: string
+          agreement_type?: string
+          created_at?: string
+          effective_date?: string | null
+          expiration_date?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      calendar_events: {
+        Row: {
+          attendees: Json | null
+          calendly_event_id: string | null
+          created_at: string
+          description: string | null
+          end_time: string
+          google_event_id: string | null
+          id: string
+          meeting_link: string | null
+          related_contact_id: string | null
+          related_deal_id: string | null
+          start_time: string
+          status: string
+          title: string
+        }
+        Insert: {
+          attendees?: Json | null
+          calendly_event_id?: string | null
+          created_at?: string
+          description?: string | null
+          end_time: string
+          google_event_id?: string | null
+          id?: string
+          meeting_link?: string | null
+          related_contact_id?: string | null
+          related_deal_id?: string | null
+          start_time: string
+          status?: string
+          title: string
+        }
+        Update: {
+          attendees?: Json | null
+          calendly_event_id?: string | null
+          created_at?: string
+          description?: string | null
+          end_time?: string
+          google_event_id?: string | null
+          id?: string
+          meeting_link?: string | null
+          related_contact_id?: string | null
+          related_deal_id?: string | null
+          start_time?: string
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
       contact_submissions: {
         Row: {
           company: string | null
@@ -36,6 +123,39 @@ export type Database = {
           message?: string | null
           name?: string | null
           phone?: string | null
+        }
+        Relationships: []
+      }
+      field_edit_history: {
+        Row: {
+          changed_by: string
+          created_at: string
+          field_name: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          record_id: string
+          table_name: string
+        }
+        Insert: {
+          changed_by: string
+          created_at?: string
+          field_name: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          record_id: string
+          table_name: string
+        }
+        Update: {
+          changed_by?: string
+          created_at?: string
+          field_name?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          record_id?: string
+          table_name?: string
         }
         Relationships: []
       }
@@ -123,6 +243,42 @@ export type Database = {
         }
         Relationships: []
       }
+      merchant_documents: {
+        Row: {
+          created_at: string
+          document_type: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+          merchant_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          document_type: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id?: string
+          merchant_id: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          merchant_id?: string
+          uploaded_by?: string
+        }
+        Relationships: []
+      }
       quiz_results: {
         Row: {
           correct_answers: number
@@ -156,6 +312,77 @@ export type Database = {
           score?: number
           total_questions?: number
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      training_lessons: {
+        Row: {
+          content: Json
+          created_at: string
+          description: string
+          estimated_time: number
+          id: number
+          module_id: number | null
+          order_num: number
+          title: string
+        }
+        Insert: {
+          content: Json
+          created_at?: string
+          description: string
+          estimated_time: number
+          id?: number
+          module_id?: number | null
+          order_num: number
+          title: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          description?: string
+          estimated_time?: number
+          id?: number
+          module_id?: number | null
+          order_num?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_lessons_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "training_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_modules: {
+        Row: {
+          created_at: string
+          description: string
+          icon: string | null
+          id: number
+          lessons_count: number
+          order_num: number
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          icon?: string | null
+          id?: number
+          lessons_count?: number
+          order_num: number
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          icon?: string | null
+          id?: number
+          lessons_count?: number
+          order_num?: number
+          title?: string
         }
         Relationships: []
       }

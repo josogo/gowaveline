@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { TeamMemberForm, TeamMembersTable, TeamSearch } from './team';
+import { supabase } from '@/integrations/supabase/client';
 import type { TeamMember } from './team/TeamMemberForm';
 
 const TeamManagement = () => {
@@ -32,6 +33,25 @@ const TeamManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [agreements, setAgreements] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Fetch agreements from Supabase
+    const fetchAgreements = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('agent_agreements')
+          .select('*');
+          
+        if (error) throw error;
+        setAgreements(data || []);
+      } catch (error) {
+        console.error("Error fetching agreements:", error);
+      }
+    };
+    
+    fetchAgreements();
+  }, []);
 
   const handleAddEdit = (values: Omit<TeamMember, 'id'>) => {
     if (editingMember) {
@@ -55,9 +75,32 @@ const TeamManagement = () => {
     setEditingMember(null);
   };
 
-  const handleDelete = (id: string) => {
-    setTeamMembers(prev => prev.filter(member => member.id !== id));
-    toast.success("Team member removed successfully!");
+  const handleDelete = async (id: string) => {
+    try {
+      // Check if there are any agreements for this team member
+      const memberAgreements = agreements.filter(agreement => agreement.agent_id === id);
+      
+      // Delete agreements if they exist
+      for (const agreement of memberAgreements) {
+        // Delete from storage
+        await supabase.storage
+          .from('agent_agreements')
+          .remove([agreement.file_path]);
+          
+        // Delete from database
+        await supabase
+          .from('agent_agreements')
+          .delete()
+          .eq('id', agreement.id);
+      }
+      
+      // Remove team member from state
+      setTeamMembers(prev => prev.filter(member => member.id !== id));
+      toast.success("Team member removed successfully!");
+    } catch (error) {
+      console.error("Error during deletion:", error);
+      toast.error("Failed to remove team member");
+    }
   };
 
   const handleEdit = (member: TeamMember) => {

@@ -19,12 +19,26 @@ const Certificate: React.FC<CertificateProps> = ({ name, lessonTitle, date, scor
     day: 'numeric'
   });
   
-  // Modified to use only supported badge variants
+  // Use supported badge variants
   const getBadgeVariant = (score: number) => {
-    if (score >= 90) return "secondary"; // Was "success"
-    if (score >= 75) return "default";   // Was "info"
-    if (score >= 60) return "outline";   // Was "warning"
+    if (score >= 90) return "secondary"; // Success badge
+    if (score >= 75) return "default";   // Info badge
+    if (score >= 60) return "outline";   // Warning badge
     return "destructive";                // Already valid variant
+  };
+  
+  // Custom class for better visual representation
+  const getBadgeClass = (score: number) => {
+    if (score >= 90) return "bg-green-100 text-green-800"; 
+    if (score >= 75) return "bg-blue-100 text-blue-800";
+    if (score >= 60) return "bg-yellow-100 text-yellow-800";
+    return ""; // Use default destructive style
+  };
+  
+  const handleDownload = () => {
+    // Here you would implement certificate PDF generation and download
+    // This is a placeholder for now
+    alert('Certificate download functionality will be implemented soon!');
   };
   
   return (
@@ -51,7 +65,10 @@ const Certificate: React.FC<CertificateProps> = ({ name, lessonTitle, date, scor
         
         <div className="flex justify-center items-center gap-3">
           <span>with a score of</span>
-          <Badge variant={getBadgeVariant(score)} className="text-md px-3 py-1">
+          <Badge 
+            variant={getBadgeVariant(score)} 
+            className={`text-md px-3 py-1 ${getBadgeClass(score)}`}
+          >
             {score}%
           </Badge>
         </div>
@@ -61,7 +78,10 @@ const Certificate: React.FC<CertificateProps> = ({ name, lessonTitle, date, scor
         </div>
         
         <div className="mt-8">
-          <Button className="flex items-center gap-2">
+          <Button 
+            className="flex items-center gap-2"
+            onClick={handleDownload}
+          >
             <Download className="h-4 w-4" />
             Download Certificate
           </Button>

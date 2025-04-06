@@ -1,192 +1,125 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { SmtpClient } from "https://deno.land/x/smtp@v0.7.0/mod.ts";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { Resend } from "npm:resend@2.0.0";
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": 
+    "authorization, x-client-info, apikey, content-type",
 };
 
-interface EmailData {
-  type: string;
-  subject: string;
-  data: Record<string, string | number | boolean>;
-}
+// Define email templates for different types of emails
+const emailTemplates = {
+  contact: (data: any) => ({
+    subject: `New Contact Form Submission: ${data.name}`,
+    html: `
+      <h1>New Contact Form Submission</h1>
+      <p><strong>Name:</strong> ${data.name || 'Not provided'}</p>
+      <p><strong>Email:</strong> ${data.email}</p>
+      <p><strong>Phone:</strong> ${data.phone || 'Not provided'}</p>
+      <p><strong>Company:</strong> ${data.company || 'Not provided'}</p>
+      <p><strong>Message:</strong></p>
+      <p>${data.message || 'No message provided'}</p>
+    `
+  }),
+  
+  quiz: (data: any) => ({
+    subject: `Quiz Result - Lesson ${data.lessonId}`,
+    html: `
+      <h1>Quiz Results</h1>
+      <p><strong>Score:</strong> ${data.score} points</p>
+      <p><strong>Correct Answers:</strong> ${data.correctAnswers} of ${data.totalQuestions}</p>
+      <p><strong>Percentage:</strong> ${data.percentage}%</p>
+    `
+  }),
+  
+  upload: (data: any) => ({
+    subject: `Document Uploaded: ${data.fileName}`,
+    html: `
+      <h1>New Document Upload</h1>
+      <p><strong>File Name:</strong> ${data.fileName}</p>
+      <p><strong>Document Type:</strong> ${data.documentType}</p>
+      <p><strong>Uploaded By:</strong> ${data.uploadedBy}</p>
+      <p><strong>Entity:</strong> ${data.entityType} - ${data.entityId}</p>
+      <p><a href="${data.fileUrl}">Click here to view the document</a></p>
+    `
+  }),
+  
+  pdf: (data: any, fileUrl: string) => ({
+    subject: `New PDF Form Submission`,
+    html: `
+      <h1>New Form Submission with PDF</h1>
+      <p>A new form with PDF has been submitted with the following information:</p>
+      <div style="margin: 20px 0; padding: 15px; background-color: #f5f5f5; border-radius: 5px;">
+        ${Object.entries(data).map(([key, value]) => 
+          `<p><strong>${key}:</strong> ${value}</p>`
+        ).join('')}
+      </div>
+      <p>The PDF is attached to this email.</p>
+    `
+  })
+};
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
-// Set to false to use actual recipient emails in production
-const USE_TEST_EMAIL = false;
-
-serve(async (req) => {
+// Handler function for all email-related operations
+const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Check if RESEND_API_KEY is configured
-    if (!RESEND_API_KEY) {
-      console.error("RESEND_API_KEY is not configured");
+    const { type, to, subject, data, attachments } = await req.json();
+    
+    if (!type || !data) {
       return new Response(
-        JSON.stringify({ 
-          error: "Email service is not properly configured. RESEND_API_KEY is missing." 
-        }),
-        { 
-          status: 500, 
-          headers: { "Content-Type": "application/json", ...corsHeaders } 
-        }
+        JSON.stringify({ error: "Missing required parameters" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    const { type, subject, data } = await req.json() as EmailData;
-
-    // For now, we're just logging the data
-    // In a production environment, this would send an actual email
-    console.log(`Email type: ${type}`);
-    console.log(`Subject: ${subject}`);
-    console.log("Data:", data);
-
-    // Email content based on type
-    let htmlContent = '';
-    let recipient = 'admin@example.com';
     
-    // Different handling based on email type
-    if (type === 'statement') {
-      // Statement analysis email logic
-      console.log("Processing statement analysis request");
-      htmlContent = `
-        <h1>New Statement Analysis Request</h1>
-        <p><strong>Company:</strong> ${data.company}</p>
-        <p><strong>Email:</strong> ${data.email}</p>
-        <p><strong>Phone:</strong> ${data.phone}</p>
-        <p><strong>File Name:</strong> ${data.fileName}</p>
-        <p><strong>File Type:</strong> ${data.fileType}</p>
-        <p><strong>File Size:</strong> ${data.fileSize} bytes</p>
-      `;
-      recipient = 'info@gowaveline.com';
-      
-    } else if (type === 'contact') {
-      // Contact form submission logic
-      console.log("Processing contact form submission");
-      htmlContent = `
-        <h1>New Contact Form Submission</h1>
-        <p><strong>Name:</strong> ${data.name}</p>
-        <p><strong>Email:</strong> ${data.email}</p>
-        <p><strong>Phone:</strong> ${data.phone}</p>
-        <p><strong>Company:</strong> ${data.company}</p>
-        <p><strong>Inquiry Type:</strong> ${data.inquiryType}</p>
-        ${data.partnerType ? `<p><strong>Partner Type:</strong> ${data.partnerType}</p>` : ''}
-        <h2>Message:</h2>
-        <p>${data.message}</p>
-      `;
-      
-      // If recipient is specified in data, use it, otherwise default
-      recipient = data.recipient ? String(data.recipient) : 'info@gowaveline.com';
-      
-    } else if (type === 'getStarted') {
-      // Get Started form submission logic
-      console.log("Processing get started submission");
-      htmlContent = `
-        <h1>New Get Started Application</h1>
-        <p><strong>Name:</strong> ${data.name}</p>
-        <p><strong>Email:</strong> ${data.email}</p>
-        <p><strong>Phone:</strong> ${data.phone}</p>
-        <p><strong>Business:</strong> ${data.businessName}</p>
-        <p><strong>Website:</strong> ${data.website || 'Not provided'}</p>
-        <p><strong>Monthly Volume:</strong> ${data.monthlyVolume}</p>
-        
-        ${data.hasAttachment ? `
-        <h2>Attached Statement</h2>
-        <p><strong>File:</strong> ${data.fileName}</p>
-        <p><strong>File Type:</strong> ${data.fileType}</p>
-        <p><strong>File Size:</strong> ${(Number(data.fileSize) / (1024 * 1024)).toFixed(2)} MB</p>
-        <p><a href="${data.fileUrl}" target="_blank">Download Statement</a> (link valid for 7 days)</p>
-        ` : '<p>No statement file was uploaded.</p>'}
-      `;
-      recipient = data.recipient ? String(data.recipient) : 'info@gowaveline.com';
-      console.log(`GetStarted form - sending to recipient: ${recipient}`);
-      
-    } else if (type === 'quiz') {
-      // Quiz results submission logic
-      console.log("Processing quiz results submission");
-      htmlContent = `
-        <h1>Quiz Result - Lesson ${data.lessonId}</h1>
-        <p><strong>User ID:</strong> ${data.userId}</p>
-        <p><strong>Score:</strong> ${data.score} out of ${data.totalQuestions}</p>
-        <p><strong>Percentage:</strong> ${data.percentage}%</p>
-        <p><strong>Correct Answers:</strong> ${data.correctAnswers}</p>
-        <p><strong>Incorrect Answers:</strong> ${data.incorrectAnswers}</p>
-      `;
-      recipient = 'info@gowaveline.com';
+    // Default recipient for admin notifications
+    const adminEmail = "admin@waveline.ai";
+    
+    // Select template based on email type
+    const template = emailTemplates[type] ? emailTemplates[type](data) : null;
+    
+    if (!template) {
+      return new Response(
+        JSON.stringify({ error: "Invalid email type" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
-
-    // If we're in testing mode, override the recipient
-    if (USE_TEST_EMAIL) {
-      console.log(`Using test email instead of ${recipient}`);
-      recipient = "jordan@gowaveline.com";
+    
+    // Prepare email options
+    const emailOptions = {
+      from: "Waveline <notifications@waveline.ai>",
+      to: to || [adminEmail],
+      subject: subject || template.subject,
+      html: template.html,
+      attachments: attachments || []
+    };
+    
+    // Send the email
+    const { data: emailData, error } = await resend.emails.send(emailOptions);
+    
+    if (error) {
+      throw new Error(error.message);
     }
-
-    // Use RESEND API to send the email
-    try {
-      console.log(`Attempting to send email to: ${recipient}`);
-      
-      // Set up the from email address - for production this should be from your verified domain
-      const fromEmail = "Waveline <info@gowaveline.com>";
-      
-      const emailResponse = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${RESEND_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: fromEmail,
-          to: [recipient],
-          subject: subject,
-          html: htmlContent || `<p>New ${type} submission received:</p>
-                <pre>${JSON.stringify(data, null, 2)}</pre>`,
-        }),
-      });
-      
-      const responseData = await emailResponse.json();
-      console.log("Email API response:", responseData);
-      
-      if (!emailResponse.ok) {
-        throw new Error(`Resend API returned ${emailResponse.status}: ${JSON.stringify(responseData)}`);
-      }
-
-      // Store the form data in a database or log it for backup
-      console.log("Form data processed successfully:", {
-        type,
-        subject,
-        recipient,
-        ...data
-      });
-
-      return new Response(JSON.stringify({ 
-        success: true, 
-        message: `Email sent successfully to ${recipient}` 
-      }), {
-        headers: { 
-          "Content-Type": "application/json",
-          ...corsHeaders,
-        },
-      });
-    } catch (error) {
-      console.error("Error sending with Resend:", error);
-      throw new Error(`Failed to send email: ${error.message}`);
-    }
-  } catch (error) {
-    console.error("Error processing request:", error);
-    return new Response(JSON.stringify({ 
-      error: error.message,
-      success: false 
-    }), {
-      status: 500,
-      headers: { 
-        "Content-Type": "application/json",
-        ...corsHeaders,
-      },
-    });
+    
+    return new Response(
+      JSON.stringify({ success: true, data: emailData }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (error: any) {
+    console.error("Error sending email:", error);
+    
+    return new Response(
+      JSON.stringify({ error: error.message || "Failed to send email" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
-});
+};
+
+serve(handler);
