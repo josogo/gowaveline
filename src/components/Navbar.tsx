@@ -17,8 +17,14 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ className }) => {
   const navigate = useNavigate();
 
+  // Enhanced navigation function that ensures scroll to top behavior
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleGetStarted = () => {
-    navigate('/get-started');
+    handleNavigation('/get-started');
   };
 
   const navItems = [
@@ -38,15 +44,15 @@ const Navbar: React.FC<NavbarProps> = ({ className }) => {
           src="/lovable-uploads/2d9abfe8-af53-43b1-9ce4-d5c73518ff44.png" 
           alt="Logo" 
           className="h-10 w-auto mr-6"
-          onClick={() => navigate('/')}
+          onClick={() => handleNavigation('/')}
           style={{ cursor: 'pointer' }}
         />
 
-        {/* Home button for desktop - NEW */}
+        {/* Home button for desktop */}
         <Button 
           variant="link" 
           className="text-[#0EA5E9] hover:scale-105 transition-transform hidden md:flex items-center mr-4" 
-          onClick={() => navigate('/')}
+          onClick={() => handleNavigation('/')}
         >
           <Home className="h-5 w-5 mr-1" />
           Home
@@ -60,7 +66,7 @@ const Navbar: React.FC<NavbarProps> = ({ className }) => {
             key={item.path} 
             variant="link" 
             className="text-[#0EA5E9] hover:scale-105 transition-transform duration-300" 
-            onClick={() => navigate(item.path)}
+            onClick={() => handleNavigation(item.path)}
           >
             {item.label}
           </Button>
@@ -78,11 +84,11 @@ const Navbar: React.FC<NavbarProps> = ({ className }) => {
           </SheetTrigger>
           <SheetContent side="right" className="w-[240px] sm:w-[300px]">
             <div className="flex flex-col space-y-4 mt-8">
-              {/* Home button for mobile - NEW */}
+              {/* Home button for mobile */}
               <Button 
                 variant="ghost" 
                 className="justify-start text-[#0EA5E9] flex items-center" 
-                onClick={() => navigate('/')}
+                onClick={() => handleNavigation('/')}
               >
                 <Home className="h-5 w-5 mr-2" />
                 Home
@@ -93,7 +99,7 @@ const Navbar: React.FC<NavbarProps> = ({ className }) => {
                   key={item.path} 
                   variant="ghost" 
                   className="justify-start text-[#0EA5E9]" 
-                  onClick={() => navigate(item.path)}
+                  onClick={() => handleNavigation(item.path)}
                 >
                   {item.label}
                 </Button>

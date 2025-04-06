@@ -1,10 +1,10 @@
-
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useScrollToTop } from "@/hooks/use-scroll-to-top";
 import Index from "./pages/Index";
 import Results from "./pages/Results";
 import Industries from "./pages/Industries";
@@ -28,6 +28,46 @@ import CommissionTracking from "./pages/admin/CommissionTracking";
 import TrainingHub from "./pages/admin/TrainingHub";
 import FAQ from "./pages/FAQ";
 
+// Scroll to top component that will be used inside the router
+const ScrollToTop = () => {
+  useScrollToTop();
+  return null;
+};
+
+// Wrap the routes with the ScrollToTop component
+const AppRoutes = () => {
+  return (
+    <>
+      <ScrollToTop />
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/results" element={<Results />} />
+        <Route path="/industries" element={<Industries />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/get-started" element={<GetStarted />} />
+        <Route path="/high-risk" element={<HighRisk />} />
+        <Route path="/case-studies" element={<CaseStudies />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/comparison" element={<Comparison />} />
+        <Route path="/partners" element={<Partners />} />
+        <Route path="/faq" element={<FAQ />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/team-management" element={<TeamManagement />} />
+        <Route path="/admin/deals" element={<Deals />} />
+        <Route path="/admin/gmail-integration" element={<GmailIntegration />} />
+        <Route path="/admin/commission-tracking" element={<CommissionTracking />} />
+        <Route path="/admin/training-hub" element={<TrainingHub />} />
+        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
+  );
+};
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -35,31 +75,7 @@ const App = () => (
     <BrowserRouter>
       <React.StrictMode>
         <TooltipProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/results" element={<Results />} />
-            <Route path="/industries" element={<Industries />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/get-started" element={<GetStarted />} />
-            <Route path="/high-risk" element={<HighRisk />} />
-            <Route path="/case-studies" element={<CaseStudies />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/comparison" element={<Comparison />} />
-            <Route path="/partners" element={<Partners />} />
-            <Route path="/faq" element={<FAQ />} />
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/team-management" element={<TeamManagement />} />
-            <Route path="/admin/deals" element={<Deals />} />
-            <Route path="/admin/gmail-integration" element={<GmailIntegration />} />
-            <Route path="/admin/commission-tracking" element={<CommissionTracking />} />
-            <Route path="/admin/training-hub" element={<TrainingHub />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AppRoutes />
           <Toaster />
           <Sonner />
         </TooltipProvider>
