@@ -1,18 +1,9 @@
-
 import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, ShieldCheck, AlertTriangle, DollarSign, BarChart, Building, Globe, ArrowRight, ArrowLeft } from 'lucide-react';
-import { 
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious
-} from '@/components/ui/carousel';
-import { Card, CardContent } from '@/components/ui/card';
 
 const HighRisk = () => {
   const navigate = useNavigate();
@@ -81,13 +72,6 @@ const HighRisk = () => {
     setSelectedIndustry(selectedIndustry?.id === industry.id ? null : industry);
   };
 
-  const carouselImages = [
-    "/lovable-uploads/2d9abfe8-af53-43b1-9ce4-d5c73518ff44.png",
-    "/lovable-uploads/1273f62c-7839-4ba0-adb3-a65f0f996b3f.png",
-    "/lovable-uploads/13e5ff13-2a8e-45f3-b1bc-ed972c3308ba.png",
-    "/lovable-uploads/db137242-a816-462b-8d10-96fde441aaa3.png",
-  ];
-
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -98,26 +82,6 @@ const HighRisk = () => {
             <p className="text-xl text-[#0EA5E9] mb-8 max-w-3xl mx-auto">
               When traditional payment processors say "no," Waveline says "let's find a way." We specialize in providing reliable merchant services to businesses in high-risk industries.
             </p>
-            
-            <div className="max-w-6xl mx-auto my-12">
-              <Carousel className="w-full">
-                <CarouselContent>
-                  {carouselImages.map((image, index) => (
-                    <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
-                      <div className="p-1">
-                        <Card>
-                          <CardContent className="flex aspect-square items-center justify-center p-0">
-                            <img src={image} alt={`High Risk Industry ${index + 1}`} className="w-full h-full object-cover rounded-lg" />
-                          </CardContent>
-                        </Card>
-                      </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious className="left-2" />
-                <CarouselNext className="right-2" />
-              </Carousel>
-            </div>
             
             <div className="flex flex-col sm:flex-row justify-center gap-4 mt-10">
               <Button 
