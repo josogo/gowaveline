@@ -76,11 +76,13 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
-      <TooltipProvider>
-        <AppRoutes />
+      <React.StrictMode>
+        <TooltipProvider>
+          <AppRoutes />
+        </TooltipProvider>
         <Toaster />
         <Sonner />
-      </TooltipProvider>
+      </React.StrictMode>
     </BrowserRouter>
   </QueryClientProvider>
 );
