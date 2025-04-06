@@ -14,8 +14,6 @@ interface EmailData {
 }
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
-// Use this email for testing - this should be your verified email in Resend
-const TEST_EMAIL = "jordan@gowaveline.com";
 // Set to false to use actual recipient emails in production
 const USE_TEST_EMAIL = false;
 
@@ -125,7 +123,7 @@ serve(async (req) => {
     // If we're in testing mode, override the recipient
     if (USE_TEST_EMAIL) {
       console.log(`Using test email instead of ${recipient}`);
-      recipient = TEST_EMAIL;
+      recipient = "jordan@gowaveline.com";
     }
 
     // Use RESEND API to send the email

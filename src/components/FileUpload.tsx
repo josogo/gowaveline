@@ -14,6 +14,7 @@ interface FileUploadWrapperProps {
 }
 
 const FileUploadWrapper: React.FC<FileUploadWrapperProps> = ({ contactInfo }) => {
+  console.log("FileUploadWrapper rendered with contactInfo:", contactInfo);
   return <FileUpload contactInfo={contactInfo} />;
 };
 

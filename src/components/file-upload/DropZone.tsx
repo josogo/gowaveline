@@ -37,6 +37,7 @@ const DropZone: React.FC<DropZoneProps> = ({ onDrop, className }) => {
       className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
         isDragActive ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-primary/50'
       } bg-white ${className}`}
+      onClick={(e) => e.stopPropagation()}
     >
       <input {...getInputProps()} />
       <div className="flex flex-col items-center justify-center gap-4">
@@ -49,7 +50,19 @@ const DropZone: React.FC<DropZoneProps> = ({ onDrop, className }) => {
             Supports PDF, CSV and Excel files (max 10MB).
           </p>
         </div>
-        <Button variant="outline" className="bg-white text-primary border-primary hover:bg-primary/5">Browse files</Button>
+        <Button 
+          variant="outline" 
+          className="bg-white text-primary border-primary hover:bg-primary/5"
+          onClick={(e) => {
+            e.stopPropagation();
+            const input = document.querySelector('input[type="file"]');
+            if (input) {
+              input.click();
+            }
+          }}
+        >
+          Browse files
+        </Button>
       </div>
     </div>
   );

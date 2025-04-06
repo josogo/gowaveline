@@ -70,7 +70,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ contactInfo }) => {
     setProgress(10);
     
     try {
-      console.log("Analyzing file:", file.name, file.type);
+      console.log("Analyzing file:", file.name, file.type, file.size);
       console.log("Contact info:", contactInfo);
       
       // Send notification email
