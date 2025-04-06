@@ -17,15 +17,17 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 interface ImportExportDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onImport: (file: File) => void;
-  onExport: () => void;
+  onImport: (data: any) => void;
+  onExport?: () => void;
+  contactsCount?: number;
 }
 
 export const ImportExportDialog: React.FC<ImportExportDialogProps> = ({
   isOpen,
   onClose,
   onImport,
-  onExport
+  onExport,
+  contactsCount
 }) => {
   const [activeTab, setActiveTab] = useState('import');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -55,7 +57,9 @@ export const ImportExportDialog: React.FC<ImportExportDialogProps> = ({
   };
 
   const handleExport = () => {
-    onExport();
+    if (onExport) {
+      onExport();
+    }
   };
 
   return (
@@ -65,6 +69,7 @@ export const ImportExportDialog: React.FC<ImportExportDialogProps> = ({
           <DialogTitle>Import & Export Contacts</DialogTitle>
           <DialogDescription>
             Import contacts from a CSV file or export your contacts database
+            {contactsCount !== undefined && ` (${contactsCount} contacts)`}
           </DialogDescription>
         </DialogHeader>
         

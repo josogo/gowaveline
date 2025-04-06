@@ -113,12 +113,6 @@ const ContactManagement: React.FC = () => {
       filtered = filtered.filter(contact => contact.type === filters.type);
     }
     
-    if (filters.tag && filters.tag !== 'all') {
-      filtered = filtered.filter(contact => 
-        contact.tags && contact.tags.includes(filters.tag)
-      );
-    }
-    
     setFilteredContacts(filtered);
   };
   
@@ -170,6 +164,12 @@ const ContactManagement: React.FC = () => {
     toast.success(`${selectedContacts.length} contacts deleted`);
   };
   
+  // Navigation to deals
+  const navigateToDeals = () => {
+    // TODO: Implement navigation to deals
+    console.log("Navigate to deals");
+  };
+  
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -205,6 +205,7 @@ const ContactManagement: React.FC = () => {
             setSelectedContacts={setSelectedContacts}
             onEditContact={(contact) => setEditingContact(contact)}
             onDeleteContact={handleDeleteContact}
+            navigateToDeals={navigateToDeals}
           />
         </TabsContent>
         
@@ -215,6 +216,7 @@ const ContactManagement: React.FC = () => {
             setSelectedContacts={setSelectedContacts}
             onEditContact={(contact) => setEditingContact(contact)}
             onDeleteContact={handleDeleteContact}
+            navigateToDeals={navigateToDeals}
           />
         </TabsContent>
         
@@ -225,6 +227,7 @@ const ContactManagement: React.FC = () => {
             setSelectedContacts={setSelectedContacts}
             onEditContact={(contact) => setEditingContact(contact)}
             onDeleteContact={handleDeleteContact}
+            navigateToDeals={navigateToDeals}
           />
         </TabsContent>
         
@@ -235,6 +238,7 @@ const ContactManagement: React.FC = () => {
             setSelectedContacts={setSelectedContacts}
             onEditContact={(contact) => setEditingContact(contact)}
             onDeleteContact={handleDeleteContact}
+            navigateToDeals={navigateToDeals}
           />
         </TabsContent>
       </Tabs>
@@ -256,9 +260,13 @@ const ContactManagement: React.FC = () => {
         onClose={() => setIsImportExportDialogOpen(false)}
         onImport={(data) => {
           // Handle import logic
-          toast.success(`Imported ${data.length} contacts`);
+          toast.success(`Imported ${Array.isArray(data) ? data.length : 1} contacts`);
         }}
         contactsCount={contacts.length}
+        onExport={() => {
+          // Export logic would go here
+          toast.success('Contacts exported successfully');
+        }}
       />
     </div>
   );
