@@ -31,6 +31,13 @@ export const analyzeStatement = async (
   onProgress: (progress: number) => void
 ): Promise<StatementAnalysis> => {
   try {
+    // Log file details for debugging
+    console.log("analyzeStatement called with file:", {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+    });
+    
     // Start progress
     onProgress(10);
     console.log("Starting file upload process for analysis", { fileName: file.name, fileType: file.type, fileSize: file.size });
@@ -52,9 +59,7 @@ export const analyzeStatement = async (
     onProgress(100);
     
     // Return mock successful data
-    toast.success("Analysis complete!");
-    
-    return {
+    const analysisResult = {
       success: true,
       effectiveRate: "2.75%",
       monthlyVolume: "$45,230.50",
@@ -69,6 +74,10 @@ export const analyzeStatement = async (
       },
       message: "Analysis successful! This is test data for demonstration purposes."
     };
+    
+    console.log("Analysis result:", analysisResult);
+    toast.success("Analysis complete!");
+    return analysisResult;
     
   } catch (error) {
     console.error('Statement analysis error:', error);
