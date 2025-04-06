@@ -24,7 +24,7 @@ const ImageCarousel = () => {
   useEffect(() => {
     if (!api) return;
     
-    // Auto-scroll every 3 seconds
+    // Auto-scroll continuously without pausing
     const intervalId = setInterval(() => {
       api.scrollNext();
     }, 3000);
@@ -43,6 +43,8 @@ const ImageCarousel = () => {
           opts={{
             align: "start",
             loop: true,
+            skipSnaps: true,
+            dragFree: true
           }}
         >
           <CarouselContent className="-ml-4">
