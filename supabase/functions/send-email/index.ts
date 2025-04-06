@@ -14,6 +14,10 @@ interface EmailData {
 }
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
+// Use this email for testing - this should be your verified email in Resend
+const TEST_EMAIL = "jordan@gowaveline.com";
+// Set to true to use the test email for all recipients during development
+const USE_TEST_EMAIL = true;
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -118,9 +122,21 @@ serve(async (req) => {
       recipient = 'info@gowaveline.com';
     }
 
+    // If we're in testing mode, override the recipient
+    if (USE_TEST_EMAIL) {
+      console.log(`Using test email instead of ${recipient}`);
+      recipient = TEST_EMAIL;
+    }
+
     // Use RESEND API to send the email
     try {
       console.log(`Attempting to send email to: ${recipient}`);
+      
+      // Set up the from email address - for production this should be from your verified domain
+      const fromEmail = USE_TEST_EMAIL 
+        ? "Waveline Test <onboarding@resend.dev>"
+        : "Waveline <onboarding@resend.dev>"; 
+      
       const emailResponse = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
@@ -128,7 +144,7 @@ serve(async (req) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "Waveline <onboarding@resend.dev>",
+          from: fromEmail,
           to: [recipient],
           subject: subject,
           html: htmlContent || `<p>New ${type} submission received:</p>
@@ -137,11 +153,19 @@ serve(async (req) => {
       });
       
       const responseData = await emailResponse.json();
-      console.log("Email sent with Resend:", responseData);
+      console.log("Email API response:", responseData);
       
       if (!emailResponse.ok) {
         throw new Error(`Resend API returned ${emailResponse.status}: ${JSON.stringify(responseData)}`);
       }
+
+      // Store the form data in a database or log it for backup
+      console.log("Form data processed successfully:", {
+        type,
+        subject,
+        recipient,
+        ...data
+      });
 
       return new Response(JSON.stringify({ 
         success: true, 
