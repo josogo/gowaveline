@@ -63,6 +63,18 @@ const Hero = () => {
         <div className="mt-16 bg-white shadow-lg rounded-lg p-8 border border-gray-200">
           <h2 className="text-2xl font-semibold text-center mb-6 text-[#0EA5E9]">Upload Your Statement</h2>
           <FileUpload />
+          
+          {/* Mobile submit button - NEW */}
+          {isMobile && (
+            <div className="mt-6 text-center">
+              <Button
+                onClick={() => navigate('/get-started')}
+                className="px-6 py-3 text-white font-semibold text-lg rounded-lg bg-gradient-to-r from-[#0EA5E9] to-[#0EA5E9]/80 hover:from-[#0EA5E9]/80 hover:to-[#0EA5E9] shadow-lg w-full"
+              >
+                Submit statement
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
