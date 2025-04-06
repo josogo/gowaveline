@@ -34,16 +34,25 @@ const GmailIntegration = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const authCode = urlParams.get('code');
       const authState = urlParams.get('state');
+      const errorParam = urlParams.get('error');
+      
+      if (errorParam) {
+        setAuthError(`Google returned an error: ${errorParam}`);
+        toast.error(`Authentication failed: ${errorParam}`);
+        return;
+      }
       
       if (authCode && authState) {
         const storedState = localStorage.getItem('gmail_oauth_state');
         if (storedState !== authState) {
+          setAuthError("Invalid state parameter. Please try again.");
           toast.error("Authentication failed: Invalid state parameter");
           return;
         }
@@ -67,6 +76,7 @@ const GmailIntegration = () => {
 
   const handleGoogleAuthCallback = async (authCode: string) => {
     setIsLoading(true);
+    setAuthError(null);
     
     try {
       const tokens = await exchangeCodeForTokens(authCode);
@@ -95,7 +105,9 @@ const GmailIntegration = () => {
       await fetchEmails(tokens.access_token);
     } catch (error) {
       console.error('Error handling auth callback:', error);
-      toast.error('Authentication failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setAuthError(`Authentication failed: ${errorMessage}`);
+      toast.error('Authentication failed: ' + errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -158,14 +170,19 @@ const GmailIntegration = () => {
 
   const handleAuthenticate = async () => {
     setIsLoading(true);
+    setAuthError(null);
     
     try {
+      console.log("Starting Gmail authentication flow...");
       const authUrl = await getGmailAuthUrl();
+      console.log("Generated auth URL:", authUrl);
       
       window.location.href = authUrl;
     } catch (error) {
       console.error('Error starting authentication:', error);
-      toast.error('Failed to start authentication: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setAuthError(`Failed to start authentication: ${errorMessage}`);
+      toast.error('Failed to start authentication: ' + errorMessage);
       setIsLoading(false);
     }
   };
@@ -293,6 +310,7 @@ const GmailIntegration = () => {
           <GmailConnectPrompt 
             isLoading={isLoading} 
             handleAuthenticate={handleAuthenticate}
+            error={authError}
           />
         ) : (
           <div>

@@ -7,11 +7,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 interface GmailConnectPromptProps {
   isLoading: boolean;
   handleAuthenticate: () => Promise<void>;
+  error?: string | null;
 }
 
 const GmailConnectPrompt: React.FC<GmailConnectPromptProps> = ({
   isLoading,
-  handleAuthenticate
+  handleAuthenticate,
+  error
 }) => {
   return (
     <div className="flex flex-col items-center py-8">
@@ -20,6 +22,17 @@ const GmailConnectPrompt: React.FC<GmailConnectPromptProps> = ({
       <p className="text-muted-foreground mb-6 text-center max-w-md">
         Connect your Gmail account to automatically sync customer emails and attachments.
       </p>
+      
+      {error && (
+        <Alert variant="destructive" className="mb-4 max-w-md">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Authentication Error</AlertTitle>
+          <AlertDescription>
+            {error}
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <div className="space-y-4">
         <Button 
           onClick={handleAuthenticate} 
@@ -74,7 +87,7 @@ const GmailConnectPrompt: React.FC<GmailConnectPromptProps> = ({
             <li>Create a project at <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Google Cloud Console</a></li>
             <li>Enable the Gmail API for your project</li>
             <li>Create OAuth credentials (client ID and secret) for a web application</li>
-            <li>Add this URL as an authorized redirect URI</li>
+            <li>Add <code className="bg-gray-100 px-1">{window.location.origin}/admin/gmail-integration</code> as an authorized redirect URI</li>
             <li>Store the client ID and secret in Supabase secrets</li>
           </ol>
         </AlertDescription>

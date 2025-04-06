@@ -8,6 +8,7 @@ import { TokenResponse } from './types';
  */
 export const getGmailAuthUrl = async (): Promise<string> => {
   try {
+    console.log("Getting Gmail client ID from edge function...");
     // We're getting the client ID from the Supabase Edge Function to avoid exposing it
     const { data, error } = await supabase.functions.invoke('get-gmail-credentials', {
       body: { action: 'getClientId' }
@@ -15,17 +16,21 @@ export const getGmailAuthUrl = async (): Promise<string> => {
 
     if (error) {
       console.error('Error getting Gmail client ID:', error);
-      throw new Error('Failed to get Gmail client ID');
+      throw new Error(`Failed to get Gmail client ID: ${error.message}`);
+    }
+
+    if (!data || !data.clientId) {
+      console.error('Invalid response from get-gmail-credentials:', data);
+      throw new Error('Client ID not found in response');
     }
 
     const clientId = data.clientId;
-    if (!clientId) {
-      throw new Error('Client ID not found');
-    }
+    console.log("Successfully retrieved client ID");
 
     // Generate a unique state for CSRF protection
     const state = Math.random().toString(36).substring(2, 15);
     localStorage.setItem('gmail_oauth_state', state);
+    console.log("Generated OAuth state:", state);
 
     // Create authorization URL
     const authUrl = new URL(GOOGLE_AUTH_ENDPOINT);
@@ -37,6 +42,7 @@ export const getGmailAuthUrl = async (): Promise<string> => {
     authUrl.searchParams.append('prompt', 'consent');
     authUrl.searchParams.append('state', state);
 
+    console.log("Created authorization URL with redirect URI:", REDIRECT_URI);
     return authUrl.toString();
   } catch (error) {
     console.error('Error generating Gmail auth URL:', error);
@@ -49,6 +55,7 @@ export const getGmailAuthUrl = async (): Promise<string> => {
  */
 export const exchangeCodeForTokens = async (code: string): Promise<TokenResponse> => {
   try {
+    console.log("Exchanging authorization code for tokens...");
     // Exchange the code for tokens using Supabase Edge Function
     const { data, error } = await supabase.functions.invoke('get-gmail-credentials', {
       body: { 
@@ -60,9 +67,15 @@ export const exchangeCodeForTokens = async (code: string): Promise<TokenResponse
 
     if (error) {
       console.error('Error exchanging code for tokens:', error);
-      throw new Error('Failed to exchange authorization code for tokens');
+      throw new Error(`Failed to exchange authorization code for tokens: ${error.message}`);
     }
 
+    if (!data || !data.access_token) {
+      console.error('Invalid token response:', data);
+      throw new Error('Invalid token response');
+    }
+
+    console.log("Successfully exchanged code for tokens");
     return data;
   } catch (error) {
     console.error('Error exchanging code for tokens:', error);
@@ -75,6 +88,7 @@ export const exchangeCodeForTokens = async (code: string): Promise<TokenResponse
  */
 export const getGmailUserProfile = async (accessToken: string): Promise<any> => {
   try {
+    console.log("Fetching user profile with access token...");
     const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
       headers: {
         Authorization: `Bearer ${accessToken}`
@@ -82,10 +96,14 @@ export const getGmailUserProfile = async (accessToken: string): Promise<any> => 
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to get user profile: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('Failed to get user profile:', response.status, errorText);
+      throw new Error(`Failed to get user profile: ${response.status} ${response.statusText}`);
     }
 
-    return response.json();
+    const profile = await response.json();
+    console.log("Successfully retrieved user profile");
+    return profile;
   } catch (error) {
     console.error('Error getting user profile:', error);
     throw error;

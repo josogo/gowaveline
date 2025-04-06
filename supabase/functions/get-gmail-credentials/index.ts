@@ -25,12 +25,16 @@ serve(async (req) => {
     const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
 
     if (!clientId || !clientSecret) {
+      console.error("Missing environment variables: GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET");
       throw new Error("Google client ID or secret not configured");
     }
+
+    console.log(`Processing action: ${action}`);
 
     // Handle different actions
     switch (action) {
       case "getClientId":
+        console.log("Returning client ID");
         return new Response(
           JSON.stringify({ clientId }),
           {
@@ -40,8 +44,11 @@ serve(async (req) => {
       
       case "exchangeCode":
         if (!code || !redirectUri) {
+          console.error("Missing required parameters:", { code: !!code, redirectUri: !!redirectUri });
           throw new Error("Code and redirectUri are required for token exchange");
         }
+
+        console.log(`Exchanging code for tokens with redirect URI: ${redirectUri}`);
 
         // Exchange authorization code for tokens
         const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
@@ -61,9 +68,11 @@ serve(async (req) => {
         const tokenData = await tokenResponse.json();
 
         if (!tokenResponse.ok) {
+          console.error("Token exchange failed:", tokenData);
           throw new Error(`Token exchange failed: ${JSON.stringify(tokenData)}`);
         }
 
+        console.log("Successfully exchanged code for tokens");
         return new Response(
           JSON.stringify(tokenData),
           {
@@ -72,6 +81,7 @@ serve(async (req) => {
         );
       
       default:
+        console.error(`Invalid action: ${action}`);
         throw new Error("Invalid action");
     }
   } catch (error) {
