@@ -128,8 +128,8 @@ const Industries = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1">
-        <div className="bg-gradient-to-b from-orange-50 to-transparent py-12 px-6 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">Industries We Serve</h1>
+        <div className="bg-gradient-to-b from-teal-50 to-transparent py-12 px-6 text-center">
+          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-[#0EA5E9]">Industries We Serve</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             We specialize in payment processing solutions for high-risk and specialized industries.
           </p>
@@ -140,14 +140,14 @@ const Industries = () => {
             {industries.map((industry, index) => (
               <Card key={index} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
-                  <CardTitle>{industry.name}</CardTitle>
+                  <CardTitle className="text-[#0EA5E9]">{industry.name}</CardTitle>
                   <CardDescription>{industry.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
                     {industry.features.map((feature, i) => (
                       <li key={i} className="flex items-start">
-                        <CheckCircle2 className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
+                        <CheckCircle2 className="h-5 w-5 text-[#0EA5E9] mr-2 mt-0.5" />
                         <span>{feature}</span>
                       </li>
                     ))}
