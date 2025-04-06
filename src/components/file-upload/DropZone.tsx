@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { UploadCloud } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,15 +10,25 @@ interface DropZoneProps {
 }
 
 const DropZone: React.FC<DropZoneProps> = ({ onDrop, className }) => {
+  const handleDrop = useCallback((acceptedFiles: File[]) => {
+    console.log('Files dropped:', acceptedFiles);
+    if (acceptedFiles && acceptedFiles.length > 0) {
+      onDrop(acceptedFiles);
+    }
+  }, [onDrop]);
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
-    onDrop,
+    onDrop: handleDrop,
     maxFiles: 1,
     accept: {
       'application/pdf': ['.pdf'],
       'text/csv': ['.csv'],
       'application/vnd.ms-excel': ['.xls'],
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-    }
+    },
+    noClick: false,
+    noKeyboard: false,
+    preventDropOnDocument: true,
   });
   
   return (

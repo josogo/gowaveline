@@ -31,20 +31,27 @@ const FileUpload: React.FC<FileUploadProps> = ({ contactInfo }) => {
   }, []);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
+    console.log("Files dropped on DropZone:", acceptedFiles);
     const selectedFile = acceptedFiles[0];
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      console.log("No file selected");
+      return;
+    }
     
     const allowedTypes = ['application/pdf', 'text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
     if (!allowedTypes.includes(selectedFile.type)) {
+      console.log("File type not allowed:", selectedFile.type);
       toast.error("Please upload a PDF, CSV, or Excel file");
       return;
     }
     
     if (selectedFile.size > 10 * 1024 * 1024) {
+      console.log("File too large:", selectedFile.size);
       toast.error("File size should be less than 10MB");
       return;
     }
     
+    console.log("File accepted:", selectedFile.name);
     setFile(selectedFile);
   }, []);
   
