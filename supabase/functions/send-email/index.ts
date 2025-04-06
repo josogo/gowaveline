@@ -30,19 +30,68 @@ serve(async (req) => {
     console.log(`Subject: ${subject}`);
     console.log("Data:", data);
 
+    // Email content based on type
+    let htmlContent = '';
+    let recipient = 'admin@example.com';
+    
     // Different handling based on email type
     if (type === 'statement') {
       // Statement analysis email logic
       console.log("Processing statement analysis request");
+      htmlContent = `
+        <h1>New Statement Analysis Request</h1>
+        <p><strong>Company:</strong> ${data.company}</p>
+        <p><strong>Email:</strong> ${data.email}</p>
+        <p><strong>Phone:</strong> ${data.phone}</p>
+        <p><strong>File Name:</strong> ${data.fileName}</p>
+        <p><strong>File Type:</strong> ${data.fileType}</p>
+        <p><strong>File Size:</strong> ${data.fileSize} bytes</p>
+      `;
+      recipient = 'info@gowaveline.com';
+      
     } else if (type === 'contact') {
       // Contact form submission logic
       console.log("Processing contact form submission");
+      htmlContent = `
+        <h1>New Contact Form Submission</h1>
+        <p><strong>Name:</strong> ${data.name}</p>
+        <p><strong>Email:</strong> ${data.email}</p>
+        <p><strong>Phone:</strong> ${data.phone}</p>
+        <p><strong>Company:</strong> ${data.company}</p>
+        <p><strong>Inquiry Type:</strong> ${data.inquiryType}</p>
+        ${data.partnerType ? `<p><strong>Partner Type:</strong> ${data.partnerType}</p>` : ''}
+        <h2>Message:</h2>
+        <p>${data.message}</p>
+      `;
+      
+      // If recipient is specified in data, use it, otherwise default
+      recipient = data.recipient ? String(data.recipient) : 'info@gowaveline.com';
+      
     } else if (type === 'getStarted') {
       // Get Started form submission logic
       console.log("Processing get started submission");
+      htmlContent = `
+        <h1>New Get Started Submission</h1>
+        <p><strong>Name:</strong> ${data.name}</p>
+        <p><strong>Email:</strong> ${data.email}</p>
+        <p><strong>Phone:</strong> ${data.phone}</p>
+        <p><strong>Business:</strong> ${data.business}</p>
+        <p><strong>Processing Volume:</strong> ${data.volume}</p>
+      `;
+      recipient = 'info@gowaveline.com';
+      
     } else if (type === 'quiz') {
       // Quiz results submission logic
       console.log("Processing quiz results submission");
+      htmlContent = `
+        <h1>Quiz Result - Lesson ${data.lessonId}</h1>
+        <p><strong>User ID:</strong> ${data.userId}</p>
+        <p><strong>Score:</strong> ${data.score} out of ${data.totalQuestions}</p>
+        <p><strong>Percentage:</strong> ${data.percentage}%</p>
+        <p><strong>Correct Answers:</strong> ${data.correctAnswers}</p>
+        <p><strong>Incorrect Answers:</strong> ${data.incorrectAnswers}</p>
+      `;
+      recipient = 'info@gowaveline.com';
     }
 
     // Use RESEND API to send the email
@@ -56,9 +105,9 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             from: "Waveline <onboarding@resend.dev>",
-            to: ["admin@example.com"],
+            to: [recipient],
             subject: subject,
-            html: `<p>New ${type} submission received:</p>
+            html: htmlContent || `<p>New ${type} submission received:</p>
                   <pre>${JSON.stringify(data, null, 2)}</pre>`,
           }),
         });

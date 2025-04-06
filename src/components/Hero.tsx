@@ -11,7 +11,7 @@ const Hero = () => {
   const isMobile = useIsMobile();
 
   return (
-    <div className="relative px-6 lg:px-8 py-16 md:py-24">
+    <div className="relative px-6 lg:px-8 py-16 md:py-24 bg-gradient-to-b from-orange-50/80 to-orange-100/30">
       <div className="mx-auto max-w-5xl">
         <div className="text-center">
           <div className="flex justify-center mb-4">
@@ -38,7 +38,7 @@ const Hero = () => {
             </h1>
           )}
           
-          <p className="mt-6 text-lg leading-8 text-muted-foreground">
+          <p className="mt-6 text-lg leading-8 text-orange-500">
             Get detailed insights into your processing fees, identify hidden charges, and understand your effective rate with our intelligent statement analyzer.
           </p>
           
@@ -52,7 +52,7 @@ const Hero = () => {
             <Button 
               onClick={() => navigate('/get-started')}
               variant="outline" 
-              className="px-6 py-3 text-primary font-semibold text-lg"
+              className="px-6 py-3 text-[#0EA5E9] font-semibold text-lg"
             >
               View demo
             </Button>

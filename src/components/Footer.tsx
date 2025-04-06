@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
@@ -55,6 +56,7 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
             <li><button onClick={() => handleNavigation('/services')} className="text-muted-foreground hover:text-orange-500 transition-colors">Services</button></li>
             <li><button onClick={() => handleNavigation('/industries')} className="text-muted-foreground hover:text-orange-500 transition-colors">Industries</button></li>
             <li><button onClick={() => handleNavigation('/high-risk')} className="text-muted-foreground hover:text-orange-500 transition-colors">High Risk Solutions</button></li>
+            <li><button onClick={() => handleNavigation('/faq')} className="text-muted-foreground hover:text-orange-500 transition-colors">Frequently Asked Questions</button></li>
             <li><button onClick={() => handleNavigation('/contact')} className="text-muted-foreground hover:text-orange-500 transition-colors">Contact Us</button></li>
           </ul>
         </div>
@@ -80,8 +82,6 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
           </Button>
         </div>
       </div>
-      
-      {/* Removed the duplicate small admin button that was here */}
     </footer>
   );
 };

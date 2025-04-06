@@ -1,66 +1,43 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import FileUpload from '@/components/file-upload';
 import { useNavigate } from 'react-router-dom';
-import AnimatedText from '@/components/AnimatedText';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-const Hero = () => {
+const CallToAction = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
   return (
-    <div className="relative px-6 lg:px-8 py-16 md:py-24">
+    <div className="relative px-6 lg:px-8 py-16 md:py-24 bg-gradient-to-b from-orange-50/80 to-orange-100/30">
       <div className="mx-auto max-w-5xl">
         <div className="text-center">
-          <div className="flex justify-center mb-4">
-            <img 
-              src="/lovable-uploads/db137242-a816-462b-8d10-96fde441aaa3.png" 
-              alt="Waveline Logo" 
-              className="h-24 md:h-32 w-auto hover:scale-105 transition-transform duration-300"
-            />
-          </div>
+          <h2 className="text-3xl md:text-4xl font-bold text-[#0EA5E9] mb-6">Ready to Optimize Your Processing?</h2>
           
-          {isMobile ? (
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-orange-400">
-                High Risk
-              </span>
-              <span className="text-[#0EA5E9]"> Processing Made Easy</span>
-            </h1>
-          ) : (
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground sm:text-6xl">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-orange-400">
-                High Risk
-              </span>
-              <span className="text-[#0EA5E9]"> Processing Made Easy</span>
-            </h1>
-          )}
-          
-          <p className="mt-6 text-lg leading-8 text-muted-foreground">
-            Get detailed insights into your processing fees, identify hidden charges, and understand your effective rate with our intelligent statement analyzer.
+          <p className="mt-6 text-lg leading-8 text-orange-500 max-w-3xl mx-auto">
+            Upload your merchant statement today and discover how much you could be saving with our detailed analysis and industry expertise.
           </p>
           
           <div className="mt-10 flex items-center justify-center gap-x-6">
             <Button 
-              onClick={() => navigate('/about')}
+              onClick={() => navigate('/contact')}
               className="px-6 py-3 text-white font-semibold text-lg rounded-lg bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-500 shadow-lg"
             >
-              Learn more
+              Contact Us
             </Button>
             <Button 
-              onClick={() => navigate('/get-started')}
+              onClick={() => navigate('/industries')}
               variant="outline" 
-              className="px-6 py-3 text-primary font-semibold text-lg"
+              className="px-6 py-3 text-[#0EA5E9] font-semibold text-lg"
             >
-              View demo
+              View Industries
             </Button>
           </div>
         </div>
         
-        {/* Use a regular div with additional styling to ensure visibility */}
         <div className="mt-16 bg-white shadow-lg rounded-lg p-8 border border-gray-200">
-          <h2 className="text-2xl font-semibold text-center mb-6 text-[#0EA5E9]">Upload Your Statement</h2>
+          <h2 className="text-2xl font-semibold text-center mb-6 text-[#0EA5E9]">Get Your Free Analysis</h2>
           <FileUpload />
         </div>
       </div>
@@ -68,4 +45,4 @@ const Hero = () => {
   );
 };
 
-export default Hero;
+export default CallToAction;

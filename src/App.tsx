@@ -26,6 +26,7 @@ import Deals from "./pages/admin/Deals";
 import GmailIntegration from "./pages/admin/GmailIntegration";
 import CommissionTracking from "./pages/admin/CommissionTracking";
 import TrainingHub from "./pages/admin/TrainingHub";
+import FAQ from "./pages/FAQ";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/comparison" element={<Comparison />} />
             <Route path="/partners" element={<Partners />} />
+            <Route path="/faq" element={<FAQ />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/team-management" element={<TeamManagement />} />

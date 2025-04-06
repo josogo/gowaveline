@@ -13,6 +13,7 @@ import {
   MessageField,
   SubmitButton 
 } from './form';
+import { sendContactFormNotification } from '@/services/notificationService';
 
 interface ContactFormProps {
   initialInquiryType?: string;
@@ -53,32 +54,20 @@ const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType, initialPa
     try {
       console.log('Form submitted:', data);
       
-      // Send email notification using our edge function
-      const response = await fetch('https://rqwrvkkfixrogxogunsk.supabase.co/functions/v1/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'contact',
-          subject: `New Contact Form: ${data.inquiryType.toUpperCase()}`,
-          data: {
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            company: data.company,
-            message: data.message,
-          }
-        }),
+      // Send email notification using our service
+      const success = await sendContactFormNotification({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        company: data.company,
+        inquiryType: data.inquiryType,
+        partnerType: data.partnerType,
+        message: data.message
       });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Email sending failed:', errorData);
-        throw new Error(errorData.error?.message || 'Failed to send email');
+      if (!success) {
+        throw new Error('Failed to send contact form');
       }
-      
-      const result = await response.json();
       
       toast.success('Your message has been sent! We\'ll be in touch soon.');
       form.reset();

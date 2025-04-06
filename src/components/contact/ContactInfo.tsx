@@ -29,9 +29,8 @@ const ContactInfo: React.FC = () => {
           <div>
             <h3 className="font-medium text-[#0EA5E9]">Office Location</h3>
             <p className="text-gray-600">
-              5100 California Ave<br />
-              Suite 200<br />
-              Bakersfield, CA 93309
+              Venice Beach<br />
+              California
             </p>
           </div>
         </div>

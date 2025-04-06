@@ -1,16 +1,9 @@
 
 import React, { useState } from 'react';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -18,346 +11,427 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
   DialogTrigger,
+  DialogFooter,
+  DialogDescription
 } from "@/components/ui/dialog";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+import { 
+  Select, 
+  SelectContent, 
+  SelectGroup, 
+  SelectItem, 
+  SelectLabel, 
+  SelectTrigger, 
+  SelectValue 
 } from "@/components/ui/select";
-import { Plus, FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { PlusCircle, Edit, FileText, Save, Trash2 } from "lucide-react";
 
-interface Deal {
-  id: string;
-  merchantName: string;
-  amount: string;
-  status: 'pending' | 'approved' | 'rejected';
-  rep: string;
-  date: string;
-  notes: string;
-}
+// Sample deal data
+const initialDeals = [
+  {
+    id: 1,
+    merchant: "ABC E-commerce",
+    amount: "$15,000",
+    date: "2025-01-15",
+    rep: "John Smith",
+    status: "Pending",
+    notes: "Client interested in high-risk solution"
+  },
+  {
+    id: 2,
+    merchant: "XYZ Health Services",
+    amount: "$32,500",
+    date: "2025-01-08",
+    rep: "Sarah Johnson",
+    status: "Won",
+    notes: "Switching from Square, needs setup by end of month"
+  },
+  {
+    id: 3,
+    merchant: "Global Fitness",
+    amount: "$8,750",
+    date: "2025-01-22",
+    rep: "Michael Brown",
+    status: "Lost",
+    notes: "Went with competitor offering lower rates"
+  },
+  {
+    id: 4,
+    merchant: "Tech Solutions Inc",
+    amount: "$21,300",
+    date: "2025-01-28",
+    rep: "Emma Wilson",
+    status: "Negotiating",
+    notes: "Need to follow up about interchange fees"
+  },
+  {
+    id: 5,
+    merchant: "Organic Grocers",
+    amount: "$12,800",
+    date: "2025-02-05",
+    rep: "John Smith",
+    status: "Pending",
+    notes: ""
+  }
+];
 
 const Deals = () => {
-  const [deals, setDeals] = useState<Deal[]>([
-    {
-      id: '1',
-      merchantName: "The Coffee Shop",
-      amount: "$45,000",
-      status: "pending",
-      rep: "John Smith",
-      date: "2025-03-28",
-      notes: "Waiting for final documentation"
-    },
-    {
-      id: '2',
-      merchantName: "Fitness Center Inc.",
-      amount: "$120,000",
-      status: "approved",
-      rep: "Sarah Johnson",
-      date: "2025-03-25",
-      notes: "Approved with standard rates"
-    },
-    {
-      id: '3',
-      merchantName: "Tech Solutions LLC",
-      amount: "$87,500",
-      status: "rejected",
-      rep: "Michael Brown",
-      date: "2025-03-22",
-      notes: "High risk profile, insufficient documentation"
-    },
-    {
-      id: '4',
-      merchantName: "Downtown Restaurant",
-      amount: "$65,000",
-      status: "pending",
-      rep: "Lisa Davis",
-      date: "2025-03-21",
-      notes: "Waiting for bank verification"
-    },
-    {
-      id: '5',
-      merchantName: "Beauty Salon & Spa",
-      amount: "$38,000",
-      status: "approved",
-      rep: "Robert Wilson",
-      date: "2025-03-18",
-      notes: "Approved with promotional rates"
-    }
-  ]);
-
-  const [filterStatus, setFilterStatus] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const filteredDeals = deals.filter(deal => {
-    // Filter by status if a status filter is applied
-    if (filterStatus && filterStatus !== 'all' && deal.status !== filterStatus) {
-      return false;
-    }
-    
-    // Filter by search query
-    if (searchQuery && !deal.merchantName.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !deal.rep.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false;
-    }
-    
-    return true;
+  const [deals, setDeals] = useState(initialDeals);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isNotesDialogOpen, setIsNotesDialogOpen] = useState(false);
+  const [currentDeal, setCurrentDeal] = useState<any>(null);
+  const [newDeal, setNewDeal] = useState({
+    merchant: "",
+    amount: "",
+    date: new Date().toISOString().split('T')[0],
+    rep: "",
+    status: "Pending",
+    notes: ""
   });
 
-  const updateDealStatus = (id: string, status: 'pending' | 'approved' | 'rejected') => {
-    setDeals(prev => 
-      prev.map(deal => 
-        deal.id === id ? { ...deal, status } : deal
-      )
-    );
+  const handleAddDeal = () => {
+    const dealToAdd = {
+      ...newDeal,
+      id: deals.length + 1
+    };
     
-    const statusText = status.charAt(0).toUpperCase() + status.slice(1);
-    toast.success(`Deal ${statusText}`);
+    setDeals([...deals, dealToAdd]);
+    setNewDeal({
+      merchant: "",
+      amount: "",
+      date: new Date().toISOString().split('T')[0],
+      rep: "",
+      status: "Pending",
+      notes: ""
+    });
+    setIsAddDialogOpen(false);
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">Pending</Badge>;
-      case 'approved':
-        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Approved</Badge>;
-      case 'rejected':
-        return <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">Rejected</Badge>;
-      default:
-        return null;
-    }
+  const handleEditDeal = () => {
+    const updatedDeals = deals.map(deal => 
+      deal.id === currentDeal.id ? currentDeal : deal
+    );
+    
+    setDeals(updatedDeals);
+    setIsEditDialogOpen(false);
+    setCurrentDeal(null);
+  };
+
+  const handleDeleteDeal = (dealId: number) => {
+    const updatedDeals = deals.filter(deal => deal.id !== dealId);
+    setDeals(updatedDeals);
+  };
+
+  const updateDealNotes = () => {
+    const updatedDeals = deals.map(deal => 
+      deal.id === currentDeal.id ? currentDeal : deal
+    );
+    
+    setDeals(updatedDeals);
+    setIsNotesDialogOpen(false);
+  };
+
+  const openEditDialog = (deal: any) => {
+    setCurrentDeal({...deal});
+    setIsEditDialogOpen(true);
+  };
+
+  const openNotesDialog = (deal: any) => {
+    setCurrentDeal({...deal});
+    setIsNotesDialogOpen(true);
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-orange-500">Deals Management</CardTitle>
-          <CardDescription>Monitor and manage all merchant deals and applications</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <Input
-              placeholder="Search by merchant or rep..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="sm:max-w-xs"
-            />
-            <Select
-              value={filterStatus || 'all'}
-              onValueChange={setFilterStatus}
-            >
-              <SelectTrigger className="sm:max-w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-2xl font-bold text-[#0EA5E9]">Deal Management</h1>
+        
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500">
+              <PlusCircle className="mr-2 h-4 w-4" /> Add New Deal
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle className="text-[#0EA5E9]">Add New Deal</DialogTitle>
+              <DialogDescription>Enter the details of the new deal below.</DialogDescription>
+            </DialogHeader>
             
-            <div className="ml-auto">
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button className="bg-orange-500 hover:bg-orange-600">
-                    <Plus className="mr-2 h-4 w-4" />
-                    New Deal
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[550px]">
-                  <DialogHeader>
-                    <DialogTitle>Add New Deal</DialogTitle>
-                    <DialogDescription>
-                      Enter the details for the new merchant deal.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <label htmlFor="merchant" className="text-right">
-                        Merchant
-                      </label>
-                      <Input
-                        id="merchant"
-                        placeholder="Merchant name"
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <label htmlFor="amount" className="text-right">
-                        Amount
-                      </label>
-                      <Input
-                        id="amount"
-                        placeholder="Processing amount"
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <label htmlFor="rep" className="text-right">
-                        Sales Rep
-                      </label>
-                      <Select>
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Select sales rep" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="john">John Smith</SelectItem>
-                          <SelectItem value="sarah">Sarah Johnson</SelectItem>
-                          <SelectItem value="michael">Michael Brown</SelectItem>
-                          <SelectItem value="lisa">Lisa Davis</SelectItem>
-                          <SelectItem value="robert">Robert Wilson</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <label htmlFor="notes" className="text-right">
-                        Notes
-                      </label>
-                      <Input
-                        id="notes"
-                        placeholder="Deal notes"
-                        className="col-span-3"
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button className="bg-[#0EA5E9]" onClick={() => toast.success('Deal added successfully!')}>
-                      Add Deal
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="merchant" className="text-right">Merchant</Label>
+                <Input
+                  id="merchant"
+                  value={newDeal.merchant}
+                  onChange={(e) => setNewDeal({...newDeal, merchant: e.target.value})}
+                  className="col-span-3"
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="amount" className="text-right">Amount</Label>
+                <Input
+                  id="amount"
+                  value={newDeal.amount}
+                  onChange={(e) => setNewDeal({...newDeal, amount: e.target.value})}
+                  className="col-span-3"
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="date" className="text-right">Date</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={newDeal.date}
+                  onChange={(e) => setNewDeal({...newDeal, date: e.target.value})}
+                  className="col-span-3"
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="rep" className="text-right">Representative</Label>
+                <Input
+                  id="rep"
+                  value={newDeal.rep}
+                  onChange={(e) => setNewDeal({...newDeal, rep: e.target.value})}
+                  className="col-span-3"
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="status" className="text-right">Status</Label>
+                <Select 
+                  value={newDeal.status} 
+                  onValueChange={(value) => setNewDeal({...newDeal, status: value})}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select a status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Status</SelectLabel>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="Won">Won</SelectItem>
+                      <SelectItem value="Lost">Lost</SelectItem>
+                      <SelectItem value="Negotiating">Negotiating</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="notes" className="text-right">Notes</Label>
+                <Textarea
+                  id="notes"
+                  value={newDeal.notes}
+                  onChange={(e) => setNewDeal({...newDeal, notes: e.target.value})}
+                  className="col-span-3"
+                  rows={3}
+                />
+              </div>
             </div>
-          </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
+              <Button 
+                className="bg-orange-500 hover:bg-orange-600" 
+                onClick={handleAddDeal}
+              >
+                Add Deal
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+      
+      <Table>
+        <TableCaption>List of deals and their current status.</TableCaption>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Merchant</TableHead>
+            <TableHead>Amount</TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead>Representative</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {deals.map((deal) => (
+            <TableRow key={deal.id}>
+              <TableCell>{deal.merchant}</TableCell>
+              <TableCell>{deal.amount}</TableCell>
+              <TableCell>{deal.date}</TableCell>
+              <TableCell>{deal.rep}</TableCell>
+              <TableCell>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  deal.status === 'Won' ? 'bg-green-100 text-green-800' : 
+                  deal.status === 'Lost' ? 'bg-red-100 text-red-800' :
+                  deal.status === 'Negotiating' ? 'bg-amber-100 text-amber-800' :
+                  'bg-blue-100 text-blue-800'
+                }`}>
+                  {deal.status}
+                </span>
+              </TableCell>
+              <TableCell>
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => openEditDialog(deal)}
+                  >
+                    <Edit className="h-4 w-4 text-[#0EA5E9]" />
+                  </Button>
+                  
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => openNotesDialog(deal)}
+                  >
+                    <FileText className="h-4 w-4 text-orange-500" />
+                  </Button>
+
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleDeleteDeal(deal.id)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      
+      {/* Edit Deal Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-[#0EA5E9]">Edit Deal</DialogTitle>
+            <DialogDescription>Update the details of this deal.</DialogDescription>
+          </DialogHeader>
           
-          <div className="border rounded-lg overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Merchant</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead className="hidden md:table-cell">Date</TableHead>
-                  <TableHead className="hidden md:table-cell">Rep</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredDeals.length > 0 ? (
-                  filteredDeals.map((deal) => (
-                    <TableRow key={deal.id}>
-                      <TableCell className="font-medium">{deal.merchantName}</TableCell>
-                      <TableCell>{deal.amount}</TableCell>
-                      <TableCell className="hidden md:table-cell">{deal.date}</TableCell>
-                      <TableCell className="hidden md:table-cell">{deal.rep}</TableCell>
-                      <TableCell>{getStatusBadge(deal.status)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="outline" size="sm">
-                                <FileText className="h-4 w-4 mr-1" />
-                                Details
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>{deal.merchantName}</DialogTitle>
-                                <DialogDescription>
-                                  Deal ID: {deal.id} • Submitted on {deal.date}
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="space-y-4 py-4">
-                                <div className="grid grid-cols-3 gap-4">
-                                  <div>
-                                    <p className="text-sm font-medium text-muted-foreground">Amount</p>
-                                    <p className="text-lg font-semibold">{deal.amount}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm font-medium text-muted-foreground">Rep</p>
-                                    <p className="text-lg font-semibold">{deal.rep}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm font-medium text-muted-foreground">Status</p>
-                                    <div className="mt-1">{getStatusBadge(deal.status)}</div>
-                                  </div>
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium text-muted-foreground">Notes</p>
-                                  <p className="mt-1">{deal.notes}</p>
-                                </div>
-                              </div>
-                              <DialogFooter className="flex justify-between">
-                                {deal.status === "pending" && (
-                                  <>
-                                    <Button
-                                      variant="destructive"
-                                      onClick={() => updateDealStatus(deal.id, 'rejected')}
-                                    >
-                                      <AlertCircle className="h-4 w-4 mr-1" />
-                                      Reject
-                                    </Button>
-                                    <Button
-                                      className="bg-green-600 hover:bg-green-700"
-                                      onClick={() => updateDealStatus(deal.id, 'approved')}
-                                    >
-                                      <CheckCircle className="h-4 w-4 mr-1" />
-                                      Approve
-                                    </Button>
-                                  </>
-                                )}
-                                {deal.status !== "pending" && (
-                                  <Button
-                                    variant="outline"
-                                    onClick={() => updateDealStatus(deal.id, 'pending')}
-                                  >
-                                    <Clock className="h-4 w-4 mr-1" />
-                                    Set to Pending
-                                  </Button>
-                                )}
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-6">
-                      No deals found matching the criteria
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-        <CardFooter>
-          <p className="text-sm text-muted-foreground">
-            Showing {filteredDeals.length} of {deals.length} total deals
-          </p>
-        </CardFooter>
-      </Card>
+          {currentDeal && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-merchant" className="text-right">Merchant</Label>
+                <Input
+                  id="edit-merchant"
+                  value={currentDeal.merchant}
+                  onChange={(e) => setCurrentDeal({...currentDeal, merchant: e.target.value})}
+                  className="col-span-3"
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-amount" className="text-right">Amount</Label>
+                <Input
+                  id="edit-amount"
+                  value={currentDeal.amount}
+                  onChange={(e) => setCurrentDeal({...currentDeal, amount: e.target.value})}
+                  className="col-span-3"
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-date" className="text-right">Date</Label>
+                <Input
+                  id="edit-date"
+                  type="date"
+                  value={currentDeal.date}
+                  onChange={(e) => setCurrentDeal({...currentDeal, date: e.target.value})}
+                  className="col-span-3"
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-rep" className="text-right">Representative</Label>
+                <Input
+                  id="edit-rep"
+                  value={currentDeal.rep}
+                  onChange={(e) => setCurrentDeal({...currentDeal, rep: e.target.value})}
+                  className="col-span-3"
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-status" className="text-right">Status</Label>
+                <Select 
+                  value={currentDeal.status} 
+                  onValueChange={(value) => setCurrentDeal({...currentDeal, status: value})}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select a status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Status</SelectLabel>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="Won">Won</SelectItem>
+                      <SelectItem value="Lost">Lost</SelectItem>
+                      <SelectItem value="Negotiating">Negotiating</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+            <Button 
+              className="bg-[#0EA5E9] hover:bg-blue-600" 
+              onClick={handleEditDeal}
+            >
+              <Save className="mr-2 h-4 w-4" /> Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Notes Dialog */}
+      <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="text-orange-500">Deal Notes</DialogTitle>
+            <DialogDescription>Add or update notes for {currentDeal?.merchant}.</DialogDescription>
+          </DialogHeader>
+          
+          {currentDeal && (
+            <div className="py-4">
+              <Textarea
+                value={currentDeal.notes}
+                onChange={(e) => setCurrentDeal({...currentDeal, notes: e.target.value})}
+                className="min-h-[150px]"
+                placeholder="Enter notes about this deal..."
+              />
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsNotesDialogOpen(false)}>Cancel</Button>
+            <Button 
+              className="bg-orange-500 hover:bg-orange-600" 
+              onClick={updateDealNotes}
+            >
+              <Save className="mr-2 h-4 w-4" /> Save Notes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
