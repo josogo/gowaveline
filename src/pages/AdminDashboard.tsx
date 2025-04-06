@@ -17,6 +17,8 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { useNavigate } from 'react-router-dom';
+import { BookOpen } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -75,6 +77,29 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
       </div>
+      
+      {/* New Training Hub Card */}
+      <Card className="mb-8 border-[#0EA5E9]/20 bg-gradient-to-r from-blue-50 to-transparent">
+        <CardContent className="p-6">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-[#0EA5E9]/10 p-3 rounded-full">
+                <BookOpen className="h-8 w-8 text-[#0EA5E9]" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-[#0EA5E9]">New! Training Hub</h3>
+                <p className="text-gray-600 mt-1">Comprehensive onboarding experience for your team</p>
+              </div>
+            </div>
+            <Button 
+              className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/90"
+              onClick={() => navigate('/admin/training-hub')}
+            >
+              Explore Resources
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
       
       {/* Recent Activity and Team Performance */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">

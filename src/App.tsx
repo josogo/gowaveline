@@ -25,6 +25,7 @@ import TeamManagement from "./pages/admin/TeamManagement";
 import Deals from "./pages/admin/Deals";
 import GmailIntegration from "./pages/admin/GmailIntegration";
 import CommissionTracking from "./pages/admin/CommissionTracking";
+import TrainingHub from "./pages/admin/TrainingHub";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/admin/deals" element={<Deals />} />
             <Route path="/admin/gmail-integration" element={<GmailIntegration />} />
             <Route path="/admin/commission-tracking" element={<CommissionTracking />} />
+            <Route path="/admin/training-hub" element={<TrainingHub />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

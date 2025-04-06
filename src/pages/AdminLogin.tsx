@@ -96,6 +96,8 @@ const AdminLogin = () => {
                         <Input 
                           placeholder="your.email@example.com" 
                           className="pl-10" 
+                          autoComplete="email"
+                          type="email"
                           {...field} 
                         />
                       </FormControl>
@@ -118,6 +120,7 @@ const AdminLogin = () => {
                           type="password" 
                           placeholder="••••••••" 
                           className="pl-10" 
+                          autoComplete="current-password"
                           {...field} 
                         />
                       </FormControl>

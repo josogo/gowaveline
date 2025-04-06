@@ -19,3 +19,4 @@ site_url = "http://localhost:5173"
 [functions]
 [functions.send-email]
 verify_jwt = false
+

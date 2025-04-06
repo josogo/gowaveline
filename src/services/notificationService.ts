@@ -8,11 +8,7 @@ export async function sendEmailNotification(fileData: File, contactData?: {
 }) {
   try {
     // Send notification using edge function
-    await fetch('https://rqwrvkkfixrogxogunsk.supabase.co/functions/v1/send-email', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    const { data, error } = await supabase.functions.invoke('send-email', {
       body: JSON.stringify({
         type: 'statement',
         subject: 'New Statement Analysis Request',
@@ -27,7 +23,12 @@ export async function sendEmailNotification(fileData: File, contactData?: {
       }),
     });
     
-    console.log('Email notification sent successfully');
+    if (error) {
+      console.error('Error invoking send-email function:', error);
+      return false;
+    }
+    
+    console.log('Email notification sent successfully', data);
     return true;
   } catch (error) {
     console.error('Error sending email notification:', error);

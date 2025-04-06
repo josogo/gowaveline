@@ -10,7 +10,8 @@ import {
   LogOut,
   Menu, 
   X,
-  ChevronDown 
+  ChevronDown,
+  BookOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -64,7 +65,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { icon: <Users className="h-5 w-5" />, label: 'Team Management', path: '/admin/team-management' },
     { icon: <FileText className="h-5 w-5" />, label: 'Deals', path: '/admin/deals' },
     { icon: <Mail className="h-5 w-5" />, label: 'Gmail Integration', path: '/admin/gmail-integration' },
-    { icon: <DollarSign className="h-5 w-5" />, label: 'Commission Tracking', path: '/admin/commission-tracking' }
+    { icon: <DollarSign className="h-5 w-5" />, label: 'Commission Tracking', path: '/admin/commission-tracking' },
+    { icon: <BookOpen className="h-5 w-5" />, label: 'Training Hub', path: '/admin/training-hub' }
   ];
 
   if (!adminUser) {
