@@ -3,7 +3,7 @@ import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useScrollToTop } from "@/hooks/use-scroll-to-top";
 import Index from "./pages/Index";
@@ -76,13 +76,11 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
-      <React.StrictMode>
-        <TooltipProvider>
-          <AppRoutes />
-          <Toaster />
-          <Sonner />
-        </TooltipProvider>
-      </React.StrictMode>
+      <TooltipProvider>
+        <AppRoutes />
+        <Toaster />
+        <Sonner />
+      </TooltipProvider>
     </BrowserRouter>
   </QueryClientProvider>
 );
