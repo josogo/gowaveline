@@ -1,5 +1,5 @@
 
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   BarChart, 
@@ -11,7 +11,8 @@ import {
   Menu, 
   X,
   ChevronDown,
-  BookOpen
+  BookOpen,
+  Phone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -22,6 +23,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { toast } from 'sonner';
+import { useCrmNavigation } from '@/hooks/use-crm-navigation';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -29,9 +31,10 @@ interface AdminLayoutProps {
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
+  const crmNav = useCrmNavigation();
   const [adminUser, setAdminUser] = useState<any>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Check if user is logged in
     const token = localStorage.getItem('adminToken');
     const userJson = localStorage.getItem('adminUser');
@@ -66,7 +69,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { icon: <FileText className="h-5 w-5" />, label: 'Deals', path: '/admin/deals' },
     { icon: <Mail className="h-5 w-5" />, label: 'Gmail Integration', path: '/admin/gmail-integration' },
     { icon: <DollarSign className="h-5 w-5" />, label: 'Commission Tracking', path: '/admin/commission-tracking' },
-    { icon: <BookOpen className="h-5 w-5" />, label: 'Training Hub', path: '/admin/training-hub' }
+    { icon: <BookOpen className="h-5 w-5" />, label: 'Training Hub', path: '/admin/training-hub' },
+    { icon: <Phone className="h-5 w-5" />, label: 'Contacts', path: '/admin/contacts' }
   ];
 
   if (!adminUser) {
