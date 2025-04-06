@@ -22,18 +22,25 @@ import {
 } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Book, BookOpen, Search, PlayCircle, FileText, MessageCircle, CheckCircle } from 'lucide-react';
 
 const TrainingHub = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedLesson, setSelectedLesson] = useState<number | null>(null);
   
   // Filter glossary terms based on search
   const filteredGlossaryTerms = glossaryTerms.filter(term => 
     term.term.toLowerCase().includes(searchTerm.toLowerCase()) || 
     term.definition.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  
+  const handleOpenLesson = (index: number) => {
+    setSelectedLesson(index);
+    setIsDialogOpen(true);
+  };
   
   return (
     <AdminLayout>
@@ -96,16 +103,15 @@ const TrainingHub = () => {
                       </Accordion>
                       
                       <div className="flex justify-between">
-                        <DrawerTrigger asChild>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="text-[#0EA5E9]"
-                          >
-                            <PlayCircle className="mr-1 h-4 w-4" />
-                            Start Lesson
-                          </Button>
-                        </DrawerTrigger>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="text-[#0EA5E9]"
+                          onClick={() => handleOpenLesson(index)}
+                        >
+                          <PlayCircle className="mr-1 h-4 w-4" />
+                          Start Lesson
+                        </Button>
                         <span className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500 flex items-center">
                           {lesson.duration}
                         </span>
@@ -115,21 +121,6 @@ const TrainingHub = () => {
                 </Card>
               ))}
             </div>
-            
-            <Drawer>
-              <DrawerContent className="max-h-[90%] p-6">
-                <div className="mx-auto max-w-4xl">
-                  <h3 className="text-2xl font-bold text-[#0EA5E9] mb-2">Lesson Preview</h3>
-                  <p className="text-muted-foreground mb-6">This module is under development. Full interactive lessons coming soon!</p>
-                  
-                  <div className="bg-gray-100 rounded-lg p-8 text-center">
-                    <PlayCircle className="h-16 w-16 text-[#0EA5E9] mx-auto mb-4" />
-                    <p className="text-lg font-medium">Interactive video lessons with quizzes</p>
-                    <p className="text-sm text-muted-foreground mt-2">Learn at your own pace with expert-guided tutorials</p>
-                  </div>
-                </div>
-              </DrawerContent>
-            </Drawer>
           </TabsContent>
           
           {/* Glossary Tab */}
@@ -221,6 +212,27 @@ const TrainingHub = () => {
           </TabsContent>
         </Tabs>
       </div>
+      
+      {/* Lesson Preview Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-h-[90%] p-6 overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Lesson Preview</DialogTitle>
+          </DialogHeader>
+          <div className="mx-auto max-w-4xl">
+            <h3 className="text-2xl font-bold text-[#0EA5E9] mb-2">
+              {selectedLesson !== null ? lessons[selectedLesson]?.title : "Lesson Preview"}
+            </h3>
+            <p className="text-muted-foreground mb-6">This module is under development. Full interactive lessons coming soon!</p>
+            
+            <div className="bg-gray-100 rounded-lg p-8 text-center">
+              <PlayCircle className="h-16 w-16 text-[#0EA5E9] mx-auto mb-4" />
+              <p className="text-lg font-medium">Interactive video lessons with quizzes</p>
+              <p className="text-sm text-muted-foreground mt-2">Learn at your own pace with expert-guided tutorials</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };
