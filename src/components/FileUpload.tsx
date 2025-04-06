@@ -1,13 +1,15 @@
 
 import React, { useState, useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { File, FileText, UploadCloud, X, Loader2, Mail } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from "sonner";
+import { Mail, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { toast } from "sonner";
-import { useNavigate } from 'react-router-dom';
 import { analyzeStatement } from '@/services/statementService';
+import { sendEmailNotification } from '@/services/notificationService';
 import { supabase } from '@/integrations/supabase/client';
+import DropZone from './file-upload/DropZone';
+import FileDisplay from './file-upload/FileDisplay';
 
 type ContactInfo = {
   companyName?: string;
@@ -47,51 +49,9 @@ const FileUpload: React.FC<FileUploadProps> = ({ contactInfo }) => {
     setFile(selectedFile);
   }, []);
   
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
-    onDrop,
-    maxFiles: 1,
-    accept: {
-      'application/pdf': ['.pdf'],
-      'text/csv': ['.csv'],
-      'application/vnd.ms-excel': ['.xls'],
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-    }
-  });
-  
   const removeFile = () => {
     setFile(null);
     setProgress(0);
-  };
-  
-  const sendEmailNotification = async (fileData: File, contactData?: ContactInfo) => {
-    try {
-      const response = await fetch('https://rqwrvkkfixrogxogunsk.supabase.co/functions/v1/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'statement',
-          subject: 'New Statement Analysis Request',
-          data: {
-            company: contactData?.companyName || 'No company provided',
-            email: contactData?.email || 'No email provided',
-            phone: contactData?.phone || 'No phone provided',
-            fileName: fileData.name,
-            fileType: fileData.type,
-            fileSize: fileData.size,
-          }
-        }),
-      });
-      
-      if (!response.ok) {
-        console.error('Failed to send email notification');
-      } else {
-        console.log('Email notification sent successfully');
-      }
-    } catch (error) {
-      console.error('Error sending email notification:', error);
-    }
   };
   
   const handleUpload = async () => {
@@ -209,55 +169,17 @@ const FileUpload: React.FC<FileUploadProps> = ({ contactInfo }) => {
     }
   };
   
-  const getFileIcon = (fileType: string) => {
-    if (fileType.includes('pdf')) return <FileText className="h-8 w-8 text-orange-500" />;
-    if (fileType.includes('csv') || fileType.includes('excel') || fileType.includes('sheet')) return <File className="h-8 w-8 text-teal-500" />;
-    return <File className="h-8 w-8 text-gray-500" />;
-  };
-  
   return (
     <div className="w-full">
       {!file ? (
-        <div
-          {...getRootProps()}
-          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-            isDragActive ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-primary/50'
-          }`}
-        >
-          <input {...getInputProps()} />
-          <div className="flex flex-col items-center justify-center gap-4">
-            <UploadCloud className={`h-12 w-12 ${isDragActive ? 'text-primary' : 'text-gray-400'}`} />
-            <div className="space-y-2">
-              <p className="text-lg font-semibold">
-                {isDragActive ? "Drop the file here" : "Drag & drop your merchant statement"}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Supports PDF, CSV and Excel files (max 10MB).
-              </p>
-            </div>
-            <Button variant="outline">Browse files</Button>
-          </div>
-        </div>
+        <DropZone onDrop={onDrop} />
       ) : (
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 border rounded-lg">
-            <div className="flex items-center space-x-3">
-              {getFileIcon(file.type)}
-              <div>
-                <p className="font-medium truncate max-w-[200px] md:max-w-[400px]">{file.name}</p>
-                <p className="text-sm text-muted-foreground">
-                  {(file.size / (1024 * 1024)).toFixed(2)} MB
-                </p>
-              </div>
-            </div>
-            <button 
-              onClick={removeFile}
-              className="p-1 rounded-full hover:bg-gray-100"
-              disabled={uploading}
-            >
-              <X className="h-5 w-5 text-gray-500" />
-            </button>
-          </div>
+          <FileDisplay 
+            file={file} 
+            uploading={uploading} 
+            removeFile={removeFile} 
+          />
           
           {uploading && (
             <div className="space-y-2">

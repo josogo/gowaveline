@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Mail, Loader2, FileCheck, CheckCircle } from 'lucide-react';
+import { Mail, Loader2, FileCheck } from 'lucide-react';
 
 interface UploadActionsProps {
   uploading: boolean;
@@ -34,7 +34,7 @@ const UploadActions: React.FC<UploadActionsProps> = ({ uploading, file, onSend, 
       <Button 
         onClick={onAnalyze} 
         disabled={uploading || !file}
-        className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/80 text-white"
+        className="bg-gradient-to-r from-teal-500 to-teal-400 hover:from-teal-400 hover:to-teal-500 text-white"
       >
         {uploading ? (
           <>
