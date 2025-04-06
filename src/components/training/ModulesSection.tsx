@@ -63,7 +63,7 @@ const ModulesSection: React.FC<ModulesSectionProps> = ({
             description={module.description}
             category={module.category}
             duration={module.duration}
-            topics={module.topics}
+            topics={module.topics as string[]}
             difficulty={module.difficulty}
             onClick={() => onOpenModule(module.id)}
           />

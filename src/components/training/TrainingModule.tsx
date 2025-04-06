@@ -10,7 +10,7 @@ export interface TrainingModuleProps {
   description: string;
   category: string;
   duration: string;
-  topics: string[];
+  topics: readonly string[] | string[];
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
   onClick: () => void;
 }
