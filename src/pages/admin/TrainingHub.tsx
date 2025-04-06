@@ -24,9 +24,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Book, BookOpen, Search, PlayCircle, FileText, MessageCircle, CheckCircle } from 'lucide-react';
+import { Book, BookOpen, Search, PlayCircle, FileText, MessageCircle, CheckCircle, Filter } from 'lucide-react';
 import { lessonContents, extendedGlossaryTerms } from '@/data/lessonContent';
-import Lesson from '@/components/training/Lesson';
+import { Lesson, TrainingModule } from '@/components/training';
 
 // Simplified version of lessons for the card display
 const lessons = lessonContents.map(lesson => ({
@@ -37,10 +37,165 @@ const lessons = lessonContents.map(lesson => ({
   topics: lesson.topics
 }));
 
+// Additional training modules based on blog content
+const additionalModules = [
+  {
+    id: 6,
+    title: "Understanding Interchange Fees",
+    description: "Learn how interchange fees work and how to explain them to merchants",
+    category: "Processing Knowledge",
+    duration: "45 minutes",
+    difficulty: "Intermediate",
+    topics: [
+      "What are interchange fees?",
+      "How networks determine rates",
+      "Explaining fees to customers",
+      "Optimizing processing for lower fees",
+      "Industry-specific rate structures"
+    ]
+  },
+  {
+    id: 7,
+    title: "High-Risk Merchant Account Sales",
+    description: "Special considerations when working with high-risk industries",
+    category: "Sales Techniques",
+    duration: "60 minutes",
+    difficulty: "Advanced",
+    topics: [
+      "Identifying high-risk industries",
+      "Underwriting requirements",
+      "Pricing strategies",
+      "Risk mitigation techniques",
+      "Compliance considerations"
+    ]
+  },
+  {
+    id: 8,
+    title: "PCI Compliance Essentials",
+    description: "Guide to helping merchants maintain PCI compliance",
+    category: "Processing Knowledge",
+    duration: "50 minutes",
+    difficulty: "Beginner",
+    topics: [
+      "PCI DSS requirements overview",
+      "SAQ types explained",
+      "Common compliance pitfalls",
+      "Helping merchants maintain compliance",
+      "Security best practices"
+    ]
+  },
+  {
+    id: 9,
+    title: "Effective Statement Analysis",
+    description: "How to analyze merchant statements to identify savings",
+    category: "Sales Techniques",
+    duration: "75 minutes",
+    difficulty: "Intermediate",
+    topics: [
+      "Identifying processing models",
+      "Finding hidden fees",
+      "Calculating effective rates",
+      "Creating savings proposals",
+      "Competitive positioning"
+    ]
+  },
+  {
+    id: 10,
+    title: "eCommerce Processing Solutions",
+    description: "Specialized knowledge for online merchant sales",
+    category: "Processing Knowledge",
+    duration: "60 minutes",
+    difficulty: "Intermediate",
+    topics: [
+      "Payment gateway options",
+      "Shopping cart integrations",
+      "Mobile optimization",
+      "Fraud prevention tools",
+      "Recurring billing solutions"
+    ]
+  },
+  {
+    id: 11,
+    title: "Chargeback Management",
+    description: "Help merchants reduce and manage chargebacks effectively",
+    category: "Processing Knowledge",
+    duration: "45 minutes",
+    difficulty: "Advanced",
+    topics: [
+      "Understanding chargeback reasons",
+      "Prevention best practices",
+      "Dispute resolution process",
+      "Chargeback monitoring programs",
+      "Risk thresholds and consequences"
+    ]
+  },
+  {
+    id: 12,
+    title: "Restaurant Payment Processing",
+    description: "Specialized solutions for the restaurant industry",
+    category: "Sales Techniques",
+    duration: "50 minutes",
+    difficulty: "Beginner",
+    topics: [
+      "POS integration options",
+      "Tip adjustment workflows",
+      "Online ordering solutions",
+      "QR code payments",
+      "Delivery service integrations"
+    ]
+  },
+  {
+    id: 13,
+    title: "Value-Added Services Sales",
+    description: "Increase deal value with complementary offerings",
+    category: "Sales Techniques",
+    duration: "40 minutes",
+    difficulty: "Intermediate",
+    topics: [
+      "Working capital programs",
+      "Gift card solutions",
+      "Loyalty programs",
+      "Data analytics tools",
+      "Customer engagement platforms"
+    ]
+  },
+  {
+    id: 14,
+    title: "Contactless Payment Technologies",
+    description: "Understanding modern payment acceptance methods",
+    category: "Processing Knowledge",
+    duration: "30 minutes",
+    difficulty: "Beginner",
+    topics: [
+      "NFC technology explained",
+      "Mobile wallet acceptance",
+      "QR code payments",
+      "Tap-to-pay terminals",
+      "Security features and tokenization"
+    ]
+  },
+  {
+    id: 15,
+    title: "Objection Handling Mastery",
+    description: "Advanced techniques for overcoming sales objections",
+    category: "Sales Techniques",
+    duration: "55 minutes",
+    difficulty: "Advanced",
+    topics: [
+      "Addressing price concerns",
+      "Contract length objections",
+      "Technology transition fears",
+      "Building trust with skeptical merchants",
+      "Competitive comparison strategies"
+    ]
+  }
+] as const;
+
 const TrainingHub = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<number | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   
   // Filter glossary terms based on search
   const filteredGlossaryTerms = extendedGlossaryTerms.filter(term => 
@@ -52,6 +207,21 @@ const TrainingHub = () => {
     setSelectedLesson(index);
     setIsDialogOpen(true);
   };
+
+  const handleOpenModule = (moduleId: number) => {
+    // For now, just show the first lesson's content
+    // In a real implementation, this would show module-specific content
+    setSelectedLesson(0);
+    setIsDialogOpen(true);
+  };
+
+  // Get unique categories for filtering
+  const categories = [...new Set(additionalModules.map(module => module.category))];
+  
+  // Filter modules based on category
+  const filteredModules = categoryFilter 
+    ? additionalModules.filter(module => module.category === categoryFilter)
+    : additionalModules;
   
   return (
     <AdminLayout>
@@ -67,8 +237,9 @@ const TrainingHub = () => {
         </div>
 
         <Tabs defaultValue="lessons" className="w-full">
-          <TabsList className="grid grid-cols-3 w-full max-w-md mb-6">
+          <TabsList className="grid grid-cols-4 w-full max-w-md mb-6">
             <TabsTrigger value="lessons">Lessons</TabsTrigger>
+            <TabsTrigger value="modules">Modules</TabsTrigger>
             <TabsTrigger value="glossary">Glossary</TabsTrigger>
             <TabsTrigger value="resources">Resources</TabsTrigger>
           </TabsList>
@@ -130,6 +301,42 @@ const TrainingHub = () => {
                     </div>
                   </CardContent>
                 </Card>
+              ))}
+            </div>
+          </TabsContent>
+          
+          {/* New Modules Tab */}
+          <TabsContent value="modules" className="space-y-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-[#0EA5E9]">Advanced Training Modules</h2>
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-gray-500" />
+                <select 
+                  className="text-sm border rounded px-2 py-1"
+                  value={categoryFilter || ''}
+                  onChange={(e) => setCategoryFilter(e.target.value || null)}
+                >
+                  <option value="">All Categories</option>
+                  {categories.map((category, i) => (
+                    <option key={i} value={category}>{category}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredModules.map((module) => (
+                <TrainingModule
+                  key={module.id}
+                  id={module.id}
+                  title={module.title}
+                  description={module.description}
+                  category={module.category}
+                  duration={module.duration}
+                  topics={module.topics}
+                  difficulty={module.difficulty}
+                  onClick={() => handleOpenModule(module.id)}
+                />
               ))}
             </div>
           </TabsContent>
