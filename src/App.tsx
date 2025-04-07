@@ -29,6 +29,8 @@ import CommissionTracking from "./pages/admin/CommissionTracking";
 import TrainingHub from "./pages/admin/TrainingHub";
 import ContactManagement from "./pages/admin/ContactManagement";
 import FAQ from "./pages/FAQ";
+import Booking from "./pages/Booking";
+import CalendarIntegration from "./pages/admin/CalendarIntegration";
 
 // Scroll to top component that will be used inside the router
 const ScrollToTop = () => {
@@ -56,11 +58,13 @@ const AppRoutes = () => {
         <Route path="/comparison" element={<Comparison />} />
         <Route path="/partners" element={<Partners />} />
         <Route path="/faq" element={<FAQ />} />
+        <Route path="/booking" element={<Booking />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/team-management" element={<TeamManagement />} />
         <Route path="/admin/deals" element={<Deals />} />
         <Route path="/admin/gmail-integration" element={<GmailIntegration />} />
+        <Route path="/admin/calendar-integration" element={<CalendarIntegration />} />
         <Route path="/admin/commission-tracking" element={<CommissionTracking />} />
         <Route path="/admin/training-hub" element={<TrainingHub />} />
         <Route path="/admin/contacts" element={<ContactManagement />} />

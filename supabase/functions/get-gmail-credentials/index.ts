@@ -1,97 +1,97 @@
 
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+// This file should already exist, but we'll add the getBookingCredentials functionality
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
-// CORS headers for the response
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, {
-      headers: corsHeaders,
-    });
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    // Get the request body
-    const { action, code, redirectUri } = await req.json();
+    const { action, code, redirectUri } = await req.json()
 
-    // Client ID and secret would be stored in environment variables
-    const clientId = Deno.env.get("GOOGLE_CLIENT_ID");
-    const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
+    const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID') || ''
+    const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET') || ''
 
-    if (!clientId || !clientSecret) {
-      console.error("Missing environment variables: GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET");
-      throw new Error("Google client ID or secret not configured");
-    }
-
-    console.log(`Processing action: ${action}`);
-
-    // Handle different actions
     switch (action) {
-      case "getClientId":
-        console.log("Returning client ID");
+      case 'getClientId':
+        // Return the client ID for frontend auth
         return new Response(
-          JSON.stringify({ clientId }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      
-      case "exchangeCode":
+          JSON.stringify({ clientId: GOOGLE_CLIENT_ID }),
+          { headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        )
+
+      case 'exchangeCode':
         if (!code || !redirectUri) {
-          console.error("Missing required parameters:", { code: !!code, redirectUri: !!redirectUri });
-          throw new Error("Code and redirectUri are required for token exchange");
+          return new Response(
+            JSON.stringify({ error: 'Missing code or redirect URI' }),
+            { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+          )
         }
 
-        console.log(`Exchanging code for tokens with redirect URI: ${redirectUri}`);
-
-        // Exchange authorization code for tokens
-        const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
-          method: "POST",
+        // Exchange auth code for tokens
+        const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+          method: 'POST',
           headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
+            'Content-Type': 'application/x-www-form-urlencoded'
           },
           body: new URLSearchParams({
             code,
-            client_id: clientId,
-            client_secret: clientSecret,
+            client_id: GOOGLE_CLIENT_ID,
+            client_secret: GOOGLE_CLIENT_SECRET,
             redirect_uri: redirectUri,
-            grant_type: "authorization_code",
-          }),
-        });
-
-        const tokenData = await tokenResponse.json();
+            grant_type: 'authorization_code'
+          })
+        })
 
         if (!tokenResponse.ok) {
-          console.error("Token exchange failed:", tokenData);
-          throw new Error(`Token exchange failed: ${JSON.stringify(tokenData)}`);
+          const errorData = await tokenResponse.text()
+          console.error('Token exchange error:', errorData)
+          return new Response(
+            JSON.stringify({ error: 'Failed to exchange authorization code for tokens', details: errorData }),
+            { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+          )
         }
 
-        console.log("Successfully exchanged code for tokens");
+        const tokenData = await tokenResponse.json()
         return new Response(
           JSON.stringify(tokenData),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      
+          { headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        )
+        
+      case 'getBookingCredentials':
+        // In a real app, you would fetch this from a database 
+        // or use a service account for a dedicated calendar
+        // For demo purposes, we'll just use a stored token
+        
+        // This is a simplified approach for demo purposes only
+        // In production, you would use a database to store admin credentials
+        // and implement proper token refreshing
+        return new Response(
+          JSON.stringify({
+            email: 'admin@example.com',  // This would be your organization's email 
+            accessToken: Deno.env.get('CALENDAR_ADMIN_TOKEN') || ''
+          }),
+          { headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        )
+
       default:
-        console.error(`Invalid action: ${action}`);
-        throw new Error("Invalid action");
+        return new Response(
+          JSON.stringify({ error: 'Invalid action' }),
+          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        )
     }
   } catch (error) {
-    console.error("Error in get-gmail-credentials:", error);
+    console.error('Error:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
+      JSON.stringify({ error: 'Internal server error', details: error.message }),
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    )
   }
-});
+})

@@ -8,37 +8,154 @@ const corsHeaders = {
 }
 
 // Helper function to handle Google Calendar API calls
-async function handleGoogleCalendarRequest(action, eventData) {
+async function handleGoogleCalendarRequest(action, eventData, accessToken) {
   const GOOGLE_API_KEY = Deno.env.get('GOOGLE_CLOUD_API_KEY') || ''
   const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID') || ''
   const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET') || ''
   
-  // Here you would implement the OAuth flow and calendar API operations
-  // For this example, we'll just return a success message
+  // Base URL for Google Calendar API
+  const calendarApiBaseUrl = 'https://www.googleapis.com/calendar/v3'
   
-  switch (action) {
-    case 'create':
-      // Would implement actual Google Calendar API call here
-      return { 
-        success: true, 
-        message: 'Event created successfully',
-        mockEventId: `google_${Date.now()}`
+  try {
+    switch (action) {
+      case 'create': {
+        // Create a new event in Google Calendar
+        const url = `${calendarApiBaseUrl}/calendars/primary/events?conferenceDataVersion=1`
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(eventData)
+        })
+        
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error('Google Calendar API error:', response.status, errorText)
+          throw new Error(`Google Calendar API error: ${response.status}`)
+        }
+        
+        const data = await response.json()
+        return data
       }
-    case 'update':
-      return { 
-        success: true, 
-        message: 'Event updated successfully' 
+      
+      case 'list': {
+        // List events from Google Calendar
+        let url = `${calendarApiBaseUrl}/calendars/primary/events?maxResults=100`
+        
+        if (eventData.timeMin) {
+          url += `&timeMin=${encodeURIComponent(eventData.timeMin)}`
+        }
+        
+        if (eventData.timeMax) {
+          url += `&timeMax=${encodeURIComponent(eventData.timeMax)}`
+        }
+        
+        if (eventData.syncToken) {
+          url += `&syncToken=${encodeURIComponent(eventData.syncToken)}`
+        }
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        })
+        
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error('Google Calendar API error:', response.status, errorText)
+          throw new Error(`Google Calendar API error: ${response.status}`)
+        }
+        
+        const data = await response.json()
+        return data
       }
-    case 'delete':
-      return { 
-        success: true, 
-        message: 'Event deleted successfully' 
+      
+      case 'update': {
+        // Update an existing event in Google Calendar
+        const { eventId, event } = eventData
+        const url = `${calendarApiBaseUrl}/calendars/primary/events/${eventId}?conferenceDataVersion=1`
+        
+        const response = await fetch(url, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(event)
+        })
+        
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error('Google Calendar API error:', response.status, errorText)
+          throw new Error(`Google Calendar API error: ${response.status}`)
+        }
+        
+        const data = await response.json()
+        return data
       }
-    default:
-      return { 
-        success: false, 
-        message: 'Invalid action' 
+      
+      case 'delete': {
+        // Delete an event from Google Calendar
+        const { eventId } = eventData
+        const url = `${calendarApiBaseUrl}/calendars/primary/events/${eventId}`
+        
+        const response = await fetch(url, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        })
+        
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error('Google Calendar API error:', response.status, errorText)
+          throw new Error(`Google Calendar API error: ${response.status}`)
+        }
+        
+        return { success: true, message: 'Event deleted successfully' }
       }
+      
+      case 'freeBusy': {
+        // Check free/busy status
+        const url = `${calendarApiBaseUrl}/freeBusy`
+        
+        const requestBody = {
+          timeMin: eventData.timeMin,
+          timeMax: eventData.timeMax,
+          items: [{ id: 'primary' }]
+        }
+        
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestBody)
+        })
+        
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error('Google Calendar API error:', response.status, errorText)
+          throw new Error(`Google Calendar API error: ${response.status}`)
+        }
+        
+        const data = await response.json()
+        return data
+      }
+      
+      default:
+        return { 
+          success: false, 
+          message: `Invalid action: ${action}` 
+        }
+    }
+  } catch (error) {
+    console.error('Error in handleGoogleCalendarRequest:', error)
+    throw error
   }
 }
 
@@ -54,43 +171,20 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
     
-    const { action, event } = await req.json()
+    const { action, event, accessToken, timeMin, timeMax, syncToken, eventId } = await req.json()
     
-    if (!action || !event) {
+    if (!action || !accessToken) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields' }),
         { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       )
     }
     
-    // Handle Google Calendar operation
-    const calendarResult = await handleGoogleCalendarRequest(action, event)
+    // Create a composite object with all possible parameters
+    const eventData = { event, timeMin, timeMax, syncToken, eventId }
     
-    // Store event in database
-    if (calendarResult.success && action === 'create') {
-      const { data: dbData, error: dbError } = await supabaseClient
-        .from('calendar_events')
-        .insert({
-          title: event.title,
-          description: event.description,
-          start_time: event.start_time,
-          end_time: event.end_time,
-          attendees: event.attendees,
-          google_event_id: calendarResult.mockEventId,
-          related_contact_id: event.contactId,
-          related_deal_id: event.dealId,
-          meeting_link: event.meeting_link,
-          status: 'scheduled'
-        })
-        
-      if (dbError) {
-        console.error('Database error:', dbError)
-        return new Response(
-          JSON.stringify({ error: 'Error saving event', details: dbError }),
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        )
-      }
-    }
+    // Handle Google Calendar operation
+    const calendarResult = await handleGoogleCalendarRequest(action, eventData, accessToken)
     
     return new Response(
       JSON.stringify(calendarResult),
