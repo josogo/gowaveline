@@ -1,14 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Industry, IndustryDocument, Lead } from './types';
+import { Industry, IndustryDocument, Lead, fetchIndustryById, fetchIndustryDocuments, fetchLeads, deleteIndustryDocument } from './types';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Upload, FileText, Image, File, Trash2 } from 'lucide-react';
+import { Loader2, Upload, FileText, Image, File } from 'lucide-react';
 import { toast } from 'sonner';
 import { DocumentsList } from './DocumentsList';
 import { FileUploader } from './FileUploader';
 import { GeneratePdfDialog } from './GeneratePdfDialog';
+import { supabase } from '@/integrations/supabase/client';
 
 interface IndustryDetailProps {
   industryId: string;
@@ -28,20 +28,16 @@ export const IndustryDetail: React.FC<IndustryDetailProps> = ({ industryId }) =>
     if (industryId) {
       fetchIndustryDetails();
       fetchIndustryDocuments();
-      fetchLeads();
+      fetchIndustryLeads();
     }
   }, [industryId]);
 
   const fetchIndustryDetails = async () => {
     try {
-      const { data, error } = await supabase
-        .from('industries')
-        .select('*')
-        .eq('id', industryId)
-        .single();
-        
-      if (error) throw error;
-      setIndustry(data);
+      const data = await fetchIndustryById(industryId);
+      if (data) {
+        setIndustry(data);
+      }
     } catch (error) {
       console.error('Error fetching industry details:', error);
       toast.error('Failed to load industry details');
@@ -51,15 +47,10 @@ export const IndustryDetail: React.FC<IndustryDetailProps> = ({ industryId }) =>
   const fetchIndustryDocuments = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('industry_documents')
-        .select('*')
-        .eq('industry_id', industryId)
-        .order('file_type', { ascending: false })
-        .order('uploaded_at', { ascending: false });
-        
-      if (error) throw error;
-      setDocuments(data || []);
+      const data = await fetchIndustryDocuments(industryId);
+      if (data) {
+        setDocuments(data);
+      }
     } catch (error) {
       console.error('Error fetching industry documents:', error);
       toast.error('Failed to load industry documents');
@@ -68,15 +59,12 @@ export const IndustryDetail: React.FC<IndustryDetailProps> = ({ industryId }) =>
     }
   };
 
-  const fetchLeads = async () => {
+  const fetchIndustryLeads = async () => {
     try {
-      const { data, error } = await supabase
-        .from('leads')
-        .select('*')
-        .order('business_name', { ascending: true });
-        
-      if (error) throw error;
-      setLeads(data || []);
+      const data = await fetchLeads();
+      if (data) {
+        setLeads(data);
+      }
     } catch (error) {
       console.error('Error fetching leads:', error);
     }
@@ -98,12 +86,7 @@ export const IndustryDetail: React.FC<IndustryDetailProps> = ({ industryId }) =>
       if (storageError) throw storageError;
       
       // Then delete from database
-      const { error: dbError } = await supabase
-        .from('industry_documents')
-        .delete()
-        .eq('id', documentId);
-        
-      if (dbError) throw dbError;
+      await deleteIndustryDocument(documentId);
       
       // Update local state
       setDocuments(documents.filter(doc => doc.id !== documentId));

@@ -56,20 +56,31 @@ export const GeneratePdfDialog: React.FC<GeneratePdfDialogProps> = ({
       }
 
       // Call the edge function
-      const response = await supabase.functions.invoke('generate-pdf', {
+      const { data, error } = await supabase.functions.invoke('generate-pdf', {
         body: { 
           industryId: industry.id,
           leadData
-        },
-        responseType: 'arraybuffer'
+        }
       });
 
-      if (!response.data) {
+      if (error) {
+        throw new Error(error.message || 'Failed to generate PDF');
+      }
+      
+      if (!data) {
         throw new Error('Failed to generate PDF');
       }
 
-      // Convert the array buffer to a Blob
-      const blob = new Blob([response.data], { type: 'application/pdf' });
+      // Convert the data to a Blob
+      const base64Data = data.pdfBase64;
+      const binaryData = atob(base64Data);
+      const bytes = new Uint8Array(binaryData.length);
+      for (let i = 0; i < binaryData.length; i++) {
+        bytes[i] = binaryData.charCodeAt(i);
+      }
+      
+      // Create a Blob from the binary data
+      const blob = new Blob([bytes], { type: 'application/pdf' });
       
       // Create a URL for the Blob
       const url = URL.createObjectURL(blob);

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { addIndustryDocument } from './types';
 
 interface FileUploaderProps {
   open: boolean;
@@ -95,11 +96,17 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
       // Check if we need to replace an existing file
       if (fileType === 'template' || fileType === 'logo') {
         // Check if file of this type already exists
-        const { data: existingDocs } = await supabase
-          .from('industry_documents')
-          .select('*')
-          .eq('industry_id', industryId)
-          .eq('file_type', fileType);
+        const { data: existingDocs, error } = await fetch(
+          `https://rqwrvkkfixrogxogunsk.supabase.co/rest/v1/industry_documents?industry_id=eq.${industryId}&file_type=eq.${fileType}`,
+          {
+            headers: {
+              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxd3J2a2tmaXhyb2d4b2d1bnNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MjMxMjEsImV4cCI6MjA1OTI5OTEyMX0.nESe15lNwkqji77TNpbWGFGo-uHkKt73AZFfBR6oMRY',
+              'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxd3J2a2tmaXhyb2d4b2d1bnNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MjMxMjEsImV4cCI6MjA1OTI5OTEyMX0.nESe15lNwkqji77TNpbWGFGo-uHkKt73AZFfBR6oMRY`
+            }
+          }
+        ).then(res => res.json());
+
+        if (error) throw error;
           
         // If exists, delete old files first
         if (existingDocs && existingDocs.length > 0) {
@@ -108,10 +115,13 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
               .from('industry-files')
               .remove([doc.file_path]);
               
-            await supabase
-              .from('industry_documents')
-              .delete()
-              .eq('id', doc.id);
+            await fetch(`https://rqwrvkkfixrogxogunsk.supabase.co/rest/v1/industry_documents?id=eq.${doc.id}`, {
+              method: 'DELETE',
+              headers: {
+                'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxd3J2a2tmaXhyb2d4b2d1bnNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MjMxMjEsImV4cCI6MjA1OTI5OTEyMX0.nESe15lNwkqji77TNpbWGFGo-uHkKt73AZFfBR6oMRY',
+                'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxd3J2a2tmaXhyb2d4b2d1bnNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MjMxMjEsImV4cCI6MjA1OTI5OTEyMX0.nESe15lNwkqji77TNpbWGFGo-uHkKt73AZFfBR6oMRY`
+              }
+            });
           }
         }
       }
@@ -133,19 +143,15 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
       if (storageError) throw storageError;
       
       // Save metadata to database
-      const { error: dbError } = await supabase
-        .from('industry_documents')
-        .insert([
-          {
-            industry_id: industryId,
-            file_name: selectedFile.name,
-            file_type: fileType,
-            file_path: filePath,
-            uploaded_by: adminUser?.id || null
-          }
-        ]);
-        
-      if (dbError) throw dbError;
+      const documentData = {
+        industry_id: industryId,
+        file_name: selectedFile.name,
+        file_type: fileType,
+        file_path: filePath,
+        uploaded_by: adminUser?.id || null
+      };
+      
+      await addIndustryDocument(documentData);
       
       onSuccess();
     } catch (error: any) {

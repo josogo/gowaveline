@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Industry } from './types';
+import { Industry, fetchIndustries, addIndustry } from './types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -26,20 +25,13 @@ export const IndustryList: React.FC<IndustryListProps> = ({ onSelectIndustry }) 
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchIndustries();
+    fetchAllIndustries();
   }, []);
 
-  const fetchIndustries = async () => {
+  const fetchAllIndustries = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('industries')
-        .select('*')
-        .order('name');
-        
-      if (error) {
-        throw error;
-      }
+      const data = await fetchIndustries();
       
       setIndustries(data || []);
       if (data && data.length > 0 && !industries.length) {
@@ -61,24 +53,15 @@ export const IndustryList: React.FC<IndustryListProps> = ({ onSelectIndustry }) 
 
     setSaving(true);
     try {
-      const { data, error } = await supabase
-        .from('industries')
-        .insert([
-          {
-            name: newIndustry.name.trim(),
-            description: newIndustry.description.trim() || null
-          }
-        ])
-        .select();
-
-      if (error) {
-        throw error;
-      }
+      const data = await addIndustry({
+        name: newIndustry.name.trim(),
+        description: newIndustry.description.trim() || null
+      });
 
       toast.success(`Industry "${newIndustry.name}" added successfully`);
       setNewIndustry({ name: '', description: '' });
       setAddDialogOpen(false);
-      fetchIndustries();
+      fetchAllIndustries();
       
       if (data && data.length > 0) {
         onSelectIndustry(data[0].id);
