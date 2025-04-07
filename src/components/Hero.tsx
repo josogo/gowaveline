@@ -23,7 +23,7 @@ const Hero = () => {
             <img 
               src="/lovable-uploads/947cccdf-76d4-46ed-b84b-abb412b19d33.png" 
               alt="Waveline Logo" 
-              className="h-36 md:h-48 w-auto hover:scale-105 transition-transform duration-300"
+              className="h-90 md:h-120 w-auto hover:scale-105 transition-transform duration-300"
             />
           </div>
           
