@@ -34,10 +34,10 @@ const Blog = () => {
       <main className="flex-1">
         <div className="bg-gradient-to-b from-orange-50 to-transparent py-16 px-6">
           <div className="max-w-6xl mx-auto">
-            <AnimatedText type="slide" direction="up" className="mb-4 text-center">
+            <AnimatedText type="fade" className="mb-4 text-center">
               <h1 className="text-4xl md:text-5xl font-bold text-orange-500">Payment Processing Insights</h1>
             </AnimatedText>
-            <AnimatedText type="fade" delay={300} className="text-center mb-16">
+            <AnimatedText type="fade" delay={200} className="text-center mb-16">
               <p className="text-xl text-[#0EA5E9] max-w-3xl mx-auto">
                 Expert advice, industry analysis, and actionable strategies to optimize your payment processing.
               </p>
@@ -45,14 +45,14 @@ const Blog = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {blogPosts.slice(0, visiblePosts).map((post, index) => (
-                <AnimatedText key={post.id} type="fade" delay={400 + (index * 100)}>
+                <AnimatedText key={post.id} type="fade" delay={300 + (index * 50)}>
                   <BlogCard post={post} onClick={() => openPost(post)} />
                 </AnimatedText>
               ))}
             </div>
             
             {visiblePosts < blogPosts.length && (
-              <AnimatedText type="fade" delay={900} className="flex justify-center mt-12">
+              <AnimatedText type="fade" delay={600} className="flex justify-center mt-12">
                 <Button 
                   onClick={loadMorePosts}
                   className="bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-500 text-white px-6 py-2 rounded-md"

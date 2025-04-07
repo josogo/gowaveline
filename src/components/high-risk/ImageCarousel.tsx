@@ -53,7 +53,6 @@ const ImageCarousel = () => {
           <CarouselContent className="-ml-4">
             {images.map((src, index) => (
               <CarouselItem key={index} className="pl-4 md:basis-1/2 lg:basis-1/3">
-                {/* Remove animation from images to ensure they show properly */}
                 <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 h-full">
                   <img 
                     src={src} 
