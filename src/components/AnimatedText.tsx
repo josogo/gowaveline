@@ -7,39 +7,58 @@ interface AnimatedTextProps {
   className?: string;
   delay?: number;
   type?: 'fade' | 'slide' | 'scale';
+  direction?: 'up' | 'down' | 'left' | 'right';
 }
 
 const AnimatedText: React.FC<AnimatedTextProps> = ({ 
   children, 
   className,
   delay = 0,
-  type = 'fade'
+  type = 'fade',
+  direction = 'up'
 }) => {
   const elementRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Simpler animation approach - immediately show content
-    const timer = setTimeout(() => {
-      if (elementRef.current) {
-        elementRef.current.classList.add('animate-in');
-      }
-    }, delay);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setTimeout(() => {
+              entry.target.classList.add('animate-in');
+            }, delay);
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
 
-    return () => clearTimeout(timer);
+    if (elementRef.current) {
+      observer.observe(elementRef.current);
+    }
+
+    return () => {
+      if (elementRef.current) {
+        observer.unobserve(elementRef.current);
+      }
+    };
   }, [delay]);
 
   return (
     <div
       ref={elementRef}
       className={cn(
-        'transition-all duration-500',
-        // Make content fully visible by default, not faded
+        'transition-all duration-700',
         {
-          'opacity-100': type === 'fade',
-          'translate-y-0': type === 'slide',
-          'scale-100': type === 'scale',
+          'opacity-0': type === 'fade',
+          'opacity-0 translate-y-6': type === 'slide' && direction === 'up',
+          'opacity-0 translate-y-[-24px]': type === 'slide' && direction === 'down',
+          'opacity-0 translate-x-6': type === 'slide' && direction === 'left',
+          'opacity-0 translate-x-[-24px]': type === 'slide' && direction === 'right',
+          'opacity-0 scale-95': type === 'scale',
         },
-        'animate-in:opacity-100 animate-in:translate-y-0 animate-in:scale-100',
+        'animate-in:opacity-100 animate-in:translate-y-0 animate-in:translate-x-0 animate-in:scale-100',
         className
       )}
     >

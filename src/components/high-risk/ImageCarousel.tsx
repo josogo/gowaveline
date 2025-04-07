@@ -5,6 +5,7 @@ import {
   CarouselContent,
   CarouselItem,
 } from '@/components/ui/carousel';
+import AnimatedText from '@/components/AnimatedText';
 
 const images = [
   "/lovable-uploads/73f46803-d80f-4a1a-a02d-d179b57d0050.png",
@@ -35,7 +36,9 @@ const ImageCarousel = () => {
   return (
     <div className="py-16 px-6 bg-gray-50">
       <div className="max-w-6xl mx-auto">
-        <h2 className="text-3xl font-bold mb-12 text-center text-[#0EA5E9]">High Risk Industry Insights</h2>
+        <AnimatedText type="slide" direction="up" className="text-3xl font-bold mb-12 text-center text-[#0EA5E9]">
+          <h2>High Risk Industry Insights</h2>
+        </AnimatedText>
         
         <Carousel 
           setApi={setApi}
@@ -50,21 +53,23 @@ const ImageCarousel = () => {
           <CarouselContent className="-ml-4">
             {images.map((src, index) => (
               <CarouselItem key={index} className="pl-4 md:basis-1/2 lg:basis-1/3">
-                <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 h-full">
-                  <img 
-                    src={src} 
-                    alt={`High risk industry illustration ${index + 1}`}
-                    className="w-full h-64 object-contain"
-                  />
-                </div>
+                <AnimatedText type="fade" delay={100 * (index % 3)}>
+                  <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 h-full">
+                    <img 
+                      src={src} 
+                      alt={`High risk industry illustration ${index + 1}`}
+                      className="w-full h-64 object-contain"
+                    />
+                  </div>
+                </AnimatedText>
               </CarouselItem>
             ))}
           </CarouselContent>
         </Carousel>
         
-        <p className="text-center mt-8 text-gray-500 italic">
-          Images showcasing various high-risk industries we serve
-        </p>
+        <AnimatedText type="fade" delay={400} className="text-center mt-8 text-gray-500 italic">
+          <p>Images showcasing various high-risk industries we serve</p>
+        </AnimatedText>
       </div>
     </div>
   );
