@@ -21,9 +21,9 @@ const Hero = () => {
         <div className="text-center">
           <div className="flex justify-center mb-4">
             <img 
-              src="/lovable-uploads/ad8a046a-7882-4cfc-9e57-3f0e9315c828.png" 
+              src="/lovable-uploads/947cccdf-76d4-46ed-b84b-abb412b19d33.png" 
               alt="Waveline Logo" 
-              className="h-24 md:h-32 w-auto hover:scale-105 transition-transform duration-300"
+              className="h-36 md:h-48 w-auto hover:scale-105 transition-transform duration-300"
             />
           </div>
           
