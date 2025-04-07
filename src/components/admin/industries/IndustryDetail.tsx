@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Industry, IndustryDocument, Lead } from './types';
+import { Industry, IndustryDocument, Lead, fetchIndustryById, fetchDocumentsByIndustryId, fetchLeads, deleteIndustryDocument } from './types';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Upload, FileText, Image, File } from 'lucide-react';
@@ -43,29 +43,11 @@ export const IndustryDetail: React.FC<IndustryDetailProps> = ({ industryId }) =>
     }
   };
 
-  const fetchIndustryDocuments = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchIndustryDocuments(); // This line has the error - it's calling itself recursively
-      if (data) {
-        setDocuments(data);
-      }
-    } catch (error) {
-      console.error('Error fetching industry documents:', error);
-      toast.error('Failed to load industry documents');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fix: Let's rename the function to avoid recursion and call the imported function instead
   const loadIndustryDocuments = async () => {
     setLoading(true);
     try {
       const data = await fetchDocumentsByIndustryId(industryId);
-      if (data) {
-        setDocuments(data);
-      }
+      setDocuments(data || []);
     } catch (error) {
       console.error('Error fetching industry documents:', error);
       toast.error('Failed to load industry documents');
@@ -89,21 +71,17 @@ export const IndustryDetail: React.FC<IndustryDetailProps> = ({ industryId }) =>
     if (!confirm('Are you sure you want to delete this document?')) return;
     
     try {
-      // Find the document to get its file path
       const docToDelete = documents.find(doc => doc.id === documentId);
       if (!docToDelete) throw new Error('Document not found');
       
-      // Delete from storage first
       const { error: storageError } = await supabase.storage
         .from('industry-files')
         .remove([docToDelete.file_path]);
         
       if (storageError) throw storageError;
       
-      // Then delete from database
       await deleteIndustryDocument(documentId);
       
-      // Update local state
       setDocuments(documents.filter(doc => doc.id !== documentId));
       toast.success('Document deleted successfully');
     } catch (error: any) {
@@ -113,7 +91,7 @@ export const IndustryDetail: React.FC<IndustryDetailProps> = ({ industryId }) =>
   };
 
   const handleUploadSuccess = () => {
-    loadIndustryDocuments(); // Fixed: Call the correctly named function
+    loadIndustryDocuments();
     setUploadDialogOpen(false);
     toast.success('Document uploaded successfully');
   };
@@ -170,7 +148,6 @@ export const IndustryDetail: React.FC<IndustryDetailProps> = ({ industryId }) =>
         
         <TabsContent value="documents">
           <div className="space-y-8">
-            {/* Template Section */}
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-medium">Application Template</h2>
@@ -204,7 +181,6 @@ export const IndustryDetail: React.FC<IndustryDetailProps> = ({ industryId }) =>
               )}
             </div>
             
-            {/* Logo Section */}
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-medium">Company Logo</h2>
@@ -238,7 +214,6 @@ export const IndustryDetail: React.FC<IndustryDetailProps> = ({ industryId }) =>
               )}
             </div>
             
-            {/* Supporting Documents Section */}
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-medium">Supporting Documents</h2>
@@ -303,11 +278,3 @@ export const IndustryDetail: React.FC<IndustryDetailProps> = ({ industryId }) =>
     </div>
   );
 };
-
-// Import these functions from types.ts
-import { 
-  fetchIndustryById, 
-  fetchDocumentsByIndustryId,  // Make sure this function exists in types.ts
-  fetchLeads, 
-  deleteIndustryDocument 
-} from './types';
