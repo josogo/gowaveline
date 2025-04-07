@@ -4,7 +4,6 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import AnimatedText from '@/components/AnimatedText';
 import { 
   CreditCard, 
   ShoppingCart, 
@@ -83,45 +82,42 @@ const Services = () => {
       <main className="flex-1">
         <div className="bg-gradient-to-b from-orange-50 to-transparent py-16 px-6">
           <div className="max-w-6xl mx-auto text-center">
-            <AnimatedText type="fade" className="mb-4">
-              <h1 className="text-4xl md:text-5xl font-bold text-[#0EA5E9]">Our Services</h1>
-            </AnimatedText>
-            <AnimatedText type="fade" delay={200} className="mb-12">
-              <p className="text-xl text-[#0EA5E9] max-w-3xl mx-auto">
-                Waveline offers innovative payment solutions tailored to your business needs, 
-                with a focus on industries overlooked by traditional processors.
-              </p>
-            </AnimatedText>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-[#0EA5E9]">Our Services</h1>
+            <p className="text-xl text-[#0EA5E9] max-w-3xl mx-auto mb-12">
+              Waveline offers innovative payment solutions tailored to your business needs, 
+              with a focus on industries overlooked by traditional processors.
+            </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {services.map((service, index) => (
-                <AnimatedText key={index} type="fade" delay={300 + (index * 50)} className="h-full">
-                  <div className="bg-white rounded-lg shadow-lg p-8 transition-transform hover:transform hover:scale-105 h-full">
-                    <div className={`w-16 h-16 mx-auto mb-6 rounded-full flex items-center justify-center bg-gradient-to-r ${service.color}`}>
-                      <service.icon className="h-8 w-8 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold mb-4 text-[#0EA5E9]">{service.title}</h3>
-                    <p className="text-[#0EA5E9] mb-6">{service.description}</p>
-                    <Button 
-                      onClick={() => navigate('/')}
-                      variant="outline" 
-                      className="w-full border-[#0EA5E9] text-[#0EA5E9] hover:bg-[#0EA5E9] hover:text-white"
-                    >
-                      Learn More
-                    </Button>
+                <div 
+                  key={index} 
+                  className="bg-white rounded-lg shadow-lg p-8 transition-transform hover:transform hover:scale-105"
+                >
+                  <div className={`w-16 h-16 mx-auto mb-6 rounded-full flex items-center justify-center bg-gradient-to-r ${service.color}`}>
+                    <service.icon className="h-8 w-8 text-white" />
                   </div>
-                </AnimatedText>
+                  <h3 className="text-xl font-bold mb-4 text-[#0EA5E9]">{service.title}</h3>
+                  <p className="text-[#0EA5E9] mb-6">{service.description}</p>
+                  <Button 
+                    onClick={() => navigate('/')}
+                    variant="outline" 
+                    className="w-full border-[#0EA5E9] text-[#0EA5E9] hover:bg-[#0EA5E9] hover:text-white"
+                  >
+                    Learn More
+                  </Button>
+                </div>
               ))}
             </div>
             
-            <AnimatedText type="fade" delay={600} className="mt-16">
+            <div className="mt-16">
               <Button 
                 onClick={() => navigate('/')}
                 className="px-8 py-6 text-lg bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-500 text-white"
               >
                 Get Started Today
               </Button>
-            </AnimatedText>
+            </div>
           </div>
         </div>
       </main>

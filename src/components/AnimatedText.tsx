@@ -7,68 +7,39 @@ interface AnimatedTextProps {
   className?: string;
   delay?: number;
   type?: 'fade' | 'slide' | 'scale';
-  direction?: 'up' | 'down' | 'left' | 'right';
 }
 
 const AnimatedText: React.FC<AnimatedTextProps> = ({ 
   children, 
   className,
   delay = 0,
-  type = 'fade',
-  direction = 'up'
+  type = 'fade'
 }) => {
   const elementRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setTimeout(() => {
-              if (elementRef.current) {
-                elementRef.current.classList.add('animate-in');
-              }
-            }, delay);
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
-
-    if (elementRef.current) {
-      observer.observe(elementRef.current);
-    }
-
-    return () => {
+    // Simpler animation approach - immediately show content
+    const timer = setTimeout(() => {
       if (elementRef.current) {
-        observer.unobserve(elementRef.current);
+        elementRef.current.classList.add('animate-in');
       }
-    };
-  }, [delay]);
+    }, delay);
 
-  const getInitialStyles = () => {
-    if (type === 'fade') return 'opacity-0';
-    if (type === 'scale') return 'opacity-0 scale-95';
-    if (type === 'slide') {
-      switch (direction) {
-        case 'up': return 'opacity-0 translate-y-8';
-        case 'down': return 'opacity-0 translate-y-[-16px]';
-        case 'left': return 'opacity-0 translate-x-8';
-        case 'right': return 'opacity-0 translate-x-[-16px]';
-        default: return 'opacity-0 translate-y-8';
-      }
-    }
-    return 'opacity-0';
-  };
+    return () => clearTimeout(timer);
+  }, [delay]);
 
   return (
     <div
       ref={elementRef}
       className={cn(
-        'transition-all duration-700',
-        getInitialStyles(),
-        'animate-in:opacity-100 animate-in:translate-y-0 animate-in:translate-x-0 animate-in:scale-100',
+        'transition-all duration-500',
+        // Make content fully visible by default, not faded
+        {
+          'opacity-100': type === 'fade',
+          'translate-y-0': type === 'slide',
+          'scale-100': type === 'scale',
+        },
+        'animate-in:opacity-100 animate-in:translate-y-0 animate-in:scale-100',
         className
       )}
     >
