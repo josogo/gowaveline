@@ -33,7 +33,7 @@ const ImageCarousel = () => {
   }, [api]);
 
   return (
-    <div className="py-16 px-6 bg-gray-50">
+    <div className="py-16 px-6 bg-gradient-to-b from-orange-50 to-orange-100">
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl font-bold mb-12 text-center text-[#0EA5E9]">High Risk Industry Insights</h2>
         
