@@ -29,6 +29,7 @@ import CommissionTracking from './pages/admin/CommissionTracking';
 import TrainingHub from './pages/admin/TrainingHub';
 import ContactManagement from './pages/admin/ContactManagement';
 import SettingsPage from './pages/admin/Settings';
+import IndustryDocuments from './pages/admin/IndustryDocuments';
 
 const App = () => {
   return (
@@ -61,6 +62,7 @@ const App = () => {
           <Route path="/admin/training-hub" element={<TrainingHub />} />
           <Route path="/admin/contacts" element={<ContactManagement />} />
           <Route path="/admin/settings" element={<SettingsPage />} />
+          <Route path="/admin/industry-documents" element={<IndustryDocuments />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
