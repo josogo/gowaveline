@@ -366,18 +366,20 @@ const SettingsPage = () => {
                       <p className="text-sm text-muted-foreground">Get notified before scheduled meetings</p>
                     </div>
                   </div>
-                  <Select defaultValue="30">
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Select time" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="10">10 minutes</SelectItem>
-                      <SelectItem value="15">15 minutes</SelectItem>
-                      <SelectItem value="30">30 minutes</SelectItem>
-                      <SelectItem value="60">1 hour</SelectItem>
-                      <SelectItem value="1440">1 day</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="w-32">
+                    <Select defaultValue="30">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select time" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10 minutes</SelectItem>
+                        <SelectItem value="15">15 minutes</SelectItem>
+                        <SelectItem value="30">30 minutes</SelectItem>
+                        <SelectItem value="60">1 hour</SelectItem>
+                        <SelectItem value="1440">1 day</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </CardContent>
               <CardFooter>
@@ -469,7 +471,7 @@ const SettingsPage = () => {
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <FormLabel>API Key</FormLabel>
+                    <div className="font-medium mb-2">API Key</div>
                     <div className="flex">
                       <Input
                         value="••••••••••••••••••••••••••••••"
@@ -540,7 +542,7 @@ const SettingsPage = () => {
                   <Separator />
                   
                   <div>
-                    <FormLabel>Accent Color</FormLabel>
+                    <div className="font-medium mb-2">Accent Color</div>
                     <div className="grid grid-cols-5 gap-2 mt-2">
                       {['bg-blue-500', 'bg-purple-500', 'bg-pink-500', 'bg-orange-500', 'bg-green-500'].map((color) => (
                         <div 
@@ -555,7 +557,7 @@ const SettingsPage = () => {
                   <Separator />
                   
                   <div>
-                    <FormLabel>Font Size</FormLabel>
+                    <div className="font-medium mb-2">Font Size</div>
                     <div className="mt-2">
                       <Select defaultValue="medium">
                         <SelectTrigger>
@@ -590,7 +592,7 @@ const SettingsPage = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
-                  <FormLabel>Default Team Member Role</FormLabel>
+                  <div className="font-medium mb-2">Default Team Member Role</div>
                   <Select defaultValue="agent">
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Select default role" />
@@ -647,7 +649,7 @@ const SettingsPage = () => {
             </Card>
           </TabsContent>
           
-          {/* Other tabs would be implemented similarly */}
+          {/* Other tabs */}
           <TabsContent value="security" className="space-y-6 pt-4">
             <Card>
               <CardHeader>
@@ -673,7 +675,7 @@ const SettingsPage = () => {
                 <Separator />
                 
                 <div>
-                  <FormLabel>Password Policy</FormLabel>
+                  <div className="font-medium mb-2">Password Policy</div>
                   <Select defaultValue="strong">
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Select password policy" />
@@ -690,7 +692,7 @@ const SettingsPage = () => {
                 <Separator />
                 
                 <div>
-                  <FormLabel>Session Timeout</FormLabel>
+                  <div className="font-medium mb-2">Session Timeout</div>
                   <Select defaultValue="60">
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Select timeout duration" />

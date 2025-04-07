@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { ChakraProvider } from '@chakra-ui/react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
@@ -30,10 +29,6 @@ import CommissionTracking from './pages/admin/CommissionTracking';
 import TrainingHub from './pages/admin/TrainingHub';
 import ContactManagement from './pages/admin/ContactManagement';
 import SettingsPage from './pages/admin/Settings';
-
-// Instead of using ChakraProvider with the Chakra UI v3 features,
-// let's transition to using the components directly without the theme provider
-// since there seem to be compatibility issues with the current version
 
 const App = () => {
   return (
