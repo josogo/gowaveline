@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ChakraProvider, extendTheme } from '@chakra-ui/react';
+import { ChakraProvider } from '@chakra-ui/react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
@@ -31,18 +31,9 @@ import TrainingHub from './pages/admin/TrainingHub';
 import ContactManagement from './pages/admin/ContactManagement';
 import SettingsPage from './pages/admin/Settings';
 
-// Create a Chakra UI theme (this is required for Chakra v3)
-const theme = extendTheme({
-  // You can customize the theme here if needed
-  config: {
-    initialColorMode: 'light',
-    useSystemColorMode: false,
-  },
-});
-
 const App = () => {
   return (
-    <ChakraProvider theme={theme}>
+    <ChakraProvider>
       <BrowserRouter>
         <Toaster position="top-right" />
         <Routes>
