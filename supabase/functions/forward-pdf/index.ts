@@ -1,6 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { Resend } from "https://esm.sh/@resend/node"
+import { Resend } from "npm:resend@2.0.0" // Changed import to use npm: prefix which works with Deno
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

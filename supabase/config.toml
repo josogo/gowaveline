@@ -31,3 +31,6 @@ verify_jwt = false
 
 [functions.forward-pdf]
 verify_jwt = false
+
+[functions.get-gmail-credentials]
+verify_jwt = false
