@@ -53,15 +53,14 @@ const ImageCarousel = () => {
           <CarouselContent className="-ml-4">
             {images.map((src, index) => (
               <CarouselItem key={index} className="pl-4 md:basis-1/2 lg:basis-1/3">
-                <AnimatedText type="fade" delay={100 * (index % 3)}>
-                  <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 h-full">
-                    <img 
-                      src={src} 
-                      alt={`High risk industry illustration ${index + 1}`}
-                      className="w-full h-64 object-contain"
-                    />
-                  </div>
-                </AnimatedText>
+                {/* Remove animation from images to ensure they show properly */}
+                <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 h-full">
+                  <img 
+                    src={src} 
+                    alt={`High risk industry illustration ${index + 1}`}
+                    className="w-full h-64 object-contain"
+                  />
+                </div>
               </CarouselItem>
             ))}
           </CarouselContent>

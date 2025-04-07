@@ -20,13 +20,12 @@ const Hero = () => {
       <div className="mx-auto max-w-5xl">
         <div className="text-center">
           <div className="flex justify-center mb-4">
-            <AnimatedText type="scale" delay={100}>
-              <img 
-                src="/lovable-uploads/9da26423-9d0b-43a0-b017-8ef2ac308729.png" 
-                alt="Waveline Logo" 
-                className="h-72 md:h-96 w-auto hover:scale-105 transition-transform duration-300"
-              />
-            </AnimatedText>
+            {/* Removed animation from the hero image */}
+            <img 
+              src="/lovable-uploads/9da26423-9d0b-43a0-b017-8ef2ac308729.png" 
+              alt="Waveline Logo" 
+              className="h-72 md:h-96 w-auto hover:scale-105 transition-transform duration-300"
+            />
           </div>
           
           {isMobile ? (

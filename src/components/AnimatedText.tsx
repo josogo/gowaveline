@@ -25,7 +25,9 @@ const AnimatedText: React.FC<AnimatedTextProps> = ({
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             setTimeout(() => {
-              entry.target.classList.add('animate-in');
+              if (elementRef.current) {
+                elementRef.current.classList.add('animate-in');
+              }
             }, delay);
             observer.unobserve(entry.target);
           }
@@ -52,11 +54,11 @@ const AnimatedText: React.FC<AnimatedTextProps> = ({
         'transition-all duration-700',
         {
           'opacity-0': type === 'fade',
-          'opacity-0 translate-y-6': type === 'slide' && direction === 'up',
-          'opacity-0 translate-y-[-24px]': type === 'slide' && direction === 'down',
-          'opacity-0 translate-x-6': type === 'slide' && direction === 'left',
-          'opacity-0 translate-x-[-24px]': type === 'slide' && direction === 'right',
-          'opacity-0 scale-95': type === 'scale',
+          'opacity-0 translate-y-4': type === 'slide' && direction === 'up',
+          'opacity-0 translate-y-[-16px]': type === 'slide' && direction === 'down',
+          'opacity-0 translate-x-4': type === 'slide' && direction === 'left',
+          'opacity-0 translate-x-[-16px]': type === 'slide' && direction === 'right',
+          'opacity-0 scale-98': type === 'scale',
         },
         'animate-in:opacity-100 animate-in:translate-y-0 animate-in:translate-x-0 animate-in:scale-100',
         className
