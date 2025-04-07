@@ -1,10 +1,10 @@
+
 import React from 'react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
 import Index from './pages/Index';
-import Dashboard from './pages/Dashboard';
 import GetStarted from './pages/GetStarted';
 import Services from './pages/Services';
 import HighRisk from './pages/HighRisk';
@@ -38,7 +38,6 @@ const App = () => {
         <Toaster position="top-right" />
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/get-started" element={<GetStarted />} />
           <Route path="/services" element={<Services />} />
           <Route path="/high-risk" element={<HighRisk />} />
