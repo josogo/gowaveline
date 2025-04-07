@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import FileUpload from '@/components/file-upload';
@@ -21,9 +20,9 @@ const Hero = () => {
         <div className="text-center">
           <div className="flex justify-center mb-4">
             <img 
-              src="/lovable-uploads/947cccdf-76d4-46ed-b84b-abb412b19d33.png" 
+              src="/lovable-uploads/9da26423-9d0b-43a0-b017-8ef2ac308729.png" 
               alt="Waveline Logo" 
-              className="h-90 md:h-120 w-auto hover:scale-105 transition-transform duration-300"
+              className="h-72 md:h-96 w-auto hover:scale-105 transition-transform duration-300"
             />
           </div>
           
