@@ -19,9 +19,11 @@ export const useCrmNavigation = () => {
   const navigateToTeams = () => navigateTo('/admin/team-management');
   const navigateToDeals = () => navigateTo('/admin/deals');
   const navigateToGmail = () => navigateTo('/admin/gmail-integration');
+  const navigateToCalendar = () => navigateTo('/admin/calendar-integration');
   const navigateToCommissions = () => navigateTo('/admin/commission-tracking');
   const navigateToTraining = () => navigateTo('/admin/training-hub');
   const navigateToContacts = () => navigateTo('/admin/contacts');
+  const navigateToSettings = () => navigateTo('/admin/settings');
   
   return {
     navigateTo,
@@ -29,8 +31,10 @@ export const useCrmNavigation = () => {
     navigateToTeams,
     navigateToDeals,
     navigateToGmail,
+    navigateToCalendar,
     navigateToCommissions,
     navigateToTraining,
-    navigateToContacts
+    navigateToContacts,
+    navigateToSettings
   };
 };

@@ -1,4 +1,3 @@
-
 import React, { ReactNode, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -17,7 +16,8 @@ import {
   SlidersHorizontal,
   Home,
   Bell,
-  Filter
+  Filter,
+  Calendar
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -50,7 +50,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [activeTab, setActiveTab] = useState<string>('main');
 
   useEffect(() => {
-    // Check if user is logged in
     const token = localStorage.getItem('adminToken');
     const userJson = localStorage.getItem('adminUser');
 
@@ -71,7 +70,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     }
   }, [navigate]);
 
-  // Close sidebar when route changes
   useEffect(() => {
     setSidebarOpen(false);
     setShowNotifications(false);
@@ -89,18 +87,18 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { icon: <Users className="h-5 w-5" />, label: 'Team Management', path: '/admin/team-management' },
     { icon: <FileText className="h-5 w-5" />, label: 'Deals', path: '/admin/deals' },
     { icon: <Mail className="h-5 w-5" />, label: 'Gmail Integration', path: '/admin/gmail-integration' },
+    { icon: <Calendar className="h-5 w-5" />, label: 'Calendar Integration', path: '/admin/calendar-integration' },
     { icon: <DollarSign className="h-5 w-5" />, label: 'Commission Tracking', path: '/admin/commission-tracking' },
     { icon: <BookOpen className="h-5 w-5" />, label: 'Training Hub', path: '/admin/training-hub' },
     { icon: <Phone className="h-5 w-5" />, label: 'Contacts', path: '/admin/contacts' },
     { icon: <Settings className="h-5 w-5" />, label: 'Settings', path: '/admin/settings' }
   ];
 
-  // Enhanced mobile navigation items with more descriptive labels
   const mobileNavItems = [
     { icon: <Home className="h-5 w-5" />, label: 'Dashboard', path: '/admin/dashboard' },
     { icon: <Users className="h-5 w-5" />, label: 'Team', path: '/admin/team-management' },
     { icon: <FileText className="h-5 w-5" />, label: 'Deals', path: '/admin/deals' },
-    { icon: <BookOpen className="h-5 w-5" />, label: 'Training', path: '/admin/training-hub' },
+    { icon: <Calendar className="h-5 w-5" />, label: 'Calendar', path: '/admin/calendar-integration' },
     { icon: <Mail className="h-5 w-5" />, label: 'Gmail', path: '/admin/gmail-integration' },
   ];
 
@@ -110,7 +108,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { icon: <Settings className="h-5 w-5" />, label: 'Settings', path: '/admin/settings' }
   ];
   
-  // Mock notifications for UI purposes
   const notifications = [
     { id: 1, title: 'New deal submitted', description: 'John Smith added a new deal', time: '10 min ago', unread: true },
     { id: 2, title: 'Commission payout processed', description: 'April commissions have been processed', time: '2 hours ago', unread: true },
@@ -126,7 +123,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      {/* Top Navigation */}
       <header className="bg-white border-b border-gray-200 py-4 px-4 md:px-6 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center">
           <img 
@@ -140,7 +136,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </div>
         
         <div className="flex items-center space-x-3">
-          {/* Notifications for mobile */}
           {isMobile && (
             <Button 
               variant="ghost" 
@@ -156,7 +151,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             </Button>
           )}
           
-          {/* User dropdown - desktop */}
           <div className="hidden md:flex items-center">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -177,7 +171,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   <p className="text-sm text-muted-foreground">{adminUser.email}</p>
                 </div>
                 
-                {/* Desktop notifications preview */}
                 <div className="max-h-60 overflow-auto py-1">
                   {notifications.slice(0, 3).map(notification => (
                     <DropdownMenuItem key={notification.id} className="flex flex-col items-start px-3 py-2 cursor-pointer">
@@ -204,7 +197,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             </DropdownMenu>
           </div>
           
-          {/* Mobile menu button */}
           <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden">
@@ -228,7 +220,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   </div>
                 </div>
                 
-                {/* Tabs for mobile sidebar */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="w-full grid grid-cols-2">
                     <TabsTrigger value="main">Navigation</TabsTrigger>
@@ -275,7 +266,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                             <h4 className="font-medium text-sm">{notification.title}</h4>
                             <span className="text-xs text-gray-500">{notification.time}</span>
                           </div>
-                          <p className="text-xs mt-1">{notification.description}</p>
+                          <p className="text-sm mt-1">{notification.description}</p>
                         </div>
                       ))}
                     </div>
@@ -298,7 +289,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </div>
       </header>
       
-      {/* Full-screen mobile notifications panel */}
       {isMobile && showNotifications && (
         <div className="fixed inset-0 bg-white z-50 p-4">
           <div className="flex justify-between items-center mb-4">
@@ -335,9 +325,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </div>
       )}
       
-      {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar Navigation - Desktop Only */}
         <aside className="hidden md:block w-64 bg-white border-r border-gray-200 p-6 overflow-y-auto sticky top-[73px] h-[calc(100vh-73px)]">
           <nav className="space-y-2">
             {navItems.map((item, index) => {
@@ -357,7 +345,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           </nav>
         </aside>
         
-        {/* Bottom Nav Bar - Mobile Only - Enhanced with labels and better spacing */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-2 flex justify-around z-30 md:hidden">
           {mobileNavItems.map((item, index) => {
             const active = isActive(item.path);
@@ -374,7 +361,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             );
           })}
           
-          {/* More menu for additional items */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -411,7 +397,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           </DropdownMenu>
         </div>
         
-        {/* Main Dashboard Content */}
         <main className="flex-1 overflow-auto p-4 md:p-6 mb-16 md:mb-0">
           {children}
         </main>
