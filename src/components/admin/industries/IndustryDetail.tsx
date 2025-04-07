@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Industry, IndustryDocument, Lead, fetchIndustryById, fetchIndustryDocuments, fetchLeads, deleteIndustryDocument } from './types';
+import { Industry, IndustryDocument, Lead } from './types';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Upload, FileText, Image, File } from 'lucide-react';
@@ -27,7 +26,7 @@ export const IndustryDetail: React.FC<IndustryDetailProps> = ({ industryId }) =>
   useEffect(() => {
     if (industryId) {
       fetchIndustryDetails();
-      fetchIndustryDocuments();
+      loadIndustryDocuments();
       fetchIndustryLeads();
     }
   }, [industryId]);
@@ -47,7 +46,23 @@ export const IndustryDetail: React.FC<IndustryDetailProps> = ({ industryId }) =>
   const fetchIndustryDocuments = async () => {
     setLoading(true);
     try {
-      const data = await fetchIndustryDocuments(industryId);
+      const data = await fetchIndustryDocuments(); // This line has the error - it's calling itself recursively
+      if (data) {
+        setDocuments(data);
+      }
+    } catch (error) {
+      console.error('Error fetching industry documents:', error);
+      toast.error('Failed to load industry documents');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fix: Let's rename the function to avoid recursion and call the imported function instead
+  const loadIndustryDocuments = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchDocumentsByIndustryId(industryId);
       if (data) {
         setDocuments(data);
       }
@@ -98,7 +113,7 @@ export const IndustryDetail: React.FC<IndustryDetailProps> = ({ industryId }) =>
   };
 
   const handleUploadSuccess = () => {
-    fetchIndustryDocuments();
+    loadIndustryDocuments(); // Fixed: Call the correctly named function
     setUploadDialogOpen(false);
     toast.success('Document uploaded successfully');
   };
@@ -288,3 +303,11 @@ export const IndustryDetail: React.FC<IndustryDetailProps> = ({ industryId }) =>
     </div>
   );
 };
+
+// Import these functions from types.ts
+import { 
+  fetchIndustryById, 
+  fetchDocumentsByIndustryId,  // Make sure this function exists in types.ts
+  fetchLeads, 
+  deleteIndustryDocument 
+} from './types';
