@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.14.0"
 
@@ -13,13 +12,11 @@ async function handleGoogleCalendarRequest(action, eventData, accessToken) {
   const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID') || ''
   const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET') || ''
   
-  // Base URL for Google Calendar API
   const calendarApiBaseUrl = 'https://www.googleapis.com/calendar/v3'
   
   try {
     switch (action) {
       case 'create': {
-        // Create a new event in Google Calendar
         const url = `${calendarApiBaseUrl}/calendars/primary/events?conferenceDataVersion=1`
         const response = await fetch(url, {
           method: 'POST',
@@ -41,7 +38,6 @@ async function handleGoogleCalendarRequest(action, eventData, accessToken) {
       }
       
       case 'list': {
-        // List events from Google Calendar
         let url = `${calendarApiBaseUrl}/calendars/primary/events?maxResults=100`
         
         if (eventData.timeMin) {
@@ -74,7 +70,6 @@ async function handleGoogleCalendarRequest(action, eventData, accessToken) {
       }
       
       case 'update': {
-        // Update an existing event in Google Calendar
         const { eventId, event } = eventData
         const url = `${calendarApiBaseUrl}/calendars/primary/events/${eventId}?conferenceDataVersion=1`
         
@@ -98,7 +93,6 @@ async function handleGoogleCalendarRequest(action, eventData, accessToken) {
       }
       
       case 'delete': {
-        // Delete an event from Google Calendar
         const { eventId } = eventData
         const url = `${calendarApiBaseUrl}/calendars/primary/events/${eventId}`
         
@@ -119,7 +113,6 @@ async function handleGoogleCalendarRequest(action, eventData, accessToken) {
       }
       
       case 'freeBusy': {
-        // Check free/busy status
         const url = `${calendarApiBaseUrl}/freeBusy`
         
         const requestBody = {
@@ -160,7 +153,6 @@ async function handleGoogleCalendarRequest(action, eventData, accessToken) {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -180,10 +172,8 @@ serve(async (req) => {
       )
     }
     
-    // Create a composite object with all possible parameters
     const eventData = { event, timeMin, timeMax, syncToken, eventId }
     
-    // Handle Google Calendar operation
     const calendarResult = await handleGoogleCalendarRequest(action, eventData, accessToken)
     
     return new Response(
