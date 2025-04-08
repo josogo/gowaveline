@@ -65,3 +65,29 @@ export const sendGmailEmail = async (accessToken: string, to: string, subject: s
     throw error;
   }
 };
+
+/**
+ * Debug assistant - Checks for common configuration issues
+ */
+export const checkGmailIntegrationSetup = async (): Promise<string> => {
+  try {
+    console.log('Checking Gmail integration setup...');
+    
+    // Check if the edge function is accessible
+    const { data, error } = await supabase.functions.invoke('get-gmail-credentials', {
+      body: { 
+        action: 'checkConfig'
+      }
+    });
+    
+    if (error) {
+      console.error('Error checking configuration:', error);
+      return `Edge function error: ${error.message}`;
+    }
+    
+    return `Configuration check completed: ${JSON.stringify(data)}`;
+  } catch (error) {
+    console.error('Error in configuration check:', error);
+    return `Exception during check: ${error instanceof Error ? error.message : String(error)}`;
+  }
+};

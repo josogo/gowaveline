@@ -34,6 +34,7 @@ serve(async (req) => {
 
     console.log('Client ID available:', !!GOOGLE_CLIENT_ID);
     console.log('Client Secret available:', !!GOOGLE_CLIENT_SECRET);
+    console.log('Redirect URI received:', redirectUri);
 
     if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
       console.error('Missing Google credentials in environment variables');
@@ -44,6 +45,19 @@ serve(async (req) => {
           clientSecretPresent: !!GOOGLE_CLIENT_SECRET
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check configuration
+    if (action === 'checkConfig') {
+      return new Response(
+        JSON.stringify({
+          status: 'ok',
+          clientIdConfigured: !!GOOGLE_CLIENT_ID,
+          clientSecretConfigured: !!GOOGLE_CLIENT_SECRET,
+          timestamp: new Date().toISOString()
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -93,37 +107,65 @@ serve(async (req) => {
       
       console.log('Making token request to Google OAuth endpoint');
       
-      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: tokenRequestBody,
-      });
+      try {
+        const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: tokenRequestBody,
+        });
 
-      const responseStatus = tokenResponse.status;
-      console.log('Token response status:', responseStatus);
-      
-      if (!tokenResponse.ok) {
-        const errorText = await tokenResponse.text();
-        console.error('Error exchanging code for tokens:', responseStatus, errorText);
+        const responseStatus = tokenResponse.status;
+        console.log('Token response status:', responseStatus);
         
-        // Create more detailed error message
+        // Get full response for debugging
+        const responseText = await tokenResponse.text();
+        console.log('Response body:', responseText);
+        
+        if (!tokenResponse.ok) {
+          console.error('Error exchanging code for tokens:', responseStatus, responseText);
+          
+          // Create more detailed error message
+          return new Response(
+            JSON.stringify({ 
+              error: `Failed to exchange code: ${responseStatus}`,
+              details: responseText,
+              requestedRedirectUri: redirectUri
+            }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Parse the response as JSON
+        let tokens;
+        try {
+          tokens = JSON.parse(responseText);
+        } catch (e) {
+          console.error('Failed to parse token response as JSON:', e);
+          return new Response(
+            JSON.stringify({ 
+              error: 'Invalid token response format', 
+              rawResponse: responseText 
+            }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        console.log('Successfully retrieved tokens');
+        
+        return new Response(
+          JSON.stringify(tokens),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (fetchError) {
+        console.error('Network error during token exchange:', fetchError);
         return new Response(
           JSON.stringify({ 
-            error: `Failed to exchange code: ${responseStatus}`,
-            details: errorText,
-            requestedRedirectUri: redirectUri
+            error: 'Network error during token exchange',
+            message: fetchError instanceof Error ? fetchError.message : String(fetchError)
           }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-
-      const tokens = await tokenResponse.json();
-      console.log('Successfully retrieved tokens');
-      
-      return new Response(
-        JSON.stringify(tokens),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
     }
 
     console.log('Invalid request action:', action);

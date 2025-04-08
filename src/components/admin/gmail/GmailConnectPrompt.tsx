@@ -1,8 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Loader2, LogIn, Mail, AlertCircle } from "lucide-react";
+import { Loader2, LogIn, Mail, AlertCircle, HelpCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { checkGmailIntegrationSetup } from '@/services/gmail/emailService';
+import { toast } from '@/hooks/use-toast';
 
 interface GmailConnectPromptProps {
   isLoading: boolean;
@@ -15,6 +17,27 @@ const GmailConnectPrompt: React.FC<GmailConnectPromptProps> = ({
   handleAuthenticate,
   error
 }) => {
+  const [diagnosisResult, setDiagnosisResult] = useState<string | null>(null);
+  const [isDiagnosing, setIsDiagnosing] = useState(false);
+
+  const runDiagnostics = async () => {
+    setIsDiagnosing(true);
+    try {
+      const result = await checkGmailIntegrationSetup();
+      setDiagnosisResult(result);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setDiagnosisResult(`Error running diagnostics: ${message}`);
+      toast({
+        title: "Diagnosis Failed",
+        description: message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsDiagnosing(false);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center py-8">
       <Mail className="h-16 w-16 text-gray-300 mb-4" />
@@ -29,6 +52,16 @@ const GmailConnectPrompt: React.FC<GmailConnectPromptProps> = ({
           <AlertTitle>Authentication Error</AlertTitle>
           <AlertDescription>
             {error}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {diagnosisResult && (
+        <Alert className="mb-4 max-w-md">
+          <HelpCircle className="h-4 w-4" />
+          <AlertTitle>Diagnostic Results</AlertTitle>
+          <AlertDescription className="whitespace-pre-wrap text-xs">
+            {diagnosisResult}
           </AlertDescription>
         </Alert>
       )}
@@ -74,6 +107,17 @@ const GmailConnectPrompt: React.FC<GmailConnectPromptProps> = ({
           </svg>
           Sign in with Google
         </Button>
+
+        <Button
+          onClick={runDiagnostics}
+          variant="secondary"
+          size="sm"
+          disabled={isDiagnosing}
+          className="mt-4 w-64"
+        >
+          {isDiagnosing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <HelpCircle className="h-4 w-4 mr-2" />}
+          Run Diagnostics
+        </Button>
       </div>
       
       <Alert className="mt-8">
@@ -81,14 +125,13 @@ const GmailConnectPrompt: React.FC<GmailConnectPromptProps> = ({
         <AlertTitle>Integration Setup Required</AlertTitle>
         <AlertDescription>
           <p className="mb-2">
-            To complete this integration, you need to set up a project in the Google Cloud Console:
+            To complete this integration, you need to:
           </p>
           <ol className="list-decimal list-inside space-y-1 text-sm">
-            <li>Create a project at <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Google Cloud Console</a></li>
-            <li>Enable the Gmail API for your project</li>
-            <li>Create OAuth credentials (client ID and secret) for a web application</li>
-            <li>Add <code className="bg-gray-100 px-1">{window.location.origin}/admin/gmail-integration</code> as an authorized redirect URI</li>
-            <li>Store the client ID and secret in Supabase secrets</li>
+            <li>Make sure <code className="bg-gray-100 px-1">GOOGLE_CLIENT_ID</code> and <code className="bg-gray-100 px-1">GOOGLE_CLIENT_SECRET</code> are set in Supabase secrets</li>
+            <li>Check that your redirect URI is configured correctly in Google Cloud Console</li>
+            <li>Ensure your redirect URI is <strong>exactly</strong>: <code className="bg-gray-100 px-1">{window.location.origin}/admin/gmail-integration</code></li>
+            <li>Verify OAuth consent screen is properly configured with appropriate scopes</li>
           </ol>
         </AlertDescription>
       </Alert>
