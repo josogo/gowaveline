@@ -5,7 +5,12 @@ import { toast } from 'sonner';
 import { useCrmData } from '@/contexts/CrmDataContext';
 
 export const useContactsManagement = () => {
+  // Add console log to help debug the context
+  console.log("Using CRM data hook...");
+  
   const { contacts, setContacts, createDealFromContact } = useCrmData();
+  console.log("CRM data retrieved:", { contactsCount: contacts?.length });
+  
   const [filteredContacts, setFilteredContacts] = useState<Contact[]>(contacts);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isImportExportDialogOpen, setIsImportExportDialogOpen] = useState(false);

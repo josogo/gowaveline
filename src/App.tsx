@@ -35,6 +35,8 @@ import IndustryDocuments from './pages/admin/IndustryDocuments';
 import DocumentsPage from './pages/admin/DocumentsPage';
 
 const App = () => {
+  console.log("App rendering with CrmDataProvider");
+  
   return (
     <BrowserRouter>
       <ThemeProvider attribute="class" defaultTheme="light">
