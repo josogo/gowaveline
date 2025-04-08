@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Command, CommandGroup, CommandItem, CommandEmpty } from '@/components/ui/command';
 import { X, Check, ChevronsUpDown } from 'lucide-react';
@@ -16,14 +15,20 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
   onChange,
   placeholder = 'Select options'
 }) => {
-  // Ensure we always have arrays even if props are undefined
-  const safeOptions = Array.isArray(options) ? options : [];
-  const safeSelected = Array.isArray(selected) ? selected : [];
+  // Make absolutely sure we have valid arrays for options and selected
+  const safeOptions = Array.isArray(options) ? [...options] : [];
+  const safeSelected = Array.isArray(selected) ? [...selected] : [];
   
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const commandRef = useRef<HTMLDivElement>(null);
+  const [commandItems, setCommandItems] = useState<string[]>([]);
+
+  // Set command items whenever safeOptions changes
+  useEffect(() => {
+    setCommandItems(safeOptions);
+  }, [safeOptions]);
 
   const handleUnselect = (item: string) => {
     onChange(safeSelected.filter(i => i !== item));
@@ -32,17 +37,23 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
   const handleSelect = (item: string) => {
     if (!item) return; // Guard against empty values
     
-    if (safeSelected.includes(item)) {
-      handleUnselect(item);
+    const isSelected = safeSelected.includes(item);
+    
+    if (isSelected) {
+      onChange(safeSelected.filter(i => i !== item));
     } else {
       onChange([...safeSelected, item]);
     }
+    
+    // Keep focus on input and reset input value after selection
+    setInputValue('');
+    inputRef.current?.focus();
   };
 
   const handleCreateTag = () => {
-    if (inputValue && !safeOptions.includes(inputValue) && !safeSelected.includes(inputValue)) {
-      handleSelect(inputValue);
-      setInputValue('');
+    const trimmedValue = inputValue.trim();
+    if (trimmedValue && !safeOptions.includes(trimmedValue) && !safeSelected.includes(trimmedValue)) {
+      handleSelect(trimmedValue);
     }
   };
 
@@ -88,7 +99,9 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
         className="flex flex-wrap gap-1 p-1 border rounded-md bg-background min-h-10"
         onClick={() => {
           setOpen(true);
-          inputRef.current?.focus();
+          setTimeout(() => {
+            inputRef.current?.focus();
+          }, 0);
         }}
       >
         {safeSelected.map(item => (
@@ -140,11 +153,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
                 safeOptions.map(option => (
                   <CommandItem
                     key={option}
-                    onSelect={() => {
-                      handleSelect(option);
-                      // Keep focus on input after selection
-                      setTimeout(() => inputRef.current?.focus(), 0);
-                    }}
+                    onSelect={() => handleSelect(option)}
                     className="flex items-center gap-2 py-1"
                   >
                     <div className={`mr-2 flex h-4 w-4 items-center justify-center rounded-sm border ${
@@ -160,16 +169,12 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
                   No options available
                 </CommandItem>
               )}
-              {inputValue && !safeOptions.includes(inputValue) && (
+              {inputValue.trim() && !safeOptions.includes(inputValue.trim()) && (
                 <CommandItem
-                  onSelect={() => {
-                    handleCreateTag();
-                    // Keep focus on input after creation
-                    setTimeout(() => inputRef.current?.focus(), 0);
-                  }}
+                  onSelect={() => handleCreateTag()}
                   className="flex items-center gap-2 py-1 italic"
                 >
-                  Create "{inputValue}"
+                  Create "{inputValue.trim()}"
                 </CommandItem>
               )}
             </CommandGroup>
