@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -20,7 +21,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -40,9 +40,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Search, Plus, Edit, Trash2, MoreHorizontal } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, MoreHorizontal, ArrowUp, ArrowDown, Upload, Users, FileText } from 'lucide-react';
 import { toast } from 'sonner';
-import { useCrmData, Deal } from '@/contexts/CrmDataContext';
+import { useCrmData, Deal, DealDocument } from '@/contexts/CrmDataContext';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -53,6 +53,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const dealSchema = z.object({
   name: z.string().min(1, 'Business name is required'),
@@ -62,12 +65,29 @@ const dealSchema = z.object({
   assignedTo: z.string().min(1, 'Please assign this deal to a team member')
 });
 
+const documentSchema = z.object({
+  name: z.string().min(1, 'Document name is required'),
+  type: z.enum(['statement', 'bank', 'corp_docs', 'license', 'void_check', 'tax_return', 'other']),
+  file: z.any().optional()
+});
+
 const DealsContent = () => {
-  const { deals, setDeals, teamMembers } = useCrmData();
+  const { deals, setDeals, teamMembers, contacts, linkContactToDeal } = useCrmData();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isDocUploadOpen, setIsDocUploadOpen] = useState(false);
   const [editingDeal, setEditingDeal] = useState<string | null>(null);
+  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortField, setSortField] = useState<keyof Deal>('createdAt');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   
+  const location = useLocation();
+  const navigate = useNavigate();
+  const queryParams = new URLSearchParams(location.search);
+  const dealIdFromUrl = queryParams.get('dealId');
+  
+  // Forms
   const form = useForm<z.infer<typeof dealSchema>>({
     resolver: zodResolver(dealSchema),
     defaultValues: {
@@ -78,6 +98,25 @@ const DealsContent = () => {
       assignedTo: ''
     }
   });
+  
+  const docForm = useForm<z.infer<typeof documentSchema>>({
+    resolver: zodResolver(documentSchema),
+    defaultValues: {
+      name: '',
+      type: 'statement'
+    }
+  });
+  
+  // Check for dealId in URL query params on component mount
+  useEffect(() => {
+    if (dealIdFromUrl) {
+      const deal = deals.find(d => d.id === dealIdFromUrl);
+      if (deal) {
+        setSelectedDeal(deal);
+        setIsDetailOpen(true);
+      }
+    }
+  }, [dealIdFromUrl, deals]);
   
   const openEditDialog = (deal: Deal) => {
     setEditingDeal(deal.id);
@@ -101,6 +140,20 @@ const DealsContent = () => {
       assignedTo: ''
     });
     setIsDialogOpen(true);
+  };
+  
+  const openDealDetail = (deal: Deal) => {
+    setSelectedDeal(deal);
+    setIsDetailOpen(true);
+    // Update URL with deal ID for sharing/bookmarking
+    navigate(`/admin/deals?dealId=${deal.id}`, { replace: true });
+  };
+  
+  const closeDealDetail = () => {
+    setIsDetailOpen(false);
+    setSelectedDeal(null);
+    // Remove deal ID from URL
+    navigate('/admin/deals', { replace: true });
   };
   
   const handleSubmit = (values: z.infer<typeof dealSchema>) => {
@@ -128,6 +181,37 @@ const DealsContent = () => {
     setIsDialogOpen(false);
   };
   
+  const handleDocumentSubmit = (values: z.infer<typeof documentSchema>) => {
+    if (!selectedDeal) return;
+    
+    // Mock file upload - in a real app, you would handle the file upload to a server
+    const mockDocument: DealDocument = {
+      id: Date.now().toString(),
+      name: values.name,
+      type: values.type,
+      uploadedAt: new Date().toISOString(),
+      uploadedBy: 'Current User',
+      fileUrl: '#',
+      fileType: 'application/pdf',
+      fileSize: 1024 * 1024 * 2 // 2MB mock size
+    };
+    
+    setDeals(prev => prev.map(deal => {
+      if (deal.id === selectedDeal.id) {
+        const documents = deal.documents || [];
+        return {
+          ...deal,
+          documents: [...documents, mockDocument]
+        };
+      }
+      return deal;
+    }));
+    
+    setIsDocUploadOpen(false);
+    docForm.reset();
+    toast.success('Document uploaded successfully');
+  };
+  
   const handleDelete = (id: string) => {
     setDeals(prev => prev.filter(deal => deal.id !== id));
     toast.success('Deal deleted successfully');
@@ -140,10 +224,42 @@ const DealsContent = () => {
     toast.success(`Deal marked as ${status}`);
   };
   
-  const filteredDeals = deals.filter(deal => 
-    deal.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    deal.contactName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleSortChange = (field: keyof Deal) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+  
+  const handleLinkContact = (contactId: string) => {
+    if (!selectedDeal) return;
+    
+    linkContactToDeal(contactId, selectedDeal.id);
+    toast.success('Contact linked to deal');
+  };
+  
+  // Apply filters and sorting
+  const filteredDeals = deals
+    .filter(deal => 
+      deal.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      deal.contactName.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => {
+      // Handle sorting for different field types
+      if (sortField === 'value') {
+        return sortDirection === 'asc' 
+          ? a.value - b.value 
+          : b.value - a.value;
+      } else {
+        const valueA = a[sortField]?.toString() || '';
+        const valueB = b[sortField]?.toString() || '';
+        return sortDirection === 'asc'
+          ? valueA.localeCompare(valueB)
+          : valueB.localeCompare(valueA);
+      }
+    });
   
   const getStatusBadgeColor = (status: string) => {
     switch(status) {
@@ -157,6 +273,33 @@ const DealsContent = () => {
   const getTeamMemberName = (id: string) => {
     const member = teamMembers.find(member => member.id === id);
     return member ? member.name : 'Unassigned';
+  };
+  
+  const getSortIcon = (field: keyof Deal) => {
+    if (sortField !== field) return null;
+    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
+  };
+  
+  const getRelatedContacts = (dealId: string) => {
+    const deal = deals.find(d => d.id === dealId);
+    if (!deal || !deal.relatedContacts) return [];
+    
+    return contacts.filter(contact => 
+      deal.relatedContacts?.includes(contact.id)
+    );
+  };
+  
+  const getDocumentTypeLabel = (type: string) => {
+    switch(type) {
+      case 'statement': return 'Merchant Statement';
+      case 'bank': return 'Bank Statement';
+      case 'corp_docs': return 'Corporation Documents';
+      case 'license': return 'License';
+      case 'void_check': return 'Void Check';
+      case 'tax_return': return 'Tax Return';
+      case 'other': return 'Other Document';
+      default: return type;
+    }
   };
   
   return (
@@ -189,11 +332,51 @@ const DealsContent = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Business Name</TableHead>
-                  <TableHead>Value</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Assigned To</TableHead>
+                  <TableHead 
+                    className="cursor-pointer"
+                    onClick={() => handleSortChange('name')}
+                  >
+                    <div className="flex items-center">
+                      Business Name
+                      {getSortIcon('name')}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer"
+                    onClick={() => handleSortChange('value')}
+                  >
+                    <div className="flex items-center">
+                      Value
+                      {getSortIcon('value')}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer"
+                    onClick={() => handleSortChange('contactName')}
+                  >
+                    <div className="flex items-center">
+                      Contact
+                      {getSortIcon('contactName')}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer"
+                    onClick={() => handleSortChange('status')}
+                  >
+                    <div className="flex items-center">
+                      Status
+                      {getSortIcon('status')}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer"
+                    onClick={() => handleSortChange('assignedTo')}
+                  >
+                    <div className="flex items-center">
+                      Assigned To
+                      {getSortIcon('assignedTo')}
+                    </div>
+                  </TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -206,7 +389,7 @@ const DealsContent = () => {
                   </TableRow>
                 ) : (
                   filteredDeals.map((deal) => (
-                    <TableRow key={deal.id}>
+                    <TableRow key={deal.id} className="cursor-pointer hover:bg-gray-50" onClick={() => openDealDetail(deal)}>
                       <TableCell className="font-medium">{deal.name}</TableCell>
                       <TableCell>${deal.value.toLocaleString()}</TableCell>
                       <TableCell>{deal.contactName}</TableCell>
@@ -218,27 +401,42 @@ const DealsContent = () => {
                       <TableCell>{getTeamMemberName(deal.assignedTo)}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                             <Button variant="ghost" size="sm">
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openEditDialog(deal)}>
+                          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation();
+                              openEditDialog(deal);
+                            }}>
                               <Edit className="mr-2 h-4 w-4" />
                               Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleStatusChange(deal.id, 'closed')}>
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation();
+                              handleStatusChange(deal.id, 'closed');
+                            }}>
                               Mark as Closed
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleStatusChange(deal.id, 'pending')}>
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation();
+                              handleStatusChange(deal.id, 'pending');
+                            }}>
                               Mark as Pending
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleStatusChange(deal.id, 'lost')}>
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation();
+                              handleStatusChange(deal.id, 'lost');
+                            }}>
                               Mark as Lost
                             </DropdownMenuItem>
                             <DropdownMenuItem 
-                              onClick={() => handleDelete(deal.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(deal.id);
+                              }}
                               className="text-red-600 focus:text-red-600"
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
@@ -256,6 +454,7 @@ const DealsContent = () => {
         </CardContent>
       </Card>
       
+      {/* Add/Edit Deal Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[525px]">
           <DialogHeader>
@@ -373,6 +572,294 @@ const DealsContent = () => {
                   Cancel
                 </Button>
                 <Button type="submit">{editingDeal ? 'Save Changes' : 'Create Deal'}</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Deal Detail Dialog */}
+      <Dialog open={isDetailOpen} onOpenChange={closeDealDetail}>
+        <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto">
+          {selectedDeal && (
+            <>
+              <DialogHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <DialogTitle className="text-xl">{selectedDeal.name}</DialogTitle>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      Created on {new Date(selectedDeal.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <Badge variant="outline" className={getStatusBadgeColor(selectedDeal.status)}>
+                    {selectedDeal.status.charAt(0).toUpperCase() + selectedDeal.status.slice(1)}
+                  </Badge>
+                </div>
+              </DialogHeader>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Deal Information</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <span className="text-sm text-muted-foreground">Value:</span>
+                      <div className="font-semibold">${selectedDeal.value.toLocaleString()}</div>
+                    </div>
+                    <div>
+                      <span className="text-sm text-muted-foreground">Primary Contact:</span>
+                      <div className="font-semibold">{selectedDeal.contactName}</div>
+                    </div>
+                    <div>
+                      <span className="text-sm text-muted-foreground">Assigned To:</span>
+                      <div className="font-semibold">{getTeamMemberName(selectedDeal.assignedTo)}</div>
+                    </div>
+                    <div>
+                      <span className="text-sm text-muted-foreground">Expected Comission:</span>
+                      <div className="font-semibold">${(selectedDeal.value * 0.35).toLocaleString()}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6">
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-lg font-semibold">Actions</h3>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button 
+                        variant="outline"
+                        className="flex items-center justify-center"
+                        onClick={() => openEditDialog(selectedDeal)}
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit Deal
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        className="flex items-center justify-center"
+                        onClick={() => setIsDocUploadOpen(true)}
+                      >
+                        <Upload className="mr-2 h-4 w-4" />
+                        Upload Document
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <Tabs defaultValue="contacts">
+                    <TabsList className="grid grid-cols-2 w-full">
+                      <TabsTrigger value="contacts">
+                        <Users className="h-4 w-4 mr-2" />
+                        Related Contacts
+                      </TabsTrigger>
+                      <TabsTrigger value="documents">
+                        <FileText className="h-4 w-4 mr-2" />
+                        Documents
+                      </TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="contacts" className="mt-4">
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <h4 className="text-sm font-semibold">Linked Contacts</h4>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <Plus className="h-3.5 w-3.5 mr-1" />
+                                Link Contact
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              {contacts
+                                .filter(c => !selectedDeal.relatedContacts?.includes(c.id))
+                                .map(contact => (
+                                  <DropdownMenuItem 
+                                    key={contact.id}
+                                    onClick={() => handleLinkContact(contact.id)}
+                                  >
+                                    {contact.name}
+                                  </DropdownMenuItem>
+                                ))
+                              }
+                              {contacts.filter(c => !selectedDeal.relatedContacts?.includes(c.id)).length === 0 && (
+                                <DropdownMenuItem disabled>No contacts to link</DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        
+                        {getRelatedContacts(selectedDeal.id).length === 0 ? (
+                          <div className="p-4 text-center text-sm text-muted-foreground border border-dashed rounded-md">
+                            No contacts linked to this deal
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {getRelatedContacts(selectedDeal.id).map(contact => (
+                              <div key={contact.id} className="p-3 border rounded-md">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center">
+                                    <Avatar className="h-8 w-8 mr-2">
+                                      <AvatarFallback>{contact.name[0]}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                      <div className="font-medium">{contact.name}</div>
+                                      <div className="text-xs text-muted-foreground">
+                                        {contact.company || contact.email}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <Badge className="ml-2">
+                                    {contact.type.charAt(0).toUpperCase() + contact.type.slice(1)}
+                                  </Badge>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="documents" className="mt-4">
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <h4 className="text-sm font-semibold">Deal Documents</h4>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setIsDocUploadOpen(true)}
+                          >
+                            <Upload className="h-3.5 w-3.5 mr-1" />
+                            Upload
+                          </Button>
+                        </div>
+                        
+                        {!selectedDeal.documents || selectedDeal.documents.length === 0 ? (
+                          <div className="p-4 text-center text-sm text-muted-foreground border border-dashed rounded-md">
+                            No documents uploaded yet
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {selectedDeal.documents.map(doc => (
+                              <div key={doc.id} className="p-3 border rounded-md flex items-center justify-between">
+                                <div className="flex items-center">
+                                  <FileText className="h-5 w-5 mr-3 text-orange-500" />
+                                  <div>
+                                    <div className="font-medium">{doc.name}</div>
+                                    <div className="text-xs text-muted-foreground">
+                                      {getDocumentTypeLabel(doc.type)} • {new Date(doc.uploadedAt).toLocaleDateString()}
+                                    </div>
+                                  </div>
+                                </div>
+                                <Button variant="ghost" size="sm">
+                                  View
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </div>
+              </div>
+              
+              <DialogFooter>
+                <Button variant="outline" onClick={closeDealDetail}>Close</Button>
+                <Button 
+                  onClick={() => {
+                    handleStatusChange(selectedDeal.id, 'closed');
+                    closeDealDetail();
+                  }}
+                  className="bg-green-600 hover:bg-green-700"
+                  disabled={selectedDeal.status === 'closed'}
+                >
+                  Mark as Closed
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Document Upload Dialog */}
+      <Dialog open={isDocUploadOpen} onOpenChange={setIsDocUploadOpen}>
+        <DialogContent className="sm:max-w-[450px]">
+          <DialogHeader>
+            <DialogTitle>Upload Document</DialogTitle>
+            <DialogDescription>
+              Upload a document for this deal.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...docForm}>
+            <form onSubmit={docForm.handleSubmit(handleDocumentSubmit)} className="space-y-4">
+              <FormField
+                control={docForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Document Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter document name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={docForm.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Document Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select document type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="statement">Merchant Statement</SelectItem>
+                        <SelectItem value="bank">Bank Statement</SelectItem>
+                        <SelectItem value="corp_docs">Corporation Documents</SelectItem>
+                        <SelectItem value="license">License</SelectItem>
+                        <SelectItem value="void_check">Void Check</SelectItem>
+                        <SelectItem value="tax_return">Tax Return</SelectItem>
+                        <SelectItem value="other">Other Document</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={docForm.control}
+                name="file"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>File</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="file" 
+                        className="cursor-pointer" 
+                        onChange={(e) => field.onChange(e.target.files?.[0])}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <DialogFooter>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsDocUploadOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit">Upload Document</Button>
               </DialogFooter>
             </form>
           </Form>

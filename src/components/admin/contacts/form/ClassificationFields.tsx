@@ -41,6 +41,7 @@ export const ClassificationFields: React.FC<ClassificationFieldsProps> = ({ form
               </FormControl>
               <SelectContent>
                 <SelectItem value="lead">Lead</SelectItem>
+                <SelectItem value="prospect">Prospect</SelectItem>
                 <SelectItem value="client">Client</SelectItem>
                 <SelectItem value="partner">Partner</SelectItem>
                 <SelectItem value="vendor">Vendor</SelectItem>

@@ -1,6 +1,6 @@
 
 export type ContactStatus = 'new' | 'active' | 'inactive' | 'lead' | 'churned';
-export type ContactType = 'lead' | 'client' | 'partner' | 'vendor';
+export type ContactType = 'lead' | 'client' | 'partner' | 'vendor' | 'prospect';
 
 export interface Contact {
   id: string;
@@ -17,6 +17,7 @@ export interface Contact {
   notes?: string;
   assignedTo?: string;
   createdAt: string;
+  relatedDeals?: string[]; // Array of deal IDs related to this contact
 }
 
 export interface ContactFormValues {
