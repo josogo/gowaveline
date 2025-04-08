@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Card,
@@ -43,7 +42,7 @@ import {
 } from "@/components/ui/form";
 import { Search, Plus, Edit, Trash2, MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
-import { useCrmData } from '@/contexts/CrmDataContext';
+import { useCrmData, Deal } from '@/contexts/CrmDataContext';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -80,7 +79,7 @@ const DealsContent = () => {
     }
   });
   
-  const openEditDialog = (deal: typeof deals[0]) => {
+  const openEditDialog = (deal: Deal) => {
     setEditingDeal(deal.id);
     form.reset({
       name: deal.name,
@@ -106,7 +105,6 @@ const DealsContent = () => {
   
   const handleSubmit = (values: z.infer<typeof dealSchema>) => {
     if (editingDeal) {
-      // Update existing deal
       setDeals(prev => prev.map(deal => 
         deal.id === editingDeal ? {
           ...deal,
@@ -115,10 +113,13 @@ const DealsContent = () => {
       ));
       toast.success('Deal updated successfully');
     } else {
-      // Create new deal
-      const newDeal = {
+      const newDeal: Deal = {
         id: Date.now().toString(),
-        ...values,
+        name: values.name,
+        value: values.value,
+        status: values.status,
+        contactName: values.contactName,
+        assignedTo: values.assignedTo,
         createdAt: new Date().toISOString().split('T')[0]
       };
       setDeals(prev => [...prev, newDeal]);
