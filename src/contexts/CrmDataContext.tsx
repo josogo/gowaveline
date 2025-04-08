@@ -5,7 +5,7 @@ export interface Deal {
   id: string;
   name: string;
   value: number;
-  processingVolume?: number; // Added processingVolume field
+  processingVolume?: number;
   status: 'pending' | 'closed' | 'lost';
   contactName: string;
   assignedTo: string;
@@ -44,6 +44,8 @@ export interface Contact {
   type: string;
   status: string;
   createdAt: string;
+  phone?: string;
+  tags?: string[];
 }
 
 // Define the context type
@@ -56,6 +58,9 @@ interface CrmDataContextType {
   setTeamMembers: React.Dispatch<React.SetStateAction<TeamMember[]>>;
   linkContactToDeal: (contactId: string, dealId: string) => void;
   createDealFromContact: (contact: any) => string;
+  totalVolume: number;
+  totalRevenue: number;
+  pendingDeals: number;
 }
 
 // Create the context
@@ -161,7 +166,7 @@ const initialDeals = [
     id: 'd1',
     name: 'ABC Restaurant POS System',
     value: 5000,
-    processingVolume: 25000, // Added processingVolume
+    processingVolume: 25000,
     status: 'pending' as const,
     contactName: 'John Smith',
     assignedTo: 't1',
@@ -176,7 +181,7 @@ const initialDeals = [
         uploadedBy: 'Sarah Jones',
         fileUrl: '#',
         fileType: 'application/pdf',
-        fileSize: 1024 * 1024 * 2.5 // 2.5MB
+        fileSize: 1024 * 1024 * 2.5
       },
       {
         id: 'doc2',
@@ -194,7 +199,7 @@ const initialDeals = [
     id: 'd2',
     name: 'XYZ Retail Payment Gateway',
     value: 3500,
-    processingVolume: 18000, // Added processingVolume
+    processingVolume: 18000,
     status: 'closed' as const,
     contactName: 'Jane Doe',
     assignedTo: 't2',
@@ -209,7 +214,7 @@ const initialDeals = [
         uploadedBy: 'Mike Johnson',
         fileUrl: '#',
         fileType: 'application/pdf',
-        fileSize: 1024 * 1024 * 1.8 // 1.8MB
+        fileSize: 1024 * 1024 * 1.8
       }
     ]
   },
@@ -217,7 +222,7 @@ const initialDeals = [
     id: 'd3',
     name: 'Golden Gate Coffee ATM Installation',
     value: 7500,
-    processingVolume: 35000, // Added processingVolume
+    processingVolume: 35000,
     status: 'pending' as const,
     contactName: 'Robert Chen',
     assignedTo: 't1',
@@ -279,6 +284,13 @@ export const CrmDataProvider: React.FC<{children: React.ReactNode}> = ({ childre
     return savedTeamMembers ? JSON.parse(savedTeamMembers) : initialTeamMembers;
   });
   
+  // Calculate derived values
+  const totalVolume = deals.reduce((sum, deal) => sum + (deal.processingVolume || 0), 0);
+  const totalRevenue = deals
+    .filter(deal => deal.status === 'closed')
+    .reduce((sum, deal) => sum + deal.value, 0);
+  const pendingDeals = deals.filter(deal => deal.status === 'pending').length;
+  
   // Save to localStorage when data changes
   useEffect(() => {
     localStorage.setItem('crm_contacts', JSON.stringify(contacts));
@@ -298,11 +310,9 @@ export const CrmDataProvider: React.FC<{children: React.ReactNode}> = ({ childre
       prevDeals.map(deal => {
         if (deal.id === dealId) {
           const existingRelatedContacts = deal.relatedContacts || [];
-          // Check if the contact is already linked
           if (existingRelatedContacts.includes(contactId)) {
             return deal;
           }
-          // Add the contact to the related contacts array
           return {
             ...deal,
             relatedContacts: [...existingRelatedContacts, contactId]
@@ -320,11 +330,11 @@ export const CrmDataProvider: React.FC<{children: React.ReactNode}> = ({ childre
       id: newDealId,
       name: `New opportunity with ${contact.company || contact.name}`,
       value: 0,
-      processingVolume: 0, // Added processingVolume field with default value
+      processingVolume: 0,
       status: 'pending',
       contactName: contact.name,
-      assignedTo: teamMembers[0].id, // Assign to first team member by default
-      createdAt: new Date().toISOString().split('T')[0], // Today's date
+      assignedTo: teamMembers[0].id,
+      createdAt: new Date().toISOString().split('T')[0],
       relatedContacts: [contact.id]
     };
     
@@ -340,7 +350,10 @@ export const CrmDataProvider: React.FC<{children: React.ReactNode}> = ({ childre
     teamMembers,
     setTeamMembers,
     linkContactToDeal,
-    createDealFromContact
+    createDealFromContact,
+    totalVolume,
+    totalRevenue,
+    pendingDeals
   };
   
   return (

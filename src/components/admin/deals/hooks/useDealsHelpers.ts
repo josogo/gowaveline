@@ -30,10 +30,11 @@ export const useDealsHelpers = () => {
         name: contact.name,
         email: contact.email || '',
         phone: contact.phone || '',
-        company: contact.company,
+        company: contact.company || '',
         type: contact.type || 'lead',
         status: contact.status || 'new',
-        tags: contact.tags || []
+        tags: contact.tags || [],
+        createdAt: contact.createdAt
       }));
   };
   

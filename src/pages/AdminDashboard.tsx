@@ -54,7 +54,7 @@ const AdminDashboard = () => {
   const isMobile = useIsMobile();
   const [selectedPeriod, setSelectedPeriod] = useState('month');
   const [showAllTeamMembers, setShowAllTeamMembers] = useState(false);
-  const { teamMembers, deals, totalVolume, totalRevenue, pendingDeals } = useCrmData();
+  const { teamMembers, deals, totalVolume = 0, totalRevenue = 0, pendingDeals = 0 } = useCrmData();
   
   // Determine how many team members to show based on toggle state and screen size
   const visibleTeamMembers = showAllTeamMembers ? teamMembers : (isMobile ? teamMembers.slice(0, 3) : teamMembers);
