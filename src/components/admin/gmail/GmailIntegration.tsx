@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -109,14 +108,21 @@ const GmailIntegration = () => {
       
       setUserProfile(profile);
       setIsAuthenticated(true);
-      toast.success('Successfully connected to Gmail');
+      toast({
+        title: "Successfully connected to Gmail",
+        status: "success"
+      });
       
       await fetchEmails(tokens.access_token);
     } catch (error) {
       console.error('Error handling auth callback:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setAuthError(`Authentication failed: ${errorMessage}`);
-      toast.error('Authentication failed: ' + errorMessage);
+      toast({
+        title: "Authentication failed",
+        description: errorMessage,
+        status: "error"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -135,7 +141,11 @@ const GmailIntegration = () => {
     } catch (error) {
       console.error('Error fetching emails:', error);
       setSyncError((error instanceof Error) ? error.message : 'Unknown error');
-      toast.error('Failed to fetch emails: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      toast({
+        title: "Failed to fetch emails",
+        description: (error instanceof Error) ? error.message : 'Unknown error',
+        status: "error"
+      });
     } finally {
       setIsSyncing(false);
     }
@@ -191,7 +201,11 @@ const GmailIntegration = () => {
       console.error('Error starting authentication:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setAuthError(`Failed to start authentication: ${errorMessage}`);
-      toast.error('Failed to start authentication: ' + errorMessage);
+      toast({
+        title: "Failed to start authentication",
+        description: errorMessage,
+        status: "error"
+      });
       setIsLoading(false);
     }
   };
@@ -204,10 +218,17 @@ const GmailIntegration = () => {
       setIsAuthenticated(false);
       setUserProfile(null);
       setEmails([]);
-      toast.info("Disconnected from Gmail");
+      toast({
+        title: "Disconnected from Gmail",
+        status: "info"
+      });
     } catch (error) {
       console.error('Error during logout:', error);
-      toast.error('Logout failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      toast({
+        title: "Logout failed",
+        description: (error instanceof Error) ? error.message : 'Unknown error',
+        status: "error"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -224,10 +245,17 @@ const GmailIntegration = () => {
       }
       
       await fetchEmails(tokens.accessToken);
-      toast.success("Emails refreshed");
+      toast({
+        title: "Emails refreshed",
+        status: "success"
+      });
     } catch (error) {
       console.error('Error refreshing emails:', error);
-      toast.error('Failed to refresh emails: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      toast({
+        title: "Failed to refresh emails", 
+        description: (error instanceof Error) ? error.message : 'Unknown error',
+        status: "error"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -236,7 +264,10 @@ const GmailIntegration = () => {
   const handleDeleteEmail = (emailId: string) => {
     const updatedEmails = emails.filter(email => email.id !== emailId);
     setEmails(updatedEmails);
-    toast.success("Email deleted");
+    toast({
+      title: "Email deleted",
+      status: "success"
+    });
   };
 
   const handleMarkAsRead = (emailId: string) => {
@@ -258,18 +289,28 @@ const GmailIntegration = () => {
       
       await sendGmailEmail(tokens.accessToken, formData.to, formData.subject, formData.body);
       
-      toast.success("Email sent successfully");
+      toast({
+        title: "Email sent successfully",
+        status: "success"
+      });
       setIsComposeOpen(false);
     } catch (error) {
       console.error('Error sending email:', error);
-      toast.error('Failed to send email: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      toast({
+        title: "Failed to send email",
+        description: (error instanceof Error) ? error.message : 'Unknown error',
+        status: "error"
+      });
     } finally {
       setIsSending(false);
     }
   };
 
   const handleConvertToLead = (emailId: string) => {
-    toast.success("Email converted to lead");
+    toast({
+      title: "Email converted to lead",
+      status: "success"
+    });
   };
 
   const syncEmails = async () => {
@@ -286,7 +327,10 @@ const GmailIntegration = () => {
     } catch (error) {
       console.error('Error syncing emails:', error);
       setSyncError((error instanceof Error) ? error.message : 'Unknown error');
-      toast.error('Failed to sync emails');
+      toast({
+        title: "Failed to sync emails",
+        status: "error"
+      });
     } finally {
       setIsSyncing(false);
     }
