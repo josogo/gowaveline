@@ -9,7 +9,7 @@ import {
   DocumentEditDialog,
   DocumentFillDialog,
   PreAppGenerationDialog,
-  Document,
+  DocumentItem,
 } from '@/components/admin/documents';
 import { checkUserIsAdmin, fetchDocuments, deleteDocument } from '@/components/admin/documents/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -22,7 +22,7 @@ const DocumentsPage = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [fillDialogOpen, setFillDialogOpen] = useState(false);
   const [preAppDialogOpen, setPreAppDialogOpen] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<DocumentItem | null>(null);
   const [filter, setFilter] = useState('all');
   const [sort, setSort] = useState('newest');
   const [isAdmin, setIsAdmin] = useState(false);
@@ -90,19 +90,19 @@ const DocumentsPage = () => {
   };
   
   // Handle view document
-  const handleViewDocument = (document: Document) => {
+  const handleViewDocument = (document: DocumentItem) => {
     setSelectedDocument(document);
     setViewDialogOpen(true);
   };
   
   // Handle edit document
-  const handleEditDocument = (document: Document) => {
+  const handleEditDocument = (document: DocumentItem) => {
     setSelectedDocument(document);
     setEditDialogOpen(true);
   };
   
   // Handle fill document
-  const handleFillDocument = (document: Document) => {
+  const handleFillDocument = (document: DocumentItem) => {
     setSelectedDocument(document);
     setFillDialogOpen(true);
   };

@@ -1,8 +1,8 @@
 
-import { Document, DocumentType } from './types';
+import { DocumentItem, DocumentType } from './types';
 import { supabase } from '@/integrations/supabase/client';
 
-export async function fetchDocuments(): Promise<Document[]> {
+export async function fetchDocuments(): Promise<DocumentItem[]> {
   const { data, error } = await supabase
     .from('documents')
     .select('*')
@@ -13,10 +13,10 @@ export async function fetchDocuments(): Promise<Document[]> {
     throw error;
   }
 
-  return data as Document[];
+  return data as DocumentItem[];
 }
 
-export async function fetchDocumentById(id: string): Promise<Document> {
+export async function fetchDocumentById(id: string): Promise<DocumentItem> {
   const { data, error } = await supabase
     .from('documents')
     .select('*')
@@ -28,10 +28,21 @@ export async function fetchDocumentById(id: string): Promise<Document> {
     throw error;
   }
 
-  return data as Document;
+  return data as DocumentItem;
 }
 
-export async function createDocument(document: Partial<Document>): Promise<Document> {
+export async function createDocument(document: {
+  name: string;
+  description?: string;
+  file_path: string;
+  file_type: string;
+  file_size: number;
+  owner_id?: string;
+  uploaded_by: string;
+  document_type: DocumentType;
+  metadata?: any;
+  is_template: boolean;
+}): Promise<DocumentItem> {
   const { data, error } = await supabase
     .from('documents')
     .insert(document)
@@ -42,10 +53,10 @@ export async function createDocument(document: Partial<Document>): Promise<Docum
     throw error;
   }
 
-  return data[0] as Document;
+  return data[0] as DocumentItem;
 }
 
-export async function updateDocument(id: string, updates: Partial<Document>): Promise<Document> {
+export async function updateDocument(id: string, updates: Partial<DocumentItem>): Promise<DocumentItem> {
   const { data, error } = await supabase
     .from('documents')
     .update(updates)
@@ -57,7 +68,7 @@ export async function updateDocument(id: string, updates: Partial<Document>): Pr
     throw error;
   }
 
-  return data[0] as Document;
+  return data[0] as DocumentItem;
 }
 
 export async function deleteDocument(id: string): Promise<boolean> {

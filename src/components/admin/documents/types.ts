@@ -1,7 +1,7 @@
-import { User } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
 
-export interface Document {
+import { User } from '@supabase/supabase-js';
+
+export interface DocumentItem {
   id: string;
   name: string;
   description?: string;

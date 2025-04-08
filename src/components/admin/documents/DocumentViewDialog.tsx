@@ -9,13 +9,13 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
-import { Document } from './types';
+import { DocumentItem } from './types';
 import { supabase } from '@/integrations/supabase/client';
 
 interface DocumentViewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  document: Document | null;
+  document: DocumentItem | null;
 }
 
 export const DocumentViewDialog: React.FC<DocumentViewDialogProps> = ({
@@ -52,12 +52,12 @@ export const DocumentViewDialog: React.FC<DocumentViewDialogProps> = ({
   const handleDownload = async () => {
     if (!document || !documentUrl) return;
     
-    const link = document.createElement('a');
+    const link = window.document.createElement('a');
     link.href = documentUrl;
     link.download = document.name;
-    document.body.appendChild(link);
+    window.document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    window.document.body.removeChild(link);
   };
   
   return (

@@ -13,14 +13,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Download, Save } from 'lucide-react';
 import { toast } from 'sonner';
-import { Document } from './types';
+import { DocumentItem } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { createDocument } from './api';
 
 interface DocumentFillDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  document: Document | null;
+  document: DocumentItem | null;
   onSuccess: () => void;
 }
 
@@ -158,12 +158,12 @@ export const DocumentFillDialog: React.FC<DocumentFillDialogProps> = ({
       
       // Create download URL and trigger download
       const url = URL.createObjectURL(pdfBlob);
-      const link = document.createElement('a');
+      const link = window.document.createElement('a');
       link.href = url;
       link.download = `Filled_${document.name}.pdf`;
-      document.body.appendChild(link);
+      window.document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      window.document.body.removeChild(link);
       
       if (!shouldSave) {
         toast.success('Document filled successfully');

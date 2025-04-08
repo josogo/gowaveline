@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Document } from './types';
+import { DocumentItem } from './types';
 import { FileText, File, Download, Trash2, Edit, Eye, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,11 +15,11 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 
 interface DocumentCardProps {
-  document: Document;
+  document: DocumentItem;
   onDelete: (id: string) => void;
-  onView: (document: Document) => void;
-  onEdit: (document: Document) => void;
-  onFill: (document: Document) => void;
+  onView: (document: DocumentItem) => void;
+  onEdit: (document: DocumentItem) => void;
+  onFill: (document: DocumentItem) => void;
   isAdmin: boolean;
 }
 
@@ -70,12 +70,12 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
       if (error) throw error;
       
       // Create a temporary anchor and trigger download
-      const link = document.createElement('a');
+      const link = window.document.createElement('a');
       link.href = data.signedUrl;
       link.download = document.name;
-      document.body.appendChild(link);
+      window.document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      window.document.body.removeChild(link);
     } catch (error) {
       console.error('Error downloading file:', error);
     }
