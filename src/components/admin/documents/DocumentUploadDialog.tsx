@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -18,7 +17,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { DocumentType } from './types';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, File, X } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { 
   Select,
   SelectContent,
@@ -95,7 +94,7 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
       const fileExt = selectedFile.name.split('.').pop();
       const filePath = `${user.id}/${timestamp}_${selectedFile.name}`;
       
-      const { error: uploadError, data: uploadData } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('documents')
         .upload(filePath, selectedFile, {
           contentType: selectedFile.type,

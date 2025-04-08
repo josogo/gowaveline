@@ -8,7 +8,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Download, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
 import { Document } from './types';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -25,8 +25,6 @@ export const DocumentViewDialog: React.FC<DocumentViewDialogProps> = ({
 }) => {
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [pageNumber, setPageNumber] = useState(1);
-  const [numPages, setNumPages] = useState(null);
   
   useEffect(() => {
     const fetchDocumentUrl = async () => {

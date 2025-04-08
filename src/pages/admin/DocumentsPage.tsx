@@ -9,11 +9,9 @@ import {
   DocumentEditDialog,
   DocumentFillDialog,
   PreAppGenerationDialog,
-  fetchDocuments,
-  deleteDocument,
   Document,
-  checkUserIsAdmin
 } from '@/components/admin/documents';
+import { checkUserIsAdmin, fetchDocuments, deleteDocument } from '@/components/admin/documents/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';

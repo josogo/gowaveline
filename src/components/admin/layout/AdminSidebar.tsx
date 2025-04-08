@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -17,9 +18,11 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useCrmNavigation } from '@/hooks/use-crm-navigation';
 
+// Change from a default export to a named export
 export const AdminSidebar = () => {
   const location = useLocation();
-  const { isAdminPage } = useCrmNavigation();
+  // Remove the isAdminPage check that doesn't exist on useCrmNavigation
+  const crmNav = useCrmNavigation();
 
   // Define navigation items
   const navigation = [
@@ -36,9 +39,7 @@ export const AdminSidebar = () => {
     { name: 'Settings', href: '/admin/settings', icon: Settings }
   ];
 
-  // If not on an admin page, don't render the sidebar
-  if (!isAdminPage) return null;
-
+  // Remove the isAdminPage check that was causing issues
   return (
     <div className="hidden md:flex h-screen w-60 flex-col fixed inset-y-0 z-10">
       <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6">

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { SheetContent } from '@/components/ui/sheet';
-import AdminSidebar from './AdminSidebar';
+import { AdminSidebar } from './AdminSidebar';
 
 interface SheetSidebarProps {
   adminUser: any;
@@ -24,15 +24,7 @@ const SheetSidebar: React.FC<SheetSidebarProps> = ({
 }) => {
   return (
     <SheetContent side="left" className="w-[85%] sm:w-[350px] p-0">
-      <AdminSidebar 
-        adminUser={adminUser}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
-        isActive={isActive}
-        handleLogout={handleLogout}
-      />
+      <AdminSidebar />
     </SheetContent>
   );
 };

@@ -8,3 +8,4 @@ export * from './DocumentViewDialog';
 export * from './DocumentEditDialog';
 export * from './DocumentFillDialog';
 export * from './PreAppGenerationDialog';
+export * from './api';

@@ -2,7 +2,6 @@
 import React, { ReactNode, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useCrmNavigation } from '@/hooks/use-crm-navigation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet } from '@/components/ui/sheet';
 import {
@@ -20,7 +19,6 @@ interface AdminLayoutProps {
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const crmNav = useCrmNavigation();
   const isMobile = useIsMobile();
   const [adminUser, setAdminUser] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -86,15 +84,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       )}
       
       <div className="flex flex-1 overflow-hidden">
-        <AdminSidebar 
-          adminUser={adminUser}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-          isActive={isActive}
-          handleLogout={handleLogout}
-        />
+        <AdminSidebar />
         
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
           <SheetSidebar 

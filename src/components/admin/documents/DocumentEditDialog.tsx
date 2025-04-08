@@ -10,13 +10,13 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { Document, DocumentType } from './types';
+import { updateDocument } from './api';
 import { 
   Select,
   SelectContent,
@@ -26,7 +26,6 @@ import {
 } from '@/components/ui/select';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
-import { supabase } from '@/integrations/supabase/client';
 
 const formSchema = z.object({
   name: z.string().min(1, { message: 'Name is required' }),
@@ -76,17 +75,12 @@ export const DocumentEditDialog: React.FC<DocumentEditDialogProps> = ({
     if (!document) return;
     
     try {
-      const { error } = await supabase
-        .from('documents')
-        .update({
-          name: values.name,
-          description: values.description || null,
-          document_type: values.document_type,
-          is_template: values.is_template
-        })
-        .eq('id', document.id);
-      
-      if (error) throw error;
+      await updateDocument(document.id, {
+        name: values.name,
+        description: values.description || null,
+        document_type: values.document_type,
+        is_template: values.is_template
+      });
       
       toast.success('Document updated successfully');
       onUpdateSuccess();

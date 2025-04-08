@@ -15,7 +15,7 @@ import { Loader2, Download, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { Document } from './types';
 import { supabase } from '@/integrations/supabase/client';
-import { createDocument } from './types';
+import { createDocument } from './api';
 
 interface DocumentFillDialogProps {
   open: boolean;
