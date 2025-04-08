@@ -1,6 +1,5 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { Command, CommandGroup, CommandItem } from '@/components/ui/command';
+import { Command, CommandGroup, CommandItem, CommandEmpty } from '@/components/ui/command';
 import { X, Check, ChevronsUpDown } from 'lucide-react';
 
 interface MultiSelectProps {
@@ -19,35 +18,60 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleUnselect = (item: string) => {
-    onChange(selected.filter(i => i !== item));
-  };
-
-  const handleSelect = (item: string) => {
-    if (selected.includes(item)) {
-      handleUnselect(item);
-    } else {
-      onChange([...selected, item]);
-    }
-  };
-
-  const handleCreateTag = () => {
-    if (inputValue && !options.includes(inputValue) && !selected.includes(inputValue)) {
-      handleSelect(inputValue);
-      setInputValue('');
-    }
-  };
+  const commandRef = useRef<HTMLDivElement>(null);
 
   // Make sure we have valid arrays before any operations
   const safeOptions = Array.isArray(options) ? options : [];
   const safeSelected = Array.isArray(selected) ? selected : [];
 
+  const handleUnselect = (item: string) => {
+    onChange(safeSelected.filter(i => i !== item));
+  };
+
+  const handleSelect = (item: string) => {
+    if (!item) return; // Guard against empty values
+    
+    if (safeSelected.includes(item)) {
+      handleUnselect(item);
+    } else {
+      onChange([...safeSelected, item]);
+    }
+  };
+
+  const handleCreateTag = () => {
+    if (inputValue && !safeOptions.includes(inputValue) && !safeSelected.includes(inputValue)) {
+      handleSelect(inputValue);
+      setInputValue('');
+    }
+  };
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (commandRef.current && !commandRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    if (open) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [open]);
+
+  // Handle keyboard events
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (open && e.key === 'Enter' && inputValue) {
         handleCreateTag();
         e.preventDefault();
+      }
+      
+      if (e.key === 'Escape' && open) {
+        setOpen(false);
       }
     };
 
@@ -58,7 +82,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
   }, [open, inputValue]);
 
   return (
-    <div className="relative">
+    <div className="relative" ref={commandRef}>
       <div
         className="flex flex-wrap gap-1 p-1 border rounded-md bg-background min-h-10"
         onClick={() => {
@@ -93,45 +117,62 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
           className="flex-1 outline-none bg-transparent py-1 px-2 text-sm placeholder:text-muted-foreground"
           onFocus={() => setOpen(true)}
           onBlur={() => {
-            setTimeout(() => setOpen(false), 200); // Delay closing to allow selection
-            handleCreateTag();
+            // Delayed closing to allow click events to register first
+            setTimeout(() => {
+              if (document.activeElement !== inputRef.current) {
+                handleCreateTag();
+              }
+            }, 150);
           }}
         />
         <div className="self-center ml-auto">
           <ChevronsUpDown className="h-4 w-4 opacity-50" />
         </div>
       </div>
+
       {open && (
-        <Command className="absolute top-full w-full z-10 mt-1 border rounded-md shadow-md bg-popover">
-          <CommandGroup className="h-auto max-h-64 overflow-auto">
-            {safeOptions.length > 0 ? (
-              safeOptions.map(option => (
-                <CommandItem
-                  key={option}
-                  onSelect={() => handleSelect(option)}
-                  className="flex items-center gap-2 py-1"
-                >
-                  <div className={`mr-2 flex h-4 w-4 items-center justify-center rounded-sm border ${
-                    safeSelected.includes(option) ? 'bg-primary border-primary' : 'opacity-50'
-                  }`}>
-                    {safeSelected.includes(option) && <Check className="h-3 w-3 text-primary-foreground" />}
-                  </div>
-                  {option}
+        <div className="absolute top-full w-full z-50 mt-1">
+          <Command className="w-full border rounded-md shadow-md bg-popover">
+            <CommandGroup className="h-auto max-h-64 overflow-auto">
+              {safeOptions.length > 0 ? (
+                safeOptions.map(option => (
+                  <CommandItem
+                    key={option}
+                    onSelect={() => {
+                      handleSelect(option);
+                      // Keep focus on input after selection
+                      setTimeout(() => inputRef.current?.focus(), 0);
+                    }}
+                    className="flex items-center gap-2 py-1"
+                  >
+                    <div className={`mr-2 flex h-4 w-4 items-center justify-center rounded-sm border ${
+                      safeSelected.includes(option) ? 'bg-primary border-primary' : 'opacity-50'
+                    }`}>
+                      {safeSelected.includes(option) && <Check className="h-3 w-3 text-primary-foreground" />}
+                    </div>
+                    {option}
+                  </CommandItem>
+                ))
+              ) : (
+                <CommandItem disabled className="py-2 px-2 text-sm text-muted-foreground">
+                  No options available
                 </CommandItem>
-              ))
-            ) : (
-              <div className="py-2 px-2 text-sm text-muted-foreground">No options available</div>
-            )}
-            {inputValue && !safeOptions.includes(inputValue) && (
-              <CommandItem
-                onSelect={handleCreateTag}
-                className="flex items-center gap-2 py-1 italic"
-              >
-                Create "{inputValue}"
-              </CommandItem>
-            )}
-          </CommandGroup>
-        </Command>
+              )}
+              {inputValue && !safeOptions.includes(inputValue) && (
+                <CommandItem
+                  onSelect={() => {
+                    handleCreateTag();
+                    // Keep focus on input after creation
+                    setTimeout(() => inputRef.current?.focus(), 0);
+                  }}
+                  className="flex items-center gap-2 py-1 italic"
+                >
+                  Create "{inputValue}"
+                </CommandItem>
+              )}
+            </CommandGroup>
+          </Command>
+        </div>
       )}
     </div>
   );
