@@ -48,7 +48,7 @@ const GmailIntegration = () => {
         toast({
           title: "Authentication failed",
           description: errorParam,
-          status: "error"
+          variant: "destructive"
         });
         return;
       }
@@ -60,7 +60,7 @@ const GmailIntegration = () => {
           toast({
             title: "Authentication failed",
             description: "Invalid state parameter",
-            status: "error"
+            variant: "destructive"
           });
           return;
         }
@@ -110,7 +110,7 @@ const GmailIntegration = () => {
       setIsAuthenticated(true);
       toast({
         title: "Successfully connected to Gmail",
-        status: "success"
+        variant: "default"
       });
       
       await fetchEmails(tokens.access_token);
@@ -121,7 +121,7 @@ const GmailIntegration = () => {
       toast({
         title: "Authentication failed",
         description: errorMessage,
-        status: "error"
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
@@ -144,7 +144,7 @@ const GmailIntegration = () => {
       toast({
         title: "Failed to fetch emails",
         description: (error instanceof Error) ? error.message : 'Unknown error',
-        status: "error"
+        variant: "destructive"
       });
     } finally {
       setIsSyncing(false);
@@ -204,7 +204,7 @@ const GmailIntegration = () => {
       toast({
         title: "Failed to start authentication",
         description: errorMessage,
-        status: "error"
+        variant: "destructive"
       });
       setIsLoading(false);
     }
@@ -220,14 +220,14 @@ const GmailIntegration = () => {
       setEmails([]);
       toast({
         title: "Disconnected from Gmail",
-        status: "info"
+        variant: "default"
       });
     } catch (error) {
       console.error('Error during logout:', error);
       toast({
         title: "Logout failed",
         description: (error instanceof Error) ? error.message : 'Unknown error',
-        status: "error"
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
@@ -247,14 +247,14 @@ const GmailIntegration = () => {
       await fetchEmails(tokens.accessToken);
       toast({
         title: "Emails refreshed",
-        status: "success"
+        variant: "default"
       });
     } catch (error) {
       console.error('Error refreshing emails:', error);
       toast({
         title: "Failed to refresh emails", 
         description: (error instanceof Error) ? error.message : 'Unknown error',
-        status: "error"
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
@@ -266,7 +266,7 @@ const GmailIntegration = () => {
     setEmails(updatedEmails);
     toast({
       title: "Email deleted",
-      status: "success"
+      variant: "default"
     });
   };
 
@@ -291,7 +291,7 @@ const GmailIntegration = () => {
       
       toast({
         title: "Email sent successfully",
-        status: "success"
+        variant: "default"
       });
       setIsComposeOpen(false);
     } catch (error) {
@@ -299,7 +299,7 @@ const GmailIntegration = () => {
       toast({
         title: "Failed to send email",
         description: (error instanceof Error) ? error.message : 'Unknown error',
-        status: "error"
+        variant: "destructive"
       });
     } finally {
       setIsSending(false);
@@ -309,7 +309,7 @@ const GmailIntegration = () => {
   const handleConvertToLead = (emailId: string) => {
     toast({
       title: "Email converted to lead",
-      status: "success"
+      variant: "default"
     });
   };
 
