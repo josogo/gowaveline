@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -40,7 +39,28 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Search, Plus, Edit, Trash2, MoreHorizontal, ArrowUp, ArrowDown, Upload, Users, FileText } from 'lucide-react';
+import { 
+  Search, 
+  Plus, 
+  Edit, 
+  Trash2, 
+  MoreHorizontal, 
+  ArrowUp, 
+  ArrowDown, 
+  Upload, 
+  Users, 
+  FileText, 
+  Calendar,
+  DollarSign,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  User,
+  Briefcase,
+  Tag,
+  ClipboardList,
+  BadgePercent
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { useCrmData, Deal, DealDocument } from '@/contexts/CrmDataContext';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -51,11 +71,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Contact } from '../admin/contacts/types';
 
 const dealSchema = z.object({
   name: z.string().min(1, 'Business name is required'),
@@ -87,7 +109,6 @@ const DealsContent = () => {
   const queryParams = new URLSearchParams(location.search);
   const dealIdFromUrl = queryParams.get('dealId');
   
-  // Forms
   const form = useForm<z.infer<typeof dealSchema>>({
     resolver: zodResolver(dealSchema),
     defaultValues: {
@@ -107,7 +128,6 @@ const DealsContent = () => {
     }
   });
   
-  // Check for dealId in URL query params on component mount
   useEffect(() => {
     if (dealIdFromUrl) {
       const deal = deals.find(d => d.id === dealIdFromUrl);
@@ -145,14 +165,12 @@ const DealsContent = () => {
   const openDealDetail = (deal: Deal) => {
     setSelectedDeal(deal);
     setIsDetailOpen(true);
-    // Update URL with deal ID for sharing/bookmarking
     navigate(`/admin/deals?dealId=${deal.id}`, { replace: true });
   };
   
   const closeDealDetail = () => {
     setIsDetailOpen(false);
     setSelectedDeal(null);
-    // Remove deal ID from URL
     navigate('/admin/deals', { replace: true });
   };
   
@@ -184,7 +202,6 @@ const DealsContent = () => {
   const handleDocumentSubmit = (values: z.infer<typeof documentSchema>) => {
     if (!selectedDeal) return;
     
-    // Mock file upload - in a real app, you would handle the file upload to a server
     const mockDocument: DealDocument = {
       id: Date.now().toString(),
       name: values.name,
@@ -193,7 +210,7 @@ const DealsContent = () => {
       uploadedBy: 'Current User',
       fileUrl: '#',
       fileType: 'application/pdf',
-      fileSize: 1024 * 1024 * 2 // 2MB mock size
+      fileSize: 1024 * 1024 * 2
     };
     
     setDeals(prev => prev.map(deal => {
@@ -240,26 +257,26 @@ const DealsContent = () => {
     toast.success('Contact linked to deal');
   };
   
-  // Apply filters and sorting
-  const filteredDeals = deals
-    .filter(deal => 
-      deal.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      deal.contactName.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .sort((a, b) => {
-      // Handle sorting for different field types
-      if (sortField === 'value') {
-        return sortDirection === 'asc' 
-          ? a.value - b.value 
-          : b.value - a.value;
-      } else {
-        const valueA = a[sortField]?.toString() || '';
-        const valueB = b[sortField]?.toString() || '';
-        return sortDirection === 'asc'
-          ? valueA.localeCompare(valueB)
-          : valueB.localeCompare(valueA);
-      }
-    });
+  const filteredDeals = useMemo(() => {
+    return deals
+      .filter(deal => 
+        deal.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        deal.contactName.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      .sort((a, b) => {
+        if (sortField === 'value') {
+          return sortDirection === 'asc' 
+            ? a.value - b.value 
+            : b.value - a.value;
+        } else {
+          const valueA = a[sortField]?.toString() || '';
+          const valueB = b[sortField]?.toString() || '';
+          return sortDirection === 'asc'
+            ? valueA.localeCompare(valueB)
+            : valueB.localeCompare(valueA);
+        }
+      });
+  }, [deals, searchQuery, sortField, sortDirection]);
   
   const getStatusBadgeColor = (status: string) => {
     switch(status) {
@@ -454,7 +471,6 @@ const DealsContent = () => {
         </CardContent>
       </Card>
       
-      {/* Add/Edit Deal Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[525px]">
           <DialogHeader>
@@ -578,209 +594,320 @@ const DealsContent = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Deal Detail Dialog */}
       <Dialog open={isDetailOpen} onOpenChange={closeDealDetail}>
-        <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto p-0">
           {selectedDeal && (
-            <>
-              <DialogHeader>
+            <div className="flex flex-col h-full">
+              <DialogHeader className="px-6 py-4 border-b sticky top-0 bg-white z-10">
                 <div className="flex justify-between items-start">
                   <div>
-                    <DialogTitle className="text-xl">{selectedDeal.name}</DialogTitle>
-                    <div className="text-sm text-muted-foreground mt-1">
-                      Created on {new Date(selectedDeal.createdAt).toLocaleDateString()}
+                    <DialogTitle className="text-xl font-bold text-gray-800">{selectedDeal.name}</DialogTitle>
+                    <div className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5" />
+                      <span>Created on {new Date(selectedDeal.createdAt).toLocaleDateString()}</span>
                     </div>
                   </div>
-                  <Badge variant="outline" className={getStatusBadgeColor(selectedDeal.status)}>
+                  <Badge variant="outline" className={`${getStatusBadgeColor(selectedDeal.status)} px-3 py-1 text-xs font-medium`}>
+                    {selectedDeal.status === 'pending' && <Clock className="h-3.5 w-3.5 mr-1 inline" />}
+                    {selectedDeal.status === 'closed' && <CheckCircle2 className="h-3.5 w-3.5 mr-1 inline" />}
+                    {selectedDeal.status === 'lost' && <XCircle className="h-3.5 w-3.5 mr-1 inline" />}
                     {selectedDeal.status.charAt(0).toUpperCase() + selectedDeal.status.slice(1)}
                   </Badge>
                 </div>
               </DialogHeader>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Deal Information</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <span className="text-sm text-muted-foreground">Value:</span>
-                      <div className="font-semibold">${selectedDeal.value.toLocaleString()}</div>
+              <div className="p-6 flex-grow overflow-auto">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="md:col-span-1 space-y-6">
+                    <div className="bg-gray-50 rounded-lg p-5 border">
+                      <h3 className="text-lg font-semibold mb-4 flex items-center">
+                        <Briefcase className="h-5 w-5 mr-2 text-orange-500" />
+                        Deal Information
+                      </h3>
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Value:</span>
+                          <div className="font-semibold text-lg flex items-center text-green-700">
+                            <DollarSign className="h-4 w-4" />
+                            {selectedDeal.value.toLocaleString()}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Primary Contact:</span>
+                          <div className="font-medium">{selectedDeal.contactName}</div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Assigned To:</span>
+                          <div className="font-medium flex items-center">
+                            <User className="h-3.5 w-3.5 mr-1.5 opacity-70" />
+                            {getTeamMemberName(selectedDeal.assignedTo)}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Expected Commission:</span>
+                          <div className="font-medium flex items-center text-orange-700">
+                            <BadgePercent className="h-3.5 w-3.5 mr-1.5" />
+                            ${(selectedDeal.value * 0.35).toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-sm text-muted-foreground">Primary Contact:</span>
-                      <div className="font-semibold">{selectedDeal.contactName}</div>
-                    </div>
-                    <div>
-                      <span className="text-sm text-muted-foreground">Assigned To:</span>
-                      <div className="font-semibold">{getTeamMemberName(selectedDeal.assignedTo)}</div>
-                    </div>
-                    <div>
-                      <span className="text-sm text-muted-foreground">Expected Comission:</span>
-                      <div className="font-semibold">${(selectedDeal.value * 0.35).toLocaleString()}</div>
+                    
+                    <div className="bg-gray-50 rounded-lg p-5 border">
+                      <h3 className="text-lg font-semibold mb-3 flex items-center">
+                        <Tag className="h-5 w-5 mr-2 text-orange-500" />
+                        Actions
+                      </h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Button 
+                          variant="outline"
+                          className="flex items-center justify-center"
+                          onClick={() => openEditDialog(selectedDeal)}
+                        >
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit Deal
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          className="flex items-center justify-center"
+                          onClick={() => setIsDocUploadOpen(true)}
+                        >
+                          <Upload className="mr-2 h-4 w-4" />
+                          Upload Document
+                        </Button>
+                      </div>
+                      
+                      <div className="mt-3 grid grid-cols-1">
+                        <Button 
+                          className={`w-full ${selectedDeal.status === 'closed' ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-green-600 hover:bg-green-700 text-white'}`}
+                          disabled={selectedDeal.status === 'closed'}
+                          onClick={() => {
+                            handleStatusChange(selectedDeal.id, 'closed');
+                          }}
+                        >
+                          <CheckCircle2 className="mr-2 h-4 w-4" />
+                          Mark as Closed
+                        </Button>
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="mt-6">
-                    <div className="flex justify-between items-center mb-3">
-                      <h3 className="text-lg font-semibold">Actions</h3>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button 
-                        variant="outline"
-                        className="flex items-center justify-center"
-                        onClick={() => openEditDialog(selectedDeal)}
-                      >
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit Deal
-                      </Button>
-                      <Button 
-                        variant="outline"
-                        className="flex items-center justify-center"
-                        onClick={() => setIsDocUploadOpen(true)}
-                      >
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload Document
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <Tabs defaultValue="contacts">
-                    <TabsList className="grid grid-cols-2 w-full">
-                      <TabsTrigger value="contacts">
-                        <Users className="h-4 w-4 mr-2" />
-                        Related Contacts
-                      </TabsTrigger>
-                      <TabsTrigger value="documents">
-                        <FileText className="h-4 w-4 mr-2" />
-                        Documents
-                      </TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="contacts" className="mt-4">
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                          <h4 className="text-sm font-semibold">Linked Contacts</h4>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="sm">
-                                <Plus className="h-3.5 w-3.5 mr-1" />
-                                Link Contact
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                              {contacts
-                                .filter(c => !selectedDeal.relatedContacts?.includes(c.id))
-                                .map(contact => (
-                                  <DropdownMenuItem 
-                                    key={contact.id}
-                                    onClick={() => handleLinkContact(contact.id)}
-                                  >
-                                    {contact.name}
+                  <div className="md:col-span-2">
+                    <Tabs defaultValue="contacts" className="w-full">
+                      <TabsList className="w-full grid grid-cols-2 mb-2">
+                        <TabsTrigger value="contacts" className="flex items-center">
+                          <Users className="h-4 w-4 mr-2" />
+                          Related Contacts
+                        </TabsTrigger>
+                        <TabsTrigger value="documents" className="flex items-center">
+                          <FileText className="h-4 w-4 mr-2" />
+                          Documents
+                        </TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="contacts" className="p-0">
+                        <div className="bg-white rounded-lg border p-4">
+                          <div className="flex justify-between items-center mb-4">
+                            <h4 className="font-semibold text-sm flex items-center">
+                              <Users className="h-4 w-4 mr-1.5 text-orange-500" />
+                              Linked Contacts
+                            </h4>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                  <Plus className="h-3.5 w-3.5 mr-1" />
+                                  Link Contact
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-56">
+                                <div className="px-2 py-1.5 text-sm font-semibold">Select Contact</div>
+                                <DropdownMenuSeparator />
+                                {contacts
+                                  .filter(c => !selectedDeal.relatedContacts?.includes(c.id))
+                                  .map(contact => (
+                                    <DropdownMenuItem 
+                                      key={contact.id}
+                                      onClick={() => handleLinkContact(contact.id)}
+                                      className="flex items-center cursor-pointer"
+                                    >
+                                      <Avatar className="h-6 w-6 mr-2">
+                                        <AvatarFallback className="text-xs">{contact.name[0]}</AvatarFallback>
+                                      </Avatar>
+                                      {contact.name}
+                                    </DropdownMenuItem>
+                                  ))
+                                }
+                                {contacts.filter(c => !selectedDeal.relatedContacts?.includes(c.id)).length === 0 && (
+                                  <DropdownMenuItem disabled className="text-center text-muted-foreground">
+                                    No contacts to link
                                   </DropdownMenuItem>
-                                ))
-                              }
-                              {contacts.filter(c => !selectedDeal.relatedContacts?.includes(c.id)).length === 0 && (
-                                <DropdownMenuItem disabled>No contacts to link</DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                        
-                        {getRelatedContacts(selectedDeal.id).length === 0 ? (
-                          <div className="p-4 text-center text-sm text-muted-foreground border border-dashed rounded-md">
-                            No contacts linked to this deal
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
-                        ) : (
-                          <div className="space-y-2">
-                            {getRelatedContacts(selectedDeal.id).map(contact => (
-                              <div key={contact.id} className="p-3 border rounded-md">
-                                <div className="flex items-center justify-between">
+                          
+                          {getRelatedContacts(selectedDeal.id).length === 0 ? (
+                            <div className="p-8 text-center text-sm text-muted-foreground border border-dashed rounded-md">
+                              <Users className="h-10 w-10 mx-auto mb-2 text-gray-300" />
+                              <p>No contacts linked to this deal</p>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="mt-2"
+                                onClick={() => {
+                                  const potentialContact = contacts.find(c => c.name === selectedDeal.contactName);
+                                  if (potentialContact) {
+                                    handleLinkContact(potentialContact.id);
+                                  }
+                                }}
+                              >
+                                <Plus className="h-3.5 w-3.5 mr-1" />
+                                Link Primary Contact
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                              {getRelatedContacts(selectedDeal.id).map(contact => (
+                                <div key={contact.id} className="p-3 border rounded-md bg-white hover:bg-gray-50 transition-colors">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center">
+                                      <Avatar className="h-10 w-10 mr-3">
+                                        <AvatarFallback>{contact.name[0]}</AvatarFallback>
+                                      </Avatar>
+                                      <div>
+                                        <div className="font-medium">{contact.name}</div>
+                                        <div className="text-xs text-muted-foreground flex items-center gap-2">
+                                          <span>{contact.email}</span>
+                                          <span>•</span>
+                                          <span>{contact.phone}</span>
+                                        </div>
+                                        {contact.company && (
+                                          <div className="text-xs text-muted-foreground mt-0.5">
+                                            {contact.company}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Badge className="capitalize">
+                                        {contact.type}
+                                      </Badge>
+                                      <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                            <MoreHorizontal className="h-4 w-4" />
+                                          </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                          <DropdownMenuItem onClick={() => setEditingContact && setEditingContact(contact)}>
+                                            <Edit className="h-4 w-4 mr-2" />
+                                            Edit Contact
+                                          </DropdownMenuItem>
+                                          <DropdownMenuSeparator />
+                                          <DropdownMenuItem className="text-red-600">
+                                            Remove from Deal
+                                          </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                      </DropdownMenu>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </TabsContent>
+                      
+                      <TabsContent value="documents" className="p-0">
+                        <div className="bg-white rounded-lg border p-4">
+                          <div className="flex justify-between items-center mb-4">
+                            <h4 className="font-semibold text-sm flex items-center">
+                              <ClipboardList className="h-4 w-4 mr-1.5 text-orange-500" />
+                              Deal Documents
+                            </h4>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => setIsDocUploadOpen(true)}
+                              className="flex items-center"
+                            >
+                              <Upload className="h-3.5 w-3.5 mr-1" />
+                              Upload Document
+                            </Button>
+                          </div>
+                          
+                          {!selectedDeal.documents || selectedDeal.documents.length === 0 ? (
+                            <div className="p-8 text-center text-sm text-muted-foreground border border-dashed rounded-md">
+                              <FileText className="h-10 w-10 mx-auto mb-2 text-gray-300" />
+                              <p>No documents uploaded yet</p>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="mt-2"
+                                onClick={() => setIsDocUploadOpen(true)}
+                              >
+                                <Upload className="h-3.5 w-3.5 mr-1" />
+                                Upload First Document
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                              {selectedDeal.documents.map(doc => (
+                                <div key={doc.id} className="p-3 border rounded-md flex items-center justify-between bg-white hover:bg-gray-50 transition-colors">
                                   <div className="flex items-center">
-                                    <Avatar className="h-8 w-8 mr-2">
-                                      <AvatarFallback>{contact.name[0]}</AvatarFallback>
-                                    </Avatar>
+                                    <div className="bg-orange-100 p-2 rounded-md mr-3">
+                                      <FileText className="h-5 w-5 text-orange-500" />
+                                    </div>
                                     <div>
-                                      <div className="font-medium">{contact.name}</div>
+                                      <div className="font-medium">{doc.name}</div>
                                       <div className="text-xs text-muted-foreground">
-                                        {contact.company || contact.email}
+                                        {getDocumentTypeLabel(doc.type)} • {new Date(doc.uploadedAt).toLocaleDateString()}
                                       </div>
                                     </div>
                                   </div>
-                                  <Badge className="ml-2">
-                                    {contact.type.charAt(0).toUpperCase() + contact.type.slice(1)}
-                                  </Badge>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </TabsContent>
-                    
-                    <TabsContent value="documents" className="mt-4">
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                          <h4 className="text-sm font-semibold">Deal Documents</h4>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => setIsDocUploadOpen(true)}
-                          >
-                            <Upload className="h-3.5 w-3.5 mr-1" />
-                            Upload
-                          </Button>
-                        </div>
-                        
-                        {!selectedDeal.documents || selectedDeal.documents.length === 0 ? (
-                          <div className="p-4 text-center text-sm text-muted-foreground border border-dashed rounded-md">
-                            No documents uploaded yet
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            {selectedDeal.documents.map(doc => (
-                              <div key={doc.id} className="p-3 border rounded-md flex items-center justify-between">
-                                <div className="flex items-center">
-                                  <FileText className="h-5 w-5 mr-3 text-orange-500" />
-                                  <div>
-                                    <div className="font-medium">{doc.name}</div>
-                                    <div className="text-xs text-muted-foreground">
-                                      {getDocumentTypeLabel(doc.type)} • {new Date(doc.uploadedAt).toLocaleDateString()}
-                                    </div>
+                                  <div className="flex items-center gap-2">
+                                    <Button variant="ghost" size="sm" onClick={() => window.open(doc.fileUrl, '_blank')}>
+                                      View
+                                    </Button>
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                          <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={() => window.open(doc.fileUrl, '_blank')}>
+                                          View Document
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem>
+                                          Download
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem className="text-red-600">
+                                          Delete
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
                                   </div>
                                 </div>
-                                <Button variant="ghost" size="sm">
-                                  View
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </TabsContent>
-                  </Tabs>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                  </div>
                 </div>
               </div>
               
-              <DialogFooter>
+              <DialogFooter className="px-6 py-4 border-t">
                 <Button variant="outline" onClick={closeDealDetail}>Close</Button>
-                <Button 
-                  onClick={() => {
-                    handleStatusChange(selectedDeal.id, 'closed');
-                    closeDealDetail();
-                  }}
-                  className="bg-green-600 hover:bg-green-700"
-                  disabled={selectedDeal.status === 'closed'}
-                >
-                  Mark as Closed
-                </Button>
               </DialogFooter>
-            </>
+            </div>
           )}
         </DialogContent>
       </Dialog>
       
-      {/* Document Upload Dialog */}
       <Dialog open={isDocUploadOpen} onOpenChange={setIsDocUploadOpen}>
         <DialogContent className="sm:max-w-[450px]">
           <DialogHeader>
@@ -859,7 +986,7 @@ const DealsContent = () => {
                 >
                   Cancel
                 </Button>
-                <Button type="submit">Upload Document</Button>
+                <Button type="submit" className="bg-orange-500 hover:bg-orange-600">Upload Document</Button>
               </DialogFooter>
             </form>
           </Form>

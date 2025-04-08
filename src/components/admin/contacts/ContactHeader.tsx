@@ -18,10 +18,11 @@ export const ContactHeader: React.FC<ContactHeaderProps> = ({
 }) => {
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-      <TabsList className="grid grid-cols-4 w-full max-w-md">
+      <TabsList className="grid grid-cols-5 w-full max-w-md">
         <TabsTrigger value="all">All Contacts</TabsTrigger>
         <TabsTrigger value="clients">Clients</TabsTrigger>
         <TabsTrigger value="leads">Leads</TabsTrigger>
+        <TabsTrigger value="prospects">Prospects</TabsTrigger>
         <TabsTrigger value="partners">Partners</TabsTrigger>
       </TabsList>
       

@@ -15,7 +15,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { ContactFormValues } from './types';
+import { ContactFormValues } from '../form/types';
 
 interface ClassificationFieldsProps {
   form: UseFormReturn<ContactFormValues>;

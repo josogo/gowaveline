@@ -1,4 +1,5 @@
 
+
 export type ContactStatus = 'new' | 'active' | 'inactive' | 'lead' | 'churned';
 export type ContactType = 'lead' | 'client' | 'partner' | 'vendor' | 'prospect';
 

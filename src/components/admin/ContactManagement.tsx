@@ -88,6 +88,17 @@ const ContactManagement: React.FC = () => {
           />
         </TabsContent>
         
+        <TabsContent value="prospects" className="mt-6">
+          <ContactTabContent 
+            contacts={filteredContacts.filter(c => c.type === 'prospect')}
+            selectedContacts={selectedContacts}
+            setSelectedContacts={setSelectedContacts}
+            onEditContact={setEditingContact}
+            onDeleteContact={handleDeleteContact}
+            navigateToDeals={navigateToDeals}
+          />
+        </TabsContent>
+        
         <TabsContent value="partners" className="mt-6">
           <ContactTabContent 
             contacts={filteredContacts.filter(c => c.type === 'partner')}
