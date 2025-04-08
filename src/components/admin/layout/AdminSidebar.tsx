@@ -40,11 +40,11 @@ export const AdminSidebar = () => {
 
   return (
     <div className="h-full md:h-screen w-60 flex-col border-r border-gray-200 bg-white px-6 overflow-y-auto">
-      <div className="flex h-24 shrink-0 items-center">
+      <div className="flex h-32 shrink-0 items-center justify-center">
         <Link to="/admin/dashboard">
           <img
-            className="h-16 w-auto"
-            src="/lovable-uploads/077f5495-682e-4dcb-9750-5375cd4f00f5.png"
+            className="h-20 w-auto"
+            src="/lovable-uploads/1e017aad-3d36-4922-992f-f27b55733ec4.png"
             alt="Waveline"
           />
         </Link>
