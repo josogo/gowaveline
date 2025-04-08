@@ -20,6 +20,9 @@ const DealsContent = () => {
   const queryParams = new URLSearchParams(location.search);
   const dealIdFromUrl = queryParams.get('dealId');
 
+  console.log('Current deals in DealsContent:', deals);
+  console.log('Current contacts in DealsContent:', contacts);
+
   const [state, setState] = useState<DealsState>({
     isDialogOpen: false,
     isDetailOpen: false,
@@ -212,6 +215,7 @@ const DealsContent = () => {
   };
   
   const filteredDeals = useMemo(() => {
+    console.log('Filtering deals with search query:', state.searchQuery);
     return deals
       .filter(deal => 
         deal.name.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
