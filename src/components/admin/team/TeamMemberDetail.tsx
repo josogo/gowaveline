@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Mail, Phone, Briefcase, PieChart, FileText, Banknote } from 'lucide-react';
+import { Mail, Phone, Briefcase, PieChart, FileText, Banknote, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import TeamAgreements from './TeamAgreements';
@@ -92,6 +92,10 @@ const TeamMemberDetail: React.FC<TeamMemberDetailProps> = ({
                   <div className="flex items-center gap-2 text-sm">
                     <PieChart className="h-4 w-4 text-muted-foreground" />
                     <span>Processing Volume: ${member.processingVolume}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    <span>Revenue Volume: ${member.revenueVolume}</span>
                   </div>
                 </div>
               </Card>

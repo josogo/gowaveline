@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -34,6 +35,7 @@ const formSchema = z.object({
   role: z.string().min(1, { message: "Role is required." }),
   commissionSplit: z.string().min(1, { message: "Commission split is required." }),
   processingVolume: z.string().min(1, { message: "Processing volume is required." }),
+  revenueVolume: z.string().min(1, { message: "Revenue volume is required." }),
   profilePicture: z.string().optional()
 });
 
@@ -57,6 +59,7 @@ const TeamMemberForm: React.FC<TeamMemberFormProps> = ({ onSubmit, editingMember
       role: "",
       commissionSplit: "",
       processingVolume: "",
+      revenueVolume: "",
       profilePicture: ""
     },
   });
@@ -70,6 +73,7 @@ const TeamMemberForm: React.FC<TeamMemberFormProps> = ({ onSubmit, editingMember
         role: editingMember.role,
         commissionSplit: editingMember.commissionSplit,
         processingVolume: String(editingMember.processingVolume),
+        revenueVolume: editingMember.revenueVolume || "",
         profilePicture: editingMember.profilePicture || ""
       });
       
@@ -84,6 +88,7 @@ const TeamMemberForm: React.FC<TeamMemberFormProps> = ({ onSubmit, editingMember
         role: "",
         commissionSplit: "",
         processingVolume: "",
+        revenueVolume: "",
         profilePicture: ""
       });
       setProfileImageUrl("");
@@ -250,6 +255,22 @@ const TeamMemberForm: React.FC<TeamMemberFormProps> = ({ onSubmit, editingMember
             )}
           />
         </div>
+        <FormField
+          control={form.control}
+          name="revenueVolume"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Revenue Volume</FormLabel>
+              <FormControl>
+                <Input placeholder="25,000" {...field} />
+              </FormControl>
+              <FormDescription className="text-xs">
+                Annual revenue from accounts
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <DialogFooter>
           <Button type="submit" className="bg-[#0EA5E9]">
             {editingMember ? 'Update' : 'Add Member'}

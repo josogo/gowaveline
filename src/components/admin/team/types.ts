@@ -12,7 +12,8 @@ export const adaptCrmTeamMemberToFormTeamMember = (member: CrmTeamMember): FormT
     role: member.role,
     commissionSplit: member.commissionSplit,
     // Convert number to string as required by FormTeamMember
-    processingVolume: String(member.processingVolume), 
+    processingVolume: String(member.processingVolume),
+    revenueVolume: member.revenueVolume ? String(member.revenueVolume) : "0", 
     profilePicture: member.profilePicture
   };
 };
@@ -28,6 +29,7 @@ export const adaptFormTeamMemberToCrmTeamMember = (member: FormTeamMember): CrmT
     commissionSplit: member.commissionSplit,
     // Convert string to number as required by CrmTeamMember
     processingVolume: Number(member.processingVolume),
+    revenueVolume: Number(member.revenueVolume),
     profilePicture: member.profilePicture
   };
 };
