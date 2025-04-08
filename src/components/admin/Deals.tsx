@@ -103,6 +103,7 @@ const DealsContent = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<keyof Deal>('createdAt');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [editingContact, setEditingContact] = useState<Contact | null>(null);
   
   const location = useLocation();
   const navigate = useNavigate();
