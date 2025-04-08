@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 
 import { GmailConnectPrompt } from './';
 import { GmailHeader } from './';
@@ -45,7 +46,11 @@ const GmailIntegration = () => {
       
       if (errorParam) {
         setAuthError(`Google returned an error: ${errorParam}`);
-        toast.error(`Authentication failed: ${errorParam}`);
+        toast({
+          title: "Authentication failed",
+          description: errorParam,
+          status: "error"
+        });
         return;
       }
       
@@ -53,7 +58,11 @@ const GmailIntegration = () => {
         const storedState = localStorage.getItem('gmail_oauth_state');
         if (storedState !== authState) {
           setAuthError("Invalid state parameter. Please try again.");
-          toast.error("Authentication failed: Invalid state parameter");
+          toast({
+            title: "Authentication failed",
+            description: "Invalid state parameter",
+            status: "error"
+          });
           return;
         }
         

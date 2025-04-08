@@ -1,9 +1,9 @@
 
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Toaster } from 'sonner';
-import { CrmDataProvider } from './contexts/CrmDataContext';
 import { ThemeProvider } from 'next-themes';
+import { Toaster } from '@/components/ui/toaster';
+import { CrmDataProvider } from './contexts/CrmDataContext';
 
 import Index from './pages/Index';
 import GetStarted from './pages/GetStarted';
@@ -36,11 +36,10 @@ import DocumentsPage from './pages/admin/DocumentsPage';
 
 const App = () => {
   return (
-    <div className="app-wrapper">
+    <BrowserRouter>
       <ThemeProvider attribute="class" defaultTheme="light">
-        <BrowserRouter>
-          <Toaster position="top-right" />
-          <CrmDataProvider>
+        <CrmDataProvider>
+          <div className="app-wrapper">
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/get-started" element={<GetStarted />} />
@@ -71,10 +70,11 @@ const App = () => {
               <Route path="/admin/documents" element={<DocumentsPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </CrmDataProvider>
-        </BrowserRouter>
+            <Toaster />
+          </div>
+        </CrmDataProvider>
       </ThemeProvider>
-    </div>
+    </BrowserRouter>
   );
 };
 
