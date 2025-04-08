@@ -8,3 +8,4 @@ export { ContactTabContent } from './ContactTabContent';
 export { ContactHeader } from './ContactHeader';
 export type { Contact } from './types';
 export * from './components';
+export * from './form';
