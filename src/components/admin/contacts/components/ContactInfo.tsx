@@ -4,6 +4,7 @@ import { Calendar, Link } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCrmData } from '@/contexts/CrmDataContext';
 import { useNavigate } from 'react-router-dom';
+import { Contact } from '../types';
 
 interface ContactInfoProps {
   contactId: string;
@@ -14,16 +15,26 @@ interface ContactInfoProps {
   relatedDeals?: string[];
 }
 
-export const ContactInfo: React.FC<ContactInfoProps> = ({
-  contactId,
-  name,
-  email,
-  phone,
-  lastContact,
-  relatedDeals
-}) => {
+// Add a new interface to accept a contact object directly
+interface ContactInfoWithObjectProps {
+  contact: Contact;
+}
+
+// The component now accepts either individual props or a contact object
+export const ContactInfo: React.FC<ContactInfoProps | ContactInfoWithObjectProps> = (props) => {
   const { deals } = useCrmData();
   const navigate = useNavigate();
+  
+  // Determine if we're working with a contact object or individual props
+  const isContactObject = 'contact' in props;
+  
+  // Extract the needed properties based on which props format we received
+  const contactId = isContactObject ? props.contact.id : props.contactId;
+  const name = isContactObject ? props.contact.name : props.name;
+  const email = isContactObject ? props.contact.email : props.email;
+  const phone = isContactObject ? props.contact.phone : props.phone;
+  const lastContact = isContactObject ? props.contact.lastContact : props.lastContact;
+  const relatedDeals = isContactObject ? props.contact.relatedDeals : props.relatedDeals;
   
   // Get related deals info
   const relatedDealsInfo = deals.filter(deal => 
