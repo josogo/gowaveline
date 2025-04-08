@@ -17,81 +17,64 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
   onChange,
   placeholder = 'Select options'
 }) => {
-  // Ensure we have valid arrays
-  const safeOptions = Array.isArray(options) ? [...options] : [];
-  const safeSelected = Array.isArray(selected) ? [...selected] : [];
+  // Ensure we always have valid arrays, never undefined
+  const safeOptions = Array.isArray(options) ? options : [];
+  const safeSelected = Array.isArray(selected) ? selected : [];
   
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const commandRef = useRef<HTMLDivElement>(null);
 
   // Handle click outside to close dropdown
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
     };
 
-    if (open) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [open]);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Remove an item from selection
   const handleUnselect = (item: string) => {
     onChange(safeSelected.filter(i => i !== item));
   };
 
-  // Add or remove an item from selection
+  // Toggle select/unselect for an item
   const handleSelect = (item: string) => {
     if (!item || item.trim() === '') return;
     
-    const trimmedItem = item.trim();
-    const isSelected = safeSelected.includes(trimmedItem);
-    
-    if (isSelected) {
-      onChange(safeSelected.filter(i => i !== trimmedItem));
+    const itemExists = safeSelected.includes(item);
+    if (itemExists) {
+      onChange(safeSelected.filter(i => i !== item));
     } else {
-      onChange([...safeSelected, trimmedItem]);
+      onChange([...safeSelected, item]);
     }
     
     setInputValue('');
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 0);
+    inputRef.current?.focus();
   };
 
   // Create a new tag if it doesn't exist
   const handleCreateTag = () => {
-    const trimmedValue = inputValue.trim();
-    if (trimmedValue && !safeOptions.includes(trimmedValue) && !safeSelected.includes(trimmedValue)) {
-      handleSelect(trimmedValue);
+    const value = inputValue.trim();
+    if (!value) return;
+    
+    if (!safeOptions.includes(value) && !safeSelected.includes(value)) {
+      handleSelect(value);
     }
+    setInputValue('');
   };
 
-  // Handle keyboard events
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (open && e.key === 'Enter' && inputValue.trim()) {
-        handleCreateTag();
-        e.preventDefault();
-      }
-      
-      if (e.key === 'Escape' && open) {
-        setOpen(false);
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [open, inputValue]);
+  // Filter options based on input value
+  const filteredOptions = safeOptions.filter(option => 
+    !safeSelected.includes(option) && 
+    option.toLowerCase().includes(inputValue.toLowerCase())
+  );
 
   return (
     <div className="relative" ref={containerRef}>
@@ -99,9 +82,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
         className="flex flex-wrap gap-1 p-1 border rounded-md bg-background min-h-10"
         onClick={() => {
           setOpen(true);
-          setTimeout(() => {
-            inputRef.current?.focus();
-          }, 0);
+          setTimeout(() => inputRef.current?.focus(), 0);
         }}
       >
         {safeSelected.map((item) => (
@@ -130,15 +111,14 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
           placeholder={safeSelected.length ? '' : placeholder}
           className="flex-1 outline-none bg-transparent py-1 px-2 text-sm placeholder:text-muted-foreground"
           onFocus={() => setOpen(true)}
-          onBlur={() => {
-            setTimeout(() => {
-              if (document.activeElement !== inputRef.current) {
-                if (inputValue.trim()) {
-                  handleCreateTag();
-                }
-                setOpen(false);
-              }
-            }, 150);
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && inputValue.trim()) {
+              e.preventDefault();
+              handleCreateTag();
+            }
+            if (e.key === 'Escape') {
+              setOpen(false);
+            }
           }}
         />
         <div className="self-center ml-auto">
@@ -148,46 +128,38 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
 
       {open && (
         <div className="absolute top-full w-full z-50 mt-1">
-          <div className="w-full border rounded-md shadow-md bg-popover">
-            <CommandPrimitive 
-              className="w-full rounded-md bg-popover overflow-hidden"
-              shouldFilter={false} // Important: handle filtering manually
-            >
-              <div className="h-auto max-h-64 overflow-auto p-1">
-                {safeOptions.length > 0 ? (
-                  safeOptions.map((option) => (
-                    <CommandPrimitive.Item
-                      key={option}
-                      onSelect={() => handleSelect(option)}
-                      className={cn(
-                        "flex items-center gap-2 py-1.5 px-2 rounded-sm text-sm cursor-default",
-                        safeSelected.includes(option) ? "bg-accent text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground"
-                      )}
-                    >
-                      <div className={cn("mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
-                        safeSelected.includes(option) ? "bg-primary border-primary" : "opacity-50"
-                      )}>
-                        {safeSelected.includes(option) && <Check className="h-3 w-3 text-primary-foreground" />}
-                      </div>
-                      {option}
-                    </CommandPrimitive.Item>
-                  ))
-                ) : (
-                  <div className="py-2 px-2 text-sm text-muted-foreground">
-                    No options available
-                  </div>
-                )}
-                
-                {inputValue.trim() && !safeOptions.includes(inputValue.trim()) && (
-                  <CommandPrimitive.Item
-                    onSelect={() => handleCreateTag()}
-                    className="flex items-center gap-2 py-1.5 px-2 rounded-sm text-sm cursor-default hover:bg-accent hover:text-accent-foreground italic"
+          <div className="w-full border rounded-md shadow-md bg-popover p-1">
+            <div ref={commandRef} className="max-h-64 overflow-auto">
+              {filteredOptions.length > 0 ? (
+                filteredOptions.map((option) => (
+                  <div
+                    key={option}
+                    className={cn(
+                      "flex items-center gap-2 py-1.5 px-2 rounded-sm text-sm cursor-default hover:bg-accent hover:text-accent-foreground"
+                    )}
+                    onClick={() => handleSelect(option)}
                   >
-                    Create "{inputValue.trim()}"
-                  </CommandPrimitive.Item>
-                )}
-              </div>
-            </CommandPrimitive>
+                    <div className="mr-2 flex h-4 w-4 items-center justify-center rounded-sm border opacity-50">
+                      {safeSelected.includes(option) && <Check className="h-3 w-3 text-primary-foreground" />}
+                    </div>
+                    {option}
+                  </div>
+                ))
+              ) : (
+                <div className="py-2 px-2 text-sm text-muted-foreground">
+                  {inputValue.trim() ? 'No matching options' : 'No options available'}
+                </div>
+              )}
+              
+              {inputValue.trim() && !safeOptions.includes(inputValue.trim()) && !safeSelected.includes(inputValue.trim()) && (
+                <div
+                  className="flex items-center gap-2 py-1.5 px-2 rounded-sm text-sm cursor-default hover:bg-accent hover:text-accent-foreground italic"
+                  onClick={() => handleCreateTag()}
+                >
+                  Create "{inputValue.trim()}"
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
