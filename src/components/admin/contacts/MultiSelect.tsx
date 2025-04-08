@@ -10,8 +10,8 @@ interface MultiSelectProps {
 }
 
 export const MultiSelect: React.FC<MultiSelectProps> = ({
-  options = [], // Provide default empty array to prevent undefined
-  selected = [], // Provide default empty array to prevent undefined
+  options = [],
+  selected = [],
   onChange,
   placeholder = 'Select options'
 }) => {
@@ -20,7 +20,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const commandRef = useRef<HTMLDivElement>(null);
 
-  // Make sure we have valid arrays before any operations
+  // Initialize safe defaults to prevent undefined iteration errors
   const safeOptions = Array.isArray(options) ? options : [];
   const safeSelected = Array.isArray(selected) ? selected : [];
 
@@ -121,6 +121,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
             setTimeout(() => {
               if (document.activeElement !== inputRef.current) {
                 handleCreateTag();
+                setOpen(false);
               }
             }, 150);
           }}
@@ -130,7 +131,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
         </div>
       </div>
 
-      {open && (
+      {open && safeOptions && (
         <div className="absolute top-full w-full z-50 mt-1">
           <Command className="w-full border rounded-md shadow-md bg-popover">
             <CommandGroup className="h-auto max-h-64 overflow-auto">
