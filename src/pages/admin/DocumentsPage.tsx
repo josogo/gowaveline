@@ -133,7 +133,7 @@ const DocumentsPage = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 w-full max-w-full">
         <DocumentsHeader
           onUploadClick={() => setUploadDialogOpen(true)}
           onCreatePreAppClick={() => setPreAppDialogOpen(true)}

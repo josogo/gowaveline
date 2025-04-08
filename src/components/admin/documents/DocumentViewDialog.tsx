@@ -65,9 +65,9 @@ export const DocumentViewDialog: React.FC<DocumentViewDialogProps> = ({
     const link = window.document.createElement('a');
     link.href = documentUrl;
     link.download = document.name;
-    window.document.body.appendChild(link);
+    document.body.appendChild(link);
     link.click();
-    window.document.body.removeChild(link);
+    document.body.removeChild(link);
   };
   
   return (
@@ -79,7 +79,7 @@ export const DocumentViewDialog: React.FC<DocumentViewDialogProps> = ({
           </DialogTitle>
         </DialogHeader>
         
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden bg-gray-50">
           {loading ? (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -89,6 +89,7 @@ export const DocumentViewDialog: React.FC<DocumentViewDialogProps> = ({
               src={documentUrl}
               title={document?.name || 'Document preview'}
               className="w-full h-full border rounded-md"
+              sandbox="allow-same-origin allow-scripts allow-forms"
             />
           ) : (
             <div className="flex items-center justify-center h-full text-gray-500">

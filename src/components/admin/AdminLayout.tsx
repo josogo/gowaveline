@@ -84,7 +84,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       )}
       
       <div className="flex flex-1 overflow-hidden">
-        <AdminSidebar />
+        <div className="md:w-60 flex-shrink-0">
+          <AdminSidebar />
+        </div>
         
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
           <SheetSidebar 
@@ -98,7 +100,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           />
         </Sheet>
         
-        <main className="flex-1 overflow-auto p-4 md:p-6 mb-16 md:mb-0">
+        <main className="flex-1 overflow-auto p-4 md:p-6 mb-16 md:mb-0 md:ml-0">
           {children}
         </main>
       </div>

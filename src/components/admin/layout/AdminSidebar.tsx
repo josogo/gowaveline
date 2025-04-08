@@ -21,7 +21,6 @@ import { useCrmNavigation } from '@/hooks/use-crm-navigation';
 // Change from a default export to a named export
 export const AdminSidebar = () => {
   const location = useLocation();
-  // Remove the isAdminPage check that doesn't exist on useCrmNavigation
   const crmNav = useCrmNavigation();
 
   // Define navigation items
@@ -39,65 +38,62 @@ export const AdminSidebar = () => {
     { name: 'Settings', href: '/admin/settings', icon: Settings }
   ];
 
-  // Remove the isAdminPage check that was causing issues
   return (
-    <div className="hidden md:flex h-screen w-60 flex-col fixed inset-y-0 z-10">
-      <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6">
-        <div className="flex h-16 shrink-0 items-center">
-          <Link to="/admin/dashboard">
-            <img
-              className="h-8 w-auto"
-              src="/lovable-uploads/73f46803-d80f-4a1a-a02d-d179b57d0050.png"
-              alt="Waveline"
-            />
-          </Link>
-        </div>
-        <nav className="flex flex-1 flex-col">
-          <ul role="list" className="flex flex-1 flex-col gap-y-7">
-            <li>
-              <ul role="list" className="-mx-2 space-y-1">
-                {navigation.map((item) => {
-                  const isActive = location.pathname === item.href;
-                  return (
-                    <li key={item.name}>
-                      <Link
-                        to={item.href}
-                        className={cn(
-                          isActive
-                            ? 'bg-gray-50 text-blue-600'
-                            : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600',
-                          'group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6'
-                        )}
-                      >
-                        <item.icon
-                          className={cn(
-                            isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-600',
-                            'h-5 w-5 shrink-0'
-                          )}
-                          aria-hidden="true"
-                        />
-                        {item.name}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </li>
-            <li className="mt-auto">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-start"
-                asChild
-              >
-                <a href="/">
-                  <span>Back to Website</span>
-                </a>
-              </Button>
-            </li>
-          </ul>
-        </nav>
+    <div className="h-full md:h-screen w-60 flex-col border-r border-gray-200 bg-white px-6 overflow-y-auto">
+      <div className="flex h-16 shrink-0 items-center">
+        <Link to="/admin/dashboard">
+          <img
+            className="h-8 w-auto"
+            src="/lovable-uploads/73f46803-d80f-4a1a-a02d-d179b57d0050.png"
+            alt="Waveline"
+          />
+        </Link>
       </div>
+      <nav className="flex flex-1 flex-col">
+        <ul role="list" className="flex flex-1 flex-col gap-y-7">
+          <li>
+            <ul role="list" className="-mx-2 space-y-1">
+              {navigation.map((item) => {
+                const isActive = location.pathname === item.href;
+                return (
+                  <li key={item.name}>
+                    <Link
+                      to={item.href}
+                      className={cn(
+                        isActive
+                          ? 'bg-gray-50 text-blue-600'
+                          : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600',
+                        'group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6'
+                      )}
+                    >
+                      <item.icon
+                        className={cn(
+                          isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-blue-600',
+                          'h-5 w-5 shrink-0'
+                        )}
+                        aria-hidden="true"
+                      />
+                      {item.name}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </li>
+          <li className="mt-auto pb-4">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-start"
+              asChild
+            >
+              <a href="/">
+                <span>Back to Website</span>
+              </a>
+            </Button>
+          </li>
+        </ul>
+      </nav>
     </div>
   );
 };
