@@ -16,7 +16,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
   onChange,
   placeholder = 'Select options'
 }) => {
-  // Initialize with empty arrays if props are undefined
+  // Ensure we always have arrays even if props are undefined
   const safeOptions = Array.isArray(options) ? options : [];
   const safeSelected = Array.isArray(selected) ? selected : [];
   
