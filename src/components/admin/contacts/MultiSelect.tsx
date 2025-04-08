@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Command, CommandGroup, CommandItem, CommandEmpty } from '@/components/ui/command';
 import { X, Check, ChevronsUpDown } from 'lucide-react';
@@ -10,19 +11,19 @@ interface MultiSelectProps {
 }
 
 export const MultiSelect: React.FC<MultiSelectProps> = ({
-  options = [],
-  selected = [],
+  options,
+  selected,
   onChange,
   placeholder = 'Select options'
 }) => {
+  // Initialize with empty arrays if props are undefined
+  const safeOptions = Array.isArray(options) ? options : [];
+  const safeSelected = Array.isArray(selected) ? selected : [];
+  
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const commandRef = useRef<HTMLDivElement>(null);
-
-  // Initialize safe defaults to prevent undefined iteration errors
-  const safeOptions = Array.isArray(options) ? options : [];
-  const safeSelected = Array.isArray(selected) ? selected : [];
 
   const handleUnselect = (item: string) => {
     onChange(safeSelected.filter(i => i !== item));
@@ -131,7 +132,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
         </div>
       </div>
 
-      {open && safeOptions && (
+      {open && (
         <div className="absolute top-full w-full z-50 mt-1">
           <Command className="w-full border rounded-md shadow-md bg-popover">
             <CommandGroup className="h-auto max-h-64 overflow-auto">
