@@ -11,8 +11,8 @@ interface MultiSelectProps {
 }
 
 export const MultiSelect: React.FC<MultiSelectProps> = ({
-  options,
-  selected,
+  options = [], // Provide default empty array to prevent undefined
+  selected = [], // Provide default empty array to prevent undefined
   onChange,
   placeholder = 'Select options'
 }) => {
@@ -39,6 +39,10 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
     }
   };
 
+  // Make sure we have valid arrays before any operations
+  const safeOptions = Array.isArray(options) ? options : [];
+  const safeSelected = Array.isArray(selected) ? selected : [];
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (open && e.key === 'Enter' && inputValue) {
@@ -62,7 +66,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
           inputRef.current?.focus();
         }}
       >
-        {selected.map(item => (
+        {safeSelected.map(item => (
           <div
             key={item}
             className="flex items-center bg-secondary text-secondary-foreground h-7 rounded-sm px-2 text-xs"
@@ -85,11 +89,11 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
           ref={inputRef}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          placeholder={selected.length ? '' : placeholder}
+          placeholder={safeSelected.length ? '' : placeholder}
           className="flex-1 outline-none bg-transparent py-1 px-2 text-sm placeholder:text-muted-foreground"
           onFocus={() => setOpen(true)}
           onBlur={() => {
-            setOpen(false);
+            setTimeout(() => setOpen(false), 200); // Delay closing to allow selection
             handleCreateTag();
           }}
         />
@@ -100,21 +104,25 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
       {open && (
         <Command className="absolute top-full w-full z-10 mt-1 border rounded-md shadow-md bg-popover">
           <CommandGroup className="h-auto max-h-64 overflow-auto">
-            {options.map(option => (
-              <CommandItem
-                key={option}
-                onSelect={() => handleSelect(option)}
-                className="flex items-center gap-2 py-1"
-              >
-                <div className={`mr-2 flex h-4 w-4 items-center justify-center rounded-sm border ${
-                  selected.includes(option) ? 'bg-primary border-primary' : 'opacity-50'
-                }`}>
-                  {selected.includes(option) && <Check className="h-3 w-3 text-primary-foreground" />}
-                </div>
-                {option}
-              </CommandItem>
-            ))}
-            {inputValue && !options.includes(inputValue) && (
+            {safeOptions.length > 0 ? (
+              safeOptions.map(option => (
+                <CommandItem
+                  key={option}
+                  onSelect={() => handleSelect(option)}
+                  className="flex items-center gap-2 py-1"
+                >
+                  <div className={`mr-2 flex h-4 w-4 items-center justify-center rounded-sm border ${
+                    safeSelected.includes(option) ? 'bg-primary border-primary' : 'opacity-50'
+                  }`}>
+                    {safeSelected.includes(option) && <Check className="h-3 w-3 text-primary-foreground" />}
+                  </div>
+                  {option}
+                </CommandItem>
+              ))
+            ) : (
+              <div className="py-2 px-2 text-sm text-muted-foreground">No options available</div>
+            )}
+            {inputValue && !safeOptions.includes(inputValue) && (
               <CommandItem
                 onSelect={handleCreateTag}
                 className="flex items-center gap-2 py-1 italic"
