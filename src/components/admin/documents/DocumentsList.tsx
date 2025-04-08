@@ -1,16 +1,16 @@
 
 import React from 'react';
 import { DocumentCard } from './DocumentCard';
-import { Document } from './types';
+import { DocumentItem } from './types';
 import { FileText, Plus } from 'lucide-react';
 
 interface DocumentsListProps {
-  documents: Document[];
+  documents: DocumentItem[];
   isLoading: boolean;
   onDelete: (id: string) => void;
-  onView: (document: Document) => void;
-  onEdit: (document: Document) => void;
-  onFill: (document: Document) => void;
+  onView: (document: DocumentItem) => void;
+  onEdit: (document: DocumentItem) => void;
+  onFill: (document: DocumentItem) => void;
   isAdmin: boolean;
   onUploadClick: () => void;
 }

@@ -15,7 +15,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { Document, DocumentType } from './types';
+import { DocumentItem, DocumentType } from './types';
 import { updateDocument } from './api';
 import { 
   Select,
@@ -39,7 +39,7 @@ type FormValues = z.infer<typeof formSchema>;
 interface DocumentEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  document: Document | null;
+  document: DocumentItem | null;
   onUpdateSuccess: () => void;
 }
 
