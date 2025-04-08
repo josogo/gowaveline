@@ -22,55 +22,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Badge } from '@/components/ui/badge';
-
-// Real data for team performance
-const teamPerformanceData = [
-  { 
-    name: 'John Smith', 
-    avatar: 'https://i.pravatar.cc/150?img=1',
-    deals: 5, 
-    revenue: '$38,500', 
-    convRate: '62%',
-    totalVolume: '$425,000',
-    commissionSplit: '35%'
-  },
-  { 
-    name: 'Sarah Johnson', 
-    avatar: 'https://i.pravatar.cc/150?img=2',
-    deals: 7, 
-    revenue: '$42,100', 
-    convRate: '71%',
-    totalVolume: '$520,000',
-    commissionSplit: '35%' 
-  },
-  { 
-    name: 'Michael Brown', 
-    avatar: 'https://i.pravatar.cc/150?img=3',
-    deals: 3, 
-    revenue: '$27,300', 
-    convRate: '54%',
-    totalVolume: '$310,000', 
-    commissionSplit: '30%'
-  },
-  { 
-    name: 'Lisa Davis', 
-    avatar: 'https://i.pravatar.cc/150?img=4',
-    deals: 6, 
-    revenue: '$35,900', 
-    convRate: '67%',
-    totalVolume: '$410,000',
-    commissionSplit: '35%'
-  },
-  { 
-    name: 'Robert Wilson', 
-    avatar: 'https://i.pravatar.cc/150?img=5',
-    deals: 4, 
-    revenue: '$31,200', 
-    convRate: '59%',
-    totalVolume: '$290,000',
-    commissionSplit: '30%'
-  },
-];
+import { useCrmData } from '@/contexts/CrmDataContext';
 
 // Monthly processing volume data for the growth chart
 const growthChartData = [
@@ -102,20 +54,10 @@ const AdminDashboard = () => {
   const isMobile = useIsMobile();
   const [selectedPeriod, setSelectedPeriod] = useState('month');
   const [showAllTeamMembers, setShowAllTeamMembers] = useState(false);
+  const { teamMembers, deals, totalVolume, totalRevenue, pendingDeals } = useCrmData();
   
-  // Calculate real-time summary statistics
-  const totalVolume = teamPerformanceData.reduce((sum, member) => {
-    return sum + parseInt(member.totalVolume.replace(/[$,]/g, ''));
-  }, 0);
-  
-  const totalDeals = teamPerformanceData.reduce((sum, member) => sum + member.deals, 0);
-  
-  const totalRevenue = teamPerformanceData.reduce((sum, member) => {
-    return sum + parseInt(member.revenue.replace(/[$,]/g, ''));
-  }, 0);
-
   // Determine how many team members to show based on toggle state and screen size
-  const visibleTeamMembers = showAllTeamMembers ? teamPerformanceData : (isMobile ? teamPerformanceData.slice(0, 3) : teamPerformanceData);
+  const visibleTeamMembers = showAllTeamMembers ? teamMembers : (isMobile ? teamMembers.slice(0, 3) : teamMembers);
   
   return (
     <AdminLayout>
@@ -165,7 +107,7 @@ const AdminDashboard = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{teamPerformanceData.length}</div>
+                    <div className="text-2xl font-bold">{teamMembers.length}</div>
                     <p className="text-xs text-muted-foreground mt-1">+2 from last month</p>
                   </CardContent>
                 </Card>
@@ -177,7 +119,7 @@ const AdminDashboard = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{totalDeals}</div>
+                    <div className="text-2xl font-bold">{pendingDeals}</div>
                     <p className="text-xs text-muted-foreground mt-1">5 require attention</p>
                   </CardContent>
                 </Card>
@@ -207,7 +149,7 @@ const AdminDashboard = () => {
                 </Card>
               </div>
 
-              {/* New Training Hub Card */}
+              {/* Training Hub Card */}
               <Card className="border-[#0EA5E9]/20 bg-gradient-to-r from-blue-50 to-transparent">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
@@ -250,7 +192,11 @@ const AdminDashboard = () => {
                     <CardTitle className="text-orange-500">Team Performance</CardTitle>
                     <CardDescription>Sales rep metrics for current month</CardDescription>
                   </div>
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => navigate('/admin/team-management')}
+                  >
                     <Filter className="h-4 w-4" />
                   </Button>
                 </CardHeader>
@@ -261,7 +207,7 @@ const AdminDashboard = () => {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center">
                             <Avatar className="h-10 w-10 mr-3">
-                              <AvatarImage src={rep.avatar} alt={rep.name} />
+                              <AvatarImage src={rep.profilePicture} alt={rep.name} />
                               <AvatarFallback className="bg-[#0EA5E9]/10 text-[#0EA5E9]">
                                 {rep.name.split(' ').map(n => n[0]).join('')}
                               </AvatarFallback>
@@ -272,11 +218,16 @@ const AdminDashboard = () => {
                                 <Badge variant="outline" className="text-xs mr-2 px-1">
                                   {rep.commissionSplit}
                                 </Badge>
-                                <span>{rep.convRate} conv. rate</span>
+                                <span>{rep.commissionSplit} split</span>
                               </div>
                             </div>
                           </div>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 w-8 p-0"
+                            onClick={() => navigate('/admin/team-management')}
+                          >
                             <ArrowUpRight className="h-4 w-4" />
                           </Button>
                         </div>
@@ -284,21 +235,28 @@ const AdminDashboard = () => {
                         <div className="grid grid-cols-3 gap-2 mt-3 px-2">
                           <div className="text-center">
                             <p className="text-xs text-muted-foreground">Deals</p>
-                            <p className="font-medium">{rep.deals}</p>
+                            <p className="font-medium">
+                              {deals.filter(deal => deal.assignedTo === rep.id).length}
+                            </p>
                           </div>
                           <div className="text-center">
                             <p className="text-xs text-muted-foreground">Revenue</p>
-                            <p className="font-medium">{rep.revenue}</p>
+                            <p className="font-medium">
+                              ${deals
+                                .filter(d => d.assignedTo === rep.id && d.status === 'closed')
+                                .reduce((sum, deal) => sum + (deal.value * 0.35), 0)
+                                .toLocaleString()}
+                            </p>
                           </div>
                           <div className="text-center">
                             <p className="text-xs text-muted-foreground">Vol.</p>
-                            <p className="font-medium">${rep.totalVolume.replace('$', '')}</p>
+                            <p className="font-medium">${rep.processingVolume}</p>
                           </div>
                         </div>
                       </div>
                     ))}
                     
-                    {teamPerformanceData.length > 3 && (
+                    {teamMembers.length > 3 && (
                       <Button 
                         variant="ghost" 
                         className="w-full text-[#0EA5E9]"
@@ -307,7 +265,7 @@ const AdminDashboard = () => {
                         {showAllTeamMembers ? (
                           <>Show Less <ChevronUp className="ml-1 h-4 w-4" /></>
                         ) : (
-                          <>Show All {teamPerformanceData.length} Members <ChevronDown className="ml-1 h-4 w-4" /></>
+                          <>Show All {teamMembers.length} Members <ChevronDown className="ml-1 h-4 w-4" /></>
                         )}
                       </Button>
                     )}
@@ -357,7 +315,7 @@ const AdminDashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">{teamPerformanceData.length}</div>
+                  <div className="text-3xl font-bold">{teamMembers.length}</div>
                   <p className="text-xs text-muted-foreground mt-1">+2 from last month</p>
                 </CardContent>
               </Card>
@@ -369,7 +327,7 @@ const AdminDashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">{totalDeals}</div>
+                  <div className="text-3xl font-bold">{pendingDeals}</div>
                   <p className="text-xs text-muted-foreground mt-1">5 require attention</p>
                 </CardContent>
               </Card>
@@ -399,7 +357,7 @@ const AdminDashboard = () => {
               </Card>
             </div>
             
-            {/* New Training Hub Card */}
+            {/* Training Hub Card */}
             <Card className="mb-8 border-[#0EA5E9]/20 bg-gradient-to-r from-blue-50 to-transparent">
               <CardContent className="p-6">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -461,11 +419,11 @@ const AdminDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {teamPerformanceData.map((rep, index) => (
+                    {teamMembers.map((rep, index) => (
                       <div key={index} className="flex items-center justify-between pb-4 border-b border-gray-100 last:border-0 last:pb-0">
                         <div className="flex items-center">
                           <Avatar className="h-10 w-10 mr-3">
-                            <AvatarImage src={rep.avatar} alt={rep.name} />
+                            <AvatarImage src={rep.profilePicture} alt={rep.name} />
                             <AvatarFallback className="bg-[#0EA5E9]/10 text-[#0EA5E9]">
                               {rep.name.split(' ').map(n => n[0]).join('')}
                             </AvatarFallback>
@@ -475,15 +433,22 @@ const AdminDashboard = () => {
                         <div className="flex items-center space-x-8">
                           <div className="text-center">
                             <p className="text-xs text-muted-foreground">Deals</p>
-                            <p className="font-medium">{rep.deals}</p>
+                            <p className="font-medium">
+                              {deals.filter(deal => deal.assignedTo === rep.id).length}
+                            </p>
                           </div>
                           <div className="text-center">
                             <p className="text-xs text-muted-foreground">Revenue</p>
-                            <p className="font-medium">{rep.revenue}</p>
+                            <p className="font-medium">
+                              ${deals
+                                .filter(d => d.assignedTo === rep.id && d.status === 'closed')
+                                .reduce((sum, deal) => sum + (deal.value * 0.35), 0)
+                                .toLocaleString()}
+                            </p>
                           </div>
                           <div className="text-center">
                             <p className="text-xs text-muted-foreground">Vol.</p>
-                            <p className="font-medium">${rep.totalVolume.replace('$', '')}</p>
+                            <p className="font-medium">${rep.processingVolume}</p>
                           </div>
                           <div className="text-center hidden md:block">
                             <p className="text-xs text-muted-foreground">Split</p>
