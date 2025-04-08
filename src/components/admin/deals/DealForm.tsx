@@ -21,7 +21,18 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
-import { TeamMember } from '@/contexts/CrmDataContext';
+
+// Define TeamMember interface here instead of importing from CrmDataContext
+interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  commissionSplit: string;
+  processingVolume: string;
+  profilePicture?: string;
+}
 
 const dealSchema = z.object({
   name: z.string().min(1, 'Business name is required'),

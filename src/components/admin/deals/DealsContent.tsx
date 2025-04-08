@@ -12,6 +12,7 @@ import DealForm, { DealFormValues } from './DealForm';
 import DocumentForm, { DocumentFormValues } from './DocumentForm';
 import { DealDialogType, DealsState } from './types';
 import { DealCard } from './DealCard';
+import { Contact } from '@/components/admin/contacts/types';
 
 const DealsContent = () => {
   const { deals, setDeals, teamMembers, contacts, linkContactToDeal } = useCrmData();
