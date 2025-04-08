@@ -5,6 +5,7 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
+  CardFooter,
 } from "@/components/ui/card";
 import {
   Table,
@@ -59,7 +60,11 @@ import {
   Briefcase,
   Tag,
   ClipboardList,
-  BadgePercent
+  BadgePercent,
+  ChevronDown,
+  ChevronUp,
+  Check,
+  X
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCrmData, Deal, DealDocument } from '@/contexts/CrmDataContext';
@@ -78,6 +83,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Contact } from '../admin/contacts/types';
+import { DealCard } from './deals/DealCard';
 
 const dealSchema = z.object({
   name: z.string().min(1, 'Business name is required'),
@@ -598,313 +604,19 @@ const DealsContent = () => {
       <Dialog open={isDetailOpen} onOpenChange={closeDealDetail}>
         <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto p-0">
           {selectedDeal && (
-            <div className="flex flex-col h-full">
-              <DialogHeader className="px-6 py-4 border-b sticky top-0 bg-white z-10">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <DialogTitle className="text-xl font-bold text-gray-800">{selectedDeal.name}</DialogTitle>
-                    <div className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5" />
-                      <span>Created on {new Date(selectedDeal.createdAt).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                  <Badge variant="outline" className={`${getStatusBadgeColor(selectedDeal.status)} px-3 py-1 text-xs font-medium`}>
-                    {selectedDeal.status === 'pending' && <Clock className="h-3.5 w-3.5 mr-1 inline" />}
-                    {selectedDeal.status === 'closed' && <CheckCircle2 className="h-3.5 w-3.5 mr-1 inline" />}
-                    {selectedDeal.status === 'lost' && <XCircle className="h-3.5 w-3.5 mr-1 inline" />}
-                    {selectedDeal.status.charAt(0).toUpperCase() + selectedDeal.status.slice(1)}
-                  </Badge>
-                </div>
-              </DialogHeader>
-              
-              <div className="p-6 flex-grow overflow-auto">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="md:col-span-1 space-y-6">
-                    <div className="bg-gray-50 rounded-lg p-5 border">
-                      <h3 className="text-lg font-semibold mb-4 flex items-center">
-                        <Briefcase className="h-5 w-5 mr-2 text-orange-500" />
-                        Deal Information
-                      </h3>
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">Value:</span>
-                          <div className="font-semibold text-lg flex items-center text-green-700">
-                            <DollarSign className="h-4 w-4" />
-                            {selectedDeal.value.toLocaleString()}
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">Primary Contact:</span>
-                          <div className="font-medium">{selectedDeal.contactName}</div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">Assigned To:</span>
-                          <div className="font-medium flex items-center">
-                            <User className="h-3.5 w-3.5 mr-1.5 opacity-70" />
-                            {getTeamMemberName(selectedDeal.assignedTo)}
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">Expected Commission:</span>
-                          <div className="font-medium flex items-center text-orange-700">
-                            <BadgePercent className="h-3.5 w-3.5 mr-1.5" />
-                            ${(selectedDeal.value * 0.35).toLocaleString()}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-gray-50 rounded-lg p-5 border">
-                      <h3 className="text-lg font-semibold mb-3 flex items-center">
-                        <Tag className="h-5 w-5 mr-2 text-orange-500" />
-                        Actions
-                      </h3>
-                      <div className="grid grid-cols-2 gap-3">
-                        <Button 
-                          variant="outline"
-                          className="flex items-center justify-center"
-                          onClick={() => openEditDialog(selectedDeal)}
-                        >
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit Deal
-                        </Button>
-                        <Button 
-                          variant="outline"
-                          className="flex items-center justify-center"
-                          onClick={() => setIsDocUploadOpen(true)}
-                        >
-                          <Upload className="mr-2 h-4 w-4" />
-                          Upload Document
-                        </Button>
-                      </div>
-                      
-                      <div className="mt-3 grid grid-cols-1">
-                        <Button 
-                          className={`w-full ${selectedDeal.status === 'closed' ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-green-600 hover:bg-green-700 text-white'}`}
-                          disabled={selectedDeal.status === 'closed'}
-                          onClick={() => {
-                            handleStatusChange(selectedDeal.id, 'closed');
-                          }}
-                        >
-                          <CheckCircle2 className="mr-2 h-4 w-4" />
-                          Mark as Closed
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="md:col-span-2">
-                    <Tabs defaultValue="contacts" className="w-full">
-                      <TabsList className="w-full grid grid-cols-2 mb-2">
-                        <TabsTrigger value="contacts" className="flex items-center">
-                          <Users className="h-4 w-4 mr-2" />
-                          Related Contacts
-                        </TabsTrigger>
-                        <TabsTrigger value="documents" className="flex items-center">
-                          <FileText className="h-4 w-4 mr-2" />
-                          Documents
-                        </TabsTrigger>
-                      </TabsList>
-                      
-                      <TabsContent value="contacts" className="p-0">
-                        <div className="bg-white rounded-lg border p-4">
-                          <div className="flex justify-between items-center mb-4">
-                            <h4 className="font-semibold text-sm flex items-center">
-                              <Users className="h-4 w-4 mr-1.5 text-orange-500" />
-                              Linked Contacts
-                            </h4>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                  <Plus className="h-3.5 w-3.5 mr-1" />
-                                  Link Contact
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-56">
-                                <div className="px-2 py-1.5 text-sm font-semibold">Select Contact</div>
-                                <DropdownMenuSeparator />
-                                {contacts
-                                  .filter(c => !selectedDeal.relatedContacts?.includes(c.id))
-                                  .map(contact => (
-                                    <DropdownMenuItem 
-                                      key={contact.id}
-                                      onClick={() => handleLinkContact(contact.id)}
-                                      className="flex items-center cursor-pointer"
-                                    >
-                                      <Avatar className="h-6 w-6 mr-2">
-                                        <AvatarFallback className="text-xs">{contact.name[0]}</AvatarFallback>
-                                      </Avatar>
-                                      {contact.name}
-                                    </DropdownMenuItem>
-                                  ))
-                                }
-                                {contacts.filter(c => !selectedDeal.relatedContacts?.includes(c.id)).length === 0 && (
-                                  <DropdownMenuItem disabled className="text-center text-muted-foreground">
-                                    No contacts to link
-                                  </DropdownMenuItem>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                          
-                          {getRelatedContacts(selectedDeal.id).length === 0 ? (
-                            <div className="p-8 text-center text-sm text-muted-foreground border border-dashed rounded-md">
-                              <Users className="h-10 w-10 mx-auto mb-2 text-gray-300" />
-                              <p>No contacts linked to this deal</p>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="mt-2"
-                                onClick={() => {
-                                  const potentialContact = contacts.find(c => c.name === selectedDeal.contactName);
-                                  if (potentialContact) {
-                                    handleLinkContact(potentialContact.id);
-                                  }
-                                }}
-                              >
-                                <Plus className="h-3.5 w-3.5 mr-1" />
-                                Link Primary Contact
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                              {getRelatedContacts(selectedDeal.id).map(contact => (
-                                <div key={contact.id} className="p-3 border rounded-md bg-white hover:bg-gray-50 transition-colors">
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center">
-                                      <Avatar className="h-10 w-10 mr-3">
-                                        <AvatarFallback>{contact.name[0]}</AvatarFallback>
-                                      </Avatar>
-                                      <div>
-                                        <div className="font-medium">{contact.name}</div>
-                                        <div className="text-xs text-muted-foreground flex items-center gap-2">
-                                          <span>{contact.email}</span>
-                                          <span>•</span>
-                                          <span>{contact.phone}</span>
-                                        </div>
-                                        {contact.company && (
-                                          <div className="text-xs text-muted-foreground mt-0.5">
-                                            {contact.company}
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <Badge className="capitalize">
-                                        {contact.type}
-                                      </Badge>
-                                      <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                            <MoreHorizontal className="h-4 w-4" />
-                                          </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                          <DropdownMenuItem onClick={() => setEditingContact && setEditingContact(contact)}>
-                                            <Edit className="h-4 w-4 mr-2" />
-                                            Edit Contact
-                                          </DropdownMenuItem>
-                                          <DropdownMenuSeparator />
-                                          <DropdownMenuItem className="text-red-600">
-                                            Remove from Deal
-                                          </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                      </DropdownMenu>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </TabsContent>
-                      
-                      <TabsContent value="documents" className="p-0">
-                        <div className="bg-white rounded-lg border p-4">
-                          <div className="flex justify-between items-center mb-4">
-                            <h4 className="font-semibold text-sm flex items-center">
-                              <ClipboardList className="h-4 w-4 mr-1.5 text-orange-500" />
-                              Deal Documents
-                            </h4>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => setIsDocUploadOpen(true)}
-                              className="flex items-center"
-                            >
-                              <Upload className="h-3.5 w-3.5 mr-1" />
-                              Upload Document
-                            </Button>
-                          </div>
-                          
-                          {!selectedDeal.documents || selectedDeal.documents.length === 0 ? (
-                            <div className="p-8 text-center text-sm text-muted-foreground border border-dashed rounded-md">
-                              <FileText className="h-10 w-10 mx-auto mb-2 text-gray-300" />
-                              <p>No documents uploaded yet</p>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="mt-2"
-                                onClick={() => setIsDocUploadOpen(true)}
-                              >
-                                <Upload className="h-3.5 w-3.5 mr-1" />
-                                Upload First Document
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                              {selectedDeal.documents.map(doc => (
-                                <div key={doc.id} className="p-3 border rounded-md flex items-center justify-between bg-white hover:bg-gray-50 transition-colors">
-                                  <div className="flex items-center">
-                                    <div className="bg-orange-100 p-2 rounded-md mr-3">
-                                      <FileText className="h-5 w-5 text-orange-500" />
-                                    </div>
-                                    <div>
-                                      <div className="font-medium">{doc.name}</div>
-                                      <div className="text-xs text-muted-foreground">
-                                        {getDocumentTypeLabel(doc.type)} • {new Date(doc.uploadedAt).toLocaleDateString()}
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Button variant="ghost" size="sm" onClick={() => window.open(doc.fileUrl, '_blank')}>
-                                      View
-                                    </Button>
-                                    <DropdownMenu>
-                                      <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                          <MoreHorizontal className="h-4 w-4" />
-                                        </Button>
-                                      </DropdownMenuTrigger>
-                                      <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={() => window.open(doc.fileUrl, '_blank')}>
-                                          View Document
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem>
-                                          Download
-                                        </DropdownMenuItem>
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem className="text-red-600">
-                                          Delete
-                                        </DropdownMenuItem>
-                                      </DropdownMenuContent>
-                                    </DropdownMenu>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </TabsContent>
-                    </Tabs>
-                  </div>
-                </div>
-              </div>
-              
-              <DialogFooter className="px-6 py-4 border-t">
-                <Button variant="outline" onClick={closeDealDetail}>Close</Button>
-              </DialogFooter>
-            </div>
+            <DealCard 
+              deal={selectedDeal} 
+              onClose={closeDealDetail}
+              onEdit={() => openEditDialog(selectedDeal)}
+              onStatusChange={(status) => handleStatusChange(selectedDeal.id, status)}
+              onUploadDocument={() => setIsDocUploadOpen(true)}
+              getTeamMemberName={getTeamMemberName}
+              getRelatedContacts={getRelatedContacts}
+              handleLinkContact={handleLinkContact}
+              contacts={contacts}
+              setEditingContact={setEditingContact}
+              getDocumentTypeLabel={getDocumentTypeLabel}
+            />
           )}
         </DialogContent>
       </Dialog>
