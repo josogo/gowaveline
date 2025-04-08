@@ -8,7 +8,7 @@ export const contactFormSchema = z.object({
   phone: z.string().min(5, { message: 'Please enter a valid phone number' }),
   company: z.string().optional(),
   title: z.string().optional(),
-  type: z.enum(['lead', 'client', 'partner', 'vendor'] as const),
+  type: z.enum(['lead', 'client', 'partner', 'vendor', 'prospect'] as const),
   status: z.enum(['new', 'active', 'inactive', 'lead', 'churned'] as const),
   tags: z.array(z.string()).default([]),
   address: z.string().optional(),

@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { TeamMember } from '@/components/admin/team/TeamMemberForm';
 import { Contact } from '@/components/admin/contacts/types';
@@ -167,6 +166,8 @@ export const CrmDataProvider: React.FC<CrmDataProviderProps> = ({ children }) =>
 
   // Function to create a new deal from a contact
   const createDealFromContact = (contact: Contact) => {
+    console.log("Creating deal from contact:", contact);
+    
     const newDeal: Deal = {
       id: Date.now().toString(),
       name: contact.company || `${contact.name} Deal`,
@@ -178,22 +179,32 @@ export const CrmDataProvider: React.FC<CrmDataProviderProps> = ({ children }) =>
       relatedContacts: [contact.id]
     };
     
-    setDeals(prevDeals => [...prevDeals, newDeal]);
+    console.log("New deal object created:", newDeal);
+    
+    setDeals(prevDeals => {
+      const updatedDeals = [...prevDeals, newDeal];
+      console.log("Updated deals state:", updatedDeals);
+      return updatedDeals;
+    });
     
     // Update the contact to reference this deal
-    setContacts(prevContacts => 
-      prevContacts.map(c => {
+    setContacts(prevContacts => {
+      const updatedContacts = prevContacts.map(c => {
         if (c.id === contact.id) {
           const relatedDeals = c.relatedDeals || [];
+          console.log("Updating contact's related deals:", [...relatedDeals, newDeal.id]);
           return {
             ...c,
             relatedDeals: [...relatedDeals, newDeal.id]
           };
         }
         return c;
-      })
-    );
+      });
+      console.log("Updated contacts state:", updatedContacts);
+      return updatedContacts;
+    });
     
+    console.log("Returning new deal ID:", newDeal.id);
     return newDeal.id;
   };
   
