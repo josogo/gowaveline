@@ -329,7 +329,8 @@ const GmailIntegration = () => {
       setSyncError((error instanceof Error) ? error.message : 'Unknown error');
       toast({
         title: "Failed to sync emails",
-        status: "error"
+        description: (error instanceof Error) ? error.message : 'Unknown error',
+        variant: "destructive"
       });
     } finally {
       setIsSyncing(false);
