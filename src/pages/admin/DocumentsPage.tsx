@@ -47,10 +47,18 @@ const DocumentsPage = () => {
   }, []);
   
   // Fetch documents
-  const { data: documents, isLoading } = useQuery({
+  const { data: documents, isLoading, error } = useQuery({
     queryKey: ['documents'],
     queryFn: fetchDocuments
   });
+  
+  // Log any errors
+  React.useEffect(() => {
+    if (error) {
+      console.error('Error fetching documents:', error);
+      toast.error('Failed to load documents');
+    }
+  }, [error]);
   
   // Delete document mutation
   const deleteMutation = useMutation({
@@ -69,22 +77,9 @@ const DocumentsPage = () => {
   const handleDeleteDocument = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this document?')) {
       try {
-        // First get the document to get the file path
-        const doc = documents?.find((d) => d.id === id);
-        if (!doc) return;
-        
-        // Delete from storage first
-        const { error: storageError } = await supabase.storage
-          .from('documents')
-          .remove([doc.file_path]);
-        
-        if (storageError) throw storageError;
-        
-        // Then delete database record
         await deleteMutation.mutateAsync(id);
       } catch (error: any) {
         console.error('Error deleting document:', error);
-        toast.error(`Failed to delete document: ${error.message}`);
       }
     }
   };
@@ -132,6 +127,7 @@ const DocumentsPage = () => {
   
   // Handle refresh
   const handleRefresh = () => {
+    console.log('Refreshing document list');
     queryClient.invalidateQueries({ queryKey: ['documents'] });
   };
 

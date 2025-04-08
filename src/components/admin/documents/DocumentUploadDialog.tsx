@@ -28,6 +28,7 @@ import {
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import FileUpload from '@/components/file-upload/FileUpload';
+import { createDocument } from './api';
 
 const formSchema = z.object({
   name: z.string().min(1, { message: 'Name is required' }),
@@ -82,6 +83,16 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
     setUploading(true);
     
     try {
+      // Check if storage bucket exists, create if not
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const documentsBucketExists = buckets?.some(bucket => bucket.name === 'documents');
+      
+      if (!documentsBucketExists) {
+        await supabase.storage.createBucket('documents', {
+          public: false,
+        });
+      }
+      
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -94,7 +105,7 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
       const fileExt = selectedFile.name.split('.').pop();
       const filePath = `${user.id}/${timestamp}_${selectedFile.name}`;
       
-      const { error: uploadError } = await supabase.storage
+      const { data: fileData, error: uploadError } = await supabase.storage
         .from('documents')
         .upload(filePath, selectedFile, {
           contentType: selectedFile.type,
@@ -105,24 +116,23 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
         throw uploadError;
       }
       
-      // Create document record in database
-      const { error: dbError } = await supabase
-        .from('documents')
-        .insert({
-          name: values.name,
-          description: values.description || null,
-          file_path: filePath,
-          file_type: selectedFile.type,
-          file_size: selectedFile.size,
-          owner_id: user.id,
-          uploaded_by: user.id,
-          document_type: values.document_type,
-          is_template: values.is_template
-        });
+      console.log('File uploaded successfully:', fileData);
       
-      if (dbError) {
-        throw dbError;
-      }
+      // Create document record in database
+      const documentData = {
+        name: values.name,
+        description: values.description || '',
+        file_path: filePath,
+        file_type: selectedFile.type,
+        file_size: selectedFile.size,
+        owner_id: user.id,
+        uploaded_by: user.id,
+        document_type: values.document_type,
+        is_template: values.is_template
+      };
+      
+      const newDocument = await createDocument(documentData);
+      console.log('Document created successfully:', newDocument);
       
       toast.success('Document uploaded successfully');
       onUploadSuccess();

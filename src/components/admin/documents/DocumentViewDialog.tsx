@@ -32,12 +32,18 @@ export const DocumentViewDialog: React.FC<DocumentViewDialogProps> = ({
       
       try {
         setLoading(true);
+        console.log('Fetching document URL for:', document.file_path);
+        
         const { data, error } = await supabase.storage
           .from('documents')
           .createSignedUrl(document.file_path, 3600); // 1 hour expiry
         
-        if (error) throw error;
+        if (error) {
+          console.error('Error creating signed URL:', error);
+          throw error;
+        }
         
+        console.log('Document URL:', data?.signedUrl);
         setDocumentUrl(data.signedUrl);
       } catch (error) {
         console.error('Error fetching document URL:', error);
@@ -46,8 +52,12 @@ export const DocumentViewDialog: React.FC<DocumentViewDialogProps> = ({
       }
     };
     
-    fetchDocumentUrl();
-  }, [document]);
+    if (open && document) {
+      fetchDocumentUrl();
+    } else {
+      setDocumentUrl(null);
+    }
+  }, [document, open]);
   
   const handleDownload = async () => {
     if (!document || !documentUrl) return;
@@ -82,7 +92,7 @@ export const DocumentViewDialog: React.FC<DocumentViewDialogProps> = ({
             />
           ) : (
             <div className="flex items-center justify-center h-full text-gray-500">
-              Unable to preview this document
+              Unable to preview this document. Please check storage permissions.
             </div>
           )}
         </div>

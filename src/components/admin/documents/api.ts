@@ -72,6 +72,31 @@ export async function updateDocument(id: string, updates: Partial<DocumentItem>)
 }
 
 export async function deleteDocument(id: string): Promise<boolean> {
+  // First get the document to get file path
+  const { data: document, error: fetchError } = await supabase
+    .from('documents')
+    .select('file_path')
+    .eq('id', id)
+    .single();
+    
+  if (fetchError) {
+    console.error(`Error fetching document with ID ${id}:`, fetchError);
+    throw fetchError;
+  }
+  
+  // Delete the file from storage first
+  if (document?.file_path) {
+    const { error: storageError } = await supabase.storage
+      .from('documents')
+      .remove([document.file_path]);
+      
+    if (storageError) {
+      console.error(`Error deleting file from storage:`, storageError);
+      // Continue with deletion of database record even if storage deletion fails
+    }
+  }
+  
+  // Now delete the database record
   const { error } = await supabase
     .from('documents')
     .delete()
