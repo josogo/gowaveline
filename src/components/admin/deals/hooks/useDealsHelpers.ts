@@ -35,11 +35,11 @@ export const useDealsHelpers = () => {
         status: (contact.status || 'new') as ContactStatus,
         tags: contact.tags || [],
         createdAt: contact.createdAt,
-        // Add all required fields from the Contact type
-        title: contact.title || '',
-        address: contact.address || '',
-        notes: contact.notes || '',
-        assignedTo: contact.assignedTo || ''
+        // Add all required fields with default values for the Contact type
+        title: '', // Default value since it doesn't exist in CrmDataContext.Contact
+        address: '', // Default value since it doesn't exist in CrmDataContext.Contact
+        notes: '', // Default value since it doesn't exist in CrmDataContext.Contact
+        assignedTo: '' // Default value since it doesn't exist in CrmDataContext.Contact
       }));
   };
   
