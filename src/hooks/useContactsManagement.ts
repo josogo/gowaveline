@@ -55,8 +55,14 @@ export const useContactsManagement = () => {
     
     // Create a deal if the contact type is prospect
     if (newContact.type === 'prospect') {
-      const dealId = createDealFromContact(newContact);
-      toast.success('Created a deal for new prospect');
+      try {
+        const dealId = createDealFromContact(newContact);
+        console.log("Created deal with ID:", dealId, "for contact:", newContact);
+        toast.success('Created a deal for new prospect');
+      } catch (error) {
+        console.error("Error creating deal from contact:", error);
+        toast.error('Failed to create deal for prospect');
+      }
     }
   };
   
@@ -64,15 +70,25 @@ export const useContactsManagement = () => {
     if (!editingContact) return;
     
     let dealCreated = false;
+    
     // Check if the contact type changed from lead to prospect
-    if (editingContact.type === 'lead' && contactData.type === 'prospect') {
-      // Find the contact with updates applied
-      const updatedContact = { ...editingContact, ...contactData };
-      // Create a new deal for this contact that just became a prospect
-      const dealId = createDealFromContact(updatedContact);
-      dealCreated = true;
+    if (editingContact.type !== 'prospect' && contactData.type === 'prospect') {
+      try {
+        // Find the contact with updates applied
+        const updatedContact = { ...editingContact, ...contactData };
+        console.log("Converting contact to prospect:", updatedContact);
+        
+        // Create a new deal for this contact that just became a prospect
+        const dealId = createDealFromContact(updatedContact);
+        console.log("Created deal with ID:", dealId);
+        dealCreated = true;
+      } catch (error) {
+        console.error("Error creating deal from contact:", error);
+        toast.error('Failed to create deal for prospect');
+      }
     }
     
+    // Update the contact in the state
     setContacts(prevContacts => 
       prevContacts.map(contact => 
         contact.id === editingContact.id ? { ...contact, ...contactData } : contact

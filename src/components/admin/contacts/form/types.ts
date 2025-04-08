@@ -1,4 +1,5 @@
 
+import * as z from 'zod';
 import { Contact, ContactType, ContactStatus } from '../types';
 
 export interface ContactFormValues {
@@ -14,3 +15,5 @@ export interface ContactFormValues {
   notes: string;
   assignedTo: string;
 }
+
+export type { Contact, ContactType, ContactStatus };
