@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from 'sonner';
 import { useCrmData, Deal, DealDocument } from '@/contexts/CrmDataContext';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { Contact } from '@/components/admin/contacts/types';
 
 import DealsHeader from './DealsHeader';
 import DealsTable from './DealsTable';
@@ -12,7 +12,6 @@ import DealForm, { DealFormValues } from './DealForm';
 import DocumentForm, { DocumentFormValues } from './DocumentForm';
 import { DealDialogType, DealsState } from './types';
 import { DealCard } from './DealCard';
-import { Contact } from '@/components/admin/contacts/types';
 
 const DealsContent = () => {
   const { deals, setDeals, teamMembers, contacts, linkContactToDeal } = useCrmData();
@@ -21,7 +20,6 @@ const DealsContent = () => {
   const queryParams = new URLSearchParams(location.search);
   const dealIdFromUrl = queryParams.get('dealId');
 
-  // Define state with a type
   const [state, setState] = useState<DealsState>({
     isDialogOpen: false,
     isDetailOpen: false,
@@ -34,7 +32,6 @@ const DealsContent = () => {
     editingContact: null
   });
 
-  // Check for deal ID in URL on component mount
   useEffect(() => {
     if (dealIdFromUrl) {
       const deal = deals.find(d => d.id === dealIdFromUrl);
@@ -48,7 +45,6 @@ const DealsContent = () => {
     }
   }, [dealIdFromUrl, deals]);
 
-  // Event handlers
   const openEditDialog = (deal: Deal) => {
     setState(prev => ({
       ...prev,
@@ -215,7 +211,6 @@ const DealsContent = () => {
     }));
   };
   
-  // Filtered and sorted deals
   const filteredDeals = useMemo(() => {
     return deals
       .filter(deal => 
@@ -237,7 +232,6 @@ const DealsContent = () => {
       });
   }, [deals, state.searchQuery, state.sortField, state.sortDirection]);
   
-  // Utility functions
   const getStatusBadgeColor = (status: string) => {
     switch(status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200';
@@ -271,7 +265,6 @@ const DealsContent = () => {
     }
   };
 
-  // Dialogs and their default values
   const getFormDefaultValues = () => {
     if (state.editingDeal) {
       const deal = deals.find(d => d.id === state.editingDeal);
@@ -317,7 +310,6 @@ const DealsContent = () => {
         </CardContent>
       </Card>
       
-      {/* Deal Form Dialog */}
       <Dialog open={state.isDialogOpen} onOpenChange={closeDialog}>
         <DialogContent className="sm:max-w-[525px]">
           <DialogHeader>
@@ -338,7 +330,6 @@ const DealsContent = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Deal Detail Dialog */}
       <Dialog open={state.isDetailOpen} onOpenChange={closeDealDetail}>
         <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto p-0">
           {state.selectedDeal && (
@@ -359,7 +350,6 @@ const DealsContent = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Document Upload Dialog */}
       <Dialog open={state.isDocUploadOpen} onOpenChange={closeDocumentUpload}>
         <DialogContent className="sm:max-w-[450px]">
           <DialogHeader>

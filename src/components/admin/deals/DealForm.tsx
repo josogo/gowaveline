@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,18 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
-
-// Define TeamMember interface here instead of importing from CrmDataContext
-interface TeamMember {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  role: string;
-  commissionSplit: string;
-  processingVolume: string;
-  profilePicture?: string;
-}
+import { TeamMember } from '@/components/admin/team/TeamMemberForm';
 
 const dealSchema = z.object({
   name: z.string().min(1, 'Business name is required'),
