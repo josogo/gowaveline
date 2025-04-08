@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -124,6 +125,7 @@ const DealsContent = () => {
         id: Date.now().toString(),
         name: values.name,
         value: values.value,
+        processingVolume: values.processingVolume,
         status: values.status,
         contactName: values.contactName,
         assignedTo: values.assignedTo,
@@ -275,6 +277,7 @@ const DealsContent = () => {
       return {
         name: deal?.name || '',
         value: deal?.value || 0,
+        processingVolume: deal?.processingVolume || 0,
         contactName: deal?.contactName || '',
         status: deal?.status as 'pending' | 'closed' | 'lost',
         assignedTo: deal?.assignedTo || ''
@@ -284,6 +287,7 @@ const DealsContent = () => {
     return {
       name: '',
       value: 0,
+      processingVolume: 0,
       contactName: '',
       status: 'pending' as const,
       assignedTo: ''

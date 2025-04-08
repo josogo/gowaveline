@@ -22,11 +22,14 @@ import { TeamMemberForm, TeamMembersTable, TeamSearch } from './team';
 import { supabase } from '@/integrations/supabase/client';
 import type { TeamMember } from './team/TeamMemberForm';
 import { useCrmData } from '@/contexts/CrmDataContext';
+import TeamMemberDetail from './team/TeamMemberDetail';
 
 const TeamManagement = () => {
   const { teamMembers, setTeamMembers } = useCrmData();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+  const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [agreements, setAgreements] = useState<any[]>([]);
 
@@ -117,6 +120,11 @@ const TeamManagement = () => {
     setIsDialogOpen(true);
   };
 
+  const handleViewDetails = (member: TeamMember) => {
+    setSelectedMember(member);
+    setIsDetailOpen(true);
+  };
+
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
   };
@@ -163,9 +171,19 @@ const TeamManagement = () => {
             members={filteredMembers}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            onViewDetails={handleViewDetails}
           />
         </CardContent>
       </Card>
+
+      {selectedMember && (
+        <TeamMemberDetail
+          isOpen={isDetailOpen}
+          onClose={() => setIsDetailOpen(false)}
+          member={selectedMember}
+          onEdit={handleEdit}
+        />
+      )}
     </div>
   );
 };

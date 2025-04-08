@@ -1,24 +1,24 @@
 
 import React from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { 
+  Table, 
+  TableHeader, 
+  TableHead, 
+  TableBody, 
+  TableRow, 
+  TableCell 
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Deal } from '@/contexts/CrmDataContext';
+import { Badge } from '@/components/ui/badge';
+import { ArrowDownUp, ChevronDown, ArrowUp, ArrowDown, Edit2, Trash2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Edit, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
-import { Deal } from '@/contexts/CrmDataContext';
 
 interface DealsTableProps {
   deals: Deal[];
@@ -33,36 +33,48 @@ interface DealsTableProps {
   getTeamMemberName: (id: string) => string;
 }
 
-const DealsTable: React.FC<DealsTableProps> = ({ 
+const DealsTable = ({ 
   deals, 
   sortField, 
-  sortDirection, 
-  onSortChange, 
-  onStatusChange, 
-  onEdit, 
-  onDelete, 
+  sortDirection,
+  onSortChange,
+  onStatusChange,
+  onEdit,
+  onDelete,
   onDealSelect,
   getStatusBadgeColor,
-  getTeamMemberName
-}) => {
-  
-  const getSortIcon = (field: keyof Deal) => {
-    if (sortField !== field) return null;
-    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
+  getTeamMemberName,
+}: DealsTableProps) => {
+  const SortIcon = ({ field }: { field: keyof Deal }) => {
+    if (field !== sortField) {
+      return <ArrowDownUp className="ml-2 h-4 w-4" />;
+    }
+    return sortDirection === 'asc' ? 
+      <ArrowUp className="ml-2 h-4 w-4" /> : 
+      <ArrowDown className="ml-2 h-4 w-4" />;
   };
-
+  
   return (
-    <div className="rounded-md border">
+    <div className="border rounded-md overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead 
-              className="cursor-pointer"
+              className="w-[250px] cursor-pointer"
               onClick={() => onSortChange('name')}
             >
               <div className="flex items-center">
-                Business Name
-                {getSortIcon('name')}
+                Deal Name
+                <SortIcon field="name" />
+              </div>
+            </TableHead>
+            <TableHead 
+              className="cursor-pointer" 
+              onClick={() => onSortChange('contactName')}
+            >
+              <div className="flex items-center">
+                Contact
+                <SortIcon field="contactName" />
               </div>
             </TableHead>
             <TableHead 
@@ -70,35 +82,31 @@ const DealsTable: React.FC<DealsTableProps> = ({
               onClick={() => onSortChange('value')}
             >
               <div className="flex items-center">
-                Value
-                {getSortIcon('value')}
+                Revenue
+                <SortIcon field="value" />
               </div>
             </TableHead>
-            <TableHead 
-              className="cursor-pointer"
-              onClick={() => onSortChange('contactName')}
-            >
+            <TableHead>
               <div className="flex items-center">
-                Contact
-                {getSortIcon('contactName')}
+                Processing Volume
               </div>
             </TableHead>
-            <TableHead 
+            <TableHead
               className="cursor-pointer"
               onClick={() => onSortChange('status')}
             >
               <div className="flex items-center">
                 Status
-                {getSortIcon('status')}
+                <SortIcon field="status" />
               </div>
             </TableHead>
-            <TableHead 
+            <TableHead
               className="cursor-pointer"
               onClick={() => onSortChange('assignedTo')}
             >
               <div className="flex items-center">
                 Assigned To
-                {getSortIcon('assignedTo')}
+                <SortIcon field="assignedTo" />
               </div>
             </TableHead>
             <TableHead className="text-right">Actions</TableHead>
@@ -107,68 +115,55 @@ const DealsTable: React.FC<DealsTableProps> = ({
         <TableBody>
           {deals.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                No deals found
+              <TableCell colSpan={7} className="text-center h-32 text-muted-foreground">
+                No deals found. Add your first deal to get started.
               </TableCell>
             </TableRow>
           ) : (
             deals.map((deal) => (
-              <TableRow key={deal.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onDealSelect(deal)}>
+              <TableRow 
+                key={deal.id} 
+                className="cursor-pointer hover:bg-muted/50"
+                onClick={() => onDealSelect(deal)}
+              >
                 <TableCell className="font-medium">{deal.name}</TableCell>
-                <TableCell>${deal.value.toLocaleString()}</TableCell>
                 <TableCell>{deal.contactName}</TableCell>
+                <TableCell>${deal.value}</TableCell>
+                <TableCell>${deal.processingVolume || 0}</TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={getStatusBadgeColor(deal.status)}>
-                    {deal.status.charAt(0).toUpperCase() + deal.status.slice(1)}
+                  <Badge className={getStatusBadgeColor(deal.status)}>
+                    {deal.status}
                   </Badge>
                 </TableCell>
                 <TableCell>{getTeamMemberName(deal.assignedTo)}</TableCell>
                 <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenuItem onClick={(e) => {
-                        e.stopPropagation();
-                        onEdit(deal);
-                      }}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => {
-                        e.stopPropagation();
-                        onStatusChange(deal.id, 'closed');
-                      }}>
-                        Mark as Closed
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => {
-                        e.stopPropagation();
-                        onStatusChange(deal.id, 'pending');
-                      }}>
-                        Mark as Pending
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => {
-                        e.stopPropagation();
-                        onStatusChange(deal.id, 'lost');
-                      }}>
-                        Mark as Lost
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDelete(deal.id);
-                        }}
-                        className="text-red-600 focus:text-red-600"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <ChevronDown className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-[160px]">
+                        <DropdownMenuItem onClick={() => onEdit(deal)}>
+                          <Edit2 className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={() => {
+                            if (window.confirm('Are you sure you want to delete this deal?')) {
+                              onDelete(deal.id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </TableCell>
               </TableRow>
             ))

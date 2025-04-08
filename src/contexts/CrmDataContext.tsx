@@ -1,25 +1,23 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { TeamMember } from '@/components/admin/team/TeamMemberForm';
-import { Contact } from '@/components/admin/contacts/types';
-
-// Define types for our deals
+// Define interfaces for the data
 export interface Deal {
   id: string;
   name: string;
   value: number;
+  processingVolume?: number; // Added processingVolume field
   status: 'pending' | 'closed' | 'lost';
   contactName: string;
-  createdAt: string;
   assignedTo: string;
-  relatedContacts?: string[]; // Array of contact IDs related to this deal
-  documents?: DealDocument[];  // Documents attached to the deal
+  createdAt: string;
+  relatedContacts?: string[];
+  documents?: DealDocument[];
 }
 
 export interface DealDocument {
   id: string;
   name: string;
-  type: 'statement' | 'bank' | 'corp_docs' | 'license' | 'void_check' | 'tax_return' | 'other';
+  type: string;
   uploadedAt: string;
   uploadedBy: string;
   fileUrl: string;
@@ -27,278 +25,336 @@ export interface DealDocument {
   fileSize: number;
 }
 
-interface CrmDataContextType {
-  teamMembers: TeamMember[];
-  setTeamMembers: React.Dispatch<React.SetStateAction<TeamMember[]>>;
-  deals: Deal[];
-  setDeals: React.Dispatch<React.SetStateAction<Deal[]>>;
-  contacts: Contact[];
-  setContacts: React.Dispatch<React.SetStateAction<Contact[]>>;
-  totalVolume: number;
-  totalRevenue: number;
-  pendingDeals: number;
-  createDealFromContact: (contact: Contact) => string; // Returns the ID of the created deal
-  linkContactToDeal: (contactId: string, dealId: string) => void;
+export interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  commissionSplit: string;
+  processingVolume: number;
+  profilePicture?: string;
 }
 
+export interface Contact {
+  id: string;
+  name: string;
+  email: string;
+  company: string;
+  type: string;
+  status: string;
+  createdAt: string;
+}
+
+// Define the context type
+interface CrmDataContextType {
+  contacts: Contact[];
+  setContacts: React.Dispatch<React.SetStateAction<Contact[]>>;
+  deals: Deal[];
+  setDeals: React.Dispatch<React.SetStateAction<Deal[]>>;
+  teamMembers: TeamMember[];
+  setTeamMembers: React.Dispatch<React.SetStateAction<TeamMember[]>>;
+  linkContactToDeal: (contactId: string, dealId: string) => void;
+  createDealFromContact: (contact: any) => string;
+}
+
+// Create the context
 const CrmDataContext = createContext<CrmDataContextType | undefined>(undefined);
 
+// Mock data for contacts
+const initialContacts = [
+  {
+    "id": "c1",
+    "name": "John Smith",
+    "email": "john.123@gmail.com",
+    "company": "ABC Restaurant",
+    "type": "customer",
+    "status": "active",
+    "createdAt": "2023-01-15"
+  },
+  {
+    "id": "c2",
+    "name": "Jane Doe",
+    "email": "jane.doe@xyzretail.com",
+    "company": "XYZ Retail",
+    "type": "lead",
+    "status": "inactive",
+    "createdAt": "2022-11-20"
+  },
+  {
+    "id": "c3",
+    "name": "Alice Johnson",
+    "email": "alice.j@xyzretail.com",
+    "company": "XYZ Retail",
+    "type": "prospect",
+    "status": "active",
+    "createdAt": "2023-02-01"
+  },
+  {
+    "id": "c4",
+    "name": "Robert Chen",
+    "email": "robert.chen@goldengatecoffee.com",
+    "company": "Golden Gate Coffee",
+    "type": "customer",
+    "status": "active",
+    "createdAt": "2022-12-10"
+  },
+  {
+    "id": "c5",
+    "name": "Emily White",
+    "email": "emily.w@newtechsolutions.net",
+    "company": "NewTech Solutions",
+    "type": "lead",
+    "status": "active",
+    "createdAt": "2023-01-25"
+  },
+  {
+    "id": "c6",
+    "name": "David Green",
+    "email": "david.g@globalexports.org",
+    "company": "Global Exports",
+    "type": "prospect",
+    "status": "inactive",
+    "createdAt": "2022-10-01"
+  },
+  {
+    "id": "c7",
+    "name": "Linda Perez",
+    "email": "linda.p@familyfoods.co",
+    "company": "Family Foods",
+    "type": "customer",
+    "status": "active",
+    "createdAt": "2023-03-01"
+  },
+  {
+    "id": "c8",
+    "name": "Thomas Black",
+    "email": "thomas.b@oceanviewhotel.com",
+    "company": "Ocean View Hotel",
+    "type": "lead",
+    "status": "active",
+    "createdAt": "2022-09-15"
+  },
+  {
+    "id": "c9",
+    "name": "Karen Lee",
+    "email": "karen.lee@brightstarenergy.com",
+    "company": "Bright Star Energy",
+    "type": "prospect",
+    "status": "inactive",
+    "createdAt": "2023-02-15"
+  },
+  {
+    "id": "c10",
+    "name": "George Hill",
+    "email": "george.h@pioneerbank.com",
+    "company": "Pioneer Bank",
+    "type": "customer",
+    "status": "active",
+    "createdAt": "2022-11-01"
+  }
+];
+
+// Mock data for deals
+const initialDeals = [
+  {
+    id: 'd1',
+    name: 'ABC Restaurant POS System',
+    value: 5000,
+    processingVolume: 25000, // Added processingVolume
+    status: 'pending' as const,
+    contactName: 'John Smith',
+    assignedTo: 't1',
+    createdAt: '2023-03-15',
+    relatedContacts: ['c1'],
+    documents: [
+      {
+        id: 'doc1',
+        name: 'Statement March 2023',
+        type: 'statement',
+        uploadedAt: '2023-03-20T10:30:00Z',
+        uploadedBy: 'Sarah Jones',
+        fileUrl: '#',
+        fileType: 'application/pdf',
+        fileSize: 1024 * 1024 * 2.5 // 2.5MB
+      },
+      {
+        id: 'doc2',
+        name: 'Business License',
+        type: 'license',
+        uploadedAt: '2023-03-18T14:15:00Z',
+        uploadedBy: 'Sarah Jones',
+        fileUrl: '#',
+        fileType: 'image/jpeg',
+        fileSize: 1024 * 512
+      }
+    ]
+  },
+  {
+    id: 'd2',
+    name: 'XYZ Retail Payment Gateway',
+    value: 3500,
+    processingVolume: 18000, // Added processingVolume
+    status: 'closed' as const,
+    contactName: 'Jane Doe',
+    assignedTo: 't2',
+    createdAt: '2023-02-28',
+    relatedContacts: ['c2', 'c3'],
+    documents: [
+      {
+        id: 'doc3',
+        name: 'Contract',
+        type: 'other',
+        uploadedAt: '2023-03-01T09:45:00Z',
+        uploadedBy: 'Mike Johnson',
+        fileUrl: '#',
+        fileType: 'application/pdf',
+        fileSize: 1024 * 1024 * 1.8 // 1.8MB
+      }
+    ]
+  },
+  {
+    id: 'd3',
+    name: 'Golden Gate Coffee ATM Installation',
+    value: 7500,
+    processingVolume: 35000, // Added processingVolume
+    status: 'pending' as const,
+    contactName: 'Robert Chen',
+    assignedTo: 't1',
+    createdAt: '2023-03-10',
+    relatedContacts: ['c4'],
+    documents: []
+  }
+];
+
+// Mock data for team members
+const initialTeamMembers = [
+  {
+    id: 't1',
+    name: 'Sarah Jones',
+    email: 'sarah@example.com',
+    phone: '(555) 123-4567',
+    role: 'Sales Manager',
+    commissionSplit: '70/30',
+    processingVolume: 95000,
+    profilePicture: 'https://i.pravatar.cc/150?img=32'
+  },
+  {
+    id: 't2',
+    name: 'Mike Johnson',
+    email: 'mike@example.com',
+    phone: '(555) 987-6543',
+    role: 'Sales Representative',
+    commissionSplit: '60/40',
+    processingVolume: 78000,
+    profilePicture: 'https://i.pravatar.cc/150?img=12'
+  },
+  {
+    id: 't3',
+    name: 'Lisa Brown',
+    email: 'lisa@example.com',
+    phone: '(555) 456-7890',
+    role: 'Account Executive',
+    commissionSplit: '65/35',
+    processingVolume: 82000,
+    profilePicture: 'https://i.pravatar.cc/150?img=25'
+  }
+];
+
+// Create the provider component
+export const CrmDataProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
+  // Load data from localStorage or use initial data
+  const [contacts, setContacts] = useState<Contact[]>(() => {
+    const savedContacts = localStorage.getItem('crm_contacts');
+    return savedContacts ? JSON.parse(savedContacts) : initialContacts;
+  });
+  
+  const [deals, setDeals] = useState<Deal[]>(() => {
+    const savedDeals = localStorage.getItem('crm_deals');
+    return savedDeals ? JSON.parse(savedDeals) : initialDeals;
+  });
+  
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(() => {
+    const savedTeamMembers = localStorage.getItem('crm_team_members');
+    return savedTeamMembers ? JSON.parse(savedTeamMembers) : initialTeamMembers;
+  });
+  
+  // Save to localStorage when data changes
+  useEffect(() => {
+    localStorage.setItem('crm_contacts', JSON.stringify(contacts));
+  }, [contacts]);
+  
+  useEffect(() => {
+    localStorage.setItem('crm_deals', JSON.stringify(deals));
+  }, [deals]);
+  
+  useEffect(() => {
+    localStorage.setItem('crm_team_members', JSON.stringify(teamMembers));
+  }, [teamMembers]);
+
+  // Function to link a contact to a deal
+  const linkContactToDeal = (contactId: string, dealId: string) => {
+    setDeals(prevDeals => 
+      prevDeals.map(deal => {
+        if (deal.id === dealId) {
+          const existingRelatedContacts = deal.relatedContacts || [];
+          // Check if the contact is already linked
+          if (existingRelatedContacts.includes(contactId)) {
+            return deal;
+          }
+          // Add the contact to the related contacts array
+          return {
+            ...deal,
+            relatedContacts: [...existingRelatedContacts, contactId]
+          };
+        }
+        return deal;
+      })
+    );
+  };
+
+  // Function to create a deal from a contact
+  const createDealFromContact = (contact: any) => {
+    const newDealId = `d-${Date.now()}`;
+    const newDeal: Deal = {
+      id: newDealId,
+      name: `New opportunity with ${contact.company || contact.name}`,
+      value: 0,
+      processingVolume: 0, // Added processingVolume field with default value
+      status: 'pending',
+      contactName: contact.name,
+      assignedTo: teamMembers[0].id, // Assign to first team member by default
+      createdAt: new Date().toISOString().split('T')[0], // Today's date
+      relatedContacts: [contact.id]
+    };
+    
+    setDeals(prevDeals => [...prevDeals, newDeal]);
+    return newDealId;
+  };
+  
+  const value = {
+    contacts,
+    setContacts,
+    deals,
+    setDeals,
+    teamMembers,
+    setTeamMembers,
+    linkContactToDeal,
+    createDealFromContact
+  };
+  
+  return (
+    <CrmDataContext.Provider value={value}>
+      {children}
+    </CrmDataContext.Provider>
+  );
+};
+
+// Custom hook to use the context
 export const useCrmData = () => {
   const context = useContext(CrmDataContext);
   if (context === undefined) {
     throw new Error('useCrmData must be used within a CrmDataProvider');
   }
   return context;
-};
-
-// Helper function to load data from localStorage
-const loadFromStorage = <T,>(key: string, defaultValue: T): T => {
-  try {
-    const storedData = localStorage.getItem(key);
-    return storedData ? JSON.parse(storedData) : defaultValue;
-  } catch (error) {
-    console.error(`Error loading ${key} from localStorage:`, error);
-    return defaultValue;
-  }
-};
-
-// Default data for team members
-const defaultTeamMembers: TeamMember[] = [
-  { id: '1', name: 'John Smith', email: 'john@gowaveline.com', phone: '555-123-4567', role: 'Sales Representative', commissionSplit: '35%', processingVolume: '425,000', profilePicture: 'https://i.pravatar.cc/150?img=1' },
-  { id: '2', name: 'Sarah Johnson', email: 'sarah@gowaveline.com', phone: '555-987-6543', role: 'Account Manager', commissionSplit: '35%', processingVolume: '520,000', profilePicture: 'https://i.pravatar.cc/150?img=2' },
-  { id: '3', name: 'Michael Brown', email: 'michael@gowaveline.com', phone: '555-456-7890', role: 'Sales Representative', commissionSplit: '30%', processingVolume: '310,000', profilePicture: 'https://i.pravatar.cc/150?img=3' },
-  { id: '4', name: 'Lisa Davis', email: 'lisa@gowaveline.com', phone: '555-789-0123', role: 'Sales Representative', commissionSplit: '35%', processingVolume: '410,000', profilePicture: 'https://i.pravatar.cc/150?img=4' },
-  { id: '5', name: 'Robert Wilson', email: 'robert@gowaveline.com', phone: '555-321-6540', role: 'Account Manager', commissionSplit: '30%', processingVolume: '290,000', profilePicture: 'https://i.pravatar.cc/150?img=5' },
-];
-
-// Default data for deals
-const defaultDeals: Deal[] = [
-  { id: '1', name: 'ABC Restaurant Group', value: 125000, status: 'pending', contactName: 'James Peterson', createdAt: '2025-03-15', assignedTo: '1', relatedContacts: ['1'] },
-  { id: '2', name: 'XYZ Tech Solutions', value: 85000, status: 'pending', contactName: 'Maria Garcia', createdAt: '2025-03-20', assignedTo: '2', relatedContacts: ['2'] },
-  { id: '3', name: 'Northside Medical Center', value: 210000, status: 'pending', contactName: 'Dr. Robert Chen', createdAt: '2025-03-22', assignedTo: '3', relatedContacts: ['3'] },
-  { id: '4', name: 'City View Hotels', value: 175000, status: 'closed', contactName: 'Emma Thompson', createdAt: '2025-03-10', assignedTo: '4', relatedContacts: ['4'] },
-  { id: '5', name: 'Green Valley Landscaping', value: 65000, status: 'pending', contactName: 'Carlos Rodriguez', createdAt: '2025-03-25', assignedTo: '5', relatedContacts: ['5'] }
-];
-
-// Default data for contacts
-const defaultContacts: Contact[] = [
-  {
-    id: '1',
-    name: 'James Peterson',
-    email: 'james@abc-restaurant.com',
-    phone: '(555) 123-4567',
-    company: 'ABC Restaurant Group',
-    title: 'Owner',
-    type: 'client',
-    status: 'active',
-    tags: ['Restaurant', 'VIP'],
-    lastContact: '2025-04-01',
-    createdAt: '2024-01-15',
-    relatedDeals: ['1']
-  },
-  {
-    id: '2',
-    name: 'Maria Garcia',
-    email: 'maria@xyz-tech.com',
-    phone: '(555) 987-6543',
-    company: 'XYZ Tech Solutions',
-    title: 'CEO',
-    type: 'lead',
-    status: 'new',
-    tags: ['Tech', 'Startup'],
-    createdAt: '2024-03-20',
-    relatedDeals: ['2']
-  },
-  {
-    id: '3',
-    name: 'Dr. Robert Chen',
-    email: 'robert@northside-medical.com',
-    phone: '(555) 456-7890',
-    company: 'Northside Medical Center',
-    title: 'Medical Director',
-    type: 'client',
-    status: 'active',
-    tags: ['Healthcare', 'Enterprise'],
-    lastContact: '2025-04-03',
-    createdAt: '2023-11-10',
-    relatedDeals: ['3']
-  },
-  {
-    id: '4',
-    name: 'Emma Thompson',
-    email: 'emma@cityviewhotels.com',
-    phone: '(555) 234-5678',
-    company: 'City View Hotels',
-    title: 'Procurement Manager',
-    type: 'client',
-    status: 'active',
-    tags: ['Hospitality', 'Enterprise'],
-    lastContact: '2025-02-15',
-    createdAt: '2023-08-22',
-    relatedDeals: ['4']
-  },
-  {
-    id: '5',
-    name: 'Carlos Rodriguez',
-    email: 'carlos@greenvalleylandscaping.com',
-    phone: '(555) 876-5432',
-    company: 'Green Valley Landscaping',
-    title: 'Owner',
-    type: 'client',
-    status: 'active',
-    tags: ['Service', 'Small Business'],
-    lastContact: '2025-03-28',
-    createdAt: '2024-02-01',
-    relatedDeals: ['5']
-  }
-];
-
-interface CrmDataProviderProps {
-  children: ReactNode;
-}
-
-export const CrmDataProvider: React.FC<CrmDataProviderProps> = ({ children }) => {
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(() => 
-    loadFromStorage('crm_teamMembers', defaultTeamMembers)
-  );
-
-  const [deals, setDeals] = useState<Deal[]>(() => 
-    loadFromStorage('crm_deals', defaultDeals)
-  );
-
-  const [contacts, setContacts] = useState<Contact[]>(() => 
-    loadFromStorage('crm_contacts', defaultContacts)
-  );
-
-  // Save data to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('crm_teamMembers', JSON.stringify(teamMembers));
-  }, [teamMembers]);
-
-  useEffect(() => {
-    localStorage.setItem('crm_deals', JSON.stringify(deals));
-  }, [deals]);
-
-  useEffect(() => {
-    localStorage.setItem('crm_contacts', JSON.stringify(contacts));
-  }, [contacts]);
-
-  // Calculate totals based on current data
-  const totalVolume = React.useMemo(() => {
-    return teamMembers.reduce((sum, member) => {
-      const volume = parseInt(member.processingVolume.replace(/[^0-9]/g, ''));
-      return sum + volume;
-    }, 0);
-  }, [teamMembers]);
-
-  // Calculate revenue (35% on closed deals)
-  const totalRevenue = React.useMemo(() => {
-    return deals
-      .filter(deal => deal.status === 'closed')
-      .reduce((sum, deal) => sum + (deal.value * 0.35), 0);
-  }, [deals]);
-
-  // Count pending deals
-  const pendingDeals = React.useMemo(() => {
-    return deals.filter(deal => deal.status === 'pending').length;
-  }, [deals]);
-
-  // Function to create a new deal from a contact
-  const createDealFromContact = (contact: Contact) => {
-    console.log("Creating deal from contact:", contact);
-    
-    const newDeal: Deal = {
-      id: Date.now().toString(),
-      name: contact.company || `${contact.name} Deal`,
-      value: 0, // Default value
-      status: 'pending',
-      contactName: contact.name,
-      createdAt: new Date().toISOString().split('T')[0],
-      assignedTo: contact.assignedTo || teamMembers[0].id, // Assign to first team member if no assignee
-      relatedContacts: [contact.id]
-    };
-    
-    console.log("New deal object created:", newDeal);
-    
-    setDeals(prevDeals => {
-      const updatedDeals = [...prevDeals, newDeal];
-      console.log("Updated deals state:", updatedDeals);
-      return updatedDeals;
-    });
-    
-    // Update the contact to reference this deal
-    setContacts(prevContacts => {
-      const updatedContacts = prevContacts.map(c => {
-        if (c.id === contact.id) {
-          const relatedDeals = c.relatedDeals || [];
-          console.log("Updating contact's related deals:", [...relatedDeals, newDeal.id]);
-          return {
-            ...c,
-            relatedDeals: [...relatedDeals, newDeal.id]
-          };
-        }
-        return c;
-      });
-      console.log("Updated contacts state:", updatedContacts);
-      return updatedContacts;
-    });
-    
-    console.log("Returning new deal ID:", newDeal.id);
-    return newDeal.id;
-  };
-  
-  // Function to link a contact to an existing deal
-  const linkContactToDeal = (contactId: string, dealId: string) => {
-    // Update the deal to include this contact
-    setDeals(prevDeals => 
-      prevDeals.map(deal => {
-        if (deal.id === dealId) {
-          const relatedContacts = deal.relatedContacts || [];
-          if (!relatedContacts.includes(contactId)) {
-            return {
-              ...deal,
-              relatedContacts: [...relatedContacts, contactId]
-            };
-          }
-        }
-        return deal;
-      })
-    );
-    
-    // Update the contact to reference this deal
-    setContacts(prevContacts => 
-      prevContacts.map(contact => {
-        if (contact.id === contactId) {
-          const relatedDeals = contact.relatedDeals || [];
-          if (!relatedDeals.includes(dealId)) {
-            return {
-              ...contact,
-              relatedDeals: [...relatedDeals, dealId]
-            };
-          }
-        }
-        return contact;
-      })
-    );
-  };
-
-  return (
-    <CrmDataContext.Provider 
-      value={{ 
-        teamMembers, 
-        setTeamMembers, 
-        deals, 
-        setDeals,
-        contacts,
-        setContacts,
-        totalVolume,
-        totalRevenue,
-        pendingDeals,
-        createDealFromContact,
-        linkContactToDeal
-      }}
-    >
-      {children}
-    </CrmDataContext.Provider>
-  );
 };

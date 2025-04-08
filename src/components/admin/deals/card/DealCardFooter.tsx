@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { CardFooter } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
 
 interface DealCardFooterProps {
   onClose: () => void;
@@ -9,9 +9,16 @@ interface DealCardFooterProps {
 
 const DealCardFooter: React.FC<DealCardFooterProps> = ({ onClose }) => {
   return (
-    <CardFooter className="border-t p-4 mt-auto flex justify-end bg-gray-50">
-      <Button variant="outline" onClick={onClose}>Close</Button>
-    </CardFooter>
+    <div className="flex justify-end p-4 border-t">
+      <Button 
+        variant="ghost" 
+        onClick={onClose}
+        className="text-muted-foreground hover:text-foreground"
+      >
+        <X className="h-4 w-4 mr-1" />
+        Close
+      </Button>
+    </div>
   );
 };
 

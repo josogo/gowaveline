@@ -2,189 +2,142 @@
 import React, { useState } from 'react';
 import {
   Table,
-  TableBody,
-  TableCell,
-  TableHead,
   TableHeader,
+  TableHead,
+  TableBody,
   TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Avatar } from "@/components/ui/avatar";
+  TableCell,
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Avatar } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { 
-  MoreHorizontal, 
-  Pencil, 
+  Edit2,
   Trash2, 
-  FilePlus, 
-  UserCircle
-} from "lucide-react";
+  Eye,
+  MoreHorizontal 
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import AgreementUploadModal from './AgreementUploadModal';
-import TeamMemberDetail from './TeamMemberDetail';
+} from '@/components/ui/dropdown-menu';
 import type { TeamMember } from './TeamMemberForm';
+import TeamMemberDetail from './TeamMemberDetail';
 
 interface TeamMembersTableProps {
   members: TeamMember[];
   onEdit: (member: TeamMember) => void;
   onDelete: (id: string) => void;
+  onViewDetails: (member: TeamMember) => void;
 }
 
 const TeamMembersTable: React.FC<TeamMembersTableProps> = ({
   members,
   onEdit,
   onDelete,
+  onViewDetails,
 }) => {
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [memberToDelete, setMemberToDelete] = useState<string | null>(null);
-  const [isAgreementModalOpen, setIsAgreementModalOpen] = useState(false);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
-  
-  const handleDeleteClick = (id: string) => {
-    setMemberToDelete(id);
-    setDeleteConfirmOpen(true);
-  };
-  
-  const handleConfirmDelete = () => {
-    if (memberToDelete) {
-      onDelete(memberToDelete);
-      setDeleteConfirmOpen(false);
-      setMemberToDelete(null);
+  const confirmDelete = (id: string, name: string) => {
+    if (window.confirm(`Are you sure you want to delete ${name}?`)) {
+      onDelete(id);
     }
   };
-  
-  const handleAgreementClick = (member: TeamMember) => {
-    setSelectedMember(member);
-    setIsAgreementModalOpen(true);
-  };
-  
-  const handleViewDetails = (member: TeamMember) => {
-    setSelectedMember(member);
-    setIsDetailModalOpen(true);
-  };
-  
+
   return (
-    <>
-      <div className="rounded-md border mt-4">
-        <Table>
-          <TableHeader>
+    <div className="border rounded-md mt-4 overflow-hidden">
+      <Table>
+        <TableHeader className="bg-gray-50">
+          <TableRow>
+            <TableHead className="w-[250px]">Name</TableHead>
+            <TableHead>Role</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {members.length === 0 ? (
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Commission Split</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                No team members found. Add your first team member to get started.
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {members.map((member) => (
-              <TableRow key={member.id}>
+          ) : (
+            members.map(member => (
+              <TableRow 
+                key={member.id} 
+                className="hover:bg-gray-50 cursor-pointer"
+                onClick={() => onViewDetails(member)}
+              >
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
+                    <Avatar className="h-9 w-9 border border-gray-200">
                       <img 
                         src={member.profilePicture || "https://i.pravatar.cc/150?img=1"} 
                         alt={member.name}
                       />
                     </Avatar>
-                    <span className="font-medium">{member.name}</span>
+                    <div>
+                      <div className="font-medium">{member.name}</div>
+                      <div className="text-sm text-muted-foreground">{member.phone}</div>
+                    </div>
                   </div>
                 </TableCell>
-                <TableCell>{member.role}</TableCell>
-                <TableCell>{member.email}</TableCell>
                 <TableCell>
-                  <Badge variant="secondary">{member.commissionSplit}</Badge>
+                  <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200">
+                    {member.role}
+                  </Badge>
                 </TableCell>
+                <TableCell>{member.email}</TableCell>
                 <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Actions</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleViewDetails(member)}>
-                        <UserCircle className="mr-2 h-4 w-4" />
-                        View Details
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => onEdit(member)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleAgreementClick(member)}>
-                        <FilePlus className="mr-2 h-4 w-4" />
-                        Upload Agreement
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        className="text-destructive" 
-                        onClick={() => handleDeleteClick(member.id)}
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewDetails(member);
+                      }}
+                      className="h-8 w-8"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => onEdit(member)}>
+                          <Edit2 className="h-4 w-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          className="text-red-600" 
+                          onClick={() => confirmDelete(member.id, member.name)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-      
-      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the team member from the database.
-              This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              className="bg-destructive text-destructive-foreground"
-              onClick={handleConfirmDelete}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      
-      {selectedMember && (
-        <>
-          <AgreementUploadModal 
-            isOpen={isAgreementModalOpen}
-            onClose={() => setIsAgreementModalOpen(false)}
-            teamMember={selectedMember}
-          />
-          
-          <TeamMemberDetail 
-            isOpen={isDetailModalOpen}
-            onClose={() => setIsDetailModalOpen(false)}
-            member={selectedMember}
-            onEdit={onEdit}
-          />
-        </>
-      )}
-    </>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
 

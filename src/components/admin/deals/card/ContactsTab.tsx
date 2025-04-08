@@ -1,23 +1,15 @@
-
 import React from 'react';
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Contact } from '@/components/admin/contacts/types';
+import DealRelatedContact from '../DealRelatedContact';
 import {
   DropdownMenu,
+  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Users, Plus, MoreHorizontal, Edit } from 'lucide-react';
-import { Contact } from '@/components/admin/contacts/types';
+import { ChevronDown, Mail, Phone, Plus, User, UserPlus, Users } from 'lucide-react';
 
 interface ContactsTabProps {
   relatedContacts: Contact[];
@@ -34,159 +26,126 @@ const ContactsTab: React.FC<ContactsTabProps> = ({
   handleLinkContact,
   setEditingContact
 }) => {
+  // Filter out contacts that are already linked to this deal
+  const availableContacts = contacts.filter(
+    contact => !relatedContacts.some(rc => rc.id === contact.id)
+  );
+  
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="pb-2">
+    <Card className="shadow-sm border-teal-100">
+      <CardHeader className="pb-2 bg-gradient-to-r from-teal-50 to-orange-50">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold flex items-center">
-            <Users className="h-4 w-4 mr-2 text-orange-500" />
+            <Users className="h-4 w-4 mr-2 text-teal-500" />
             Related Contacts
           </CardTitle>
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8">
-                <Plus className="h-3.5 w-3.5 mr-1" />
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="border-teal-200 hover:bg-teal-50"
+              >
+                <UserPlus className="h-3.5 w-3.5 mr-1" />
                 Link Contact
+                <ChevronDown className="h-3.5 w-3.5 ml-1" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <div className="px-2 py-1.5 text-sm font-semibold">Select Contact</div>
-              <DropdownMenuSeparator />
-              {contacts
-                .filter(c => !relatedContacts.some(rc => rc.id === c.id))
-                .map(contact => (
+            <DropdownMenuContent align="end" className="w-60">
+              {availableContacts.length === 0 ? (
+                <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                  No more contacts to link
+                </div>
+              ) : (
+                availableContacts.map(contact => (
                   <DropdownMenuItem 
                     key={contact.id}
                     onClick={() => handleLinkContact(contact.id)}
-                    className="flex items-center cursor-pointer"
                   >
-                    <Avatar className="h-6 w-6 mr-2">
-                      <AvatarFallback className="text-xs">{contact.name[0]}</AvatarFallback>
-                    </Avatar>
-                    {contact.name}
+                    <div className="flex flex-col w-full">
+                      <span className="font-medium">{contact.name}</span>
+                      <span className="text-xs text-muted-foreground">{contact.email}</span>
+                    </div>
                   </DropdownMenuItem>
                 ))
-              }
-              {contacts.filter(c => !relatedContacts.some(rc => rc.id === c.id)).length === 0 && (
-                <DropdownMenuItem disabled className="text-center text-muted-foreground">
-                  No contacts to link
-                </DropdownMenuItem>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </CardHeader>
       <CardContent>
-        {relatedContacts.length === 0 ? (
-          <EmptyContactsList dealContactName={dealContactName} handleLinkContact={handleLinkContact} contacts={contacts} />
-        ) : (
-          <ContactList contacts={relatedContacts} setEditingContact={setEditingContact} />
-        )}
+        {/* Primary Contact */}
+        <div className="mb-4">
+          <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
+            <User className="h-3.5 w-3.5 mr-1" />
+            Primary Contact
+          </h4>
+          
+          <div className="p-3 border rounded-md bg-white">
+            <div className="flex flex-col">
+              <div className="font-medium">{dealContactName}</div>
+              <div className="mt-2 flex items-center text-sm space-x-4 text-muted-foreground">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 px-2 text-teal-600 hover:text-teal-700 hover:bg-teal-50"
+                  onClick={() => {/* Add functionality to email contact */}}
+                >
+                  <Mail className="h-3.5 w-3.5 mr-1" />
+                  Email
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 px-2 text-teal-600 hover:text-teal-700 hover:bg-teal-50"
+                  onClick={() => {/* Add functionality to call contact */}}
+                >
+                  <Phone className="h-3.5 w-3.5 mr-1" />
+                  Call
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Related Contacts */}
+        <div>
+          <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center">
+            <Users className="h-3.5 w-3.5 mr-1" />
+            Other Contacts ({relatedContacts.length})
+          </h4>
+          
+          {relatedContacts.length === 0 ? (
+            <div className="text-center p-6 border border-dashed rounded-lg">
+              <Users className="h-10 w-10 mx-auto mb-2 text-gray-300" />
+              <p className="text-muted-foreground">No related contacts yet</p>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="mt-2"
+                onClick={() => {/* Open dropdown or dialog to add contacts */}}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" />
+                Link First Contact
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+              {relatedContacts.map(contact => (
+                <DealRelatedContact 
+                  key={contact.id} 
+                  contact={contact} 
+                  canRemove={true}
+                  onRemoveContact={() => {/* Add functionality to remove contact */}}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
 };
-
-// Extracted subcomponent for empty contacts list
-const EmptyContactsList: React.FC<{
-  dealContactName: string;
-  handleLinkContact: (contactId: string) => void;
-  contacts: Contact[];
-}> = ({ dealContactName, handleLinkContact, contacts }) => (
-  <div className="py-6 text-center text-sm text-muted-foreground border border-dashed rounded-md">
-    <Users className="h-10 w-10 mx-auto mb-2 text-gray-300" />
-    <p>No contacts linked to this deal</p>
-    <Button 
-      variant="outline" 
-      size="sm" 
-      className="mt-2"
-      onClick={() => {
-        const potentialContact = contacts.find(c => c.name === dealContactName);
-        if (potentialContact) {
-          handleLinkContact(potentialContact.id);
-        }
-      }}
-    >
-      <Plus className="h-3.5 w-3.5 mr-1" />
-      Link Primary Contact
-    </Button>
-  </div>
-);
-
-// Extracted subcomponent for contacts list
-const ContactList: React.FC<{
-  contacts: Contact[];
-  setEditingContact: React.Dispatch<React.SetStateAction<Contact | null>>;
-}> = ({ contacts, setEditingContact }) => (
-  <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
-    {contacts.map(contact => (
-      <Card key={contact.id} className="p-3 border shadow-sm hover:shadow-md transition-shadow">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start">
-            <Avatar className="h-10 w-10 mr-3 mt-0.5">
-              <AvatarFallback>{contact.name[0]}</AvatarFallback>
-            </Avatar>
-            <div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="font-medium hover:text-orange-600 transition-colors cursor-pointer">
-                      {contact.name}
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="p-4 space-y-1">
-                    <p className="font-medium">{contact.name}</p>
-                    <div className="text-xs flex items-center gap-1">
-                      <span className="text-muted-foreground">Email:</span> 
-                      <span>{contact.email}</span>
-                    </div>
-                    <div className="text-xs flex items-center gap-1">
-                      <span className="text-muted-foreground">Phone:</span> 
-                      <span>{contact.phone}</span>
-                    </div>
-                    {contact.company && (
-                      <div className="text-xs flex items-center gap-1">
-                        <span className="text-muted-foreground">Company:</span> 
-                        <span>{contact.company}</span>
-                      </div>
-                    )}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <div className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
-                <span>{contact.email}</span>
-              </div>
-              <div className="text-xs text-muted-foreground mt-0.5">
-                <span>{contact.phone}</span>
-                {contact.company && (
-                  <span> • {contact.company}</span>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setEditingContact(contact)}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Contact
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-red-600">
-                  Remove from Deal
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </Card>
-    ))}
-  </div>
-);
 
 export default ContactsTab;
