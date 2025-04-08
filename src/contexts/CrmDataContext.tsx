@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { TeamMember } from '@/components/admin/team/TeamMemberForm';
 import { Contact } from '@/components/admin/contacts/types';
 
@@ -50,99 +51,137 @@ export const useCrmData = () => {
   return context;
 };
 
+// Helper function to load data from localStorage
+const loadFromStorage = <T,>(key: string, defaultValue: T): T => {
+  try {
+    const storedData = localStorage.getItem(key);
+    return storedData ? JSON.parse(storedData) : defaultValue;
+  } catch (error) {
+    console.error(`Error loading ${key} from localStorage:`, error);
+    return defaultValue;
+  }
+};
+
+// Default data for team members
+const defaultTeamMembers: TeamMember[] = [
+  { id: '1', name: 'John Smith', email: 'john@gowaveline.com', phone: '555-123-4567', role: 'Sales Representative', commissionSplit: '35%', processingVolume: '425,000', profilePicture: 'https://i.pravatar.cc/150?img=1' },
+  { id: '2', name: 'Sarah Johnson', email: 'sarah@gowaveline.com', phone: '555-987-6543', role: 'Account Manager', commissionSplit: '35%', processingVolume: '520,000', profilePicture: 'https://i.pravatar.cc/150?img=2' },
+  { id: '3', name: 'Michael Brown', email: 'michael@gowaveline.com', phone: '555-456-7890', role: 'Sales Representative', commissionSplit: '30%', processingVolume: '310,000', profilePicture: 'https://i.pravatar.cc/150?img=3' },
+  { id: '4', name: 'Lisa Davis', email: 'lisa@gowaveline.com', phone: '555-789-0123', role: 'Sales Representative', commissionSplit: '35%', processingVolume: '410,000', profilePicture: 'https://i.pravatar.cc/150?img=4' },
+  { id: '5', name: 'Robert Wilson', email: 'robert@gowaveline.com', phone: '555-321-6540', role: 'Account Manager', commissionSplit: '30%', processingVolume: '290,000', profilePicture: 'https://i.pravatar.cc/150?img=5' },
+];
+
+// Default data for deals
+const defaultDeals: Deal[] = [
+  { id: '1', name: 'ABC Restaurant Group', value: 125000, status: 'pending', contactName: 'James Peterson', createdAt: '2025-03-15', assignedTo: '1', relatedContacts: ['1'] },
+  { id: '2', name: 'XYZ Tech Solutions', value: 85000, status: 'pending', contactName: 'Maria Garcia', createdAt: '2025-03-20', assignedTo: '2', relatedContacts: ['2'] },
+  { id: '3', name: 'Northside Medical Center', value: 210000, status: 'pending', contactName: 'Dr. Robert Chen', createdAt: '2025-03-22', assignedTo: '3', relatedContacts: ['3'] },
+  { id: '4', name: 'City View Hotels', value: 175000, status: 'closed', contactName: 'Emma Thompson', createdAt: '2025-03-10', assignedTo: '4', relatedContacts: ['4'] },
+  { id: '5', name: 'Green Valley Landscaping', value: 65000, status: 'pending', contactName: 'Carlos Rodriguez', createdAt: '2025-03-25', assignedTo: '5', relatedContacts: ['5'] }
+];
+
+// Default data for contacts
+const defaultContacts: Contact[] = [
+  {
+    id: '1',
+    name: 'James Peterson',
+    email: 'james@abc-restaurant.com',
+    phone: '(555) 123-4567',
+    company: 'ABC Restaurant Group',
+    title: 'Owner',
+    type: 'client',
+    status: 'active',
+    tags: ['Restaurant', 'VIP'],
+    lastContact: '2025-04-01',
+    createdAt: '2024-01-15',
+    relatedDeals: ['1']
+  },
+  {
+    id: '2',
+    name: 'Maria Garcia',
+    email: 'maria@xyz-tech.com',
+    phone: '(555) 987-6543',
+    company: 'XYZ Tech Solutions',
+    title: 'CEO',
+    type: 'lead',
+    status: 'new',
+    tags: ['Tech', 'Startup'],
+    createdAt: '2024-03-20',
+    relatedDeals: ['2']
+  },
+  {
+    id: '3',
+    name: 'Dr. Robert Chen',
+    email: 'robert@northside-medical.com',
+    phone: '(555) 456-7890',
+    company: 'Northside Medical Center',
+    title: 'Medical Director',
+    type: 'client',
+    status: 'active',
+    tags: ['Healthcare', 'Enterprise'],
+    lastContact: '2025-04-03',
+    createdAt: '2023-11-10',
+    relatedDeals: ['3']
+  },
+  {
+    id: '4',
+    name: 'Emma Thompson',
+    email: 'emma@cityviewhotels.com',
+    phone: '(555) 234-5678',
+    company: 'City View Hotels',
+    title: 'Procurement Manager',
+    type: 'client',
+    status: 'active',
+    tags: ['Hospitality', 'Enterprise'],
+    lastContact: '2025-02-15',
+    createdAt: '2023-08-22',
+    relatedDeals: ['4']
+  },
+  {
+    id: '5',
+    name: 'Carlos Rodriguez',
+    email: 'carlos@greenvalleylandscaping.com',
+    phone: '(555) 876-5432',
+    company: 'Green Valley Landscaping',
+    title: 'Owner',
+    type: 'client',
+    status: 'active',
+    tags: ['Service', 'Small Business'],
+    lastContact: '2025-03-28',
+    createdAt: '2024-02-01',
+    relatedDeals: ['5']
+  }
+];
+
 interface CrmDataProviderProps {
   children: ReactNode;
 }
 
 export const CrmDataProvider: React.FC<CrmDataProviderProps> = ({ children }) => {
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
-    { id: '1', name: 'John Smith', email: 'john@gowaveline.com', phone: '555-123-4567', role: 'Sales Representative', commissionSplit: '35%', processingVolume: '425,000', profilePicture: 'https://i.pravatar.cc/150?img=1' },
-    { id: '2', name: 'Sarah Johnson', email: 'sarah@gowaveline.com', phone: '555-987-6543', role: 'Account Manager', commissionSplit: '35%', processingVolume: '520,000', profilePicture: 'https://i.pravatar.cc/150?img=2' },
-    { id: '3', name: 'Michael Brown', email: 'michael@gowaveline.com', phone: '555-456-7890', role: 'Sales Representative', commissionSplit: '30%', processingVolume: '310,000', profilePicture: 'https://i.pravatar.cc/150?img=3' },
-    { id: '4', name: 'Lisa Davis', email: 'lisa@gowaveline.com', phone: '555-789-0123', role: 'Sales Representative', commissionSplit: '35%', processingVolume: '410,000', profilePicture: 'https://i.pravatar.cc/150?img=4' },
-    { id: '5', name: 'Robert Wilson', email: 'robert@gowaveline.com', phone: '555-321-6540', role: 'Account Manager', commissionSplit: '30%', processingVolume: '290,000', profilePicture: 'https://i.pravatar.cc/150?img=5' },
-  ]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(() => 
+    loadFromStorage('crm_teamMembers', defaultTeamMembers)
+  );
 
-  const [deals, setDeals] = useState<Deal[]>([
-    { id: '1', name: 'ABC Restaurant Group', value: 125000, status: 'pending', contactName: 'James Peterson', createdAt: '2025-03-15', assignedTo: '1', relatedContacts: ['1'] },
-    { id: '2', name: 'XYZ Tech Solutions', value: 85000, status: 'pending', contactName: 'Maria Garcia', createdAt: '2025-03-20', assignedTo: '2', relatedContacts: ['2'] },
-    { id: '3', name: 'Northside Medical Center', value: 210000, status: 'pending', contactName: 'Dr. Robert Chen', createdAt: '2025-03-22', assignedTo: '3', relatedContacts: ['3'] },
-    { id: '4', name: 'City View Hotels', value: 175000, status: 'closed', contactName: 'Emma Thompson', createdAt: '2025-03-10', assignedTo: '4', relatedContacts: ['4'] },
-    { id: '5', name: 'Green Valley Landscaping', value: 65000, status: 'pending', contactName: 'Carlos Rodriguez', createdAt: '2025-03-25', assignedTo: '5', relatedContacts: ['5'] }
-  ]);
+  const [deals, setDeals] = useState<Deal[]>(() => 
+    loadFromStorage('crm_deals', defaultDeals)
+  );
 
-  // Sample contacts data
-  const [contacts, setContacts] = useState<Contact[]>([
-    {
-      id: '1',
-      name: 'James Peterson',
-      email: 'james@abc-restaurant.com',
-      phone: '(555) 123-4567',
-      company: 'ABC Restaurant Group',
-      title: 'Owner',
-      type: 'client',
-      status: 'active',
-      tags: ['Restaurant', 'VIP'],
-      lastContact: '2025-04-01',
-      createdAt: '2024-01-15',
-      relatedDeals: ['1']
-    },
-    {
-      id: '2',
-      name: 'Maria Garcia',
-      email: 'maria@xyz-tech.com',
-      phone: '(555) 987-6543',
-      company: 'XYZ Tech Solutions',
-      title: 'CEO',
-      type: 'lead',
-      status: 'new',
-      tags: ['Tech', 'Startup'],
-      createdAt: '2024-03-20',
-      relatedDeals: ['2']
-    },
-    {
-      id: '3',
-      name: 'Dr. Robert Chen',
-      email: 'robert@northside-medical.com',
-      phone: '(555) 456-7890',
-      company: 'Northside Medical Center',
-      title: 'Medical Director',
-      type: 'client',
-      status: 'active',
-      tags: ['Healthcare', 'Enterprise'],
-      lastContact: '2025-04-03',
-      createdAt: '2023-11-10',
-      relatedDeals: ['3']
-    },
-    {
-      id: '4',
-      name: 'Emma Thompson',
-      email: 'emma@cityviewhotels.com',
-      phone: '(555) 234-5678',
-      company: 'City View Hotels',
-      title: 'Procurement Manager',
-      type: 'client',
-      status: 'active',
-      tags: ['Hospitality', 'Enterprise'],
-      lastContact: '2025-02-15',
-      createdAt: '2023-08-22',
-      relatedDeals: ['4']
-    },
-    {
-      id: '5',
-      name: 'Carlos Rodriguez',
-      email: 'carlos@greenvalleylandscaping.com',
-      phone: '(555) 876-5432',
-      company: 'Green Valley Landscaping',
-      title: 'Owner',
-      type: 'client',
-      status: 'active',
-      tags: ['Service', 'Small Business'],
-      lastContact: '2025-03-28',
-      createdAt: '2024-02-01',
-      relatedDeals: ['5']
-    }
-  ]);
+  const [contacts, setContacts] = useState<Contact[]>(() => 
+    loadFromStorage('crm_contacts', defaultContacts)
+  );
+
+  // Save data to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('crm_teamMembers', JSON.stringify(teamMembers));
+  }, [teamMembers]);
+
+  useEffect(() => {
+    localStorage.setItem('crm_deals', JSON.stringify(deals));
+  }, [deals]);
+
+  useEffect(() => {
+    localStorage.setItem('crm_contacts', JSON.stringify(contacts));
+  }, [contacts]);
 
   // Calculate totals based on current data
   const totalVolume = React.useMemo(() => {
