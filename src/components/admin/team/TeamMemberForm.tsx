@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -70,7 +69,7 @@ const TeamMemberForm: React.FC<TeamMemberFormProps> = ({ onSubmit, editingMember
         phone: editingMember.phone,
         role: editingMember.role,
         commissionSplit: editingMember.commissionSplit,
-        processingVolume: editingMember.processingVolume,
+        processingVolume: String(editingMember.processingVolume),
         profilePicture: editingMember.profilePicture || ""
       });
       

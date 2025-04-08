@@ -1,6 +1,6 @@
 
 import { useCrmData } from '@/contexts/CrmDataContext';
-import { Contact } from '@/components/admin/contacts/types';
+import { Contact, ContactType, ContactStatus } from '@/components/admin/contacts/types';
 
 export const useDealsHelpers = () => {
   const { teamMembers, contacts, deals } = useCrmData();
@@ -31,10 +31,15 @@ export const useDealsHelpers = () => {
         email: contact.email || '',
         phone: contact.phone || '',
         company: contact.company || '',
-        type: contact.type || 'lead',
-        status: contact.status || 'new',
+        type: (contact.type || 'lead') as ContactType,
+        status: (contact.status || 'new') as ContactStatus,
         tags: contact.tags || [],
-        createdAt: contact.createdAt
+        createdAt: contact.createdAt,
+        // Add all required fields from the Contact type
+        title: contact.title || '',
+        address: contact.address || '',
+        notes: contact.notes || '',
+        assignedTo: contact.assignedTo || ''
       }));
   };
   

@@ -1,17 +1,39 @@
 
 import { useState, useEffect } from 'react';
-import { Contact } from '@/components/admin/contacts/types';
+import { Contact, ContactType, ContactStatus } from '@/components/admin/contacts/types';
 import { toast } from 'sonner';
 import { useCrmData } from '@/contexts/CrmDataContext';
+
+// Adapter function to convert CrmContact to Contact
+function adaptCrmContactToAdminContact(crmContact: any): Contact {
+  return {
+    id: crmContact.id,
+    name: crmContact.name,
+    email: crmContact.email || '',
+    phone: crmContact.phone || '',
+    company: crmContact.company || '',
+    title: crmContact.title || '',
+    type: (crmContact.type || 'lead') as ContactType,
+    status: (crmContact.status || 'new') as ContactStatus,
+    tags: crmContact.tags || [],
+    address: crmContact.address || '',
+    notes: crmContact.notes || '',
+    assignedTo: crmContact.assignedTo || '',
+    createdAt: crmContact.createdAt
+  };
+}
 
 export const useContactsManagement = () => {
   // Add console log to help debug the context
   console.log("Using CRM data hook...");
   
-  const { contacts, setContacts, createDealFromContact } = useCrmData();
-  console.log("CRM data retrieved:", { contactsCount: contacts?.length });
+  const { contacts: crmContacts, setContacts: setCrmContacts, createDealFromContact } = useCrmData();
+  console.log("CRM data retrieved:", { contactsCount: crmContacts?.length });
   
-  const [filteredContacts, setFilteredContacts] = useState<Contact[]>(contacts);
+  // Convert CRM contacts to admin contacts format
+  const adminContacts = crmContacts.map(adaptCrmContactToAdminContact);
+  
+  const [filteredContacts, setFilteredContacts] = useState<Contact[]>(adminContacts);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isImportExportDialogOpen, setIsImportExportDialogOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
@@ -19,12 +41,12 @@ export const useContactsManagement = () => {
   
   // Update filtered contacts when contacts change
   useEffect(() => {
-    setFilteredContacts(contacts);
-  }, [contacts]);
+    setFilteredContacts(adminContacts);
+  }, [crmContacts]);
   
   // Filter handlers
   const handleFilter = (filters: Record<string, any>) => {
-    let filtered = [...contacts];
+    let filtered = [...adminContacts];
     
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
@@ -48,21 +70,22 @@ export const useContactsManagement = () => {
   
   // Contact CRUD operations
   const handleAddContact = (contactData: any) => {
-    const newContact: Contact = {
+    // Convert to CRM contact format before adding
+    const newCrmContact = {
       id: `c-${Date.now()}`,
       ...contactData,
       createdAt: new Date().toISOString().split('T')[0]
     };
     
-    setContacts(prevContacts => [...prevContacts, newContact]);
+    setCrmContacts((prevContacts: any) => [...prevContacts, newCrmContact]);
     setIsAddDialogOpen(false);
     toast.success('Contact added successfully');
     
     // Create a deal if the contact type is prospect
-    if (newContact.type === 'prospect') {
+    if (newCrmContact.type === 'prospect') {
       try {
-        const dealId = createDealFromContact(newContact);
-        console.log("Created deal with ID:", dealId, "for contact:", newContact);
+        const dealId = createDealFromContact(newCrmContact);
+        console.log("Created deal with ID:", dealId, "for contact:", newCrmContact);
         toast.success('Created a deal for new prospect');
       } catch (error) {
         console.error("Error creating deal from contact:", error);
@@ -94,8 +117,8 @@ export const useContactsManagement = () => {
     }
     
     // Update the contact in the state
-    setContacts(prevContacts => 
-      prevContacts.map(contact => 
+    setCrmContacts((prevContacts: any) => 
+      prevContacts.map((contact: any) => 
         contact.id === editingContact.id ? { ...contact, ...contactData } : contact
       )
     );
@@ -109,15 +132,15 @@ export const useContactsManagement = () => {
   };
   
   const handleDeleteContact = (id: string) => {
-    setContacts(prevContacts => prevContacts.filter(contact => contact.id !== id));
+    setCrmContacts((prevContacts: any) => prevContacts.filter((contact: any) => contact.id !== id));
     toast.success('Contact deleted successfully');
   };
   
   const handleBulkDelete = () => {
     if (selectedContacts.length === 0) return;
     
-    setContacts(prevContacts => 
-      prevContacts.filter(contact => !selectedContacts.includes(contact.id))
+    setCrmContacts((prevContacts: any) => 
+      prevContacts.filter((contact: any) => !selectedContacts.includes(contact.id))
     );
     
     setSelectedContacts([]);
@@ -125,7 +148,7 @@ export const useContactsManagement = () => {
   };
 
   return {
-    contacts,
+    contacts: adminContacts,
     filteredContacts,
     isAddDialogOpen,
     setIsAddDialogOpen,

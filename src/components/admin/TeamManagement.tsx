@@ -23,6 +23,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { TeamMember } from './team/TeamMemberForm';
 import { useCrmData } from '@/contexts/CrmDataContext';
 import TeamMemberDetail from './team/TeamMemberDetail';
+import { adaptCrmTeamMemberToFormTeamMember, adaptFormTeamMemberToCrmTeamMember } from './team/types';
 
 const TeamManagement = () => {
   const { teamMembers, setTeamMembers } = useCrmData();
@@ -32,6 +33,9 @@ const TeamManagement = () => {
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [agreements, setAgreements] = useState<any[]>([]);
+
+  // Convert CRM team members to the form team member type
+  const adaptedTeamMembers = teamMembers.map(adaptCrmTeamMemberToFormTeamMember);
 
   useEffect(() => {
     // Fetch agreements from Supabase using fetch API instead of SDK
@@ -63,16 +67,21 @@ const TeamManagement = () => {
       // Edit existing team member
       setTeamMembers(prev => 
         prev.map(member => 
-          member.id === editingMember.id ? { ...member, ...values } : member
+          member.id === editingMember.id ? adaptFormTeamMemberToCrmTeamMember({
+            ...values,
+            id: editingMember.id
+          }) : member
         )
       );
       toast.success("Team member updated successfully!");
     } else {
       // Add new team member
-      const newMember = {
-        id: Date.now().toString(),
+      const newMemberId = Date.now().toString();
+      const newMember = adaptFormTeamMemberToCrmTeamMember({
+        id: newMemberId,
         ...values,
-      };
+      });
+      
       setTeamMembers(prev => [...prev, newMember]);
       toast.success("Team member added successfully!");
     }
@@ -129,7 +138,7 @@ const TeamManagement = () => {
     setSearchQuery(value);
   };
 
-  const filteredMembers = teamMembers.filter(member => 
+  const filteredMembers = adaptedTeamMembers.filter(member => 
     member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     member.role.toLowerCase().includes(searchQuery.toLowerCase())
