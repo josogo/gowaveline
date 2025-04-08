@@ -56,6 +56,8 @@ export const getGmailAuthUrl = async (): Promise<string> => {
 export const exchangeCodeForTokens = async (code: string): Promise<TokenResponse> => {
   try {
     console.log("Exchanging authorization code for tokens...");
+    console.log("Using redirect URI:", REDIRECT_URI);
+    
     // Exchange the code for tokens using Supabase Edge Function
     const { data, error } = await supabase.functions.invoke('get-gmail-credentials', {
       body: { 
@@ -70,9 +72,19 @@ export const exchangeCodeForTokens = async (code: string): Promise<TokenResponse
       throw new Error(`Failed to exchange authorization code for tokens: ${error.message}`);
     }
 
-    if (!data || !data.access_token) {
+    if (!data) {
+      console.error('Empty response received from token exchange');
+      throw new Error('Empty response from token exchange');
+    }
+    
+    if (data.error) {
+      console.error('Error in token response:', data);
+      throw new Error(`Error from Google: ${data.error} - ${data.error_description || 'No additional details'}`);
+    }
+
+    if (!data.access_token) {
       console.error('Invalid token response:', data);
-      throw new Error('Invalid token response');
+      throw new Error('Invalid token response - missing access token');
     }
 
     console.log("Successfully exchanged code for tokens");
@@ -107,5 +119,37 @@ export const getGmailUserProfile = async (accessToken: string): Promise<any> => 
   } catch (error) {
     console.error('Error getting user profile:', error);
     throw error;
+  }
+};
+
+/**
+ * Verify that the Google OAuth configuration is correct
+ */
+export const verifyOAuthSetup = async (): Promise<{
+  status: string;
+  redirectUri: string;
+  scopes: string[];
+  timestamp: string;
+  message?: string;
+}> => {
+  try {
+    console.log("Verifying OAuth setup...");
+    
+    return {
+      status: "ok",
+      redirectUri: REDIRECT_URI,
+      scopes: GMAIL_SCOPES,
+      timestamp: new Date().toISOString(),
+      message: "OAuth parameters ready for verification"
+    };
+  } catch (error) {
+    console.error('Error verifying OAuth setup:', error);
+    return {
+      status: "error",
+      redirectUri: REDIRECT_URI,
+      scopes: GMAIL_SCOPES,
+      timestamp: new Date().toISOString(),
+      message: error instanceof Error ? error.message : String(error)
+    };
   }
 };

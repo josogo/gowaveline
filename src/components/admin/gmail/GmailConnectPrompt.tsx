@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Loader2, LogIn, Mail, AlertCircle, HelpCircle } from "lucide-react";
+import { Loader2, LogIn, Mail, AlertCircle, HelpCircle, FileSearch } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { checkGmailIntegrationSetup } from '@/services/gmail/emailService';
+import { checkGmailIntegrationSetup, runAdvancedDiagnostics } from '@/services/gmail/emailService';
 import { toast } from '@/hooks/use-toast';
 
 interface GmailConnectPromptProps {
@@ -19,6 +19,7 @@ const GmailConnectPrompt: React.FC<GmailConnectPromptProps> = ({
 }) => {
   const [diagnosisResult, setDiagnosisResult] = useState<string | null>(null);
   const [isDiagnosing, setIsDiagnosing] = useState(false);
+  const [isRunningAdvancedDiagnostics, setIsRunningAdvancedDiagnostics] = useState(false);
 
   const runDiagnostics = async () => {
     setIsDiagnosing(true);
@@ -35,6 +36,29 @@ const GmailConnectPrompt: React.FC<GmailConnectPromptProps> = ({
       });
     } finally {
       setIsDiagnosing(false);
+    }
+  };
+
+  const runDetailedDiagnostics = async () => {
+    setIsRunningAdvancedDiagnostics(true);
+    try {
+      const result = await runAdvancedDiagnostics();
+      setDiagnosisResult(result);
+      toast({
+        title: "Advanced Diagnostics Complete",
+        description: "Check the results below for detailed information",
+        variant: "default"
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setDiagnosisResult(`Error running advanced diagnostics: ${message}`);
+      toast({
+        title: "Advanced Diagnostics Failed",
+        description: message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsRunningAdvancedDiagnostics(false);
     }
   };
 
@@ -60,7 +84,7 @@ const GmailConnectPrompt: React.FC<GmailConnectPromptProps> = ({
         <Alert className="mb-4 max-w-md">
           <HelpCircle className="h-4 w-4" />
           <AlertTitle>Diagnostic Results</AlertTitle>
-          <AlertDescription className="whitespace-pre-wrap text-xs">
+          <AlertDescription className="whitespace-pre-wrap text-xs max-h-96 overflow-y-auto">
             {diagnosisResult}
           </AlertDescription>
         </Alert>
@@ -108,16 +132,29 @@ const GmailConnectPrompt: React.FC<GmailConnectPromptProps> = ({
           Sign in with Google
         </Button>
 
-        <Button
-          onClick={runDiagnostics}
-          variant="secondary"
-          size="sm"
-          disabled={isDiagnosing}
-          className="mt-4 w-64"
-        >
-          {isDiagnosing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <HelpCircle className="h-4 w-4 mr-2" />}
-          Run Diagnostics
-        </Button>
+        <div className="flex flex-col gap-2 mt-4">
+          <Button
+            onClick={runDiagnostics}
+            variant="secondary"
+            size="sm"
+            disabled={isDiagnosing}
+            className="w-64"
+          >
+            {isDiagnosing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <HelpCircle className="h-4 w-4 mr-2" />}
+            Run Basic Diagnostics
+          </Button>
+          
+          <Button
+            onClick={runDetailedDiagnostics}
+            variant="outline"
+            size="sm"
+            disabled={isRunningAdvancedDiagnostics}
+            className="w-64"
+          >
+            {isRunningAdvancedDiagnostics ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <FileSearch className="h-4 w-4 mr-2" />}
+            Run Advanced Diagnostics
+          </Button>
+        </div>
       </div>
       
       <Alert className="mt-8">

@@ -106,6 +106,10 @@ serve(async (req) => {
       }).toString();
       
       console.log('Making token request to Google OAuth endpoint');
+      console.log('Request parameters:', {
+        code: code.substring(0, 10) + '...',  // Log only part of the code for security
+        redirect_uri: redirectUri,
+      });
       
       try {
         const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -124,14 +128,22 @@ serve(async (req) => {
         if (!tokenResponse.ok) {
           console.error('Error exchanging code for tokens:', responseStatus, responseText);
           
+          let parsedError;
+          try {
+            parsedError = JSON.parse(responseText);
+          } catch (e) {
+            parsedError = { error: 'invalid_request', error_description: responseText };
+          }
+          
           // Create more detailed error message
           return new Response(
             JSON.stringify({ 
-              error: `Failed to exchange code: ${responseStatus}`,
-              details: responseText,
-              requestedRedirectUri: redirectUri
+              error: parsedError.error || `HTTP Error: ${responseStatus}`,
+              error_description: parsedError.error_description || 'No error description provided',
+              requestedRedirectUri: redirectUri,
+              tokenEndpointUrl: 'https://oauth2.googleapis.com/token'
             }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: responseStatus, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
@@ -143,7 +155,8 @@ serve(async (req) => {
           console.error('Failed to parse token response as JSON:', e);
           return new Response(
             JSON.stringify({ 
-              error: 'Invalid token response format', 
+              error: 'invalid_token_response', 
+              error_description: 'Invalid token response format', 
               rawResponse: responseText 
             }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -160,12 +173,32 @@ serve(async (req) => {
         console.error('Network error during token exchange:', fetchError);
         return new Response(
           JSON.stringify({ 
-            error: 'Network error during token exchange',
+            error: 'network_error',
+            error_description: 'Network error during token exchange',
             message: fetchError instanceof Error ? fetchError.message : String(fetchError)
           }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+    }
+
+    // Check OAuth configuration
+    if (action === 'verifyOAuthConfig') {
+      console.log('Verifying OAuth configuration');
+      return new Response(
+        JSON.stringify({
+          clientId: GOOGLE_CLIENT_ID.substring(0, 8) + '...',  // Mask most of the client ID for security
+          redirectUriExpected: redirectUri,
+          requiredScopes: [
+            'https://www.googleapis.com/auth/gmail.readonly',
+            'https://www.googleapis.com/auth/gmail.send',
+            'https://www.googleapis.com/auth/userinfo.email',
+            'https://www.googleapis.com/auth/userinfo.profile'
+          ],
+          timestamp: new Date().toISOString()
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log('Invalid request action:', action);

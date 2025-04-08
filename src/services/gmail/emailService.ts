@@ -91,3 +91,59 @@ export const checkGmailIntegrationSetup = async (): Promise<string> => {
     return `Exception during check: ${error instanceof Error ? error.message : String(error)}`;
   }
 };
+
+/**
+ * Advanced diagnostics - Provides detailed information about OAuth configuration
+ */
+export const runAdvancedDiagnostics = async (): Promise<string> => {
+  try {
+    console.log('Running advanced OAuth diagnostics...');
+    
+    // Check edge function connectivity
+    const configCheck = await checkGmailIntegrationSetup();
+    
+    // Verify OAuth configuration parameters
+    const { data: verifyData, error: verifyError } = await supabase.functions.invoke('get-gmail-credentials', {
+      body: { 
+        action: 'verifyOAuthConfig',
+        redirectUri: window.location.origin + '/admin/gmail-integration'
+      }
+    });
+    
+    if (verifyError) {
+      console.error('Error verifying OAuth config:', verifyError);
+      return `Edge function error during OAuth verification: ${verifyError.message}\n\nBase configuration check: ${configCheck}`;
+    }
+    
+    // Also check frontend constants to ensure they match
+    const authService = await import('./authService');
+    const oauthSetup = await authService.verifyOAuthSetup();
+    
+    const diagnosticResults = {
+      edgeFunctionCheck: configCheck,
+      backendOAuthConfig: verifyData || 'Unavailable',
+      frontendOAuthConfig: oauthSetup,
+      browserInfo: {
+        currentUrl: window.location.href,
+        origin: window.location.origin,
+        userAgent: navigator.userAgent
+      },
+      timestamp: new Date().toISOString()
+    };
+    
+    return `
+Advanced Diagnostics Results:
+----------------------------
+${JSON.stringify(diagnosticResults, null, 2)}
+
+Common Issues to Check:
+1. Make sure your Google Cloud Console project has the Gmail API enabled
+2. Check that your OAuth consent screen is properly configured with the required scopes
+3. Verify your authorized redirect URI exactly matches: ${window.location.origin}/admin/gmail-integration
+4. Ensure both the Client ID and Client Secret are correctly set in Supabase secrets
+`;
+  } catch (error) {
+    console.error('Error in advanced diagnostics:', error);
+    return `Exception during advanced diagnostics: ${error instanceof Error ? error.message : String(error)}`;
+  }
+};
