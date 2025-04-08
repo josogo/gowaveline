@@ -8,6 +8,8 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('Gmail API function called with method:', req.method);
+  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, {
@@ -16,11 +18,19 @@ serve(async (req) => {
   }
 
   try {
-    const { action, accessToken, maxResults, to, subject, body } = await req.json();
+    const requestBody = await req.json().catch(error => {
+      console.error('Error parsing request body:', error);
+      return {};
+    });
+    
+    const { action, accessToken, maxResults, to, subject, body } = requestBody;
 
     if (!accessToken) {
+      console.error('No access token provided');
       throw new Error("Access token is required");
     }
+
+    console.log('Processing Gmail API request:', action);
 
     switch (action) {
       case "listMessages": {
@@ -42,6 +52,7 @@ serve(async (req) => {
 
         if (!response.ok) {
           const errorText = await response.text();
+          console.error('Error listing messages:', response.status, errorText);
           throw new Error(`Failed to list messages: ${errorText}`);
         }
 
@@ -66,7 +77,8 @@ serve(async (req) => {
             const messageDetails = await detailsResponse.json();
             messages.push(messageDetails);
           } else {
-            console.error(`Failed to get details for message ${message.id}`);
+            const errorText = await detailsResponse.text();
+            console.error(`Failed to get details for message ${message.id}:`, detailsResponse.status, errorText);
           }
         }
 
@@ -82,6 +94,7 @@ serve(async (req) => {
 
       case "sendEmail": {
         if (!to || !subject || !body) {
+          console.error('Missing email parameters:', { to, subject, bodyProvided: !!body });
           throw new Error("To, subject, and body are required");
         }
 
@@ -121,6 +134,7 @@ serve(async (req) => {
 
         if (!response.ok) {
           const errorText = await response.text();
+          console.error('Error sending email:', response.status, errorText);
           throw new Error(`Failed to send email: ${errorText}`);
         }
 
@@ -136,12 +150,15 @@ serve(async (req) => {
       }
 
       default:
+        console.error('Invalid action requested:', action);
         throw new Error("Invalid action");
     }
   } catch (error) {
     console.error("Error in gmail-api function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : String(error)
+      }),
       {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
