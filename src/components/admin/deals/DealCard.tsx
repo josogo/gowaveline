@@ -1,9 +1,5 @@
 
 import React, { useState } from 'react';
-import { 
-  Card, 
-  CardContent,
-} from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileText, Users } from 'lucide-react';
 import { Deal } from '@/contexts/CrmDataContext';
@@ -31,6 +27,7 @@ interface DealCardProps {
   contacts: Contact[];
   setEditingContact: React.Dispatch<React.SetStateAction<Contact | null>>;
   getDocumentTypeLabel: (type: string) => string;
+  getStatusBadgeColor: (status: string) => string;
 }
 
 export const DealCard: React.FC<DealCardProps> = ({
@@ -44,7 +41,8 @@ export const DealCard: React.FC<DealCardProps> = ({
   handleLinkContact,
   contacts,
   setEditingContact,
-  getDocumentTypeLabel
+  getDocumentTypeLabel,
+  getStatusBadgeColor
 }) => {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
@@ -53,15 +51,6 @@ export const DealCard: React.FC<DealCardProps> = ({
       setExpandedSection(null);
     } else {
       setExpandedSection(section);
-    }
-  };
-
-  const getStatusBadgeColor = (status: string) => {
-    switch(status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200';
-      case 'closed': return 'bg-green-100 text-green-800 hover:bg-green-200';
-      case 'lost': return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
-      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
