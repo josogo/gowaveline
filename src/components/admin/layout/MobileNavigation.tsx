@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Users, FileText, Calendar, Mail, SlidersHorizontal, LogOut, DollarSign, Phone, Settings, Briefcase } from 'lucide-react';
+import { Home, Users, FileText, Calendar, Mail, SlidersHorizontal, LogOut, DollarSign, Phone, Settings, Briefcase, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu,
@@ -24,10 +24,11 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({ handleLogout, isAct
     { icon: <Users className="h-5 w-5" />, label: 'Team', path: '/admin/team-management' },
     { icon: <FileText className="h-5 w-5" />, label: 'Deals', path: '/admin/deals' },
     { icon: <Calendar className="h-5 w-5" />, label: 'Calendar', path: '/admin/calendar-integration' },
-    { icon: <Mail className="h-5 w-5" />, label: 'Gmail', path: '/admin/gmail-integration' },
+    { icon: <BookOpen className="h-5 w-5" />, label: 'Training', path: '/admin/training-hub' },
   ];
 
   const moreNavItems = [
+    { icon: <Mail className="h-5 w-5" />, label: 'Gmail', path: '/admin/gmail-integration' },
     { icon: <DollarSign className="h-5 w-5" />, label: 'Commission', path: '/admin/commission-tracking' },
     { icon: <Phone className="h-5 w-5" />, label: 'Contacts', path: '/admin/contacts' },
     { icon: <Briefcase className="h-5 w-5" />, label: 'Industries', path: '/admin/industry-documents' },

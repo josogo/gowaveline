@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Users, FileText, Calendar, Mail, LogOut, DollarSign, Phone, Settings, Briefcase } from 'lucide-react';
+import { Home, Users, FileText, Calendar, Mail, LogOut, DollarSign, Phone, Settings, Briefcase, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -33,6 +33,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
     { icon: <Calendar className="h-5 w-5" />, label: 'Calendar', path: '/admin/calendar-integration' },
     { icon: <Mail className="h-5 w-5" />, label: 'Gmail', path: '/admin/gmail-integration' },
     { icon: <DollarSign className="h-5 w-5" />, label: 'Commission', path: '/admin/commission-tracking' },
+    { icon: <BookOpen className="h-5 w-5" />, label: 'Training', path: '/admin/training-hub' },
     { icon: <Phone className="h-5 w-5" />, label: 'Contacts', path: '/admin/contacts' },
     { icon: <Briefcase className="h-5 w-5" />, label: 'Industries', path: '/admin/industry-documents' },
     { icon: <Settings className="h-5 w-5" />, label: 'Settings', path: '/admin/settings' },
