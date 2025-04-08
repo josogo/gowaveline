@@ -65,9 +65,9 @@ export const DocumentViewDialog: React.FC<DocumentViewDialogProps> = ({
     const link = window.document.createElement('a');
     link.href = documentUrl;
     link.download = document.name;
-    document.body.appendChild(link);
+    window.document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    window.document.body.removeChild(link);
   };
   
   return (
