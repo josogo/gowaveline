@@ -51,6 +51,38 @@ function useToast() {
 // Export the hook and also a direct toast function
 export { useToast };
 export const toast = (props: ToastProps) => {
-  const showToast = useToast();
-  return showToast(props);
+  const { title, description, status, duration = 3000, isClosable = true } = props;
+  
+  switch (status) {
+    case "info":
+      return sonnerToast.info(title, {
+        description,
+        duration,
+        dismissible: isClosable,
+      });
+    case "warning":
+      return sonnerToast.warning(title, {
+        description,
+        duration,
+        dismissible: isClosable,
+      });
+    case "success":
+      return sonnerToast.success(title, {
+        description,
+        duration,
+        dismissible: isClosable,
+      });
+    case "error":
+      return sonnerToast.error(title, {
+        description,
+        duration,
+        dismissible: isClosable,
+      });
+    default:
+      return sonnerToast(title, {
+        description,
+        duration,
+        dismissible: isClosable,
+      });
+  }
 };
