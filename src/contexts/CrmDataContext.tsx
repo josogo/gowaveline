@@ -33,6 +33,7 @@ export interface TeamMember {
   role: string;
   commissionSplit: string;
   processingVolume: number;
+  revenueVolume?: number;
   profilePicture?: string;
 }
 
@@ -242,6 +243,7 @@ const initialTeamMembers = [
     role: 'Sales Manager',
     commissionSplit: '70/30',
     processingVolume: 95000,
+    revenueVolume: 35000,
     profilePicture: 'https://i.pravatar.cc/150?img=32'
   },
   {
@@ -252,6 +254,7 @@ const initialTeamMembers = [
     role: 'Sales Representative',
     commissionSplit: '60/40',
     processingVolume: 78000,
+    revenueVolume: 28000,
     profilePicture: 'https://i.pravatar.cc/150?img=12'
   },
   {
@@ -262,6 +265,7 @@ const initialTeamMembers = [
     role: 'Account Executive',
     commissionSplit: '65/35',
     processingVolume: 82000,
+    revenueVolume: 32000,
     profilePicture: 'https://i.pravatar.cc/150?img=25'
   }
 ];
