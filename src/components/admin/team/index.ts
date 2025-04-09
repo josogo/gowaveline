@@ -7,3 +7,4 @@ export { default as TeamAgreements } from './TeamAgreements';
 export { default as TeamMemberDialog } from './TeamMemberDialog';
 export { default as TeamHeader } from './TeamHeader';
 export { default as TeamContent } from './TeamContent';
+export { default as TeamMemberDetail } from './TeamMemberDetail';
