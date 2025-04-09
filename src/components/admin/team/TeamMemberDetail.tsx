@@ -14,7 +14,7 @@ import { Mail, Phone, Briefcase, PieChart, FileText, Banknote, DollarSign } from
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import TeamAgreements from './TeamAgreements';
-import type { TeamMember } from './TeamMemberForm';
+import type { TeamMember } from './form';
 import { useCrmData } from '@/contexts/CrmDataContext';
 
 interface TeamMemberDetailProps {

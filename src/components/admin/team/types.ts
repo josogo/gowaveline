@@ -1,6 +1,6 @@
 
 import { TeamMember as CrmTeamMember } from '@/contexts/CrmDataContext';
-import { TeamMember as FormTeamMember } from './TeamMemberForm';
+import { TeamMember as FormTeamMember } from './form';
 
 // This function adapts CrmTeamMember to FormTeamMember
 export const adaptCrmTeamMemberToFormTeamMember = (member: CrmTeamMember): FormTeamMember => {

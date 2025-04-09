@@ -20,7 +20,7 @@ import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { TeamMemberForm, TeamMembersTable, TeamSearch } from './team';
 import { supabase } from '@/integrations/supabase/client';
-import type { TeamMember } from './team/TeamMemberForm';
+import type { TeamMember } from './team/form';
 import { useCrmData } from '@/contexts/CrmDataContext';
 import TeamMemberDetail from './team/TeamMemberDetail';
 import { adaptCrmTeamMemberToFormTeamMember, adaptFormTeamMemberToCrmTeamMember } from './team/types';

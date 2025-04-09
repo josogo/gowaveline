@@ -24,7 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import type { TeamMember } from './TeamMemberForm';
+import type { TeamMember } from './form';
 import TeamMemberDetail from './TeamMemberDetail';
 
 interface TeamMembersTableProps {
