@@ -21,12 +21,13 @@ export * from './hooks';
 // Export form items without causing type conflicts
 export { 
   documentFormSchema, 
-  DocumentFormValues,
   DocumentForm,
   BasicInfoFields,
   DocumentTypeField,
   TemplateToggleField,
 } from './form';
 
-// Export type explicitly to avoid ambiguity
+// Export types explicitly with 'export type' syntax
+export type { DocumentFormValues } from './form';
 export type { DocumentType as DocumentFormType } from './form';
+

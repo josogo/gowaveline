@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, Plus, FileText, ScrollText } from 'lucide-react';
+import { Loader2, Plus, FileText, ScrollText, FileUp } from 'lucide-react';
 import { DocumentCard } from './DocumentCard';
 import { DocumentItem, DocumentItemType } from './types';
 import { motion } from 'framer-motion';
