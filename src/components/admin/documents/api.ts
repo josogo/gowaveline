@@ -1,5 +1,5 @@
 
-import { DocumentItem, DocumentType } from './types';
+import { DocumentItem, DocumentItemType } from './types';
 import { supabase } from '@/integrations/supabase/client';
 
 export async function fetchDocuments(): Promise<DocumentItem[]> {
@@ -39,7 +39,7 @@ export async function createDocument(document: {
   file_size: number;
   owner_id?: string;
   uploaded_by: string;
-  document_type: DocumentType;
+  document_type: DocumentItemType;
   metadata?: any;
   is_template: boolean;
 }): Promise<DocumentItem> {

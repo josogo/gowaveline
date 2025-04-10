@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Dialog,
   DialogContent,
@@ -15,10 +15,9 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { Form } from '@/components/ui/form';
 import FileUpload from '@/components/file-upload/FileUpload';
-import { createDocument } from './api';
 import { DocumentForm } from './form/DocumentForm';
 import { documentFormSchema, DocumentFormValues } from './form';
-import { supabase } from '@/integrations/supabase/client';
+import { useDocumentUpload } from './hooks';
 
 interface DocumentUploadDialogProps {
   open: boolean;
@@ -31,8 +30,7 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
   onOpenChange,
   onUploadSuccess,
 }) => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const { uploading, selectedFile, handleFilesChange, uploadDocument, reset } = useDocumentUpload();
   
   const form = useForm<DocumentFormValues>({
     resolver: zodResolver(documentFormSchema),
@@ -44,14 +42,12 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
     },
   });
   
-  const handleFilesChange = (files: File[]) => {
-    if (files.length > 0) {
-      setSelectedFile(files[0]);
-      
-      // Auto-set the name if empty
-      if (!form.getValues('name')) {
-        form.setValue('name', files[0].name.split('.')[0]);
-      }
+  const handleFileChange = (files: File[]) => {
+    const file = handleFilesChange(files);
+    
+    // Auto-set the name if empty
+    if (file && !form.getValues('name')) {
+      form.setValue('name', file.name.split('.')[0]);
     }
   };
   
@@ -61,74 +57,19 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
       return;
     }
     
-    setUploading(true);
-    
-    try {
-      // Check if storage bucket exists, create if not
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const documentsBucketExists = buckets?.some(bucket => bucket.name === 'documents');
-      
-      if (!documentsBucketExists) {
-        await supabase.storage.createBucket('documents', {
-          public: false,
-        });
+    await uploadDocument({
+      values,
+      file: selectedFile,
+      onSuccess: () => {
+        onUploadSuccess();
+        handleDialogClose();
       }
-      
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-      
-      // Upload file to storage
-      const timestamp = new Date().getTime();
-      const fileExt = selectedFile.name.split('.').pop();
-      const filePath = `${user.id}/${timestamp}_${selectedFile.name}`;
-      
-      const { data: fileData, error: uploadError } = await supabase.storage
-        .from('documents')
-        .upload(filePath, selectedFile, {
-          contentType: selectedFile.type,
-          upsert: false
-        });
-      
-      if (uploadError) {
-        throw uploadError;
-      }
-      
-      console.log('File uploaded successfully:', fileData);
-      
-      // Create document record in database
-      const documentData = {
-        name: values.name,
-        description: values.description || '',
-        file_path: filePath,
-        file_type: selectedFile.type,
-        file_size: selectedFile.size,
-        owner_id: user.id,
-        uploaded_by: user.id,
-        document_type: values.document_type,
-        is_template: values.is_template
-      };
-      
-      const newDocument = await createDocument(documentData);
-      console.log('Document created successfully:', newDocument);
-      
-      toast.success('Document uploaded successfully');
-      onUploadSuccess();
-      reset();
-    } catch (error: any) {
-      console.error('Error uploading document:', error);
-      toast.error(`Upload failed: ${error.message}`);
-    } finally {
-      setUploading(false);
-    }
+    });
   };
   
-  const reset = () => {
+  const handleDialogClose = () => {
     form.reset();
-    setSelectedFile(null);
+    reset();
     onOpenChange(false);
   };
   
@@ -149,7 +90,7 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
                 <FileUpload
                   accept=".pdf,.doc,.docx,.xlsx,.xls"
                   maxSize={10 * 1024 * 1024} // 10MB
-                  onFilesChange={handleFilesChange}
+                  onFilesChange={handleFileChange}
                 />
               </div>
               
@@ -160,7 +101,7 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
               <Button 
                 type="button" 
                 variant="outline" 
-                onClick={reset}
+                onClick={handleDialogClose}
                 disabled={uploading}
               >
                 Cancel
