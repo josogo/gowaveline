@@ -22,6 +22,7 @@ const IndustryCard: React.FC<IndustryCardProps> = ({ industry, isSelected, onCar
       onClick={() => onCardClick(industry)}
     >
       <div className="mb-4 transition-transform duration-300 hover:scale-110">
+        {/* Properly handle icon rendering based on its type */}
         {React.isValidElement(industry.icon) ? (
           React.cloneElement(industry.icon, {
             className: `h-12 w-12 ${isSelected ? 'text-[#0EA5E9] drop-shadow-[0_0_3px_rgba(14,165,233,0.5)]' : 'text-[#FF9F5A]'}`
