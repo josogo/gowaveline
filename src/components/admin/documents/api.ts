@@ -1,4 +1,3 @@
-
 import { DocumentItem, DocumentItemType } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { PreAppFormValues } from './PreAppFormSchema';
@@ -39,25 +38,23 @@ export async function createDocument(document: {
   file_type: string;
   file_size: number;
   owner_id?: string;
-  uploaded_by: string | undefined;
+  uploaded_by?: string;
   document_type: DocumentItemType;
   metadata?: any;
   is_template: boolean;
 }): Promise<DocumentItem> {
-  // Ensure we have a valid uploaded_by value
-  if (!document.uploaded_by || (!isValidUUID(document.uploaded_by) && document.uploaded_by !== "system")) {
-    // Try to get the current user
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user?.id) {
-      document.uploaded_by = user.id;
-    } else {
-      document.uploaded_by = "system";
-    }
-  }
+  // Get the current authenticated user
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  // Create a document object with a valid UUID for uploaded_by
+  const documentToInsert = {
+    ...document,
+    uploaded_by: user?.id // Only use user ID if available (must be UUID)
+  };
   
   const { data, error } = await supabase
     .from('documents')
-    .insert(document)
+    .insert(documentToInsert)
     .select();
 
   if (error) {
@@ -167,7 +164,6 @@ export async function generatePreApp(
   try {
     // Get the current user
     const { data: { user } } = await supabase.auth.getUser();
-    const userId = user?.id;
     
     const metadata = {
       industryId,
@@ -182,12 +178,12 @@ export async function generatePreApp(
       file_path: `pre-apps/${Date.now()}-application.pdf`,
       file_type: 'application/pdf',
       file_size: 0,
-      uploaded_by: userId || "system",
       document_type: 'MERCHANT_APPLICATION' as DocumentItemType,
       metadata,
       is_template: false
     };
     
+    // The createDocument function will handle setting the uploaded_by field properly
     const newDoc = await createDocument(docData);
     
     return newDoc;
