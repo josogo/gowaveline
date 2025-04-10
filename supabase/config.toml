@@ -69,5 +69,6 @@ url = ""
 [functions]
 # Port to use for Functions server
 port = 54321
+
 [functions.generate-pre-app]
 verify_jwt = true

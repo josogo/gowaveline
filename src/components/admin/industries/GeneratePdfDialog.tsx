@@ -44,8 +44,16 @@ export const GeneratePdfDialog: React.FC<GeneratePdfDialogProps> = ({
       // Verify user is authenticated
       const { data: { session }, error: authError } = await supabase.auth.getSession();
       
-      if (authError || !session) {
-        toast.error("Authentication error: You must be logged in to generate a PDF");
+      if (authError) {
+        console.error("Authentication error:", authError);
+        toast.error("Authentication error: " + authError.message);
+        setGenerating(false);
+        return;
+      }
+      
+      if (!session) {
+        console.error("No active session found");
+        toast.error("You must be logged in to generate a PDF");
         setGenerating(false);
         return;
       }
@@ -64,8 +72,13 @@ export const GeneratePdfDialog: React.FC<GeneratePdfDialogProps> = ({
         }
       }
 
+      console.log("Calling generate-pre-app function with:", { 
+        industryId: industry.id,
+        leadData 
+      });
+
       // Call the edge function
-      const { data, error } = await supabase.functions.invoke('generate-pdf', {
+      const { data, error } = await supabase.functions.invoke('generate-pre-app', {
         body: { 
           industryId: industry.id,
           leadData
@@ -73,13 +86,17 @@ export const GeneratePdfDialog: React.FC<GeneratePdfDialogProps> = ({
       });
 
       if (error) {
+        console.error("Edge function error:", error);
         throw new Error(error.message || 'Failed to generate PDF');
       }
       
-      if (!data) {
-        throw new Error('Failed to generate PDF');
+      if (!data || !data.pdfBase64) {
+        console.error("Invalid response from edge function:", data);
+        throw new Error('Invalid response from server');
       }
 
+      console.log("PDF data received successfully");
+      
       // Convert the data to a Blob
       const base64Data = data.pdfBase64;
       const binaryData = atob(base64Data);
