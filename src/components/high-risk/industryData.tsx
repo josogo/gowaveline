@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   CreditCard, 
@@ -9,7 +8,7 @@ import {
   Building, 
   Globe, 
   Plane,
-  Dice,
+  Dice5,
   GraduationCap,
   Handshake,
   Users,
@@ -100,7 +99,7 @@ export const industryData: HighRiskIndustry[] = [
     id: 10,
     title: "Online Gambling & Sports Betting",
     description: "Gambling and sports betting platforms need compliant payment processing that can handle high volumes while managing regulatory requirements.",
-    icon: <Dice className="h-10 w-10 text-[#0EA5E9]" />,
+    icon: <Dice5 className="h-10 w-10 text-[#0EA5E9]" />,
     helpText: "For gambling and sports betting operators, we offer high-volume merchant accounts with strong fraud prevention tools, geolocation services to ensure regulatory compliance, and rapid settlement options to keep your platform running smoothly. Our solutions are designed to navigate the complex legal landscape while providing reliable payment processing."
   },
   {
@@ -220,7 +219,7 @@ export const industryData: HighRiskIndustry[] = [
     title: "Drop Shipping Businesses",
     description: "Drop shippers face payment processing challenges due to extended delivery times and product quality concerns.",
     icon: <Truck className="h-10 w-10 text-[#0EA5E9]" />,
-    helpText: "Our drop shipping payment solutions include merchant accounts that understand extended fulfillment timelines, shipping integration to reduce chargebacks, and fraud prevention tools designed for e-commerce. We help you maintain reliable processing despite the high-risk classification of many drop shipping categories."
+    helpText: "Our drop shipping payment solutions include merchant accounts that understand extended fulfillment timelines, shipping integration to reduce chargebacks, and fraud prevention tools designed for e-commerce. We help drop shippers maintain reliable processing despite the high-risk classification of many drop shipping categories."
   },
   {
     id: 28,
@@ -265,4 +264,3 @@ export const industryData: HighRiskIndustry[] = [
     helpText: "Our large ticket retail solutions include specialized merchant accounts for big purchases, delivery confirmation integration to prevent chargebacks, and financing options for your customers. We help furniture and high-value retailers maintain stable processing despite industry-specific challenges."
   },
 ];
-
