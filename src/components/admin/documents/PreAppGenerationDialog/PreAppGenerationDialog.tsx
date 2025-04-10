@@ -47,6 +47,8 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
   const [leadData, setLeadData] = useState(null);
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
   const form = useForm<PreAppFormValues>({
     resolver: zodResolver(preAppFormSchema),
@@ -67,22 +69,53 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
     queryFn: fetchIndustries,
   });
 
-  // Check authentication status
+  // Check authentication status and admin role
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data } = await supabase.auth.getSession();
-        const isAuthed = !!data.session?.user;
+        const { data: sessionData } = await supabase.auth.getSession();
+        const currentUser = sessionData.session?.user;
+        const isAuthed = !!currentUser;
+        
         setIsAuthenticated(isAuthed);
         
         if (!isAuthed) {
           setError('Authentication required. Please log in to generate applications.');
           toast.error('You must be logged in to generate applications');
-        } else {
-          console.log('User authenticated:', data.session.user.id);
-          // Clear any previous auth errors
-          if (error === 'Authentication required. Please log in to generate applications.') {
-            setError(null);
+          return;
+        } 
+        
+        console.log('User authenticated:', currentUser.id);
+        setUserId(currentUser.id);
+        
+        // Check if user is admin
+        if (currentUser) {
+          try {
+            const { data: hasAdminRole, error: roleError } = await supabase.rpc('has_role', {
+              user_id: currentUser.id,
+              role: 'admin'
+            });
+            
+            if (roleError) {
+              console.error('Error checking admin status:', roleError);
+              setError('Failed to verify admin permissions');
+              setIsAdmin(false);
+            } else {
+              setIsAdmin(!!hasAdminRole);
+              console.log('User is admin:', !!hasAdminRole);
+              
+              if (!hasAdminRole) {
+                setError('You need admin permissions to generate applications');
+                toast.error('Admin permissions required');
+              } else {
+                // Clear any previous auth errors
+                setError(null);
+              }
+            }
+          } catch (e) {
+            console.error('Error checking admin role:', e);
+            setError('Failed to verify admin permissions');
+            setIsAdmin(false);
           }
         }
       } catch (e) {
@@ -95,7 +128,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
     if (open) {
       checkAuth();
     }
-  }, [open, error]);
+  }, [open]);
 
   const handleGenerate = async (data: PreAppFormValues) => {
     if (!selectedIndustryId) {
@@ -107,6 +140,11 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
       toast.error('You must be logged in to generate applications');
       return;
     }
+    
+    if (!isAdmin) {
+      toast.error('You need admin permissions to generate applications');
+      return;
+    }
 
     try {
       setIsGenerating(true);
@@ -115,6 +153,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
       console.log('Starting PDF generation process');
       console.log('Selected industry:', selectedIndustryId);
       console.log('Form data:', data);
+      console.log('User ID:', userId);
       
       // Generate Pre-App PDF
       const result = await generatePreApp(selectedIndustryId, leadData, data);
@@ -126,7 +165,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
       onOpenChange(false);
     } catch (error: any) {
       console.error('Error generating pre-app:', error);
-      setError(error.message);
+      setError(error.message || 'Unknown error occurred');
       toast.error(`Failed to generate merchant application: ${error.message || 'Unknown error'}`);
     } finally {
       setIsGenerating(false);
@@ -170,11 +209,29 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
           </div>
         )}
         
+        {isAuthenticated === true && isAdmin === true && (
+          <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-4">
+            <p className="text-sm text-green-600 flex items-center">
+              <FileText className="h-4 w-4 mr-2" />
+              Logged in with admin permissions. You can generate applications.
+            </p>
+          </div>
+        )}
+        
         {isAuthenticated === false && (
           <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-4">
             <p className="text-sm text-amber-600 flex items-center">
               <AlertCircle className="h-4 w-4 mr-2" />
               You need to be logged in to generate applications. Please log in and try again.
+            </p>
+          </div>
+        )}
+        
+        {isAuthenticated === true && isAdmin === false && (
+          <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-4">
+            <p className="text-sm text-amber-600 flex items-center">
+              <AlertCircle className="h-4 w-4 mr-2" />
+              You need admin permissions to generate applications.
             </p>
           </div>
         )}
@@ -248,7 +305,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
               <Button 
                 type="submit" 
                 className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/80" 
-                disabled={isGenerating || isAuthenticated === false}
+                disabled={isGenerating || !isAuthenticated || isAdmin === false || !selectedIndustryId}
               >
                 {isGenerating ? (
                   <>

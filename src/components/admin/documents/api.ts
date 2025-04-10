@@ -1,4 +1,3 @@
-
 import { DocumentItem, DocumentItemType } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { PreAppFormValues } from './PreAppFormSchema';
@@ -46,10 +45,32 @@ export async function createDocument(document: {
 }): Promise<DocumentItem> {
   try {
     // Get the current authenticated user
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      console.error('Error getting session:', sessionError);
+      throw new Error('Authentication error: Could not get session');
+    }
+    
+    const user = session?.user;
     
     if (!user) {
       throw new Error('User not authenticated. Please log in to create documents.');
+    }
+    
+    // Check if user has admin role
+    const { data: isAdmin, error: roleError } = await supabase.rpc('has_role', {
+      user_id: user.id,
+      role: 'admin'
+    });
+    
+    if (roleError) {
+      console.error('Error checking admin role:', roleError);
+      throw new Error('Failed to verify permission level');
+    }
+    
+    if (!isAdmin) {
+      throw new Error('Admin permissions required to create documents');
     }
     
     // Create a document object with the authenticated user's ID
@@ -59,6 +80,8 @@ export async function createDocument(document: {
     };
     
     console.log('Creating document with data:', documentToInsert);
+    console.log('User:', user.id);
+    console.log('Is admin:', isAdmin);
     
     // First try with normal client
     try {
@@ -81,30 +104,42 @@ export async function createDocument(document: {
     // If we're here, the normal insert failed - attempt to create document through the edge function
     console.log('Attempting to create document through edge function');
     
-    // Get the current session for authentication
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session || !session.access_token) {
-      throw new Error('No valid session found. Please log in again.');
+    // Verify we have a valid session token
+    if (!session?.access_token) {
+      throw new Error('No valid session token found. Please log in again.');
     }
     
-    const response = await fetch('/api/documents/create', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`
-      },
-      body: JSON.stringify(documentToInsert)
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`Edge function error: ${errorData.error || response.statusText}`);
+    try {
+      const response = await fetch('/api/documents/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify(documentToInsert)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = 'Edge function error';
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || response.statusText;
+        } catch {
+          errorMessage = `${errorMessage}: ${errorText || response.statusText}`;
+        }
+        
+        throw new Error(errorMessage);
+      }
+      
+      const result = await response.json();
+      console.log('Document created through edge function:', result);
+      return result.document as DocumentItem;
+    } catch (fetchError: any) {
+      console.error('Error calling document creation edge function:', fetchError);
+      throw new Error(`Edge function error: ${fetchError.message}`);
     }
-    
-    const result = await response.json();
-    console.log('Document created through edge function:', result);
-    return result.document as DocumentItem;
 
   } catch (error) {
     console.error('Error in createDocument:', error);
@@ -169,17 +204,22 @@ export async function deleteDocument(id: string): Promise<boolean> {
 }
 
 export async function checkUserIsAdmin(userId: string): Promise<boolean> {
-  const { data, error } = await supabase.rpc('has_role', {
-    user_id: userId,
-    role: 'admin'
-  });
+  try {
+    const { data, error } = await supabase.rpc('has_role', {
+      user_id: userId,
+      role: 'admin'
+    });
 
-  if (error) {
-    console.error('Error checking admin role:', error);
+    if (error) {
+      console.error('Error checking admin role:', error);
+      return false;
+    }
+
+    return !!data;
+  } catch (e) {
+    console.error('Exception checking admin role:', e);
     return false;
   }
-
-  return !!data;
 }
 
 interface Industry {
@@ -209,14 +249,37 @@ export async function generatePreApp(
   formData: PreAppFormValues
 ): Promise<DocumentItem> {
   try {
-    // Get the current user
-    const { data: { user } } = await supabase.auth.getUser();
+    // Get the current user and session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      console.error('Session error:', sessionError);
+      throw new Error('Authentication error: Could not get session');
+    }
+    
+    const user = session?.user;
     
     if (!user) {
       throw new Error('User not authenticated. Please log in to generate applications.');
     }
     
+    // Check if user has admin role
+    const { data: isAdmin, error: roleError } = await supabase.rpc('has_role', {
+      user_id: user.id,
+      role: 'admin'
+    });
+    
+    if (roleError) {
+      console.error('Error checking admin role:', roleError);
+      throw new Error('Failed to verify permission level');
+    }
+    
+    if (!isAdmin) {
+      throw new Error('Admin permissions required to generate applications');
+    }
+    
     console.log('Generating pre-app with user:', user.id);
+    console.log('Is admin:', isAdmin);
     
     const metadata = {
       industryId,
@@ -225,67 +288,85 @@ export async function generatePreApp(
       generatedAt: new Date().toISOString()
     };
     
+    // Verify we have a valid session token
+    if (!session?.access_token) {
+      throw new Error('No valid session token found. Please log in again.');
+    }
+    
     // Call the Supabase Edge Function to generate the PDF
     console.log('Calling edge function to generate PDF');
     
-    // Get the current session for authentication
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session || !session.access_token) {
-      throw new Error('No valid session found. Please log in again.');
-    }
-    
-    const response = await fetch('/api/generate-pre-app', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`
-      },
-      body: JSON.stringify({ industryId, leadData, formData })
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`PDF generation failed: ${errorData.error || response.statusText}`);
-    }
-    
-    const result = await response.json();
-    if (!result.pdfBase64) {
-      throw new Error('No PDF data received from the server');
-    }
-    
-    console.log('PDF generated successfully, saving to storage');
-    
-    // Upload the PDF to storage
-    const filePath = `pre-apps/${Date.now()}-application.pdf`;
-    const fileBlob = base64ToBlob(result.pdfBase64, 'application/pdf');
-    
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('documents')
-      .upload(filePath, fileBlob);
+    try {
+      const response = await fetch('/api/generate-pre-app', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ industryId, leadData, formData })
+      });
       
-    if (uploadError) {
-      console.error('Error uploading PDF to storage:', uploadError);
-      throw uploadError;
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = 'PDF generation failed';
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || response.statusText;
+        } catch {
+          errorMessage = `${errorMessage}: ${errorText || response.statusText}`;
+        }
+        
+        console.error('Error response from edge function:', { 
+          status: response.status,
+          statusText: response.statusText,
+          errorText
+        });
+        
+        throw new Error(errorMessage);
+      }
+      
+      const result = await response.json();
+      if (!result.pdfBase64) {
+        throw new Error('No PDF data received from the server');
+      }
+      
+      console.log('PDF generated successfully, saving to storage');
+      
+      // Upload the PDF to storage
+      const filePath = `pre-apps/${Date.now()}-application.pdf`;
+      const fileBlob = base64ToBlob(result.pdfBase64, 'application/pdf');
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, fileBlob);
+        
+      if (uploadError) {
+        console.error('Error uploading PDF to storage:', uploadError);
+        throw uploadError;
+      }
+      
+      // Create document entry in the database
+      const docData = {
+        name: `Merchant Application - ${formData.businessName || formData.principalName || 'New'}`,
+        description: `Pre-application form for ${formData.principalName || formData.businessName || 'merchant'}`,
+        file_path: filePath,
+        file_type: 'application/pdf',
+        file_size: fileBlob.size,
+        document_type: 'MERCHANT_APPLICATION' as DocumentItemType,
+        metadata,
+        is_template: false,
+        uploaded_by: user.id
+      };
+      
+      // Create the document
+      console.log('Creating document entry for the generated PDF');
+      return await createDocument(docData);
+    } catch (fetchError: any) {
+      console.error('Error in edge function call:', fetchError);
+      throw new Error(`Edge function error: ${fetchError.message}`);
     }
-    
-    // Create document entry in the database
-    const docData = {
-      name: `Merchant Application - ${formData.businessName || formData.principalName || 'New'}`,
-      description: `Pre-application form for ${formData.principalName || formData.businessName || 'merchant'}`,
-      file_path: filePath,
-      file_type: 'application/pdf',
-      file_size: fileBlob.size,
-      document_type: 'MERCHANT_APPLICATION' as DocumentItemType,
-      metadata,
-      is_template: false,
-      uploaded_by: user.id
-    };
-    
-    // Create the document
-    console.log('Creating document entry for the generated PDF');
-    return await createDocument(docData);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating pre-app document:', error);
     throw error;
   }
