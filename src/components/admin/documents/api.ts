@@ -1,3 +1,4 @@
+
 import { DocumentItem, DocumentItemType } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { PreAppFormValues } from './PreAppFormSchema';
@@ -45,18 +46,21 @@ export async function createDocument(document: {
 }): Promise<DocumentItem> {
   try {
     // Get the current authenticated user
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError) {
       console.error('Error getting session:', sessionError);
       throw new Error('Authentication error: Could not get session');
     }
     
+    const session = data?.session;
     const user = session?.user;
     
     if (!user) {
       throw new Error('User not authenticated. Please log in to create documents.');
     }
+    
+    console.log('Creating document with authenticated user:', user.id);
     
     // Check if user has admin role
     const { data: isAdmin, error: roleError } = await supabase.rpc('has_role', {
@@ -70,18 +74,18 @@ export async function createDocument(document: {
     }
     
     if (!isAdmin) {
+      console.error('User is not admin:', user.id);
       throw new Error('Admin permissions required to create documents');
     }
+    
+    console.log('Admin role verified for user:', user.id);
+    console.log('Creating document with data:', document);
     
     // Create a document object with the authenticated user's ID
     const documentToInsert = {
       ...document,
       uploaded_by: user.id
     };
-    
-    console.log('Creating document with data:', documentToInsert);
-    console.log('User:', user.id);
-    console.log('Is admin:', isAdmin);
     
     // First try with normal client
     try {
@@ -249,19 +253,25 @@ export async function generatePreApp(
   formData: PreAppFormValues
 ): Promise<DocumentItem> {
   try {
+    console.log('Starting generatePreApp function');
+    
     // Get the current user and session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError) {
       console.error('Session error:', sessionError);
-      throw new Error('Authentication error: Could not get session');
+      throw new Error(`Authentication error: Could not get session - ${sessionError.message}`);
     }
     
+    const session = data?.session;
     const user = session?.user;
     
     if (!user) {
+      console.error('No authenticated user found');
       throw new Error('User not authenticated. Please log in to generate applications.');
     }
+    
+    console.log('User authenticated:', user.id);
     
     // Check if user has admin role
     const { data: isAdmin, error: roleError } = await supabase.rpc('has_role', {
@@ -271,15 +281,15 @@ export async function generatePreApp(
     
     if (roleError) {
       console.error('Error checking admin role:', roleError);
-      throw new Error('Failed to verify permission level');
+      throw new Error(`Failed to verify permission level: ${roleError.message}`);
     }
     
     if (!isAdmin) {
+      console.error('User is not admin:', user.id);
       throw new Error('Admin permissions required to generate applications');
     }
     
-    console.log('Generating pre-app with user:', user.id);
-    console.log('Is admin:', isAdmin);
+    console.log('Admin role verified for user:', user.id);
     
     const metadata = {
       industryId,
@@ -290,6 +300,7 @@ export async function generatePreApp(
     
     // Verify we have a valid session token
     if (!session?.access_token) {
+      console.error('No valid session token found');
       throw new Error('No valid session token found. Please log in again.');
     }
     
@@ -305,6 +316,8 @@ export async function generatePreApp(
         },
         body: JSON.stringify({ industryId, leadData, formData })
       });
+      
+      console.log('Edge function response status:', response.status);
       
       if (!response.ok) {
         const errorText = await response.text();

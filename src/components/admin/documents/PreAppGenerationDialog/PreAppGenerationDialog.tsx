@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { FileText, Loader2, AlertCircle } from 'lucide-react';
+import { FileText, Loader2, AlertCircle, Check } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchIndustries, generatePreApp } from '../api';
 import { toast } from 'sonner';
@@ -49,6 +49,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [authCheckComplete, setAuthCheckComplete] = useState(false);
 
   const form = useForm<PreAppFormValues>({
     resolver: zodResolver(preAppFormSchema),
@@ -73,15 +74,29 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const currentUser = sessionData.session?.user;
-        const isAuthed = !!currentUser;
+        console.log('Checking authentication status...');
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          setError(`Authentication error: ${sessionError.message}`);
+          setIsAuthenticated(false);
+          setAuthCheckComplete(true);
+          return;
+        }
+        
+        const currentUser = sessionData?.session?.user;
+        console.log('Session data:', sessionData);
+        console.log('Current user:', currentUser);
+        
+        const isAuthed = !!currentUser;
         setIsAuthenticated(isAuthed);
         
         if (!isAuthed) {
+          console.log('Not authenticated');
           setError('Authentication required. Please log in to generate applications.');
           toast.error('You must be logged in to generate applications');
+          setAuthCheckComplete(true);
           return;
         } 
         
@@ -91,6 +106,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
         // Check if user is admin
         if (currentUser) {
           try {
+            console.log('Checking admin role for user:', currentUser.id);
             const { data: hasAdminRole, error: roleError } = await supabase.rpc('has_role', {
               user_id: currentUser.id,
               role: 'admin'
@@ -98,34 +114,40 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
             
             if (roleError) {
               console.error('Error checking admin status:', roleError);
-              setError('Failed to verify admin permissions');
+              setError(`Failed to verify admin permissions: ${roleError.message}`);
               setIsAdmin(false);
             } else {
+              console.log('Admin role check result:', hasAdminRole);
               setIsAdmin(!!hasAdminRole);
-              console.log('User is admin:', !!hasAdminRole);
               
               if (!hasAdminRole) {
+                console.log('User is not admin');
                 setError('You need admin permissions to generate applications');
                 toast.error('Admin permissions required');
               } else {
+                console.log('User confirmed as admin');
                 // Clear any previous auth errors
                 setError(null);
               }
             }
-          } catch (e) {
+          } catch (e: any) {
             console.error('Error checking admin role:', e);
-            setError('Failed to verify admin permissions');
+            setError(`Failed to verify admin permissions: ${e.message}`);
             setIsAdmin(false);
           }
         }
-      } catch (e) {
+        
+        setAuthCheckComplete(true);
+      } catch (e: any) {
         console.error('Error checking auth status:', e);
-        setError('Failed to verify authentication status');
+        setError(`Failed to verify authentication status: ${e.message}`);
         setIsAuthenticated(false);
+        setAuthCheckComplete(true);
       }
     };
     
     if (open) {
+      setAuthCheckComplete(false);
       checkAuth();
     }
   }, [open]);
@@ -200,25 +222,32 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
           </DialogTitle>
         </DialogHeader>
         
-        {error && (
+        {!authCheckComplete && (
+          <div className="flex justify-center items-center p-4">
+            <Loader2 className="h-6 w-6 animate-spin text-blue-500 mr-2" /> 
+            Checking authentication status...
+          </div>
+        )}
+        
+        {error && authCheckComplete && (
           <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
             <p className="text-sm text-red-600 flex items-center">
               <AlertCircle className="h-4 w-4 mr-2" />
-              Error: {error}
+              {error}
             </p>
           </div>
         )}
         
-        {isAuthenticated === true && isAdmin === true && (
+        {isAuthenticated === true && isAdmin === true && authCheckComplete && (
           <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-4">
             <p className="text-sm text-green-600 flex items-center">
-              <FileText className="h-4 w-4 mr-2" />
-              Logged in with admin permissions. You can generate applications.
+              <Check className="h-4 w-4 mr-2" />
+              Logged in as admin. You can generate applications.
             </p>
           </div>
         )}
         
-        {isAuthenticated === false && (
+        {isAuthenticated === false && authCheckComplete && (
           <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-4">
             <p className="text-sm text-amber-600 flex items-center">
               <AlertCircle className="h-4 w-4 mr-2" />
@@ -227,7 +256,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
           </div>
         )}
         
-        {isAuthenticated === true && isAdmin === false && (
+        {isAuthenticated === true && isAdmin === false && authCheckComplete && (
           <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-4">
             <p className="text-sm text-amber-600 flex items-center">
               <AlertCircle className="h-4 w-4 mr-2" />
@@ -305,7 +334,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
               <Button 
                 type="submit" 
                 className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/80" 
-                disabled={isGenerating || !isAuthenticated || isAdmin === false || !selectedIndustryId}
+                disabled={isGenerating || !authCheckComplete || !isAuthenticated || isAdmin === false || !selectedIndustryId}
               >
                 {isGenerating ? (
                   <>
