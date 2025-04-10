@@ -15,8 +15,11 @@ const HighRiskHero = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
         >
-          <h1 className="text-4xl md:text-5xl font-bold mb-8 bg-gradient-to-r from-[#FF9F5A] via-[#FF7F37] to-[#0EA5E9] bg-clip-text text-transparent">
-            High Risk Payment Processing Solutions
+          <h1 className="text-4xl md:text-5xl font-bold mb-8">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-orange-400">
+              High Risk
+            </span>
+            <span className="text-[#0EA5E9]"> Payment Processing Solutions</span>
           </h1>
           
           <motion.p 
