@@ -80,11 +80,15 @@ export async function createDocument(document: {
     
     // If we're here, the normal insert failed - attempt to create document through the edge function
     console.log('Attempting to create document through edge function');
+    
+    // Get the current session for authentication
+    const { data: { session } } = await supabase.auth.getSession();
+    
     const response = await fetch('/api/documents/create', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabase.auth.session()?.access_token || ''}`
+        'Authorization': `Bearer ${session?.access_token || ''}`
       },
       body: JSON.stringify(documentToInsert)
     });
@@ -219,11 +223,15 @@ export async function generatePreApp(
     
     // Call the Supabase Edge Function to generate the PDF
     console.log('Calling edge function to generate PDF');
+    
+    // Get the current session for authentication
+    const { data: { session } } = await supabase.auth.getSession();
+    
     const response = await fetch('/api/generate-pre-app', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabase.auth.session()?.access_token || ''}`
+        'Authorization': `Bearer ${session?.access_token || ''}`
       },
       body: JSON.stringify({ industryId, leadData, formData })
     });
