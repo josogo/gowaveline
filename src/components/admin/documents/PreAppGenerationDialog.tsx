@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -51,7 +52,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
     },
   });
 
-  // Fetch industries - Add proper typing for the industries data
+  // Fetch industries with proper typing
   const { data: industries, isLoading: industriesLoading } = useQuery<Industry[]>({
     queryKey: ['industries'],
     queryFn: fetchIndustries,
@@ -367,7 +368,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
                           <FormDescription>If using Shopify, request Authorize.net Gateway</FormDescription>
                           <FormControl>
                             <Input {...field} placeholder="Shopping cart platform" />
-                          FormControl>
+                          </FormControl>
                         </FormItem>
                       )}
                     />
@@ -924,3 +925,929 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
                         </FormItem>
                       )}
                     />
+                    
+                    <FormField
+                      control={form.control}
+                      name="highestTicket"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Highest Ticket</FormLabel>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
+                            <FormControl>
+                              <Input {...field} placeholder="0.00" className="pl-8" />
+                            </FormControl>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <h3 className="font-semibold text-xl text-[#0EA5E9] mt-6 mb-4">10. Transaction Method (Must Equal 100%)</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="faceToFacePercentage"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Face-to-Face (Retail)</FormLabel>
+                          <div className="relative">
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2">%</span>
+                            <FormControl>
+                              <Input {...field} placeholder="0" className="pr-8" />
+                            </FormControl>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="motoPercentage"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Telephone/Mail/Email (MOTO)</FormLabel>
+                          <div className="relative">
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2">%</span>
+                            <FormControl>
+                              <Input {...field} placeholder="0" className="pr-8" />
+                            </FormControl>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="ecommercePercentage"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Internet (eCommerce)</FormLabel>
+                          <div className="relative">
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2">%</span>
+                            <FormControl>
+                              <Input {...field} placeholder="0" className="pr-8" />
+                            </FormControl>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-between">
+                  <Button type="button" onClick={goToPrevTab} variant="outline">
+                    Previous
+                  </Button>
+                  <Button type="button" onClick={goToNextTab} className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/80">
+                    Next
+                  </Button>
+                </div>
+              </TabsContent>
+              
+              {/* Tab 6: Policies */}
+              <TabsContent value="policies" className="space-y-4">
+                <div className="bg-[#0EA5E9]/5 p-4 rounded-lg mb-4">
+                  <h3 className="font-semibold text-xl text-[#0EA5E9] mb-4">11. Refund / Cancellation Policy</h3>
+                  
+                  <div className="grid grid-cols-1 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="hasRefundPolicy"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-x-2">
+                          <FormLabel>Do you have a refund policy?</FormLabel>
+                          <FormControl>
+                            <div className="flex items-center space-x-4">
+                              <div className="flex items-center space-x-2">
+                                <RadioGroup 
+                                  onValueChange={(value) => field.onChange(value === 'true')}
+                                  value={field.value ? 'true' : 'false'}
+                                  className="flex flex-row space-x-4"
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="true" id="refund_yes" />
+                                    <Label htmlFor="refund_yes">Yes</Label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="false" id="refund_no" />
+                                    <Label htmlFor="refund_no">No</Label>
+                                  </div>
+                                </RadioGroup>
+                              </div>
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {form.watch('hasRefundPolicy') && (
+                      <FormField
+                        control={form.control}
+                        name="policyType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Policy Type</FormLabel>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <FormControl>
+                                <RadioGroup 
+                                  onValueChange={field.onChange} 
+                                  value={field.value || ''}
+                                  className="flex flex-col space-y-2"
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="exchange" id="policy_exchange" />
+                                    <Label htmlFor="policy_exchange">Exchange</Label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="store_credit" id="policy_store_credit" />
+                                    <Label htmlFor="policy_store_credit">Store Credit</Label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="refund_30_days" id="policy_refund" />
+                                    <Label htmlFor="policy_refund">Refund within 30 days</Label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="other" id="policy_other" />
+                                    <Label htmlFor="policy_other">Other</Label>
+                                  </div>
+                                </RadioGroup>
+                              </FormControl>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    
+                    {form.watch('policyType') === 'other' && (
+                      <FormField
+                        control={form.control}
+                        name="policyTypeOther"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Please specify</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Specify other policy type" />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    
+                    <FormField
+                      control={form.control}
+                      name="hasProcessingHistory"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-x-2">
+                          <FormLabel>Processing History?</FormLabel>
+                          <FormDescription>(if yes, attach 3 most recent processing statements)</FormDescription>
+                          <FormControl>
+                            <div className="flex items-center space-x-4">
+                              <div className="flex items-center space-x-2">
+                                <RadioGroup 
+                                  onValueChange={(value) => field.onChange(value === 'true')}
+                                  value={field.value ? 'true' : 'false'}
+                                  className="flex flex-row space-x-4"
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="true" id="history_yes" />
+                                    <Label htmlFor="history_yes">Yes</Label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="false" id="history_no" />
+                                    <Label htmlFor="history_no">No</Label>
+                                  </div>
+                                </RadioGroup>
+                              </div>
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="currentPreviousProcessors"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Current/Previous Processor(s)</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="List current or previous payment processors" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="hasPreviousTerminations"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-x-2">
+                          <FormLabel>Previous Terminations?</FormLabel>
+                          <FormControl>
+                            <div className="flex items-center space-x-4">
+                              <div className="flex items-center space-x-2">
+                                <RadioGroup 
+                                  onValueChange={(value) => field.onChange(value === 'true')}
+                                  value={field.value ? 'true' : 'false'}
+                                  className="flex flex-row space-x-4"
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="true" id="terminations_yes" />
+                                    <Label htmlFor="terminations_yes">Yes</Label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="false" id="terminations_no" />
+                                    <Label htmlFor="terminations_no">No</Label>
+                                  </div>
+                                </RadioGroup>
+                              </div>
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {form.watch('hasPreviousTerminations') && (
+                      <FormField
+                        control={form.control}
+                        name="terminationsExplanation"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Please explain</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} placeholder="Explain previous terminations" rows={2} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    
+                    <FormField
+                      control={form.control}
+                      name="hasBankruptcies"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-x-2">
+                          <FormLabel>Bankruptcies?</FormLabel>
+                          <FormControl>
+                            <div className="flex items-center space-x-4">
+                              <div className="flex items-center space-x-2">
+                                <RadioGroup 
+                                  onValueChange={(value) => field.onChange(value === 'true')}
+                                  value={field.value ? 'true' : 'false'}
+                                  className="flex flex-row space-x-4"
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="true" id="bankruptcies_yes" />
+                                    <Label htmlFor="bankruptcies_yes">Yes</Label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="false" id="bankruptcies_no" />
+                                    <Label htmlFor="bankruptcies_no">No</Label>
+                                  </div>
+                                </RadioGroup>
+                              </div>
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {form.watch('hasBankruptcies') && (
+                      <FormField
+                        control={form.control}
+                        name="bankruptciesExplanation"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Please explain</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} placeholder="Explain bankruptcy history" rows={2} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </div>
+                  
+                  <h3 className="font-semibold text-xl text-[#0EA5E9] mt-6 mb-4">12. Business Type</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="b2bPercentage"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>B2B (%)</FormLabel>
+                          <div className="relative">
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2">%</span>
+                            <FormControl>
+                              <Input {...field} placeholder="0" className="pr-8" />
+                            </FormControl>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="b2cPercentage"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>B2C (%)</FormLabel>
+                          <div className="relative">
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2">%</span>
+                            <FormControl>
+                              <Input {...field} placeholder="0" className="pr-8" />
+                            </FormControl>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="isSeasonalBusiness"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-x-2">
+                          <FormLabel>Seasonal Business?</FormLabel>
+                          <FormControl>
+                            <div className="flex items-center space-x-4">
+                              <div className="flex items-center space-x-2">
+                                <RadioGroup 
+                                  onValueChange={(value) => field.onChange(value === 'true')}
+                                  value={field.value ? 'true' : 'false'}
+                                  className="flex flex-row space-x-4"
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="true" id="seasonal_yes" />
+                                    <Label htmlFor="seasonal_yes">Yes</Label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="false" id="seasonal_no" />
+                                    <Label htmlFor="seasonal_no">No</Label>
+                                  </div>
+                                </RadioGroup>
+                              </div>
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="hasRecurringPayments"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-x-2">
+                          <FormLabel>Recurring Payments/Subscriptions?</FormLabel>
+                          <FormControl>
+                            <div className="flex items-center space-x-4">
+                              <div className="flex items-center space-x-2">
+                                <RadioGroup 
+                                  onValueChange={(value) => field.onChange(value === 'true')}
+                                  value={field.value ? 'true' : 'false'}
+                                  className="flex flex-row space-x-4"
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="true" id="recurring_yes" />
+                                    <Label htmlFor="recurring_yes">Yes</Label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="false" id="recurring_no" />
+                                    <Label htmlFor="recurring_no">No</Label>
+                                  </div>
+                                </RadioGroup>
+                              </div>
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {form.watch('hasRecurringPayments') && (
+                      <FormField
+                        control={form.control}
+                        name="recurringPaymentsDetails"
+                        render={({ field }) => (
+                          <FormItem className="md:col-span-2">
+                            <FormLabel>Please specify</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} placeholder="Specify recurring payment details" rows={2} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex justify-between">
+                  <Button type="button" onClick={goToPrevTab} variant="outline">
+                    Previous
+                  </Button>
+                  <Button type="button" onClick={goToNextTab} className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/80">
+                    Next
+                  </Button>
+                </div>
+              </TabsContent>
+              
+              {/* Tab 7: eCommerce */}
+              <TabsContent value="ecommerce" className="space-y-4">
+                <div className="bg-[#0EA5E9]/5 p-4 rounded-lg mb-4">
+                  <h3 className="font-semibold text-xl text-[#0EA5E9] mb-4">13. eCommerce / Card-Not-Present</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="productPurchaseAddresses"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Product Purchase Address(es)</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Address(es) where products are purchased" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="inventoryOwnership"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Who Owns Inventory?</FormLabel>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <FormControl>
+                              <RadioGroup 
+                                onValueChange={field.onChange} 
+                                value={field.value || ''}
+                                className="flex flex-row space-x-4"
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="merchant" id="inventory_merchant" />
+                                  <Label htmlFor="inventory_merchant">Merchant</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="vendor" id="inventory_vendor" />
+                                  <Label htmlFor="inventory_vendor">Vendor (Drop Ship)</Label>
+                                </div>
+                              </RadioGroup>
+                            </FormControl>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="fulfillmentProviders"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Fulfillment Provider(s)</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Fulfillment providers" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="shoppingCartPlatforms"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Shopping Cart / CRM Platform(s)</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Shopping cart or CRM platforms" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="purchaseMethods"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel>How Do Customers Purchase?</FormLabel>
+                          <FormControl>
+                            <div className="flex flex-wrap gap-4">
+                              {[
+                                { value: 'in_person', label: 'In Person' },
+                                { value: 'mail_phone', label: 'Mail/Phone' },
+                                { value: 'internet', label: 'Internet' },
+                                { value: 'fax', label: 'Fax' },
+                                { value: 'other', label: 'Other' }
+                              ].map((method) => (
+                                <div key={method.value} className="flex items-center space-x-2">
+                                  <Checkbox 
+                                    checked={field.value?.includes(method.value)}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        field.onChange([...(field.value || []), method.value]);
+                                      } else {
+                                        field.onChange(field.value?.filter((value: string) => value !== method.value));
+                                      }
+                                    }}
+                                    id={`purchase_method_${method.value}`}
+                                  />
+                                  <Label htmlFor={`purchase_method_${method.value}`} className="text-sm font-normal">
+                                    {method.label}
+                                  </Label>
+                                </div>
+                              ))}
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {form.watch('purchaseMethods')?.includes('other') && (
+                      <FormField
+                        control={form.control}
+                        name="purchaseMethodsOther"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Other Purchase Methods</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Specify other purchase methods" />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    
+                    <FormField
+                      control={form.control}
+                      name="callCenterProviders"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Call Center Provider(s)</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Call center providers" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="authToShipTimeframe"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Authorization to Shipment Timeframe</FormLabel>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+                            <FormControl>
+                              <RadioGroup 
+                                onValueChange={field.onChange} 
+                                value={field.value || ''}
+                                className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4"
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="0-7" id="auth_ship_0_7" />
+                                  <Label htmlFor="auth_ship_0_7">0–7 days</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="8-14" id="auth_ship_8_14" />
+                                  <Label htmlFor="auth_ship_8_14">8–14 days</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="15-30" id="auth_ship_15_30" />
+                                  <Label htmlFor="auth_ship_15_30">15–30 days</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="30-90" id="auth_ship_30_90" />
+                                  <Label htmlFor="auth_ship_30_90">30–90 days</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="90+" id="auth_ship_90_plus" />
+                                  <Label htmlFor="auth_ship_90_plus">90+ days</Label>
+                                </div>
+                              </RadioGroup>
+                            </FormControl>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="deliveryTimeframe"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Delivery Timeframe to Customer</FormLabel>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+                            <FormControl>
+                              <RadioGroup 
+                                onValueChange={field.onChange} 
+                                value={field.value || ''}
+                                className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4"
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="0-7" id="delivery_0_7" />
+                                  <Label htmlFor="delivery_0_7">0–7 days</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="8-14" id="delivery_8_14" />
+                                  <Label htmlFor="delivery_8_14">8–14 days</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="15-30" id="delivery_15_30" />
+                                  <Label htmlFor="delivery_15_30">15–30 days</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="30-90" id="delivery_30_90" />
+                                  <Label htmlFor="delivery_30_90">30–90 days</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="90+" id="delivery_90_plus" />
+                                  <Label htmlFor="delivery_90_plus">90+ days</Label>
+                                </div>
+                              </RadioGroup>
+                            </FormControl>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="chargebackManagement"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Chargeback Management System (if any)</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Chargeback management system" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="depositsRequired"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-x-2">
+                          <FormLabel>Deposits Required?</FormLabel>
+                          <FormControl>
+                            <div className="flex items-center space-x-4">
+                              <div className="flex items-center space-x-2">
+                                <RadioGroup 
+                                  onValueChange={(value) => field.onChange(value === 'true')}
+                                  value={field.value ? 'true' : 'false'}
+                                  className="flex flex-row space-x-4"
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="true" id="deposits_yes" />
+                                    <Label htmlFor="deposits_yes">Yes</Label>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="false" id="deposits_no" />
+                                    <Label htmlFor="deposits_no">No</Label>
+                                  </div>
+                                </RadioGroup>
+                              </div>
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {form.watch('depositsRequired') && (
+                      <FormField
+                        control={form.control}
+                        name="depositPercentage"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Percentage Required</FormLabel>
+                            <div className="relative">
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2">%</span>
+                              <FormControl>
+                                <Input {...field} placeholder="0" className="pr-8" />
+                              </FormControl>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    
+                    <FormField
+                      control={form.control}
+                      name="fullPaymentTiming"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>When is Full Payment Received?</FormLabel>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <FormControl>
+                              <RadioGroup 
+                                onValueChange={field.onChange} 
+                                value={field.value || ''}
+                                className="flex flex-row space-x-4"
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="advance" id="payment_advance" />
+                                  <Label htmlFor="payment_advance">100% Paid in Advance</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="delivery" id="payment_delivery" />
+                                  <Label htmlFor="payment_delivery">100% Paid on Delivery/Completion</Label>
+                                </div>
+                              </RadioGroup>
+                            </FormControl>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="salesRegions"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Sales Regions</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Regions where sales occur" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="internationalTransactionsPercentage"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>% of International Transactions</FormLabel>
+                          <div className="relative">
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2">%</span>
+                            <FormControl>
+                              <Input {...field} placeholder="0" className="pr-8" />
+                            </FormControl>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="shippingMethod"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel>Shipping Method</FormLabel>
+                          <FormControl>
+                            <div className="flex flex-wrap gap-4">
+                              {[
+                                { value: 'fedex', label: 'FedEx' },
+                                { value: 'ups', label: 'UPS' },
+                                { value: 'usps', label: 'USPS' },
+                                { value: 'other', label: 'Other' }
+                              ].map((method) => (
+                                <div key={method.value} className="flex items-center space-x-2">
+                                  <Checkbox 
+                                    checked={field.value?.includes(method.value)}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        field.onChange([...(field.value || []), method.value]);
+                                      } else {
+                                        field.onChange(field.value?.filter((value: string) => value !== method.value));
+                                      }
+                                    }}
+                                    id={`shipping_method_${method.value}`}
+                                  />
+                                  <Label htmlFor={`shipping_method_${method.value}`} className="text-sm font-normal">
+                                    {method.label}
+                                  </Label>
+                                </div>
+                              ))}
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {form.watch('shippingMethod')?.includes('other') && (
+                      <FormField
+                        control={form.control}
+                        name="shippingMethodOther"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Other Shipping Methods</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Specify other shipping methods" />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    
+                    <FormField
+                      control={form.control}
+                      name="advertisingChannels"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel>Advertising Channels</FormLabel>
+                          <FormControl>
+                            <div className="flex flex-wrap gap-4">
+                              {[
+                                { value: 'catalog', label: 'Catalog' },
+                                { value: 'tv_radio', label: 'TV/Radio' },
+                                { value: 'direct_mail', label: 'Flyers/Direct Mail' },
+                                { value: 'internet', label: 'Internet' },
+                                { value: 'other', label: 'Other' }
+                              ].map((channel) => (
+                                <div key={channel.value} className="flex items-center space-x-2">
+                                  <Checkbox 
+                                    checked={field.value?.includes(channel.value)}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        field.onChange([...(field.value || []), channel.value]);
+                                      } else {
+                                        field.onChange(field.value?.filter((value: string) => value !== channel.value));
+                                      }
+                                    }}
+                                    id={`ad_channel_${channel.value}`}
+                                  />
+                                  <Label htmlFor={`ad_channel_${channel.value}`} className="text-sm font-normal">
+                                    {channel.label}
+                                  </Label>
+                                </div>
+                              ))}
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {form.watch('advertisingChannels')?.includes('other') && (
+                      <FormField
+                        control={form.control}
+                        name="advertisingChannelsOther"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Other Advertising Channels</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Specify other advertising channels" />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    
+                    <FormField
+                      control={form.control}
+                      name="warrantyProvider"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Warranty / Guarantee Provided By</FormLabel>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <FormControl>
+                              <RadioGroup 
+                                onValueChange={field.onChange} 
+                                value={field.value || ''}
+                                className="flex flex-row space-x-4"
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="merchant" id="warranty_merchant" />
+                                  <Label htmlFor="warranty_merchant">Merchant</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value="manufacturer" id="warranty_manufacturer" />
+                                  <Label htmlFor="warranty_manufacturer">Manufacturer</Label>
+                                </div>
+                              </RadioGroup>
+                            </FormControl>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-between">
+                  <Button type="button" onClick={goToPrevTab} variant="outline">
+                    Previous
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/80"
+                    disabled={isGenerating}
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      'Generate Application'
+                    )}
+                  </Button>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+};
