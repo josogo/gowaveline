@@ -84,11 +84,15 @@ export async function createDocument(document: {
     // Get the current session for authentication
     const { data: { session } } = await supabase.auth.getSession();
     
+    if (!session || !session.access_token) {
+      throw new Error('No valid session found. Please log in again.');
+    }
+    
     const response = await fetch('/api/documents/create', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.access_token || ''}`
+        'Authorization': `Bearer ${session.access_token}`
       },
       body: JSON.stringify(documentToInsert)
     });
@@ -227,11 +231,15 @@ export async function generatePreApp(
     // Get the current session for authentication
     const { data: { session } } = await supabase.auth.getSession();
     
+    if (!session || !session.access_token) {
+      throw new Error('No valid session found. Please log in again.');
+    }
+    
     const response = await fetch('/api/generate-pre-app', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.access_token || ''}`
+        'Authorization': `Bearer ${session.access_token}`
       },
       body: JSON.stringify({ industryId, leadData, formData })
     });

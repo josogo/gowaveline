@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { FileText, Loader2 } from 'lucide-react';
+import { FileText, Loader2, AlertCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchIndustries, generatePreApp } from '../api';
 import { toast } from 'sonner';
@@ -46,6 +46,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [leadData, setLeadData] = useState(null);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   const form = useForm<PreAppFormValues>({
     resolver: zodResolver(preAppFormSchema),
@@ -69,19 +70,41 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
   // Check authentication status
   useEffect(() => {
     const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
-        toast.error('You must be logged in to generate applications');
-        setError('Authentication required');
+      try {
+        const { data } = await supabase.auth.getSession();
+        const isAuthed = !!data.session?.user;
+        setIsAuthenticated(isAuthed);
+        
+        if (!isAuthed) {
+          setError('Authentication required. Please log in to generate applications.');
+          toast.error('You must be logged in to generate applications');
+        } else {
+          console.log('User authenticated:', data.session.user.id);
+          // Clear any previous auth errors
+          if (error === 'Authentication required. Please log in to generate applications.') {
+            setError(null);
+          }
+        }
+      } catch (e) {
+        console.error('Error checking auth status:', e);
+        setError('Failed to verify authentication status');
+        setIsAuthenticated(false);
       }
     };
     
-    checkAuth();
-  }, []);
+    if (open) {
+      checkAuth();
+    }
+  }, [open, error]);
 
   const handleGenerate = async (data: PreAppFormValues) => {
     if (!selectedIndustryId) {
       toast.error('Please select an industry');
+      return;
+    }
+
+    if (!isAuthenticated) {
+      toast.error('You must be logged in to generate applications');
       return;
     }
 
@@ -140,7 +163,19 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
         
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
-            <p className="text-sm text-red-600">Error: {error}</p>
+            <p className="text-sm text-red-600 flex items-center">
+              <AlertCircle className="h-4 w-4 mr-2" />
+              Error: {error}
+            </p>
+          </div>
+        )}
+        
+        {isAuthenticated === false && (
+          <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-4">
+            <p className="text-sm text-amber-600 flex items-center">
+              <AlertCircle className="h-4 w-4 mr-2" />
+              You need to be logged in to generate applications. Please log in and try again.
+            </p>
           </div>
         )}
         
@@ -210,7 +245,11 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
             </Tabs>
             
             <div className="flex justify-end">
-              <Button type="submit" className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/80" disabled={isGenerating}>
+              <Button 
+                type="submit" 
+                className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/80" 
+                disabled={isGenerating || isAuthenticated === false}
+              >
                 {isGenerating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
