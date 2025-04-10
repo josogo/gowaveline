@@ -28,21 +28,20 @@ serve(async (req) => {
       }
     )
     
-    // Now we can get the session or user metadata
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseClient.auth.getUser()
-
-    if (userError || !user) {
-      console.error("User authentication error:", userError);
-      throw new Error('User not authenticated')
-    }
-
-    console.log("User authenticated:", user.id);
+    // For debugging - log headers
+    console.log("Request headers:", 
+      Array.from(req.headers.entries())
+        .filter(([key]) => !key.toLowerCase().includes('auth'))
+        .reduce((obj, [key, val]) => ({...obj, [key]: val}), {})
+    );
     
     // Get request body
-    const { industryId, leadData } = await req.json()
+    const requestBody = await req.json().catch((err) => {
+      console.error("Error parsing request body:", err);
+      throw new Error("Invalid request body format");
+    });
+    
+    const { industryId, leadData } = requestBody;
     
     console.log("Generating PDF for industry:", industryId);
     console.log("Lead data:", leadData || "No lead data provided");
@@ -56,74 +55,99 @@ serve(async (req) => {
       .from('industries')
       .select('*')
       .eq('id', industryId)
-      .single()
+      .single();
 
-    if (industryError || !industry) {
+    if (industryError) {
       console.error("Industry fetch error:", industryError);
-      throw new Error('Industry not found')
+      throw new Error(`Industry not found: ${industryError.message}`);
+    }
+
+    if (!industry) {
+      console.error("Industry not found for ID:", industryId);
+      throw new Error('Industry not found');
     }
 
     console.log("Industry found:", industry.name);
 
     // Get industry logo if available
     let logoImageData = null;
-    const { data: logoDoc, error: logoError } = await supabaseClient
-      .from('industry_documents')
-      .select('*')
-      .eq('industry_id', industryId)
-      .eq('file_type', 'logo')
-      .maybeSingle();
+    try {
+      const { data: logoDoc, error: logoError } = await supabaseClient
+        .from('industry_documents')
+        .select('*')
+        .eq('industry_id', industryId)
+        .eq('file_type', 'logo')
+        .maybeSingle();
 
-    if (logoDoc && !logoError) {
-      console.log("Logo found");
-      try {
-        const { data: logoData, error: logoFetchError } = await supabaseClient
-          .storage
-          .from('industry-files')
-          .download(logoDoc.file_path);
-          
-        if (logoData && !logoFetchError) {
-          logoImageData = await new Promise((resolve) => {
+      if (logoDoc && !logoError) {
+        console.log("Logo found:", logoDoc.file_path);
+        try {
+          const { data: logoData, error: logoFetchError } = await supabaseClient
+            .storage
+            .from('industry-files')
+            .download(logoDoc.file_path);
+            
+          if (logoFetchError) {
+            console.error("Error downloading logo:", logoFetchError);
+          }
+            
+          if (logoData) {
+            console.log("Logo downloaded successfully, converting to base64");
             const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.readAsDataURL(logoData);
-          });
+            logoImageData = await new Promise((resolve) => {
+              reader.onload = () => resolve(reader.result);
+              reader.readAsDataURL(logoData);
+            });
+            console.log("Logo converted to base64 successfully");
+          }
+        } catch (e) {
+          console.error("Error processing logo:", e);
+          // Continue without logo
         }
-      } catch (e) {
-        console.error("Error fetching logo:", e);
-        // Continue without logo
+      } else {
+        console.log("No logo found for this industry");
       }
+    } catch (error) {
+      console.error("Error fetching logo info:", error);
+      // Continue without logo
     }
 
     // Generate the PDF
     console.log("Generating PDF document");
-    const pdfBytes = await generatePreApplicationPDF(industry, leadData, logoImageData);
-    
-    // Convert the PDF to a base64 string
-    const pdfBase64 = btoa(
-      new Uint8Array(pdfBytes)
-        .reduce((data, byte) => data + String.fromCharCode(byte), '')
-    );
-    
-    console.log("PDF generation complete");
-    
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        pdfBase64
-      }),
-      { 
-        headers: { 
-          'Content-Type': 'application/json',
-          ...corsHeaders
-        } 
-      }
-    );
+    try {
+      const pdfBytes = await generatePreApplicationPDF(industry, leadData, logoImageData);
+      console.log("PDF generation successful, size:", pdfBytes.byteLength);
+      
+      // Convert the PDF to a base64 string
+      const pdfBase64 = btoa(
+        new Uint8Array(pdfBytes)
+          .reduce((data, byte) => data + String.fromCharCode(byte), '')
+      );
+      
+      console.log("PDF base64 conversion complete, length:", pdfBase64.length);
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          pdfBase64
+        }),
+        { 
+          headers: { 
+            'Content-Type': 'application/json',
+            ...corsHeaders
+          } 
+        }
+      );
+    } catch (pdfError) {
+      console.error("PDF generation error:", pdfError);
+      throw new Error(`Error generating PDF: ${pdfError.message}`);
+    }
   } catch (error) {
     console.error('Error generating PDF:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'An unexpected error occurred' 
+        error: error.message || 'An unexpected error occurred',
+        stack: error.stack
       }),
       { 
         status: 400, 
@@ -132,9 +156,9 @@ serve(async (req) => {
           ...corsHeaders 
         } 
       }
-    )
+    );
   }
-})
+});
 
 async function generatePreApplicationPDF(industry, leadData, logoImageData) {
   // Create a new PDF document
@@ -150,8 +174,9 @@ async function generatePreApplicationPDF(industry, leadData, logoImageData) {
   // Add company logo if available
   if (logoImageData) {
     try {
-      doc.addImage(logoImageData, 'JPEG', 10, 10, 50, 20);
+      doc.addImage(logoImageData, 'AUTO', 10, 10, 50, 20);
       yPosition = 40;
+      console.log("Logo added to PDF");
     } catch (e) {
       console.error("Error adding logo to PDF:", e);
       // Continue without logo
@@ -355,90 +380,6 @@ async function generatePreApplicationPDF(industry, leadData, logoImageData) {
     section.fields.forEach(field => {
       doc.text(field, 20, yPosition);
       yPosition += 8;
-    });
-    
-    yPosition += 6;
-  });
-
-  // Add third page with final sections
-  doc.addPage();
-  yPosition = 20;
-
-  const thirdPageSections = [
-    {
-      title: '10. Transaction Method (Must Equal 100%)',
-      fields: [
-        'Face-to-Face (Retail): ______%',
-        'Telephone/Mail/Email (MOTO): ______%',
-        'Internet (eCommerce): ______%'
-      ]
-    },
-    {
-      title: '11. Refund / Cancellation Policy',
-      fields: [
-        'Do you have a refund policy? Yes □  No □',
-        'Policy Type: Exchange □  Store Credit □  Refund within 30 days □  Other: _____________',
-        'Processing History? Yes □  No □',
-        'If yes, attach 3 most recent processing statements.',
-        'Current/Previous Processor(s): _______________________',
-        'Previous Terminations? Yes* □  No □',
-        '_If Yes, explain: _______________________________________',
-        'Bankruptcies? Yes* □  No □',
-        '_If Yes, explain: _______________________________________'
-      ]
-    },
-    {
-      title: '12. Business Type',
-      fields: [
-        'B2B (%): _______  B2C (%): _______',
-        'Seasonal Business? Yes □  No □',
-        'Recurring Payments/Subscriptions? Yes □  No □',
-        '_If yes, specify: _______________________________________'
-      ]
-    },
-    {
-      title: '13. eCommerce / Card-Not-Present',
-      fields: [
-        'Product Purchase Address(es): _______________________________________',
-        'Who Owns Inventory? Merchant □  Vendor (Drop Ship) □',
-        'Fulfillment Provider(s): _______________________',
-        'Shopping Cart / CRM Platform(s): _______________________',
-        'How Do Customers Purchase? In Person □  Mail/Phone □  Internet □  Fax □  Other □',
-        'Call Center Provider(s): _______________________',
-        'Authorization to Shipment Timeframe: 0–7 days □  8–14 days □  15–30 days □  30–90 days □  90+ days □',
-        'Delivery Timeframe to Customer: 0–7 days □  8–14 days □  15–30 days □  30–90 days □  90+ days □',
-        'Chargeback Management System (if any): _______________________',
-        'Deposits Required? Yes □  No □',
-        '_If Yes, % Required: __________%',
-        'When is Full Payment Received? 100% Paid in Advance □  100% Paid on Delivery/Completion □',
-        'Sales Regions: _______________________________________',
-        '% of International Transactions: ________%',
-        'Shipping Method: FedEx □  UPS □  USPS □  Other □',
-        'Advertising Channels: Catalog □  TV/Radio □  Flyers/Direct Mail □  Internet □  Other □',
-        'Warranty / Guarantee Provided By: Merchant □  Manufacturer □'
-      ]
-    }
-  ];
-
-  // Add third page sections
-  thirdPageSections.forEach(section => {
-    // Check if we need to add a new page
-    if (yPosition > 250) {
-      doc.addPage();
-      yPosition = 20;
-    }
-
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text(section.title, 20, yPosition);
-    yPosition += 8;
-    
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    
-    section.fields.forEach(field => {
-      doc.text(field, 20, yPosition);
-      yPosition += 6; // Slightly smaller spacing for this dense section
     });
     
     yPosition += 6;

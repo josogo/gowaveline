@@ -45,16 +45,16 @@ export const GeneratePdfDialog: React.FC<GeneratePdfDialogProps> = ({
       console.log("Starting PDF generation process");
       
       // Verify user is authenticated
-      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      const { data, error: authError } = await supabase.auth.getSession();
       
-      if (authError || !session) {
+      if (authError || !data.session) {
         console.error("Authentication error:", authError || "No active session found");
         toast.error("You must be logged in to generate a PDF. Please log in and try again.");
         setGenerating(false);
         return;
       }
       
-      console.log("User authenticated, preparing data for PDF generation");
+      console.log("User authenticated:", data.session.user.id);
       
       let leadData = null;
       if (selectedLeadId !== 'blank') {
@@ -67,6 +67,7 @@ export const GeneratePdfDialog: React.FC<GeneratePdfDialogProps> = ({
             website: lead.website,
             processingVolume: lead.processing_volume
           };
+          console.log("Using lead data:", leadData);
         }
       }
 
@@ -76,7 +77,7 @@ export const GeneratePdfDialog: React.FC<GeneratePdfDialogProps> = ({
       });
 
       // Call the edge function
-      const { data, error } = await supabase.functions.invoke('generate-pre-app', {
+      const { data: responseData, error } = await supabase.functions.invoke('generate-pre-app', {
         body: { 
           industryId: industry.id,
           leadData
@@ -88,15 +89,17 @@ export const GeneratePdfDialog: React.FC<GeneratePdfDialogProps> = ({
         throw new Error(error.message || 'Failed to generate PDF');
       }
       
-      if (!data || !data.pdfBase64) {
-        console.error("Invalid response from edge function:", data);
+      console.log("Response from edge function:", responseData);
+      
+      if (!responseData || !responseData.pdfBase64) {
+        console.error("Invalid response from edge function:", responseData);
         throw new Error('Invalid response from server');
       }
 
-      console.log("PDF data received successfully");
+      console.log("PDF data received successfully, length:", responseData.pdfBase64.length);
       
       // Convert the data to a Blob
-      const base64Data = data.pdfBase64;
+      const base64Data = responseData.pdfBase64;
       const binaryData = atob(base64Data);
       const bytes = new Uint8Array(binaryData.length);
       for (let i = 0; i < binaryData.length; i++) {

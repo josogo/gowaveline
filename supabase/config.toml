@@ -71,5 +71,4 @@ url = ""
 port = 54321
 
 [functions.generate-pre-app]
-verify_jwt = true
-
+verify_jwt = false
