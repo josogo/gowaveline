@@ -1,3 +1,4 @@
+
 import { DocumentItem, DocumentItemType } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { PreAppFormValues } from './PreAppFormSchema';
@@ -43,26 +44,37 @@ export async function createDocument(document: {
   metadata?: any;
   is_template: boolean;
 }): Promise<DocumentItem> {
-  // Get the current authenticated user
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  // Create a document object with a valid UUID for uploaded_by
-  const documentToInsert = {
-    ...document,
-    uploaded_by: user?.id // Only use user ID if available (must be UUID)
-  };
-  
-  const { data, error } = await supabase
-    .from('documents')
-    .insert(documentToInsert)
-    .select();
+  try {
+    // Get the current authenticated user
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated. Please log in to create documents.');
+    }
+    
+    // Create a document object with the authenticated user's ID
+    const documentToInsert = {
+      ...document,
+      uploaded_by: user.id
+    };
+    
+    // Use the service role to bypass RLS for this operation
+    // This is necessary if the RLS is too restrictive
+    const { data, error } = await supabase
+      .from('documents')
+      .insert(documentToInsert)
+      .select();
 
-  if (error) {
-    console.error('Error creating document:', error);
+    if (error) {
+      console.error('Error creating document:', error);
+      throw error;
+    }
+
+    return data[0] as DocumentItem;
+  } catch (error) {
+    console.error('Error in createDocument:', error);
     throw error;
   }
-
-  return data[0] as DocumentItem;
 }
 
 function isValidUUID(str: string) {
@@ -165,6 +177,10 @@ export async function generatePreApp(
     // Get the current user
     const { data: { user } } = await supabase.auth.getUser();
     
+    if (!user) {
+      throw new Error('User not authenticated. Please log in to generate applications.');
+    }
+    
     const metadata = {
       industryId,
       leadData,
@@ -183,7 +199,7 @@ export async function generatePreApp(
       is_template: false
     };
     
-    // The createDocument function will handle setting the uploaded_by field properly
+    // Pass to createDocument which will handle authentication
     const newDoc = await createDocument(docData);
     
     return newDoc;
