@@ -58,19 +58,46 @@ export async function createDocument(document: {
       uploaded_by: user.id
     };
     
-    // Use the service role to bypass RLS for this operation
-    // This is necessary if the RLS is too restrictive
-    const { data, error } = await supabase
-      .from('documents')
-      .insert(documentToInsert)
-      .select();
+    console.log('Creating document with data:', documentToInsert);
+    
+    // First try with normal client
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .insert(documentToInsert)
+        .select();
 
-    if (error) {
-      console.error('Error creating document:', error);
-      throw error;
+      if (!error) {
+        console.log('Document created successfully:', data);
+        return data[0] as DocumentItem;
+      }
+      
+      // If there was an RLS error, log it but continue to try alternative method
+      console.warn('Error with standard insert (might be RLS):', error);
+    } catch (insertError) {
+      console.warn('Standard insert failed:', insertError);
     }
+    
+    // If we're here, the normal insert failed - attempt to create document through the edge function
+    console.log('Attempting to create document through edge function');
+    const response = await fetch('/api/documents/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabase.auth.session()?.access_token || ''}`
+      },
+      body: JSON.stringify(documentToInsert)
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Edge function error: ${errorData.error || response.statusText}`);
+    }
+    
+    const result = await response.json();
+    console.log('Document created through edge function:', result);
+    return result.document as DocumentItem;
 
-    return data[0] as DocumentItem;
   } catch (error) {
     console.error('Error in createDocument:', error);
     throw error;
@@ -181,6 +208,8 @@ export async function generatePreApp(
       throw new Error('User not authenticated. Please log in to generate applications.');
     }
     
+    console.log('Generating pre-app with user:', user.id);
+    
     const metadata = {
       industryId,
       leadData,
@@ -188,23 +217,70 @@ export async function generatePreApp(
       generatedAt: new Date().toISOString()
     };
     
+    // Call the Supabase Edge Function to generate the PDF
+    console.log('Calling edge function to generate PDF');
+    const response = await fetch('/api/generate-pre-app', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabase.auth.session()?.access_token || ''}`
+      },
+      body: JSON.stringify({ industryId, leadData, formData })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`PDF generation failed: ${errorData.error || response.statusText}`);
+    }
+    
+    const result = await response.json();
+    if (!result.pdfBase64) {
+      throw new Error('No PDF data received from the server');
+    }
+    
+    console.log('PDF generated successfully, saving to storage');
+    
+    // Upload the PDF to storage
+    const filePath = `pre-apps/${Date.now()}-application.pdf`;
+    const fileBlob = base64ToBlob(result.pdfBase64, 'application/pdf');
+    
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('documents')
+      .upload(filePath, fileBlob);
+      
+    if (uploadError) {
+      console.error('Error uploading PDF to storage:', uploadError);
+      throw uploadError;
+    }
+    
+    // Create document entry in the database
     const docData = {
       name: `Merchant Application - ${formData.businessName || formData.principalName || 'New'}`,
       description: `Pre-application form for ${formData.principalName || formData.businessName || 'merchant'}`,
-      file_path: `pre-apps/${Date.now()}-application.pdf`,
+      file_path: filePath,
       file_type: 'application/pdf',
-      file_size: 0,
+      file_size: fileBlob.size,
       document_type: 'MERCHANT_APPLICATION' as DocumentItemType,
       metadata,
-      is_template: false
+      is_template: false,
+      uploaded_by: user.id
     };
     
-    // Pass to createDocument which will handle authentication
-    const newDoc = await createDocument(docData);
-    
-    return newDoc;
+    // Create the document
+    console.log('Creating document entry for the generated PDF');
+    return await createDocument(docData);
   } catch (error) {
     console.error('Error generating pre-app document:', error);
     throw error;
   }
+}
+
+// Helper function to convert base64 to Blob
+function base64ToBlob(base64: string, type: string): Blob {
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return new Blob([bytes], { type });
 }

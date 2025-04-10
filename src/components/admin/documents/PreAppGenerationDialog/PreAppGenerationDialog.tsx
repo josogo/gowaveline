@@ -44,6 +44,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
   const [activeTab, setActiveTab] = useState('structure');
   const [isGenerating, setIsGenerating] = useState(false);
   const [leadData, setLeadData] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const form = useForm<PreAppFormValues>({
     resolver: zodResolver(preAppFormSchema),
@@ -54,7 +55,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
       shippingMethod: [],
       advertisingChannels: [],
       additionalOwners: false,
-      businessName: '', // Add default value for businessName
+      businessName: '',
     },
   });
 
@@ -64,6 +65,19 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
     queryFn: fetchIndustries,
   });
 
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        toast.error('You must be logged in to generate applications');
+        setError('Authentication required');
+      }
+    };
+    
+    checkAuth();
+  }, []);
+
   const handleGenerate = async (data: PreAppFormValues) => {
     if (!selectedIndustryId) {
       toast.error('Please select an industry');
@@ -72,15 +86,23 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
 
     try {
       setIsGenerating(true);
+      setError(null);
+      
+      console.log('Starting PDF generation process');
+      console.log('Selected industry:', selectedIndustryId);
+      console.log('Form data:', data);
       
       // Generate Pre-App PDF
-      await generatePreApp(selectedIndustryId, leadData, data);
+      const result = await generatePreApp(selectedIndustryId, leadData, data);
       
+      console.log('Pre-app generation successful:', result);
       toast.success('Merchant application generated successfully');
+      
       if (onSuccess) onSuccess();
       onOpenChange(false);
     } catch (error: any) {
       console.error('Error generating pre-app:', error);
+      setError(error.message);
       toast.error(`Failed to generate merchant application: ${error.message || 'Unknown error'}`);
     } finally {
       setIsGenerating(false);
@@ -114,6 +136,12 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
             WaveLine Merchant Application
           </DialogTitle>
         </DialogHeader>
+        
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+            <p className="text-sm text-red-600">Error: {error}</p>
+          </div>
+        )}
         
         <div className="mb-4">
           <Label htmlFor="industry" className="block font-medium mb-1">Select Industry</Label>
