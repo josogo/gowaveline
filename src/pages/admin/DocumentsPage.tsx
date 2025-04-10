@@ -15,6 +15,7 @@ import { checkUserIsAdmin, fetchDocuments, deleteDocument } from '@/components/a
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { motion } from 'framer-motion';
 
 const DocumentsPage = () => {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
@@ -133,7 +134,12 @@ const DocumentsPage = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6 w-full max-w-full">
+      <motion.div 
+        className="space-y-6 w-full max-w-full px-4 py-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
         <DocumentsHeader
           onUploadClick={() => setUploadDialogOpen(true)}
           onCreatePreAppClick={() => setPreAppDialogOpen(true)}
@@ -185,7 +191,7 @@ const DocumentsPage = () => {
           onOpenChange={setPreAppDialogOpen}
           onSuccess={handleRefresh}
         />
-      </div>
+      </motion.div>
     </AdminLayout>
   );
 };

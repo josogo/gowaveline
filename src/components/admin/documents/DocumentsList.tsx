@@ -1,10 +1,10 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Plus, FilePlus, FileUp } from 'lucide-react';
+import { Loader2, Plus, FileText, FileUp } from 'lucide-react';
 import { DocumentCard } from './DocumentCard';
 import { DocumentItem } from './types';
+import { motion } from 'framer-motion';
 
 interface DocumentsListProps {
   documents: DocumentItem[];
@@ -59,26 +59,54 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <Loader2 className="h-6 w-6 animate-spin text-[#0EA5E9]" />
       </div>
     );
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: {
+        duration: 0.5
+      }
+    }
+  };
+
   if (allDocuments.length === 0) {
     return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center p-10 text-center">
-          <FileUp className="h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium">No documents yet</h3>
-          <p className="text-sm text-gray-500 mt-2 mb-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="bg-gradient-to-r from-[#0EA5E9]/10 to-[#FF9F5A]/5 rounded-2xl p-10 text-center">
+          <FileUp className="h-12 w-12 text-[#0EA5E9] mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-[#0EA5E9]">No documents yet</h3>
+          <p className="text-[#0EA5E9]/80 mt-2 mb-6">
             Upload document templates to generate contracts and agreements
           </p>
-          <Button onClick={onUploadClick}>
+          <Button 
+            onClick={onUploadClick}
+            className="bg-gradient-to-r from-[#FF9F5A] to-[#FF7F37] hover:from-[#FF7F37] hover:to-[#FF9F5A] text-white"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Upload Document
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </motion.div>
     );
   }
 
@@ -101,10 +129,15 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
   );
 
   return (
-    <div className="space-y-8">
+    <motion.div 
+      className="space-y-12"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       {sortedTypes.map((type) => (
-        <div key={type} className="space-y-4">
-          <h3 className="font-medium text-lg capitalize">
+        <motion.div key={type} className="space-y-4" variants={itemVariants}>
+          <h3 className="font-semibold text-xl text-[#0EA5E9] capitalize">
             {type === 'nda' ? 'Non-Disclosure Agreements' :
              type === 'contract' ? 'Contracts' :
              type === 'agreement' ? 'Agent Agreements' :
@@ -112,21 +145,27 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
              'Other Documents'}
           </h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {groupedDocuments[type].map((document) => (
-              <DocumentCard
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {groupedDocuments[type].map((document, index) => (
+              <motion.div
                 key={document.id}
-                document={document}
-                onDelete={document.isStandard ? undefined : () => onDelete(document.id)}
-                onView={() => onView(document)}
-                onEdit={document.isStandard ? undefined : () => onEdit(document)}
-                onFill={document.is_template ? () => onFill(document) : undefined}
-                isAdmin={isAdmin}
-              />
+                variants={itemVariants}
+                custom={index}
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+              >
+                <DocumentCard
+                  document={document}
+                  onDelete={document.isStandard ? undefined : () => onDelete(document.id)}
+                  onView={() => onView(document)}
+                  onEdit={document.isStandard ? undefined : () => onEdit(document)}
+                  onFill={document.is_template ? () => onFill(document) : undefined}
+                  isAdmin={isAdmin}
+                />
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 };
