@@ -42,6 +42,8 @@ export const GeneratePdfDialog: React.FC<GeneratePdfDialogProps> = ({
     setGenerating(true);
 
     try {
+      console.log("Starting PDF generation process");
+      
       // Verify user is authenticated
       const { data: { session }, error: authError } = await supabase.auth.getSession();
       
@@ -51,6 +53,8 @@ export const GeneratePdfDialog: React.FC<GeneratePdfDialogProps> = ({
         setGenerating(false);
         return;
       }
+      
+      console.log("User authenticated, preparing data for PDF generation");
       
       let leadData = null;
       if (selectedLeadId !== 'blank') {
