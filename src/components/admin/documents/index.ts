@@ -10,4 +10,4 @@ export * from './DocumentFillDialog';
 export * from './PreAppGenerationDialog';
 export * from './api';
 export * from './DocumentDownloadSection';
-export * from './DocumentCard3D';
+export { DocumentCard as DocumentCard3D } from './DocumentCard3D';

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { DocumentCard } from './DocumentCard3D';
+import { DocumentCard3D } from './DocumentCard3D';
 import { DocumentItem } from './types';
 import { Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -142,7 +142,7 @@ export const DocumentDownloadSection: React.FC<DocumentDownloadSectionProps> = (
         >
           {filteredDocs.map((doc) => (
             <motion.div key={doc.id} variants={itemVariants}>
-              <DocumentCard 
+              <DocumentCard3D 
                 document={doc}
                 isAdmin={isAdmin}
                 onDownload={() => handleDownload(doc)}

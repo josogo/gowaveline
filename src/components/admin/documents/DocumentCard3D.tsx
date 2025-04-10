@@ -2,7 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { DocumentItem } from './types';
-import { Download, Eye, FileText, File, FilePdf, Clock } from 'lucide-react';
+import { Download, Eye, FileText, File, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { HoverCard, HoverCardTrigger, HoverCardContent } from '@/components/ui/hover-card';
 import { cn } from '@/lib/utils';
@@ -27,7 +27,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
   const getFileIcon = () => {
     switch (fileExt) {
       case 'pdf':
-        return <FilePdf className="h-12 w-12 text-red-500 transition-all group-hover:text-orange-500 group-hover:drop-shadow-[0_0_8px_rgba(255,82,0,0.5)]" />;
+        return <FileText className="h-12 w-12 text-red-500 transition-all group-hover:text-orange-500 group-hover:drop-shadow-[0_0_8px_rgba(255,82,0,0.5)]" />;
       case 'doc':
       case 'docx':
         return <File className="h-12 w-12 text-blue-600 transition-all group-hover:text-orange-500 group-hover:drop-shadow-[0_0_8px_rgba(255,82,0,0.5)]" />;
