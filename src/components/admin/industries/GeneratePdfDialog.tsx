@@ -5,7 +5,8 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle,
-  DialogFooter
+  DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { 
@@ -44,16 +45,9 @@ export const GeneratePdfDialog: React.FC<GeneratePdfDialogProps> = ({
       // Verify user is authenticated
       const { data: { session }, error: authError } = await supabase.auth.getSession();
       
-      if (authError) {
-        console.error("Authentication error:", authError);
-        toast.error("Authentication error: " + authError.message);
-        setGenerating(false);
-        return;
-      }
-      
-      if (!session) {
-        console.error("No active session found");
-        toast.error("You must be logged in to generate a PDF");
+      if (authError || !session) {
+        console.error("Authentication error:", authError || "No active session found");
+        toast.error("You must be logged in to generate a PDF. Please log in and try again.");
         setGenerating(false);
         return;
       }
@@ -137,13 +131,16 @@ export const GeneratePdfDialog: React.FC<GeneratePdfDialogProps> = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Generate Pre-Application PDF</DialogTitle>
+          <DialogDescription>
+            Create a pre-application form for {industry?.name} industry
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
           <div>
             <Label htmlFor="lead-select">Select a lead (optional)</Label>
             <Select value={selectedLeadId} onValueChange={setSelectedLeadId}>
-              <SelectTrigger className="mt-2">
+              <SelectTrigger className="mt-2" id="lead-select">
                 <SelectValue placeholder="Select a lead to pre-fill data" />
               </SelectTrigger>
               <SelectContent>
