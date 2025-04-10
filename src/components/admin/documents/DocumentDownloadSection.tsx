@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { DocumentCard3D } from './DocumentCard3D';
+import { DocumentCard } from './DocumentCard3D';
 import { DocumentItem } from './types';
 import { Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -26,7 +25,6 @@ export const DocumentDownloadSection: React.FC<DocumentDownloadSectionProps> = (
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredDocs, setFilteredDocs] = useState<DocumentItem[]>(documents);
 
-  // Filter documents when search query or documents change
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredDocs(documents);
@@ -43,14 +41,12 @@ export const DocumentDownloadSection: React.FC<DocumentDownloadSectionProps> = (
 
   const handleDownload = async (document: DocumentItem) => {
     try {
-      // Generate signed URL for secure download
       const { data, error } = await supabase.storage
         .from('documents')
         .createSignedUrl(document.file_path, 60);
       
       if (error) throw error;
       
-      // Create a temporary anchor and trigger download
       const link = window.document.createElement('a');
       link.href = data.signedUrl;
       link.download = document.name;
@@ -62,7 +58,6 @@ export const DocumentDownloadSection: React.FC<DocumentDownloadSectionProps> = (
     }
   };
 
-  // Animation variants for staggered card appearance
   const containerVariants = {
     hidden: { opacity: 0 },
     show: {
@@ -142,13 +137,12 @@ export const DocumentDownloadSection: React.FC<DocumentDownloadSectionProps> = (
         >
           {filteredDocs.map((doc) => (
             <motion.div key={doc.id} variants={itemVariants}>
-              <DocumentCard3D 
+              <DocumentCard 
                 document={doc}
                 isAdmin={isAdmin}
                 onDownload={() => handleDownload(doc)}
                 onView={() => onView(doc)}
                 isNew={
-                  // Mark as new if document was added in the last 7 days
                   new Date(doc.created_at).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000
                 }
               />
