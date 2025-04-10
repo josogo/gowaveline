@@ -1,3 +1,4 @@
+
 import { DocumentItem, DocumentItemType } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { PreAppFormValues } from './PreAppFormSchema';
@@ -43,17 +44,20 @@ export async function createDocument(document: {
   metadata?: any;
   is_template: boolean;
 }): Promise<DocumentItem> {
-  const { uploaded_by, ...restDocument } = document;
-  
-  let documentToCreate = restDocument;
-  
-  if (uploaded_by && uploaded_by !== "system" && isValidUUID(uploaded_by)) {
-    documentToCreate = { ...restDocument, uploaded_by };
+  // Ensure we have a valid uploaded_by value
+  if (!document.uploaded_by || (!isValidUUID(document.uploaded_by) && document.uploaded_by !== "system")) {
+    // Try to get the current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.id) {
+      document.uploaded_by = user.id;
+    } else {
+      document.uploaded_by = "system";
+    }
   }
   
   const { data, error } = await supabase
     .from('documents')
-    .insert(documentToCreate)
+    .insert(document)
     .select();
 
   if (error) {
@@ -161,6 +165,7 @@ export async function generatePreApp(
   formData: PreAppFormValues
 ): Promise<DocumentItem> {
   try {
+    // Get the current user
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user?.id;
     
@@ -177,7 +182,7 @@ export async function generatePreApp(
       file_path: `pre-apps/${Date.now()}-application.pdf`,
       file_type: 'application/pdf',
       file_size: 0,
-      uploaded_by: userId,
+      uploaded_by: userId || "system",
       document_type: 'MERCHANT_APPLICATION' as DocumentItemType,
       metadata,
       is_template: false
