@@ -1,10 +1,7 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { FormField, FormItem, FormLabel, FormControl, FormDescription } from '@/components/ui/form';
-import { Label } from '@/components/ui/label';
+import { FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import type { UseFormReturn } from 'react-hook-form';
 import type { PreAppFormValues } from '../../PreAppFormSchema';
 
@@ -14,17 +11,26 @@ interface BusinessInfoTabProps {
   goToPrevTab: () => void;
 }
 
-export const BusinessInfoTab: React.FC<BusinessInfoTabProps> = ({ 
-  form, 
-  goToNextTab,
-  goToPrevTab
-}) => {
+export const BusinessInfoTab: React.FC<BusinessInfoTabProps> = ({ form, goToNextTab, goToPrevTab }) => {
   return (
     <div className="space-y-4">
       <div className="bg-[#0EA5E9]/5 p-4 rounded-lg mb-4">
         <h3 className="font-semibold text-xl text-[#0EA5E9] mb-4">2. Business Information</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="businessName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Business Name</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Business name" />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          
           <FormField
             control={form.control}
             name="streetAddress"

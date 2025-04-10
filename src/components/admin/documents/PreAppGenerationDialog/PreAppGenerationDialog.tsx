@@ -54,6 +54,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
       shippingMethod: [],
       advertisingChannels: [],
       additionalOwners: false,
+      businessName: '', // Add default value for businessName
     },
   });
 

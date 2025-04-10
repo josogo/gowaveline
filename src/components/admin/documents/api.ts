@@ -1,4 +1,3 @@
-
 import { DocumentItem, DocumentItemType } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { PreAppFormValues } from './PreAppFormSchema';
@@ -39,14 +38,22 @@ export async function createDocument(document: {
   file_type: string;
   file_size: number;
   owner_id?: string;
-  uploaded_by: string;
+  uploaded_by: string | undefined;
   document_type: DocumentItemType;
   metadata?: any;
   is_template: boolean;
 }): Promise<DocumentItem> {
+  const { uploaded_by, ...restDocument } = document;
+  
+  let documentToCreate = restDocument;
+  
+  if (uploaded_by && uploaded_by !== "system" && isValidUUID(uploaded_by)) {
+    documentToCreate = { ...restDocument, uploaded_by };
+  }
+  
   const { data, error } = await supabase
     .from('documents')
-    .insert(document)
+    .insert(documentToCreate)
     .select();
 
   if (error) {
@@ -55,6 +62,11 @@ export async function createDocument(document: {
   }
 
   return data[0] as DocumentItem;
+}
+
+function isValidUUID(str: string) {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
 }
 
 export async function updateDocument(id: string, updates: Partial<DocumentItem>): Promise<DocumentItem> {
@@ -73,7 +85,6 @@ export async function updateDocument(id: string, updates: Partial<DocumentItem>)
 }
 
 export async function deleteDocument(id: string): Promise<boolean> {
-  // First get the document to get file path
   const { data: document, error: fetchError } = await supabase
     .from('documents')
     .select('file_path')
@@ -85,7 +96,6 @@ export async function deleteDocument(id: string): Promise<boolean> {
     throw fetchError;
   }
   
-  // Delete the file from storage first
   if (document?.file_path) {
     const { error: storageError } = await supabase.storage
       .from('documents')
@@ -97,7 +107,6 @@ export async function deleteDocument(id: string): Promise<boolean> {
     }
   }
   
-  // Now delete the database record
   const { error } = await supabase
     .from('documents')
     .delete()
@@ -125,9 +134,6 @@ export async function checkUserIsAdmin(userId: string): Promise<boolean> {
   return !!data;
 }
 
-// Add the missing functions for PreAppGenerationDialog.tsx
-
-// Define the Industry type
 interface Industry {
   id: string;
   name: string;
@@ -135,7 +141,6 @@ interface Industry {
   created_at?: string;
 }
 
-// Function to fetch industries
 export async function fetchIndustries(): Promise<Industry[]> {
   const { data, error } = await supabase
     .from('industries')
@@ -150,18 +155,15 @@ export async function fetchIndustries(): Promise<Industry[]> {
   return data as Industry[];
 }
 
-// Function to generate pre-application document
 export async function generatePreApp(
   industryId: string,
   leadData: any,
   formData: PreAppFormValues
 ): Promise<DocumentItem> {
-  // Implement the actual logic to generate a pre-app document
-  // This is a simplified implementation - in a real app, you might call an API endpoint
-  // that generates a PDF and stores it in Supabase storage
-  
   try {
-    // Create a metadata object that combines lead and form data
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user?.id;
+    
     const metadata = {
       industryId,
       leadData,
@@ -169,20 +171,18 @@ export async function generatePreApp(
       generatedAt: new Date().toISOString()
     };
     
-    // Create a document entry in the database
     const docData = {
-      name: `Merchant Application - ${formData.businessStructure || 'New'}`,
-      description: `Pre-application form for ${formData.principalName || 'merchant'}`,
+      name: `Merchant Application - ${formData.businessName || formData.principalName || 'New'}`,
+      description: `Pre-application form for ${formData.principalName || formData.businessName || 'merchant'}`,
       file_path: `pre-apps/${Date.now()}-application.pdf`,
       file_type: 'application/pdf',
-      file_size: 0, // This would be the actual size if we were creating a real PDF
-      uploaded_by: 'system',
+      file_size: 0,
+      uploaded_by: userId,
       document_type: 'MERCHANT_APPLICATION' as DocumentItemType,
       metadata,
       is_template: false
     };
     
-    // Store the document record
     const newDoc = await createDocument(docData);
     
     return newDoc;
