@@ -253,25 +253,31 @@ export async function generatePreApp(
   formData: PreAppFormValues
 ): Promise<DocumentItem> {
   try {
-    console.log('Starting generatePreApp function');
+    console.log('[GENERATE_PRE_APP] Starting generatePreApp function with industry:', industryId);
     
     // Get the current user and session
-    const { data, error: sessionError } = await supabase.auth.getSession();
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError) {
-      console.error('Session error:', sessionError);
+      console.error('[GENERATE_PRE_APP] Session error:', sessionError);
       throw new Error(`Authentication error: Could not get session - ${sessionError.message}`);
     }
     
-    const session = data?.session;
-    const user = session?.user;
+    const session = sessionData?.session;
     
-    if (!user) {
-      console.error('No authenticated user found');
+    if (!session) {
+      console.error('[GENERATE_PRE_APP] No session found');
       throw new Error('User not authenticated. Please log in to generate applications.');
     }
     
-    console.log('User authenticated:', user.id);
+    const user = session.user;
+    
+    if (!user) {
+      console.error('[GENERATE_PRE_APP] No user in session');
+      throw new Error('User not authenticated. Please log in to generate applications.');
+    }
+    
+    console.log('[GENERATE_PRE_APP] User authenticated:', user.id);
     
     // Check if user has admin role
     const { data: isAdmin, error: roleError } = await supabase.rpc('has_role', {
@@ -280,16 +286,16 @@ export async function generatePreApp(
     });
     
     if (roleError) {
-      console.error('Error checking admin role:', roleError);
+      console.error('[GENERATE_PRE_APP] Error checking admin role:', roleError);
       throw new Error(`Failed to verify permission level: ${roleError.message}`);
     }
     
     if (!isAdmin) {
-      console.error('User is not admin:', user.id);
+      console.error('[GENERATE_PRE_APP] User is not admin:', user.id);
       throw new Error('Admin permissions required to generate applications');
     }
     
-    console.log('Admin role verified for user:', user.id);
+    console.log('[GENERATE_PRE_APP] Admin role verified for user:', user.id);
     
     const metadata = {
       industryId,
@@ -300,15 +306,18 @@ export async function generatePreApp(
     
     // Verify we have a valid session token
     if (!session?.access_token) {
-      console.error('No valid session token found');
+      console.error('[GENERATE_PRE_APP] No valid access token in session');
       throw new Error('No valid session token found. Please log in again.');
     }
     
     // Call the Supabase Edge Function to generate the PDF
-    console.log('Calling edge function to generate PDF');
+    console.log('[GENERATE_PRE_APP] Calling edge function to generate PDF');
     
     try {
-      const response = await fetch('/api/generate-pre-app', {
+      const edgeFunctionUrl = 'https://rqwrvkkfixrogxogunsk.supabase.co/functions/v1/generate-pre-app';
+      console.log('[GENERATE_PRE_APP] Calling edge function URL:', edgeFunctionUrl);
+      
+      const response = await fetch(edgeFunctionUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -317,7 +326,7 @@ export async function generatePreApp(
         body: JSON.stringify({ industryId, leadData, formData })
       });
       
-      console.log('Edge function response status:', response.status);
+      console.log('[GENERATE_PRE_APP] Edge function response status:', response.status);
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -330,7 +339,7 @@ export async function generatePreApp(
           errorMessage = `${errorMessage}: ${errorText || response.statusText}`;
         }
         
-        console.error('Error response from edge function:', { 
+        console.error('[GENERATE_PRE_APP] Error response from edge function:', { 
           status: response.status,
           statusText: response.statusText,
           errorText
@@ -344,7 +353,7 @@ export async function generatePreApp(
         throw new Error('No PDF data received from the server');
       }
       
-      console.log('PDF generated successfully, saving to storage');
+      console.log('[GENERATE_PRE_APP] PDF generated successfully, saving to storage');
       
       // Upload the PDF to storage
       const filePath = `pre-apps/${Date.now()}-application.pdf`;
@@ -355,7 +364,7 @@ export async function generatePreApp(
         .upload(filePath, fileBlob);
         
       if (uploadError) {
-        console.error('Error uploading PDF to storage:', uploadError);
+        console.error('[GENERATE_PRE_APP] Error uploading PDF to storage:', uploadError);
         throw uploadError;
       }
       
@@ -373,14 +382,14 @@ export async function generatePreApp(
       };
       
       // Create the document
-      console.log('Creating document entry for the generated PDF');
+      console.log('[GENERATE_PRE_APP] Creating document entry for the generated PDF');
       return await createDocument(docData);
     } catch (fetchError: any) {
-      console.error('Error in edge function call:', fetchError);
+      console.error('[GENERATE_PRE_APP] Error in edge function call:', fetchError);
       throw new Error(`Edge function error: ${fetchError.message}`);
     }
   } catch (error: any) {
-    console.error('Error generating pre-app document:', error);
+    console.error('[GENERATE_PRE_APP] Error generating pre-app document:', error);
     throw error;
   }
 }

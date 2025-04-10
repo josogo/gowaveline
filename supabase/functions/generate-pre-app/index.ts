@@ -10,15 +10,19 @@ const corsHeaders = {
 serve(async (req) => {
   // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
+    console.log("Handling CORS preflight request");
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    console.log("Edge function started: generate-pre-app");
+    
     // Get API keys from environment variables
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
     if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("Missing Supabase environment variables");
       throw new Error('Missing Supabase environment variables')
     }
 
@@ -28,11 +32,13 @@ serve(async (req) => {
     // Get the authorization header from the request
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
+      console.error("Missing authorization header");
       throw new Error('Missing authorization header')
     }
 
     // Extract the JWT token
     const token = authHeader.replace('Bearer ', '')
+    console.log("Token received, verifying user");
 
     // Verify the token and get the user
     const { data: { user }, error: userError } = await supabase.auth.getUser(token)
@@ -63,7 +69,14 @@ serve(async (req) => {
     console.log('Admin role verified for user:', user.id);
 
     // Get the request data
-    const { industryId, leadData, formData } = await req.json()
+    const requestData = await req.json();
+    const { industryId, leadData, formData } = requestData;
+    
+    console.log("Received request data:", {
+      industryId,
+      formData: formData ? "Present" : "Missing",
+      leadData: leadData ? "Present" : "Missing"
+    });
     
     if (!industryId) {
       throw new Error('Industry ID is required')
@@ -75,8 +88,10 @@ serve(async (req) => {
 
     // TODO: Here, you would generate the actual PDF
     // For now, we'll return mock PDF data
+    console.log("Generating mock PDF data");
     const pdfBase64 = 'JVBERi0xLjMKJcTl8uXrp/Og0MTGCjQgMCBvYmoKPDwgL0xlbmd0aCA1IDAgUiAvRmlsdGVyIC9GbGF0ZURlY29kZSA+PgpzdHJlYW0KeAGFkT9PwzAQxfd8Cq8IKYnrJE5YkCqVAQYGYEBiQO1AwRL/JDJQ8e25NghVgMHy6d7v7t6dWwgkQA8hhIHeQK8tNw48IOxzWEcwJsLwdDAYRAMLfR' // Mock base64 data
 
+    console.log("PDF generation completed successfully");
     return new Response(
       JSON.stringify({
         success: true,

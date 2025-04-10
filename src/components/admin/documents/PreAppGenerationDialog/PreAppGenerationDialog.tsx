@@ -50,6 +50,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
   const [userId, setUserId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [authCheckComplete, setAuthCheckComplete] = useState(false);
+  const [sessionChecked, setSessionChecked] = useState(false);
 
   const form = useForm<PreAppFormValues>({
     resolver: zodResolver(preAppFormSchema),
@@ -74,83 +75,92 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        console.log('Checking authentication status...');
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        console.log('[AUTH CHECK] Starting authentication check process');
+        setAuthCheckComplete(false);
         
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-          setError(`Authentication error: ${sessionError.message}`);
-          setIsAuthenticated(false);
-          setAuthCheckComplete(true);
-          return;
+        // Force refresh the session to ensure we have the latest data
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        
+        if (refreshError) {
+          console.error('[AUTH CHECK] Failed to refresh session:', refreshError);
+        } else {
+          console.log('[AUTH CHECK] Session refreshed successfully');
         }
+
+        // Get the current session
+        const { data: sessionData } = await supabase.auth.getSession();
+        console.log('[AUTH CHECK] Session data:', sessionData);
         
-        const currentUser = sessionData?.session?.user;
-        console.log('Session data:', sessionData);
-        console.log('Current user:', currentUser);
+        const session = sessionData?.session;
+        const currentUser = session?.user;
         
-        const isAuthed = !!currentUser;
-        setIsAuthenticated(isAuthed);
-        
-        if (!isAuthed) {
-          console.log('Not authenticated');
+        if (!session || !currentUser) {
+          console.log('[AUTH CHECK] No active session or user found');
+          setIsAuthenticated(false);
+          setIsAdmin(false);
           setError('Authentication required. Please log in to generate applications.');
           toast.error('You must be logged in to generate applications');
           setAuthCheckComplete(true);
+          setSessionChecked(true);
           return;
-        } 
+        }
         
-        console.log('User authenticated:', currentUser.id);
+        // User is authenticated
+        console.log('[AUTH CHECK] User authenticated:', currentUser.id);
+        setIsAuthenticated(true);
         setUserId(currentUser.id);
         
         // Check if user is admin
-        if (currentUser) {
-          try {
-            console.log('Checking admin role for user:', currentUser.id);
-            const { data: hasAdminRole, error: roleError } = await supabase.rpc('has_role', {
-              user_id: currentUser.id,
-              role: 'admin'
-            });
-            
-            if (roleError) {
-              console.error('Error checking admin status:', roleError);
-              setError(`Failed to verify admin permissions: ${roleError.message}`);
-              setIsAdmin(false);
-            } else {
-              console.log('Admin role check result:', hasAdminRole);
-              setIsAdmin(!!hasAdminRole);
-              
-              if (!hasAdminRole) {
-                console.log('User is not admin');
-                setError('You need admin permissions to generate applications');
-                toast.error('Admin permissions required');
-              } else {
-                console.log('User confirmed as admin');
-                // Clear any previous auth errors
-                setError(null);
-              }
-            }
-          } catch (e: any) {
-            console.error('Error checking admin role:', e);
-            setError(`Failed to verify admin permissions: ${e.message}`);
+        try {
+          console.log('[AUTH CHECK] Checking admin role for user:', currentUser.id);
+          const { data: hasAdminRole, error: roleError } = await supabase.rpc('has_role', {
+            user_id: currentUser.id,
+            role: 'admin'
+          });
+          
+          if (roleError) {
+            console.error('[AUTH CHECK] Error checking admin status:', roleError);
+            setError(`Failed to verify admin permissions: ${roleError.message}`);
             setIsAdmin(false);
+          } else {
+            console.log('[AUTH CHECK] Admin role check result:', hasAdminRole);
+            setIsAdmin(!!hasAdminRole);
+            
+            if (!hasAdminRole) {
+              console.log('[AUTH CHECK] User is not admin');
+              setError('You need admin permissions to generate applications');
+              toast.error('Admin permissions required');
+            } else {
+              console.log('[AUTH CHECK] User confirmed as admin');
+              // Clear any previous auth errors
+              setError(null);
+            }
           }
+        } catch (e: any) {
+          console.error('[AUTH CHECK] Error checking admin role:', e);
+          setError(`Failed to verify admin permissions: ${e.message}`);
+          setIsAdmin(false);
         }
         
         setAuthCheckComplete(true);
+        setSessionChecked(true);
       } catch (e: any) {
-        console.error('Error checking auth status:', e);
+        console.error('[AUTH CHECK] Error in authentication check:', e);
         setError(`Failed to verify authentication status: ${e.message}`);
         setIsAuthenticated(false);
+        setIsAdmin(false);
         setAuthCheckComplete(true);
+        setSessionChecked(true);
       }
     };
     
-    if (open) {
-      setAuthCheckComplete(false);
+    if (open && !sessionChecked) {
       checkAuth();
+    } else if (!open) {
+      // Reset session checked when dialog closes so it will check again next time
+      setSessionChecked(false);
     }
-  }, [open]);
+  }, [open, sessionChecked]);
 
   const handleGenerate = async (data: PreAppFormValues) => {
     if (!selectedIndustryId) {
@@ -172,21 +182,21 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
       setIsGenerating(true);
       setError(null);
       
-      console.log('Starting PDF generation process');
-      console.log('Selected industry:', selectedIndustryId);
-      console.log('Form data:', data);
-      console.log('User ID:', userId);
+      console.log('[GENERATE] Starting PDF generation process');
+      console.log('[GENERATE] Selected industry:', selectedIndustryId);
+      console.log('[GENERATE] Form data:', data);
+      console.log('[GENERATE] User ID:', userId);
       
       // Generate Pre-App PDF
       const result = await generatePreApp(selectedIndustryId, leadData, data);
       
-      console.log('Pre-app generation successful:', result);
+      console.log('[GENERATE] Pre-app generation successful:', result);
       toast.success('Merchant application generated successfully');
       
       if (onSuccess) onSuccess();
       onOpenChange(false);
     } catch (error: any) {
-      console.error('Error generating pre-app:', error);
+      console.error('[GENERATE] Error generating pre-app:', error);
       setError(error.message || 'Unknown error occurred');
       toast.error(`Failed to generate merchant application: ${error.message || 'Unknown error'}`);
     } finally {
@@ -212,6 +222,12 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
     else if (activeTab === 'business') setActiveTab('structure');
   };
 
+  // Manual authentication check for debugging
+  const triggerManualAuthCheck = async () => {
+    setSessionChecked(false);
+    toast.info('Rechecking authentication status...');
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -235,6 +251,14 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
               <AlertCircle className="h-4 w-4 mr-2" />
               {error}
             </p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-2"
+              onClick={triggerManualAuthCheck}
+            >
+              <Loader2 className="h-3 w-3 mr-1" /> Recheck Auth Status
+            </Button>
           </div>
         )}
         
@@ -253,6 +277,14 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
               <AlertCircle className="h-4 w-4 mr-2" />
               You need to be logged in to generate applications. Please log in and try again.
             </p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-2"
+              onClick={triggerManualAuthCheck}
+            >
+              <Loader2 className="h-3 w-3 mr-1" /> Recheck Auth Status
+            </Button>
           </div>
         )}
         
