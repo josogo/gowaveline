@@ -15,7 +15,19 @@ serve(async (req) => {
   }
 
   try {
-    console.log("Edge function started: generate-pre-app");
+    console.log("======== Edge function started: generate-pre-app ========");
+    console.log("Request method:", req.method);
+    
+    // Log all headers for debugging (except authorization details)
+    const headersLog = {};
+    for (const [key, value] of req.headers.entries()) {
+      if (key.toLowerCase() === 'authorization') {
+        headersLog[key] = 'Bearer [token-hidden]';
+      } else {
+        headersLog[key] = value;
+      }
+    }
+    console.log("Request headers:", JSON.stringify(headersLog, null, 2));
     
     // Get API keys from environment variables
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
@@ -25,6 +37,8 @@ serve(async (req) => {
       console.error("Missing Supabase environment variables");
       throw new Error('Missing Supabase environment variables')
     }
+    
+    console.log("Supabase URL and service key are available");
 
     // Create a Supabase client with the service role key (bypasses RLS)
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
@@ -43,12 +57,17 @@ serve(async (req) => {
     // Verify the token and get the user
     const { data: { user }, error: userError } = await supabase.auth.getUser(token)
     
-    if (userError || !user) {
-      console.error('User auth error:', userError);
-      throw new Error(`Invalid auth token: ${userError?.message || 'User not found'}`)
+    if (userError) {
+      console.error('User auth error details:', JSON.stringify(userError, null, 2));
+      throw new Error(`Invalid auth token: ${userError.message || 'Unknown authentication error'}`)
+    }
+    
+    if (!user) {
+      console.error('User not found in token response');
+      throw new Error('User not found in authentication response')
     }
 
-    console.log('Authenticated user:', user.id);
+    console.log('Authenticated user:', user.id, '(Email:', user.email, ')');
     
     // Verify the user has admin role
     const { data: hasAdminRole, error: roleError } = await supabase.rpc('has_role', {
@@ -57,7 +76,7 @@ serve(async (req) => {
     });
     
     if (roleError) {
-      console.error('Role check error:', roleError);
+      console.error('Role check error details:', JSON.stringify(roleError, null, 2));
       throw new Error(`Failed to verify admin role: ${roleError.message}`);
     }
     
@@ -69,11 +88,19 @@ serve(async (req) => {
     console.log('Admin role verified for user:', user.id);
 
     // Get the request data
-    const requestData = await req.json();
+    let requestData;
+    try {
+      requestData = await req.json();
+      console.log("Request data received");
+    } catch (parseError) {
+      console.error("Error parsing request JSON:", parseError);
+      throw new Error('Invalid JSON in request body');
+    }
+    
     const { industryId, leadData, formData } = requestData;
     
-    console.log("Received request data:", {
-      industryId,
+    console.log("Request data contents:", {
+      industryId: industryId || "Missing",
       formData: formData ? "Present" : "Missing",
       leadData: leadData ? "Present" : "Missing"
     });
@@ -107,11 +134,12 @@ serve(async (req) => {
     )
   } catch (error) {
     console.error('Error in generate-pre-app:', error);
+    console.error('Error stack:', error.stack);
     
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message
+        error: error.message || 'Unknown error occurred'
       }),
       { 
         headers: { 

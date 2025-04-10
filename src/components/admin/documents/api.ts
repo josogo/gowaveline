@@ -255,7 +255,18 @@ export async function generatePreApp(
   try {
     console.log('[GENERATE_PRE_APP] Starting generatePreApp function with industry:', industryId);
     
+    // Force refresh the session to ensure we have the latest data
+    console.log('[GENERATE_PRE_APP] Refreshing user session...');
+    try {
+      await supabase.auth.refreshSession();
+      console.log('[GENERATE_PRE_APP] Session refreshed successfully');
+    } catch (refreshError) {
+      console.error('[GENERATE_PRE_APP] Session refresh error:', refreshError);
+      // Continue anyway - we'll try to get the current session next
+    }
+    
     // Get the current user and session
+    console.log('[GENERATE_PRE_APP] Getting current session...');
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError) {
@@ -267,19 +278,20 @@ export async function generatePreApp(
     
     if (!session) {
       console.error('[GENERATE_PRE_APP] No session found');
-      throw new Error('User not authenticated. Please log in to generate applications.');
+      throw new Error('User not authenticated. Please log in to generate applications. (No session found)');
     }
     
     const user = session.user;
     
     if (!user) {
       console.error('[GENERATE_PRE_APP] No user in session');
-      throw new Error('User not authenticated. Please log in to generate applications.');
+      throw new Error('User not authenticated. Please log in to generate applications. (No user found in session)');
     }
     
-    console.log('[GENERATE_PRE_APP] User authenticated:', user.id);
+    console.log('[GENERATE_PRE_APP] User authenticated:', user.id, '(Email:', user.email, ')');
     
     // Check if user has admin role
+    console.log('[GENERATE_PRE_APP] Checking admin role...');
     const { data: isAdmin, error: roleError } = await supabase.rpc('has_role', {
       user_id: user.id,
       role: 'admin'
@@ -314,8 +326,10 @@ export async function generatePreApp(
     console.log('[GENERATE_PRE_APP] Calling edge function to generate PDF');
     
     try {
+      // Use the complete URL explicitly
       const edgeFunctionUrl = 'https://rqwrvkkfixrogxogunsk.supabase.co/functions/v1/generate-pre-app';
       console.log('[GENERATE_PRE_APP] Calling edge function URL:', edgeFunctionUrl);
+      console.log('[GENERATE_PRE_APP] Using access token:', session.access_token.substring(0, 5) + '...[truncated]');
       
       const response = await fetch(edgeFunctionUrl, {
         method: 'POST',
@@ -328,28 +342,32 @@ export async function generatePreApp(
       
       console.log('[GENERATE_PRE_APP] Edge function response status:', response.status);
       
+      // Get the full response text for debugging
+      const responseText = await response.text();
+      console.log('[GENERATE_PRE_APP] Raw response:', responseText);
+      
+      let result;
+      try {
+        // Try to parse as JSON
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('[GENERATE_PRE_APP] Error parsing response as JSON:', parseError);
+        throw new Error(`Failed to parse response from PDF generation service: ${responseText.substring(0, 100)}...`);
+      }
+      
       if (!response.ok) {
-        const errorText = await response.text();
-        let errorMessage = 'PDF generation failed';
-        
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData.error || response.statusText;
-        } catch {
-          errorMessage = `${errorMessage}: ${errorText || response.statusText}`;
-        }
-        
+        const errorMessage = result?.error || response.statusText || 'Unknown error';
         console.error('[GENERATE_PRE_APP] Error response from edge function:', { 
           status: response.status,
           statusText: response.statusText,
-          errorText
+          error: errorMessage
         });
         
-        throw new Error(errorMessage);
+        throw new Error(`PDF generation failed: ${errorMessage}`);
       }
       
-      const result = await response.json();
       if (!result.pdfBase64) {
+        console.error('[GENERATE_PRE_APP] No PDF data in response:', result);
         throw new Error('No PDF data received from the server');
       }
       
