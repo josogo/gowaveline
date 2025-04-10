@@ -165,7 +165,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
       const link = document.createElement('a');
       link.href = url;
       const industryName = industries.find(i => i.id === selectedIndustryId)?.name || 'industry';
-      link.download = `${industryName.replace(/\s+/g, '_')}_pre_application.pdf`;
+      link.download = `${industryName.replace(/\s+/g, '_')}_merchant_application.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -175,7 +175,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
       
       onSuccess();
       onOpenChange(false);
-      toast.success('PDF generated successfully');
+      toast.success('Merchant application generated successfully');
     } catch (error: any) {
       console.error('Error generating PDF:', error);
       toast.error(error.message || 'Failed to generate PDF');
@@ -188,9 +188,9 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Generate Pre-Application PDF</DialogTitle>
+          <DialogTitle>Generate Merchant Application</DialogTitle>
           <DialogDescription>
-            Create a pre-application form for your selected industry
+            Create a merchant application form for your selected industry
           </DialogDescription>
         </DialogHeader>
         
@@ -214,7 +214,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
               </SelectContent>
             </Select>
             <p className="text-sm text-gray-500 mt-2">
-              Select the industry for this pre-application form.
+              Select the industry for this merchant application form.
             </p>
           </div>
           
@@ -242,7 +242,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
           <div className="flex p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <FileText className="h-5 w-5 text-blue-500 flex-shrink-0 mr-2" />
             <p className="text-sm text-blue-800">
-              None of the fields in the generated pre-application form are mandatory. Fill in as many or as few fields as needed.
+              The generated application will include comprehensive sections for business structure, information, processing volumes, and more.
             </p>
           </div>
         </div>
@@ -254,9 +254,10 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
           <Button 
             onClick={handleGenerate} 
             disabled={generating || !selectedIndustryId}
+            className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/90"
           >
             {generating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Generate PDF
+            Generate Merchant Application
           </Button>
         </DialogFooter>
       </DialogContent>

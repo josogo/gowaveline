@@ -115,7 +115,7 @@ export const GeneratePdfDialog: React.FC<GeneratePdfDialogProps> = ({
       // Create a link element and trigger the download
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${industry.name.replace(/\s+/g, '_')}_pre_application.pdf`;
+      link.download = `${industry.name.replace(/\s+/g, '_')}_merchant_application.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -124,7 +124,7 @@ export const GeneratePdfDialog: React.FC<GeneratePdfDialogProps> = ({
       URL.revokeObjectURL(url);
       
       onOpenChange(false);
-      toast.success('PDF generated successfully');
+      toast.success('Merchant application generated successfully');
     } catch (error: any) {
       console.error('Error generating PDF:', error);
       toast.error(error.message || 'Failed to generate PDF');
@@ -137,9 +137,9 @@ export const GeneratePdfDialog: React.FC<GeneratePdfDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Generate Pre-Application PDF</DialogTitle>
+          <DialogTitle>Generate Merchant Application</DialogTitle>
           <DialogDescription>
-            Create a pre-application form for {industry?.name} industry
+            Create a merchant application form for {industry?.name} industry
           </DialogDescription>
         </DialogHeader>
         
@@ -167,7 +167,7 @@ export const GeneratePdfDialog: React.FC<GeneratePdfDialogProps> = ({
           <div className="flex p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <FileText className="h-5 w-5 text-blue-500 flex-shrink-0 mr-2" />
             <p className="text-sm text-blue-800">
-              The generated PDF will include the industry template and company logo (if available).
+              The generated application will include the industry template, comprehensive merchant information fields, and company logo (if available).
             </p>
           </div>
         </div>
@@ -179,9 +179,10 @@ export const GeneratePdfDialog: React.FC<GeneratePdfDialogProps> = ({
           <Button 
             onClick={handleGenerate} 
             disabled={generating}
+            className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/90"
           >
             {generating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Generate PDF
+            Generate Merchant Application
           </Button>
         </DialogFooter>
       </DialogContent>
