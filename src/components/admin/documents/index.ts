@@ -11,6 +11,7 @@ export * from './DocumentViewDialog';
 export * from './DocumentEditDialog';
 export * from './DocumentFillDialog';
 export * from './PreAppGenerationDialog';
+export * from './PreAppFormSchema';
 
 // Export API functions
 export * from './api';
@@ -30,4 +31,4 @@ export {
 // Export types explicitly with 'export type' syntax
 export type { DocumentFormValues } from './form';
 export type { DocumentType as DocumentFormType } from './form';
-
+export type { PreAppFormValues } from './PreAppFormSchema';
