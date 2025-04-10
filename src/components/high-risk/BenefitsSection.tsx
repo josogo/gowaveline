@@ -97,7 +97,7 @@ const BenefitsSection = () => {
         >
           <Button 
             onClick={() => navigate('/')}
-            className="bg-gradient-to-r from-[#0EA5E9] to-[#0EA5E9]/80 hover:from-[#0EA5E9]/90 hover:to-[#0EA5E9] text-white px-8 py-6 text-lg font-medium rounded-xl shadow-lg transform transition-transform hover:scale-105"
+            className="bg-gradient-to-r from-[#FF9F5A] to-[#FF7F37] hover:from-[#FF7F37] hover:to-[#FF9F5A] text-white px-8 py-6 text-lg font-medium rounded-xl shadow-lg transform transition-transform hover:scale-105"
           >
             Analyze Your Statement
           </Button>

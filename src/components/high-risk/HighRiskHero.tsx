@@ -47,7 +47,7 @@ const HighRiskHero = () => {
             <Button 
               onClick={() => navigate('/contact')}
               variant="outline" 
-              className="px-6 py-3 border-[#0EA5E9] text-[#0EA5E9] font-semibold text-lg rounded-xl hover:bg-[#0EA5E9]/10 transition-colors"
+              className="px-6 py-3 border-[#FF9F5A] text-[#FF9F5A] font-semibold text-lg rounded-xl hover:bg-[#FF9F5A]/10 transition-colors"
             >
               Contact Us
             </Button>

@@ -69,7 +69,7 @@ const IndustriesSection = () => {
             <Button 
               onClick={() => setSearchQuery('')}
               variant="outline" 
-              className="text-[#0EA5E9] border-[#0EA5E9] hover:bg-[#0EA5E9]/10"
+              className="text-[#FF9F5A] border-[#FF9F5A] hover:bg-[#FF9F5A]/10"
             >
               Clear search
             </Button>
@@ -99,7 +99,7 @@ const IndustriesSection = () => {
             <Button 
               onClick={() => setVisibleCount(prev => prev + 8)}
               variant="outline" 
-              className="border-[#0EA5E9] text-[#0EA5E9] hover:bg-[#0EA5E9]/10"
+              className="border-[#FF9F5A] text-[#FF9F5A] hover:bg-[#FF9F5A]/10"
             >
               Load More
             </Button>
@@ -113,7 +113,7 @@ const IndustriesSection = () => {
           </p>
           <Button 
             onClick={() => navigate('/contact')}
-            className="bg-gradient-to-r from-[#0EA5E9] to-[#FF9F5A] hover:from-[#0EA5E9]/90 hover:to-[#FF9F5A]/90 text-white shadow-md transform transition-transform hover:scale-105"
+            className="bg-gradient-to-r from-[#FF9F5A] to-[#FF7F37] hover:from-[#FF7F37] hover:to-[#FF9F5A] text-white shadow-md transform transition-transform hover:scale-105"
           >
             Discuss Your Needs
           </Button>
