@@ -1,25 +1,33 @@
 
 import React from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { DocumentItem } from './types';
-import { FileText, File, Download, Trash2, Edit, Eye, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  File,
+  FileText,
+  FilePen,
+  Trash2,
+  Eye,
+  CheckSquare,
+  MoreVertical,
+  Calendar
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
+import { DocumentItem } from './types';
+import { format } from 'date-fns';
 
 interface DocumentCardProps {
   document: DocumentItem;
-  onDelete: (id: string) => void;
-  onView: (document: DocumentItem) => void;
-  onEdit: (document: DocumentItem) => void;
-  onFill: (document: DocumentItem) => void;
+  onDelete?: () => void;
+  onView: () => void;
+  onEdit?: () => void;
+  onFill?: () => void;
   isAdmin: boolean;
 }
 
@@ -31,126 +39,117 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
   onFill,
   isAdmin,
 }) => {
-  const fileExt = document.file_path.split('.').pop()?.toLowerCase();
-  
-  const getFileIcon = () => {
-    switch (fileExt) {
-      case 'pdf':
-        return <FileText className="h-10 w-10 text-red-500" />;
-      case 'doc':
-      case 'docx':
-        return <File className="h-10 w-10 text-blue-600" />;
-      case 'xls':
-      case 'xlsx':
-        return <File className="h-10 w-10 text-green-600" />;
-      default:
-        return <File className="h-10 w-10 text-gray-500" />;
-    }
-  };
-  
-  const getDocumentTypeBadge = () => {
+  // Function to get icon based on document type
+  const getDocumentIcon = () => {
     switch (document.document_type) {
-      case 'template':
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Template</Badge>;
       case 'contract':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Contract</Badge>;
-      case 'preapp':
-        return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">Pre-App</Badge>;
+        return <FileText className="h-6 w-6" />;
+      case 'nda':
+        return <File className="h-6 w-6" />;
+      case 'agreement':
+        return <CheckSquare className="h-6 w-6" />;
       default:
-        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">Other</Badge>;
+        return <File className="h-6 w-6" />;
     }
   };
-  
-  const handleDownload = async () => {
+
+  // Format date
+  const formatDate = (dateString: string) => {
     try {
-      const { data, error } = await supabase.storage
-        .from('documents')
-        .createSignedUrl(document.file_path, 60);
-      
-      if (error) throw error;
-      
-      // Create a temporary anchor and trigger download
-      const link = window.document.createElement('a');
-      link.href = data.signedUrl;
-      link.download = document.name;
-      window.document.body.appendChild(link);
-      link.click();
-      window.document.body.removeChild(link);
-    } catch (error) {
-      console.error('Error downloading file:', error);
+      return format(new Date(dateString), 'MMM d, yyyy');
+    } catch (e) {
+      return 'N/A';
     }
   };
-  
-  // Format file size
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return bytes + ' bytes';
-    else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-    else return (bytes / 1048576).toFixed(1) + ' MB';
-  };
-  
+
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
-      <CardContent className="p-0">
-        <div className="p-4 flex items-center space-x-4">
-          <div className="bg-gray-50 p-3 rounded">
-            {getFileIcon()}
-          </div>
-          
-          <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-gray-900 truncate">{document.name}</h3>
-            
-            <div className="flex flex-wrap items-center gap-2 mt-1">
-              {getDocumentTypeBadge()}
-              
-              {document.is_template && (
-                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Template</Badge>
-              )}
+    <Card className="overflow-hidden flex flex-col">
+      <CardContent className="p-6 flex-grow">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-gray-100 rounded-md">
+              {getDocumentIcon()}
             </div>
-            
-            <div className="flex items-center text-sm mt-1 text-gray-500">
-              <span>{formatFileSize(document.file_size)}</span>
-              <span className="mx-1">•</span>
-              <span>Added {formatDistanceToNow(new Date(document.created_at), { addSuffix: true })}</span>
+            <div>
+              <h3 className="font-medium">{document.name}</h3>
+              <p className="text-sm text-gray-500 flex items-center">
+                <Calendar className="h-3 w-3 mr-1" />
+                {formatDate(document.created_at)}
+              </p>
             </div>
           </div>
-        </div>
-      </CardContent>
-      
-      <CardFooter className="p-3 border-t bg-gray-50 flex justify-between">
-        <Button variant="ghost" size="sm" onClick={() => onView(document)}>
-          <Eye className="h-4 w-4 mr-1" /> View
-        </Button>
-        
-        <div className="flex space-x-1">
-          <Button variant="ghost" size="sm" onClick={handleDownload}>
-            <Download className="h-4 w-4 mr-1" /> Download
-          </Button>
-          
-          {document.is_template && (
-            <Button variant="ghost" size="sm" onClick={() => onFill(document)}>
-              <Copy className="h-4 w-4 mr-1" /> Fill
-            </Button>
-          )}
-          
-          {isAdmin && (
+
+          {(onDelete || onEdit || onFill) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <Edit className="h-4 w-4" />
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onEdit(document)}>
-                  <Edit className="h-4 w-4 mr-2" /> Edit Details
+                <DropdownMenuItem onClick={onView}>
+                  <Eye className="h-4 w-4 mr-2" />
+                  View
                 </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => onDelete(document.id)}
-                  className="text-red-600 focus:text-red-600"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" /> Delete
-                </DropdownMenuItem>
+                
+                {onEdit && (
+                  <DropdownMenuItem onClick={onEdit}>
+                    <FilePen className="h-4 w-4 mr-2" />
+                    Edit Details
+                  </DropdownMenuItem>
+                )}
+                
+                {onFill && (
+                  <DropdownMenuItem onClick={onFill}>
+                    <CheckSquare className="h-4 w-4 mr-2" />
+                    Fill Template
+                  </DropdownMenuItem>
+                )}
+                
+                {onDelete && isAdmin && (
+                  <DropdownMenuItem 
+                    className="text-red-600"
+                    onClick={onDelete}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
+          )}
+        </div>
+        
+        {document.description && (
+          <p className="text-sm text-gray-600 mt-3">
+            {document.description}
+          </p>
+        )}
+      </CardContent>
+      
+      <CardFooter className="px-6 py-4 bg-gray-50 border-t flex items-center justify-between">
+        <div>
+          {document.is_template && (
+            <Badge variant="outline" className="mr-2 bg-blue-50 text-blue-700 border-blue-200">
+              Template
+            </Badge>
+          )}
+          <Badge variant="outline" className="capitalize bg-gray-50">
+            {document.document_type || 'Document'}
+          </Badge>
+        </div>
+        
+        <div className="flex space-x-2">
+          <Button size="sm" variant="ghost" onClick={onView}>
+            <Eye className="h-4 w-4 mr-1" />
+            View
+          </Button>
+          
+          {onFill && (
+            <Button size="sm" variant="outline" onClick={onFill}>
+              <CheckSquare className="h-4 w-4 mr-1" />
+              Fill
+            </Button>
           )}
         </div>
       </CardFooter>

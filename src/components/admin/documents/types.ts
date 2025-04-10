@@ -1,31 +1,24 @@
 
-import { User } from '@supabase/supabase-js';
-
 export interface DocumentItem {
   id: string;
   name: string;
   description?: string;
   file_path: string;
   file_type: string;
-  file_size: number;
-  owner_id?: string;
-  uploaded_by: string;
-  document_type: DocumentType;
+  file_size?: number;
+  document_type?: string;
+  is_template?: boolean;
   created_at: string;
-  metadata?: any;
-  is_template: boolean;
-}
-
-export type DocumentType = 'template' | 'contract' | 'preapp' | 'other';
-
-export interface DocumentFormValues {
-  name: string;
-  description: string;
-  document_type: DocumentType;
-  is_template: boolean;
+  uploaded_by?: string;
   owner_id?: string;
+  metadata?: any;
+  isStandard?: boolean; // Flag to identify standard pre-loaded documents
 }
 
-export interface FileWithPreview extends File {
-  preview: string;
+export interface DocumentUploadFormData {
+  name: string;
+  description?: string;
+  document_type: string;
+  is_template: boolean;
+  file?: File;
 }

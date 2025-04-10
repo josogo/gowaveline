@@ -48,12 +48,12 @@ export const DocumentFillDialog: React.FC<DocumentFillDialogProps> = ({
       // For this example, we'll use predefined fields
       // In a real app, you'd extract fields from the PDF template
       const defaultFields: Field[] = [
-        { name: 'businessName', value: '', placeholder: 'Business Name', isRequired: true },
-        { name: 'contactName', value: '', placeholder: 'Contact Name', isRequired: true },
-        { name: 'email', value: '', placeholder: 'Email Address', isRequired: true },
-        { name: 'phone', value: '', placeholder: 'Phone Number', isRequired: true },
+        { name: 'businessName', value: '', placeholder: 'Business Name', isRequired: false },
+        { name: 'contactName', value: '', placeholder: 'Contact Name', isRequired: false },
+        { name: 'email', value: '', placeholder: 'Email Address', isRequired: false },
+        { name: 'phone', value: '', placeholder: 'Phone Number', isRequired: false },
         { name: 'address', value: '', placeholder: 'Business Address', isRequired: false },
-        { name: 'date', value: new Date().toLocaleDateString(), placeholder: 'Date', isRequired: true }
+        { name: 'date', value: new Date().toLocaleDateString(), placeholder: 'Date', isRequired: false }
       ];
       
       setFields(defaultFields);
@@ -69,13 +69,6 @@ export const DocumentFillDialog: React.FC<DocumentFillDialogProps> = ({
   
   const handleFillDocument = async (shouldSave: boolean = false) => {
     if (!document) return;
-    
-    // Check required fields
-    const missingRequiredFields = fields.filter(f => f.isRequired && !f.value);
-    if (missingRequiredFields.length > 0) {
-      toast.error(`Please fill in all required fields: ${missingRequiredFields.map(f => f.placeholder).join(', ')}`);
-      return;
-    }
     
     setProcessing(true);
     
@@ -198,7 +191,6 @@ export const DocumentFillDialog: React.FC<DocumentFillDialogProps> = ({
               <div key={index} className="grid gap-2">
                 <Label htmlFor={`field-${index}`}>
                   {field.placeholder}
-                  {field.isRequired && <span className="text-red-500">*</span>}
                 </Label>
                 <Input
                   id={`field-${index}`}
@@ -208,6 +200,9 @@ export const DocumentFillDialog: React.FC<DocumentFillDialogProps> = ({
                 />
               </div>
             ))}
+            <div className="text-sm text-gray-500 pt-2">
+              All fields are optional. Fill in only what you need.
+            </div>
           </div>
         )}
         

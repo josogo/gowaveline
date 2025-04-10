@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.14.0'
 import { jsPDF } from 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/+esm'
@@ -210,6 +209,15 @@ async function generatePreApplicationPDF(industry, leadData, logoImageData) {
   // Set text color to black for the rest of the document
   doc.setTextColor(0, 0, 0);
   
+  // Add a note about non-mandatory fields
+  doc.setFontSize(10);
+  doc.setTextColor(100, 100, 100); // Gray color
+  doc.text('Note: All fields in this form are optional. Complete only what applies to you.', pageWidth / 2, yPosition, { align: 'center' });
+  yPosition += 10;
+  
+  // Reset text color to black
+  doc.setTextColor(0, 0, 0);
+  
   // If lead data is provided, pre-fill it
   if (leadData) {
     doc.setFontSize(14);
@@ -393,7 +401,7 @@ async function generatePreApplicationPDF(industry, leadData, logoImageData) {
     // Add footer text
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
-    doc.text('This pre-application form is for informational purposes only.', 20, 280);
+    doc.text('This pre-application form is for informational purposes only. All fields are optional.', 20, 280);
     doc.text(`Page ${i} of ${pageCount}`, pageWidth - 20, 280, { align: 'right' });
   }
   

@@ -1,8 +1,10 @@
 
 import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Loader2, Plus, FilePlus, FileUp } from 'lucide-react';
 import { DocumentCard } from './DocumentCard';
 import { DocumentItem } from './types';
-import { FileText, Plus } from 'lucide-react';
 
 interface DocumentsListProps {
   documents: DocumentItem[];
@@ -11,8 +13,8 @@ interface DocumentsListProps {
   onView: (document: DocumentItem) => void;
   onEdit: (document: DocumentItem) => void;
   onFill: (document: DocumentItem) => void;
-  isAdmin: boolean;
   onUploadClick: () => void;
+  isAdmin: boolean;
 }
 
 export const DocumentsList: React.FC<DocumentsListProps> = ({
@@ -22,61 +24,108 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
   onView,
   onEdit,
   onFill,
-  isAdmin,
   onUploadClick,
+  isAdmin
 }) => {
+  // Define standard document types
+  const standardDocs = [
+    {
+      id: "standard-nda",
+      name: "Non-Disclosure Agreement (NDA)",
+      description: "Standard Non-Disclosure Agreement for merchant and agent relationships",
+      document_type: "nda",
+      is_template: true,
+      file_path: "templates/nda.pdf",
+      file_type: "application/pdf",
+      created_at: new Date().toISOString(),
+      isStandard: true
+    },
+    {
+      id: "standard-agent-agreement",
+      name: "Agent Agreement",
+      description: "Standard Agent Agreement for new relationships",
+      document_type: "agreement",
+      is_template: true,
+      file_path: "templates/agent-agreement.pdf",
+      file_type: "application/pdf",
+      created_at: new Date().toISOString(),
+      isStandard: true
+    }
+  ];
+  
+  // Combine standard docs with uploaded docs
+  const allDocuments = [...standardDocs, ...documents];
+
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="border rounded-lg p-4 animate-pulse">
-            <div className="flex items-center space-x-4">
-              <div className="bg-gray-200 h-12 w-12 rounded"></div>
-              <div className="space-y-2 flex-1">
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-              </div>
-            </div>
-          </div>
-        ))}
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
   }
 
-  if (documents.length === 0) {
+  if (allDocuments.length === 0) {
     return (
-      <div className="text-center py-12 border border-dashed rounded-lg">
-        <FileText className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-2 text-lg font-medium text-gray-900">No documents found</h3>
-        <p className="mt-1 text-sm text-gray-500">
-          Get started by uploading your first document.
-        </p>
-        <div className="mt-6">
-          <button
-            type="button"
-            onClick={onUploadClick}
-            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <Plus className="-ml-1 mr-2 h-4 w-4" aria-hidden="true" />
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center p-10 text-center">
+          <FileUp className="h-12 w-12 text-gray-400 mb-4" />
+          <h3 className="text-lg font-medium">No documents yet</h3>
+          <p className="text-sm text-gray-500 mt-2 mb-6">
+            Upload document templates to generate contracts and agreements
+          </p>
+          <Button onClick={onUploadClick}>
+            <Plus className="h-4 w-4 mr-2" />
             Upload Document
-          </button>
-        </div>
-      </div>
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
+
+  // Group documents by type
+  const groupedDocuments = allDocuments.reduce((acc, doc) => {
+    const type = doc.document_type || 'other';
+    if (!acc[type]) {
+      acc[type] = [];
+    }
+    acc[type].push(doc);
+    return acc;
+  }, {} as Record<string, DocumentItem[]>);
+
+  // Display order for document types
+  const typeOrder = ['nda', 'agreement', 'contract', 'template', 'other'];
+
+  // Sort document types
+  const sortedTypes = Object.keys(groupedDocuments).sort(
+    (a, b) => typeOrder.indexOf(a) - typeOrder.indexOf(b)
+  );
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {documents.map((document) => (
-        <DocumentCard
-          key={document.id}
-          document={document}
-          onDelete={onDelete}
-          onView={onView}
-          onEdit={onEdit}
-          onFill={onFill}
-          isAdmin={isAdmin}
-        />
+    <div className="space-y-8">
+      {sortedTypes.map((type) => (
+        <div key={type} className="space-y-4">
+          <h3 className="font-medium text-lg capitalize">
+            {type === 'nda' ? 'Non-Disclosure Agreements' :
+             type === 'contract' ? 'Contracts' :
+             type === 'agreement' ? 'Agent Agreements' :
+             type === 'template' ? 'Templates' : 
+             'Other Documents'}
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {groupedDocuments[type].map((document) => (
+              <DocumentCard
+                key={document.id}
+                document={document}
+                onDelete={document.isStandard ? undefined : () => onDelete(document.id)}
+                onView={() => onView(document)}
+                onEdit={document.isStandard ? undefined : () => onEdit(document)}
+                onFill={document.is_template ? () => onFill(document) : undefined}
+                isAdmin={isAdmin}
+              />
+            ))}
+          </div>
+        </div>
       ))}
     </div>
   );
