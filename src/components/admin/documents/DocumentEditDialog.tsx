@@ -18,9 +18,7 @@ import { Form } from '@/components/ui/form';
 import { 
   documentFormSchema, 
   DocumentFormValues,
-  BasicInfoFields,
-  DocumentTypeField,
-  TemplateToggleField
+  DocumentForm
 } from './form';
 
 interface DocumentEditDialogProps {
@@ -41,7 +39,8 @@ export const DocumentEditDialog: React.FC<DocumentEditDialogProps> = ({
     defaultValues: {
       name: document?.name || '',
       description: document?.description || '',
-      document_type: document?.document_type || 'other',
+      // Cast the document_type to the allowed enum type using type assertion
+      document_type: (document?.document_type as DocumentFormValues['document_type']) || 'other',
       is_template: document?.is_template || false,
     }
   });
@@ -52,7 +51,8 @@ export const DocumentEditDialog: React.FC<DocumentEditDialogProps> = ({
       form.reset({
         name: document.name,
         description: document.description || '',
-        document_type: document.document_type || 'other',
+        // Cast the document_type to the allowed enum type
+        document_type: (document.document_type as DocumentFormValues['document_type']) || 'other',
         is_template: document.is_template || false,
       });
     }
@@ -90,11 +90,7 @@ export const DocumentEditDialog: React.FC<DocumentEditDialogProps> = ({
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-4">
-              <BasicInfoFields form={form} />
-              <DocumentTypeField form={form} />
-              <TemplateToggleField form={form} />
-            </div>
+            <DocumentForm form={form} />
             
             <DialogFooter>
               <Button 

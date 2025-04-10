@@ -8,4 +8,6 @@ export const documentFormSchema = z.object({
   is_template: z.boolean().default(false),
 });
 
+// Define the DocumentType explicitly to match the enum in the schema
+export type DocumentType = 'template' | 'contract' | 'nda' | 'agreement' | 'preapp' | 'other';
 export type DocumentFormValues = z.infer<typeof documentFormSchema>;
