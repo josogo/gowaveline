@@ -10,11 +10,13 @@ import {
   DocumentFillDialog,
   PreAppGenerationDialog,
   DocumentItem,
+  DocumentDownloadSection,
 } from '@/components/admin/documents';
 import { checkUserIsAdmin, fetchDocuments, deleteDocument } from '@/components/admin/documents/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const DocumentsPage = () => {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
@@ -26,6 +28,7 @@ const DocumentsPage = () => {
   const [filter, setFilter] = useState('all');
   const [sort, setSort] = useState('newest');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [activeTab, setActiveTab] = useState('modern');
   
   const queryClient = useQueryClient();
   
@@ -134,25 +137,56 @@ const DocumentsPage = () => {
   return (
     <AdminLayout>
       <div className="space-y-6 w-full max-w-full">
-        <DocumentsHeader
-          onUploadClick={() => setUploadDialogOpen(true)}
-          onCreatePreAppClick={() => setPreAppDialogOpen(true)}
-          onFilterChange={setFilter}
-          onSortChange={setSort}
-          currentFilter={filter}
-          currentSort={sort}
-        />
-        
-        <DocumentsList
-          documents={sortedDocuments}
-          isLoading={isLoading}
-          onDelete={handleDeleteDocument}
-          onView={handleViewDocument}
-          onEdit={handleEditDocument}
-          onFill={handleFillDocument}
-          isAdmin={isAdmin}
-          onUploadClick={() => setUploadDialogOpen(true)}
-        />
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="flex justify-between items-center mb-4">
+            <TabsList>
+              <TabsTrigger value="modern">Modern View</TabsTrigger>
+              <TabsTrigger value="classic">Classic View</TabsTrigger>
+            </TabsList>
+            
+            {activeTab === 'modern' ? (
+              <div className="flex gap-2">
+                <PreAppGenerationDialog
+                  open={preAppDialogOpen}
+                  onOpenChange={setPreAppDialogOpen}
+                  onSuccess={handleRefresh}
+                />
+              </div>
+            ) : (
+              <DocumentsHeader
+                onUploadClick={() => setUploadDialogOpen(true)}
+                onCreatePreAppClick={() => setPreAppDialogOpen(true)}
+                onFilterChange={setFilter}
+                onSortChange={setSort}
+                currentFilter={filter}
+                currentSort={sort}
+              />
+            )}
+          </div>
+
+          <TabsContent value="modern" className="mt-6">
+            <DocumentDownloadSection 
+              documents={sortedDocuments}
+              isAdmin={isAdmin}
+              isLoading={isLoading}
+              onUploadClick={() => setUploadDialogOpen(true)}
+              onView={handleViewDocument}
+            />
+          </TabsContent>
+          
+          <TabsContent value="classic">
+            <DocumentsList
+              documents={sortedDocuments}
+              isLoading={isLoading}
+              onDelete={handleDeleteDocument}
+              onView={handleViewDocument}
+              onEdit={handleEditDocument}
+              onFill={handleFillDocument}
+              isAdmin={isAdmin}
+              onUploadClick={() => setUploadDialogOpen(true)}
+            />
+          </TabsContent>
+        </Tabs>
         
         <DocumentUploadDialog
           open={uploadDialogOpen}
@@ -177,12 +211,6 @@ const DocumentsPage = () => {
           open={fillDialogOpen}
           onOpenChange={setFillDialogOpen}
           document={selectedDocument}
-          onSuccess={handleRefresh}
-        />
-        
-        <PreAppGenerationDialog
-          open={preAppDialogOpen}
-          onOpenChange={setPreAppDialogOpen}
           onSuccess={handleRefresh}
         />
       </div>

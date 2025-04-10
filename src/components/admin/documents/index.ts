@@ -9,3 +9,5 @@ export * from './DocumentEditDialog';
 export * from './DocumentFillDialog';
 export * from './PreAppGenerationDialog';
 export * from './api';
+export * from './DocumentDownloadSection';
+export * from './DocumentCard3D';
