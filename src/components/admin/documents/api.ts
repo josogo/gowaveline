@@ -1,6 +1,7 @@
 
 import { DocumentItem, DocumentItemType } from './types';
 import { supabase } from '@/integrations/supabase/client';
+import { PreAppFormValues } from './PreAppFormSchema';
 
 export async function fetchDocuments(): Promise<DocumentItem[]> {
   const { data, error } = await supabase
@@ -122,4 +123,71 @@ export async function checkUserIsAdmin(userId: string): Promise<boolean> {
   }
 
   return !!data;
+}
+
+// Add the missing functions for PreAppGenerationDialog.tsx
+
+// Define the Industry type
+interface Industry {
+  id: string;
+  name: string;
+  description?: string;
+  created_at?: string;
+}
+
+// Function to fetch industries
+export async function fetchIndustries(): Promise<Industry[]> {
+  const { data, error } = await supabase
+    .from('industries')
+    .select('*')
+    .order('name', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching industries:', error);
+    throw error;
+  }
+
+  return data as Industry[];
+}
+
+// Function to generate pre-application document
+export async function generatePreApp(
+  industryId: string,
+  leadData: any,
+  formData: PreAppFormValues
+): Promise<DocumentItem> {
+  // Implement the actual logic to generate a pre-app document
+  // This is a simplified implementation - in a real app, you might call an API endpoint
+  // that generates a PDF and stores it in Supabase storage
+  
+  try {
+    // Create a metadata object that combines lead and form data
+    const metadata = {
+      industryId,
+      leadData,
+      formData,
+      generatedAt: new Date().toISOString()
+    };
+    
+    // Create a document entry in the database
+    const docData = {
+      name: `Merchant Application - ${formData.businessStructure || 'New'}`,
+      description: `Pre-application form for ${formData.principalName || 'merchant'}`,
+      file_path: `pre-apps/${Date.now()}-application.pdf`,
+      file_type: 'application/pdf',
+      file_size: 0, // This would be the actual size if we were creating a real PDF
+      uploaded_by: 'system',
+      document_type: 'MERCHANT_APPLICATION' as DocumentItemType,
+      metadata,
+      is_template: false
+    };
+    
+    // Store the document record
+    const newDoc = await createDocument(docData);
+    
+    return newDoc;
+  } catch (error) {
+    console.error('Error generating pre-app document:', error);
+    throw error;
+  }
 }
