@@ -4,6 +4,8 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
 } from '@/components/ui/carousel';
 
 const images = [
@@ -49,7 +51,7 @@ const ImageCarousel = () => {
         >
           <CarouselContent className="-ml-4">
             {images.map((src, index) => (
-              <CarouselItem key={index} className="pl-4 md:basis-1/2 lg:basis-1/3">
+              <CarouselItem key={index} className="pl-4 md:basis-1/2 lg:basis-1/3 xl:basis-1/4">
                 <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 h-full">
                   <img 
                     src={src} 
@@ -60,9 +62,13 @@ const ImageCarousel = () => {
               </CarouselItem>
             ))}
           </CarouselContent>
+          <div className="flex justify-center gap-2 mt-8">
+            <CarouselPrevious className="static transform-none mx-2" />
+            <CarouselNext className="static transform-none mx-2" />
+          </div>
         </Carousel>
         
-        <p className="text-center mt-8 text-gray-500 italic">
+        <p className="text-center mt-4 text-gray-500 italic">
           Images showcasing various high-risk industries we serve
         </p>
       </div>
