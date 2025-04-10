@@ -1,8 +1,13 @@
+
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+
 const industries = [{
   name: "Auto Dealers",
   description: "Payment processing solutions for car dealerships and automotive businesses",
@@ -96,37 +101,97 @@ const industries = [{
   description: "Payment processing for cognitive enhancement products",
   features: ["High-risk expertise", "Subscription billing", "Regulatory compliance"]
 }];
+
 const Industries = () => {
-  return <div className="min-h-screen flex flex-col">
+  const navigate = useNavigate();
+  
+  return (
+    <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1">
-        <div className="bg-gradient-to-b from-teal-50 to-transparent py-12 px-6 text-center">
-          <h1 className="text-3xl font-bold mb-4 md:text-[ff9f5a] text-[#ffa05c]">Industries We Serve</h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            We specialize in payment processing solutions for high-risk and specialized industries.
-          </p>
+        {/* Hero Section - Styled like HighRiskHero */}
+        <div className="bg-gradient-to-b from-[#FF9F5A]/10 to-white py-20 px-6">
+          <div className="max-w-5xl mx-auto text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+            >
+              <h1 className="text-4xl md:text-5xl font-bold mb-8">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-orange-400">
+                  Industries
+                </span>
+                <span className="text-[#0EA5E9]"> We Serve</span>
+              </h1>
+              
+              <motion.p 
+                className="text-xl text-[#0EA5E9] mb-10 max-w-3xl mx-auto leading-relaxed"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.7, ease: "easeOut" }}
+              >
+                We specialize in payment processing solutions for high-risk and specialized industries
+                that need reliable, secure, and compliant merchant services.
+              </motion.p>
+            </motion.div>
+          </div>
         </div>
         
-        <div className="container mx-auto py-12 px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {industries.map((industry, index) => <Card key={index} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle className="text-[#0EA5E9]">{industry.name}</CardTitle>
-                  <CardDescription>{industry.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {industry.features.map((feature, i) => <li key={i} className="flex items-start">
-                        <CheckCircle2 className="h-5 w-5 text-[#0EA5E9] mr-2 mt-0.5" />
-                        <span>{feature}</span>
-                      </li>)}
-                  </ul>
-                </CardContent>
-              </Card>)}
+        {/* Industries Grid with Card Animation */}
+        <div className="py-16 px-6 bg-gradient-to-b from-white to-gray-50">
+          <div className="container mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {industries.map((industry, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05, duration: 0.5 }}
+                >
+                  <Card className="h-full hover:shadow-lg transition-shadow border border-gray-100">
+                    <CardHeader>
+                      <CardTitle className="text-[#0EA5E9]">{industry.name}</CardTitle>
+                      <CardDescription>{industry.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-2">
+                        {industry.features.map((feature, i) => (
+                          <li key={i} className="flex items-start">
+                            <CheckCircle2 className="h-5 w-5 text-[#FF9F5A] mr-2 mt-0.5" />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+        
+        {/* Contact CTA Section - Similar to the "Don't See Your Industry" section in IndustriesSection */}
+        <div className="py-16 px-6 bg-gray-50">
+          <div className="max-w-6xl mx-auto">
+            <div className="p-8 bg-gradient-to-r from-[#0EA5E9]/10 to-[#FF9F5A]/5 rounded-2xl text-center shadow-sm">
+              <h3 className="text-2xl font-bold mb-4 text-[#0EA5E9]">Don't See Your Industry?</h3>
+              <p className="text-[#0EA5E9]/80 mb-6 max-w-2xl mx-auto">
+                We work with many other specialized industries not listed here. 
+                If you're struggling to find payment processing for your business, we likely have a solution.
+              </p>
+              <Button 
+                onClick={() => navigate('/contact')}
+                className="bg-gradient-to-r from-[#0EA5E9] to-[#FF9F5A] hover:from-[#0EA5E9]/90 hover:to-[#FF9F5A]/90 text-white shadow-md transform transition-transform hover:scale-105"
+              >
+                Discuss Your Needs
+              </Button>
+            </div>
           </div>
         </div>
       </main>
       <Footer />
-    </div>;
+    </div>
+  );
 };
+
 export default Industries;
