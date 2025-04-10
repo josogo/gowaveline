@@ -9,4 +9,15 @@ export * from './DocumentEditDialog';
 export * from './DocumentFillDialog';
 export * from './PreAppGenerationDialog';
 export * from './api';
-export * from './form';
+// Export form items without causing type conflicts
+export { 
+  documentFormSchema, 
+  DocumentFormValues,
+  DocumentForm,
+  BasicInfoFields,
+  DocumentTypeField,
+  TemplateToggleField,
+  // Export DocumentType from form explicitly to avoid ambiguity
+  DocumentType as DocumentFormType
+} from './form';
+

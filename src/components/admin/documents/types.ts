@@ -15,7 +15,8 @@ export interface DocumentItem {
   isStandard?: boolean; // Flag to identify standard pre-loaded documents
 }
 
-export type DocumentType = 'template' | 'contract' | 'nda' | 'agreement' | 'preapp' | 'other';
+// Renamed this type to avoid conflicts with DocumentType from form schema
+export type DocumentItemType = 'template' | 'contract' | 'nda' | 'agreement' | 'preapp' | 'other';
 
 export interface DocumentUploadFormData {
   name: string;
