@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, Plus, FileText, FileUp } from 'lucide-react';
+import { Loader2, Plus, FileText, FileUp, ScrollText } from 'lucide-react';  // Changed Contract to ScrollText
 import { DocumentCard } from './DocumentCard';
 import { DocumentItem } from './types';
 import { motion } from 'framer-motion';

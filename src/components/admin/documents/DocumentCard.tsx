@@ -11,7 +11,7 @@ import {
   FileCheck,
   FilePlus,
   FileX,
-  Contract,
+  ScrollText,  // Using ScrollText instead of Contract which doesn't exist
   FileQuestion
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -41,7 +41,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
       case 'nda':
         return <FileCheck className="h-10 w-10 text-[#FF9F5A]" />;
       case 'agreement':
-        return <Contract className="h-10 w-10 text-[#FF9F5A]" />;
+        return <ScrollText className="h-10 w-10 text-[#FF9F5A]" />; // Changed from Contract to ScrollText
       case 'contract':
         return <FileSignature className="h-10 w-10 text-[#FF9F5A]" />;
       case 'preapp':
