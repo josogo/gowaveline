@@ -30,7 +30,7 @@ import { Switch } from '@/components/ui/switch';
 const formSchema = z.object({
   name: z.string().min(1, { message: 'Name is required' }),
   description: z.string().optional(),
-  document_type: z.enum(['template', 'contract', 'preapp', 'other'] as const),
+  document_type: z.enum(['template', 'contract', 'nda', 'agreement', 'preapp', 'other'] as const),
   is_template: z.boolean().default(false),
 });
 
@@ -155,6 +155,8 @@ export const DocumentEditDialog: React.FC<DocumentEditDialogProps> = ({
                       <SelectContent>
                         <SelectItem value="template">Template</SelectItem>
                         <SelectItem value="contract">Contract</SelectItem>
+                        <SelectItem value="nda">Non-Disclosure Agreement</SelectItem>
+                        <SelectItem value="agreement">Agent Agreement</SelectItem>
                         <SelectItem value="preapp">Pre-Application Form</SelectItem>
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
