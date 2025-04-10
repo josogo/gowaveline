@@ -26,6 +26,7 @@ export {
   BasicInfoFields,
   DocumentTypeField,
   TemplateToggleField,
-  // Export DocumentType from form explicitly to avoid ambiguity
-  DocumentType as DocumentFormType
 } from './form';
+
+// Export type explicitly to avoid ambiguity
+export type { DocumentType as DocumentFormType } from './form';

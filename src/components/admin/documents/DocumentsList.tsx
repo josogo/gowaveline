@@ -1,9 +1,9 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, Plus, FileText, FileUp, ScrollText } from 'lucide-react';  // Changed Contract to ScrollText
+import { Loader2, Plus, FileText, ScrollText } from 'lucide-react';
 import { DocumentCard } from './DocumentCard';
-import { DocumentItem } from './types';
+import { DocumentItem, DocumentItemType } from './types';
 import { motion } from 'framer-motion';
 
 interface DocumentsListProps {
@@ -27,13 +27,13 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
   onUploadClick,
   isAdmin
 }) => {
-  // Define standard document types
+  // Define standard document types using the DocumentItemType
   const standardDocs = [
     {
       id: "standard-nda",
       name: "Non-Disclosure Agreement (NDA)",
       description: "Standard Non-Disclosure Agreement for merchant and agent relationships",
-      document_type: "nda",
+      document_type: "nda" as DocumentItemType,
       is_template: true,
       file_path: "templates/nda.pdf",
       file_type: "application/pdf",
@@ -44,7 +44,7 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
       id: "standard-agent-agreement",
       name: "Agent Agreement",
       description: "Standard Agent Agreement for new relationships",
-      document_type: "agreement",
+      document_type: "agreement" as DocumentItemType,
       is_template: true,
       file_path: "templates/agent-agreement.pdf",
       file_type: "application/pdf",
@@ -110,7 +110,7 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
     );
   }
 
-  // Group documents by type
+  // Group documents by type using the updated type
   const groupedDocuments = allDocuments.reduce((acc, doc) => {
     const type = doc.document_type || 'other';
     if (!acc[type]) {
@@ -120,10 +120,10 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
     return acc;
   }, {} as Record<string, DocumentItem[]>);
 
-  // Display order for document types
-  const typeOrder = ['nda', 'agreement', 'contract', 'template', 'other'];
+  // Display order for document types - matches the order in our form components
+  const typeOrder = ['template', 'contract', 'nda', 'agreement', 'preapp', 'other'];
 
-  // Sort document types
+  // Sort document types according to our form ordering
   const sortedTypes = Object.keys(groupedDocuments).sort(
     (a, b) => typeOrder.indexOf(a) - typeOrder.indexOf(b)
   );
@@ -142,6 +142,7 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({
              type === 'contract' ? 'Contracts' :
              type === 'agreement' ? 'Agent Agreements' :
              type === 'template' ? 'Templates' : 
+             type === 'preapp' ? 'Pre-Application Forms' :
              'Other Documents'}
           </h3>
           
