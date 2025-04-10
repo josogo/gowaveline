@@ -60,19 +60,19 @@ const ImageCarousel = () => {
                   whileHover={{ scale: 1.05, y: -5 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 >
-                  <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl overflow-hidden shadow-lg border border-gray-100 p-3 flex flex-col items-center justify-center h-full transform transition-all duration-300 hover:shadow-xl relative">
+                  <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl overflow-hidden shadow-lg border border-gray-100 p-2 flex flex-col items-center justify-center h-full transform transition-all duration-300 hover:shadow-xl relative">
                     {/* Glossy effect overlay */}
                     <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-transparent rounded-2xl opacity-50"></div>
                     
                     {/* Soft glow effect */}
                     <div className="absolute inset-0 rounded-2xl bg-[#FF9F5A]/5 blur-md"></div>
                     
-                    {/* Image container with soft shadow */}
-                    <div className="relative z-10 rounded-xl overflow-hidden w-full h-48 bg-white shadow-inner">
+                    {/* Image container with less padding to fill more space */}
+                    <div className="relative z-10 rounded-xl overflow-hidden w-full aspect-square bg-white shadow-inner">
                       <img 
                         src={src} 
                         alt={`High risk industry illustration ${index + 1}`}
-                        className="w-full h-full object-contain p-2 transition-transform duration-300"
+                        className="w-full h-full object-cover p-1 transition-transform duration-300"
                       />
                     </div>
                     
