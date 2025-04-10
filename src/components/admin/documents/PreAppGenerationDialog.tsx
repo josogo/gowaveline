@@ -1,307 +1,227 @@
 
 import React, { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogClose
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Loader2, FileText } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { toast } from 'sonner';
-import { createDocument } from './api';
-import { supabase } from '@/integrations/supabase/client';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2, Info } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface PreAppGenerationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess: () => void;
+  onSuccess?: () => void;
 }
+
+const formSchema = z.object({
+  // Business Structure
+  businessStructure: z.enum(['Sole Proprietorship', 'Corporation', 'LLC', 'Non-profit (401(c))', 'Government', 'Other']),
+  otherBusinessStructure: z.string().optional(),
+  
+  // Business Information
+  businessName: z.string().min(1, 'Business name is required'),
+  streetAddress: z.string().min(1, 'Street address is required'),
+  mailingAddress: z.string().min(1, 'Mailing address is required'),
+  businessPhone: z.string().min(1, 'Business phone is required'),
+  businessEmail: z.string().email('Invalid email format'),
+  businessFax: z.string().optional(),
+  customerServicePhone: z.string().optional(),
+  customerServiceEmail: z.string().email('Invalid email format').optional(),
+  website: z.string().optional(),
+  
+  // Authorized Contact
+  contactName: z.string().min(1, 'Contact name is required'),
+  
+  // Equipment/Software
+  terminalGateway: z.string().optional(),
+  shoppingCart: z.string().optional(),
+  
+  // Business Location
+  employeeCount: z.string().optional(),
+  locationType: z.enum(['Home/Residential', 'Office/Business District', 'Storefront']),
+  ownOrRent: z.enum(['Own', 'Rent']),
+  squareFootage: z.enum(['0-500', '501-2000', '2001-5000', '5000+']),
+  
+  // Principal Information
+  principalName: z.string().min(1, 'Principal name is required'),
+  ownershipPercentage: z.string().min(1, 'Ownership percentage is required'),
+  hasAdditionalOwners: z.boolean().default(false),
+  title: z.string().min(1, 'Title is required'),
+  homePhone: z.string().min(1, 'Home phone is required'),
+  dateOfBirth: z.string().min(1, 'Date of birth is required'),
+  ssn: z.string().min(1, 'SSN is required'),
+  driversLicense: z.string().min(1, 'Driver\'s license number is required'),
+  licenseExpDate: z.string().min(1, 'License expiration date is required'),
+  licenseState: z.string().min(1, 'License state is required'),
+  homeAddress: z.string().min(1, 'Home address is required'),
+  personalEmail: z.string().email('Invalid email format'),
+  
+  // Bank Settlement Information
+  bankName: z.string().min(1, 'Bank name is required'),
+  bankContact: z.string().optional(),
+  routingNumber: z.string().min(1, 'Routing number is required'),
+  accountNumber: z.string().min(1, 'Account number is required'),
+  
+  // Business Description
+  productsServices: z.string().min(1, 'Products/Services description is required'),
+  yearsInOperation: z.string().min(1, 'Years in operation is required'),
+  storageLocation: z.string().optional(),
+  
+  // Processing Volume
+  monthlyVolume: z.string().min(1, 'Monthly volume is required'),
+  visaMastercardVolume: z.string().optional(),
+  amexVolume: z.string().optional(),
+  averageTicket: z.string().min(1, 'Average ticket is required'),
+  highestTicket: z.string().min(1, 'Highest ticket is required'),
+  
+  // Transaction Methods
+  faceToFacePercent: z.string().optional(),
+  motoPercent: z.string().optional(),
+  ecommercePercent: z.string().optional(),
+  
+  // Refund Policy
+  hasRefundPolicy: z.enum(['Yes', 'No']),
+  refundPolicyType: z.enum(['Exchange', 'Store Credit', 'Refund within 30 days', 'Other']).optional(),
+  otherRefundPolicy: z.string().optional(),
+  
+  // Processing History
+  hasProcessingHistory: z.enum(['Yes', 'No']),
+  previousProcessor: z.string().optional(),
+  hasPreviousTerminations: z.enum(['Yes', 'No']),
+  terminationsExplanation: z.string().optional(),
+  hasBankruptcies: z.enum(['Yes', 'No']),
+  bankruptciesExplanation: z.string().optional(),
+  
+  // Business Type
+  b2bPercent: z.string(),
+  b2cPercent: z.string(),
+  isSeasonalBusiness: z.enum(['Yes', 'No']),
+  hasRecurringPayments: z.enum(['Yes', 'No']),
+  recurringPaymentsDetails: z.string().optional(),
+  
+  // eCommerce
+  productPurchaseAddresses: z.string().optional(),
+  inventoryOwner: z.enum(['Merchant', 'Vendor (Drop Ship)']),
+  fulfillmentProviders: z.string().optional(),
+  shoppingCartPlatforms: z.string().optional(),
+  purchaseMethods: z.array(z.string()).optional(),
+  otherPurchaseMethod: z.string().optional(),
+  callCenterProviders: z.string().optional(),
+  authToShipTimeframe: z.enum(['0–7 days', '8–14 days', '15–30 days', '30–90 days', '90+ days']),
+  deliveryTimeframe: z.enum(['0–7 days', '8–14 days', '15–30 days', '30–90 days', '90+ days']),
+  chargebackSystem: z.string().optional(),
+  requiresDeposits: z.enum(['Yes', 'No']),
+  depositPercent: z.string().optional(),
+  paymentTiming: z.enum(['100% Paid in Advance', '100% Paid on Delivery/Completion']),
+  salesRegions: z.string().optional(),
+  internationalPercent: z.string().optional(),
+  shippingMethods: z.array(z.string()).optional(),
+  otherShippingMethod: z.string().optional(),
+  advertisingChannels: z.array(z.string()).optional(),
+  otherAdvertisingChannel: z.string().optional(),
+  warrantyProvider: z.enum(['Merchant', 'Manufacturer'])
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
   open,
   onOpenChange,
   onSuccess,
 }) => {
-  const [processing, setProcessing] = useState(false);
-  
-  // Business Structure
-  const [businessStructure, setBusinessStructure] = useState<string>('');
-  const [otherBusinessStructure, setOtherBusinessStructure] = useState<string>('');
-  
-  // Business Information
-  const [businessName, setBusinessName] = useState('');
-  const [streetAddress, setStreetAddress] = useState('');
-  const [mailingAddress, setMailingAddress] = useState('');
-  const [businessPhone, setBusinessPhone] = useState('');
-  const [businessEmail, setBusinessEmail] = useState('');
-  const [businessFax, setBusinessFax] = useState('');
-  const [customerServicePhone, setCustomerServicePhone] = useState('');
-  const [customerServiceEmail, setCustomerServiceEmail] = useState('');
-  const [website, setWebsite] = useState('');
-  
-  // Authorized Contact
-  const [contactName, setContactName] = useState('');
-  
-  // Equipment / Software
-  const [terminalGateway, setTerminalGateway] = useState('');
-  const [shoppingCart, setShoppingCart] = useState('');
-  
-  // Business Location
-  const [employeeCount, setEmployeeCount] = useState('');
-  const [locationType, setLocationType] = useState<string>('');
-  const [ownOrRent, setOwnOrRent] = useState<string>('');
-  const [squareFootage, setSquareFootage] = useState<string>('');
-  
-  // Principal Information
-  const [principalName, setPrincipalName] = useState('');
-  const [ownershipPercentage, setOwnershipPercentage] = useState('');
-  const [hasAdditionalOwners, setHasAdditionalOwners] = useState(false);
-  const [title, setTitle] = useState('');
-  const [homePhone, setHomePhone] = useState('');
-  const [dateOfBirth, setDateOfBirth] = useState('');
-  const [ssn, setSsn] = useState('');
-  const [driversLicense, setDriversLicense] = useState('');
-  const [licenseExpDate, setLicenseExpDate] = useState('');
-  const [licenseState, setLicenseState] = useState('');
-  const [homeAddress, setHomeAddress] = useState('');
-  const [personalEmail, setPersonalEmail] = useState('');
-  
-  // Bank Settlement Information
-  const [bankName, setBankName] = useState('');
-  const [bankContact, setBankContact] = useState('');
-  const [routingNumber, setRoutingNumber] = useState('');
-  const [accountNumber, setAccountNumber] = useState('');
-  
-  // Business Description
-  const [productsServices, setProductsServices] = useState('');
-  const [yearsInOperation, setYearsInOperation] = useState('');
-  const [storageLocation, setStorageLocation] = useState('');
-  
-  // Processing Volume
-  const [monthlyVolume, setMonthlyVolume] = useState('');
-  const [visaMastercardVolume, setVisaMastercardVolume] = useState('');
-  const [amexVolume, setAmexVolume] = useState('');
-  const [averageTicket, setAverageTicket] = useState('');
-  const [highestTicket, setHighestTicket] = useState('');
-  
-  // Transaction Method
-  const [faceToFacePercent, setFaceToFacePercent] = useState('');
-  const [motoPercent, setMotoPercent] = useState('');
-  const [ecommercePercent, setEcommercePercent] = useState('');
-  
-  // Refund / Cancellation
-  const [hasRefundPolicy, setHasRefundPolicy] = useState<string>('');
-  const [refundPolicyType, setRefundPolicyType] = useState<string>('');
-  const [otherRefundPolicy, setOtherRefundPolicy] = useState('');
-  const [hasProcessingHistory, setHasProcessingHistory] = useState<string>('');
-  const [previousProcessor, setPreviousProcessor] = useState('');
-  const [hasPreviousTerminations, setHasPreviousTerminations] = useState<string>('');
-  const [terminationsExplanation, setTerminationsExplanation] = useState('');
-  const [hasBankruptcies, setHasBankruptcies] = useState<string>('');
-  const [bankruptciesExplanation, setBankruptciesExplanation] = useState('');
-  
-  // Business Type
-  const [b2bPercent, setB2bPercent] = useState('');
-  const [b2cPercent, setB2cPercent] = useState('');
-  const [isSeasonalBusiness, setIsSeasonalBusiness] = useState<string>('');
-  const [hasRecurringPayments, setHasRecurringPayments] = useState<string>('');
-  const [recurringPaymentsDetails, setRecurringPaymentsDetails] = useState('');
-  
-  // eCommerce / Card-Not-Present
-  const [productPurchaseAddresses, setProductPurchaseAddresses] = useState('');
-  const [inventoryOwner, setInventoryOwner] = useState<string>('');
-  const [fulfillmentProviders, setFulfillmentProviders] = useState('');
-  const [shoppingCartPlatforms, setShoppingCartPlatforms] = useState('');
-  const [purchaseMethods, setPurchaseMethods] = useState<string[]>([]);
-  const [otherPurchaseMethod, setOtherPurchaseMethod] = useState('');
-  const [callCenterProviders, setCallCenterProviders] = useState('');
-  const [authToShipTimeframe, setAuthToShipTimeframe] = useState<string>('');
-  const [deliveryTimeframe, setDeliveryTimeframe] = useState<string>('');
-  const [chargebackSystem, setChargebackSystem] = useState('');
-  const [requiresDeposits, setRequiresDeposits] = useState<string>('');
-  const [depositPercent, setDepositPercent] = useState('');
-  const [paymentTiming, setPaymentTiming] = useState<string>('');
-  const [salesRegions, setSalesRegions] = useState('');
-  const [internationalPercent, setInternationalPercent] = useState('');
-  const [shippingMethods, setShippingMethods] = useState<string[]>([]);
-  const [otherShippingMethod, setOtherShippingMethod] = useState('');
-  const [advertisingChannels, setAdvertisingChannels] = useState<string[]>([]);
-  const [otherAdvertisingChannel, setOtherAdvertisingChannel] = useState('');
-  const [warrantyProvider, setWarrantyProvider] = useState<string>('');
-  
-  // Form validation
-  const [activeTab, setActiveTab] = useState('business-info');
-  
-  const isValidForm = () => {
-    // Minimum required fields validation
-    if (!businessName) {
-      toast.error("Business name is required");
-      return false;
+  const [activeTab, setActiveTab] = useState("business-info");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      businessStructure: 'Sole Proprietorship',
+      businessName: '',
+      streetAddress: '',
+      mailingAddress: '',
+      businessPhone: '',
+      businessEmail: '',
+      contactName: '',
+      locationType: 'Office/Business District',
+      ownOrRent: 'Own',
+      squareFootage: '0-500',
+      principalName: '',
+      ownershipPercentage: '',
+      hasAdditionalOwners: false,
+      title: '',
+      homePhone: '',
+      dateOfBirth: '',
+      ssn: '',
+      driversLicense: '',
+      licenseExpDate: '',
+      licenseState: '',
+      homeAddress: '',
+      personalEmail: '',
+      bankName: '',
+      routingNumber: '',
+      accountNumber: '',
+      productsServices: '',
+      yearsInOperation: '',
+      monthlyVolume: '',
+      averageTicket: '',
+      highestTicket: '',
+      faceToFacePercent: '0',
+      motoPercent: '0',
+      ecommercePercent: '100',
+      hasRefundPolicy: 'Yes',
+      hasProcessingHistory: 'No',
+      hasPreviousTerminations: 'No',
+      hasBankruptcies: 'No',
+      b2bPercent: '0',
+      b2cPercent: '100',
+      isSeasonalBusiness: 'No',
+      hasRecurringPayments: 'No',
+      inventoryOwner: 'Merchant',
+      authToShipTimeframe: '0–7 days',
+      deliveryTimeframe: '0–7 days',
+      requiresDeposits: 'No',
+      paymentTiming: '100% Paid in Advance',
+      warrantyProvider: 'Merchant'
     }
-    
-    if (!businessEmail) {
-      toast.error("Business email is required");
-      return false;
-    }
-    
-    if (!businessPhone) {
-      toast.error("Business phone is required");
-      return false;
-    }
-    
-    return true;
-  };
-  
-  const handleGenerate = async () => {
-    if (!isValidForm()) return;
-    
-    setProcessing(true);
-    
+  });
+
+  const onSubmit = async (values: FormValues) => {
+    setIsSubmitting(true);
     try {
-      // Prepare form data for the PDF generation
-      const formData = {
-        // Business Structure
-        businessStructure,
-        otherBusinessStructure: businessStructure === 'Other' ? otherBusinessStructure : '',
-        
-        // Business Information
-        businessName,
-        streetAddress,
-        mailingAddress,
-        businessPhone,
-        businessEmail,
-        businessFax,
-        customerServicePhone,
-        customerServiceEmail,
-        website,
-        
-        // Authorized Contact
-        contactName,
-        
-        // Equipment / Software
-        terminalGateway,
-        shoppingCart,
-        
-        // Business Location
-        employeeCount,
-        locationType,
-        ownOrRent,
-        squareFootage,
-        
-        // Principal Information
-        principalName,
-        ownershipPercentage,
-        hasAdditionalOwners,
-        title,
-        homePhone,
-        dateOfBirth,
-        ssn,
-        driversLicense,
-        licenseExpDate,
-        licenseState,
-        homeAddress,
-        personalEmail,
-        
-        // Bank Settlement Information
-        bankName,
-        bankContact,
-        routingNumber,
-        accountNumber,
-        
-        // Business Description
-        productsServices,
-        yearsInOperation,
-        storageLocation,
-        
-        // Processing Volume
-        monthlyVolume,
-        visaMastercardVolume,
-        amexVolume,
-        averageTicket,
-        highestTicket,
-        
-        // Transaction Method
-        faceToFacePercent,
-        motoPercent,
-        ecommercePercent,
-        
-        // Refund / Cancellation
-        hasRefundPolicy,
-        refundPolicyType,
-        otherRefundPolicy: refundPolicyType === 'Other' ? otherRefundPolicy : '',
-        hasProcessingHistory,
-        previousProcessor,
-        hasPreviousTerminations,
-        terminationsExplanation: hasPreviousTerminations === 'Yes' ? terminationsExplanation : '',
-        hasBankruptcies,
-        bankruptciesExplanation: hasBankruptcies === 'Yes' ? bankruptciesExplanation : '',
-        
-        // Business Type
-        b2bPercent,
-        b2cPercent,
-        isSeasonalBusiness,
-        hasRecurringPayments,
-        recurringPaymentsDetails: hasRecurringPayments === 'Yes' ? recurringPaymentsDetails : '',
-        
-        // eCommerce / Card-Not-Present
-        productPurchaseAddresses,
-        inventoryOwner,
-        fulfillmentProviders,
-        shoppingCartPlatforms,
-        purchaseMethods,
-        otherPurchaseMethod: purchaseMethods.includes('Other') ? otherPurchaseMethod : '',
-        callCenterProviders,
-        authToShipTimeframe,
-        deliveryTimeframe,
-        chargebackSystem,
-        requiresDeposits,
-        depositPercent: requiresDeposits === 'Yes' ? depositPercent : '',
-        paymentTiming,
-        salesRegions,
-        internationalPercent,
-        shippingMethods,
-        otherShippingMethod: shippingMethods.includes('Other') ? otherShippingMethod : '',
-        advertisingChannels,
-        otherAdvertisingChannel: advertisingChannels.includes('Other') ? otherAdvertisingChannel : '',
-        warrantyProvider,
-        
-        // Date fields
-        date: new Date().toLocaleDateString()
-      };
+      // Check if the user is authenticated
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
       
-      // Call edge function to generate pre-app PDF
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session || !session.user) {
-        throw new Error('User not authenticated');
+      if (authError || !session) {
+        toast.error("Authentication error: You must be logged in to generate a pre-application PDF.");
+        setIsSubmitting(false);
+        return;
       }
       
       // Call the edge function
-      const response = await supabase.functions.invoke('generate-pre-app', {
-        body: { formData }
+      const { data, error } = await supabase.functions.invoke('generate-pre-app', {
+        body: { formData: values }
       });
-      
-      if (response.error) {
-        throw new Error(response.error.message || 'Failed to generate PDF');
+
+      if (error) {
+        console.error('Error generating pre-application PDF:', error);
+        throw new Error(error.message || 'Failed to generate pre-application PDF');
       }
       
-      if (!response.data || !response.data.pdfBase64) {
-        throw new Error('Failed to generate PDF');
+      if (!data || !data.pdfBase64) {
+        throw new Error('Invalid response from server');
       }
-      
-      // Convert the data to a Blob
-      const base64Data = response.data.pdfBase64;
-      const binaryData = atob(base64Data);
+
+      // Convert the base64 data to a Blob
+      const binaryData = atob(data.pdfBase64);
       const bytes = new Uint8Array(binaryData.length);
       for (let i = 0; i < binaryData.length; i++) {
         bytes[i] = binaryData.charCodeAt(i);
@@ -310,1431 +230,1611 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
       // Create a Blob from the binary data
       const blob = new Blob([bytes], { type: 'application/pdf' });
       
-      // Upload to storage
-      const fileName = `PreApp_${businessName}_${new Date().getTime()}.pdf`;
-      const filePath = `${session.user.id}/${fileName}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('documents')
-        .upload(filePath, blob, {
-          contentType: 'application/pdf',
-          upsert: false
-        });
-      
-      if (uploadError) throw uploadError;
-      
-      // Create document record
-      await createDocument({
-        name: `Pre-App for ${businessName}`,
-        description: `Pre-application form for ${businessName}`,
-        file_path: filePath,
-        file_type: 'application/pdf',
-        file_size: blob.size,
-        uploaded_by: session.user.id,
-        document_type: 'preapp',
-        is_template: false,
-        metadata: formData
-      });
-      
-      toast.success('Pre-application document generated successfully');
-      onSuccess();
-      onOpenChange(false);
-      
-      // Trigger download
+      // Create a URL for the Blob
       const url = URL.createObjectURL(blob);
+      
+      // Create a link element and trigger the download
       const link = document.createElement('a');
       link.href = url;
-      link.download = fileName;
+      link.download = `pre_application_form.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       
       // Clean up the URL object
       URL.revokeObjectURL(url);
+      
+      toast.success('Pre-application form generated successfully');
+      onOpenChange(false);
+      if (onSuccess) onSuccess();
     } catch (error: any) {
-      console.error('Error generating pre-app document:', error);
-      toast.error(`Failed to generate document: ${error.message}`);
+      console.error('Error generating pre-application PDF:', error);
+      toast.error(error.message || 'Failed to generate pre-application PDF');
     } finally {
-      setProcessing(false);
+      setIsSubmitting(false);
     }
   };
-  
+
   return (
-    <Dialog open={open} onOpenChange={(open) => !processing && onOpenChange(open)}>
-      <DialogContent className="sm:max-w-[80vw] max-h-[90vh] overflow-hidden">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Generate Pre-Application Document</DialogTitle>
-          <DialogDescription>
-            Fill out the business information to generate a comprehensive pre-application form.
-          </DialogDescription>
+          <DialogTitle>Generate Pre-Application Form</DialogTitle>
         </DialogHeader>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full grid grid-cols-3 md:grid-cols-6 mb-4">
-            <TabsTrigger value="business-info">Business Info</TabsTrigger>
-            <TabsTrigger value="principal-info">Principal Info</TabsTrigger>
-            <TabsTrigger value="bank-info">Bank Info</TabsTrigger>
-            <TabsTrigger value="processing-info">Processing</TabsTrigger>
-            <TabsTrigger value="refund-policy">Refund Policy</TabsTrigger>
-            <TabsTrigger value="ecommerce">eCommerce</TabsTrigger>
-          </TabsList>
-          
-          <ScrollArea className="h-[60vh]">
-            <div className="p-4">
-              <TabsContent value="business-info">
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-medium mb-4">1. Business Structure</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroup value={businessStructure} onValueChange={setBusinessStructure}>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="Sole Proprietorship" id="sole-prop" />
-                            <Label htmlFor="sole-prop">Sole Proprietorship</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="Corporation" id="corp" />
-                            <Label htmlFor="corp">Corporation</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="LLC" id="llc" />
-                            <Label htmlFor="llc">LLC</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="Non-profit" id="non-profit" />
-                            <Label htmlFor="non-profit">Non-profit (401(c))</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="Government" id="gov" />
-                            <Label htmlFor="gov">Government</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="Other" id="other-structure" />
-                            <Label htmlFor="other-structure">Other</Label>
-                          </div>
-                        </RadioGroup>
-                      </div>
-                      
-                      {businessStructure === 'Other' && (
-                        <div>
-                          <Input 
-                            value={otherBusinessStructure} 
-                            onChange={(e) => setOtherBusinessStructure(e.target.value)}
-                            placeholder="Specify other business structure"
-                          />
-                        </div>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid grid-cols-5 w-full">
+                <TabsTrigger value="business-info">Business Info</TabsTrigger>
+                <TabsTrigger value="principal-info">Principal Info</TabsTrigger>
+                <TabsTrigger value="banking">Banking</TabsTrigger>
+                <TabsTrigger value="processing">Processing</TabsTrigger>
+                <TabsTrigger value="ecommerce">eCommerce</TabsTrigger>
+              </TabsList>
+              
+              {/* Business Info Tab */}
+              <TabsContent value="business-info" className="space-y-4">
+                <div className="bg-blue-50 border border-blue-100 rounded-md p-3 mb-4">
+                  <h3 className="text-sm font-medium text-blue-800 flex items-center">
+                    <Info className="h-4 w-4 mr-1" /> Business Structure & Information
+                  </h3>
+                  <p className="text-xs text-blue-700">
+                    Complete the basic information about the business entity.
+                  </p>
+                </div>
+                
+                {/* Business Structure */}
+                <div className="border rounded-md p-4 space-y-4">
+                  <h3 className="font-medium">Business Structure</h3>
+                  <FormField
+                    control={form.control}
+                    name="businessStructure"
+                    render={({ field }) => (
+                      <FormItem className="space-y-1">
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-2 md:grid-cols-3 gap-2"
+                          >
+                            {['Sole Proprietorship', 'Corporation', 'LLC', 'Non-profit (401(c))', 'Government', 'Other'].map((option) => (
+                              <FormItem key={option} className="flex items-center space-x-2">
+                                <FormControl>
+                                  <RadioGroupItem value={option} />
+                                </FormControl>
+                                <FormLabel className="font-normal">{option}</FormLabel>
+                              </FormItem>
+                            ))}
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {form.watch('businessStructure') === 'Other' && (
+                    <FormField
+                      control={form.control}
+                      name="otherBusinessStructure"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Specify Other Business Structure:</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
                       )}
-                    </div>
+                    />
+                  )}
+                </div>
+                
+                {/* Business Information */}
+                <div className="border rounded-md p-4 space-y-4">
+                  <h3 className="font-medium">Business Information</h3>
+                  <FormField
+                    control={form.control}
+                    name="businessName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Business Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="streetAddress"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Street (Location) Address</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="mailingAddress"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Mailing (Legal) Address</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                   
-                  <div>
-                    <h3 className="text-lg font-medium mb-4">2. Business Information</h3>
-                    <div className="grid gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="businessName">Business Name <span className="text-red-500">*</span></Label>
-                        <Input
-                          id="businessName"
-                          value={businessName}
-                          onChange={(e) => setBusinessName(e.target.value)}
-                          placeholder="Enter business name"
-                          required
-                        />
-                      </div>
-                      
-                      <div className="grid gap-2">
-                        <Label htmlFor="streetAddress">Street (Location) Address</Label>
-                        <Input
-                          id="streetAddress"
-                          value={streetAddress}
-                          onChange={(e) => setStreetAddress(e.target.value)}
-                          placeholder="Enter street address"
-                        />
-                      </div>
-                      
-                      <div className="grid gap-2">
-                        <Label htmlFor="mailingAddress">Mailing (Legal) Address</Label>
-                        <Input
-                          id="mailingAddress"
-                          value={mailingAddress}
-                          onChange={(e) => setMailingAddress(e.target.value)}
-                          placeholder="Enter mailing address"
-                        />
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                          <Label htmlFor="businessPhone">Business/Contact Telephone <span className="text-red-500">*</span></Label>
-                          <Input
-                            id="businessPhone"
-                            value={businessPhone}
-                            onChange={(e) => setBusinessPhone(e.target.value)}
-                            placeholder="Enter business phone"
-                            required
-                          />
-                        </div>
-                        
-                        <div className="grid gap-2">
-                          <Label htmlFor="businessEmail">Business/Contact Email <span className="text-red-500">*</span></Label>
-                          <Input
-                            id="businessEmail"
-                            value={businessEmail}
-                            onChange={(e) => setBusinessEmail(e.target.value)}
-                            placeholder="Enter business email"
-                            type="email"
-                            required
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                          <Label htmlFor="businessFax">Business Fax #</Label>
-                          <Input
-                            id="businessFax"
-                            value={businessFax}
-                            onChange={(e) => setBusinessFax(e.target.value)}
-                            placeholder="Enter business fax"
-                          />
-                        </div>
-                        
-                        <div className="grid gap-2">
-                          <Label htmlFor="customerServicePhone">Customer Service Telephone</Label>
-                          <Input
-                            id="customerServicePhone"
-                            value={customerServicePhone}
-                            onChange={(e) => setCustomerServicePhone(e.target.value)}
-                            placeholder="Enter customer service phone"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                          <Label htmlFor="customerServiceEmail">Customer Service Email</Label>
-                          <Input
-                            id="customerServiceEmail"
-                            value={customerServiceEmail}
-                            onChange={(e) => setCustomerServiceEmail(e.target.value)}
-                            placeholder="Enter customer service email"
-                            type="email"
-                          />
-                        </div>
-                        
-                        <div className="grid gap-2">
-                          <Label htmlFor="website">Website/URL</Label>
-                          <div className="flex items-center">
-                            <span className="bg-gray-100 px-3 py-2 border border-r-0 border-gray-300 rounded-l-md text-gray-500">http://</span>
-                            <Input
-                              id="website"
-                              value={website}
-                              onChange={(e) => setWebsite(e.target.value)}
-                              placeholder="yourbusiness.com"
-                              className="rounded-l-none"
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="businessPhone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Business/Contact Telephone</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="businessEmail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Business/Contact Email</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="businessFax"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Business Fax # (Optional)</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="customerServicePhone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Customer Service Telephone</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="customerServiceEmail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Customer Service Email</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <FormField
+                    control={form.control}
+                    name="website"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Website/URL (without http://)</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="example.com" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                {/* Authorized Contact */}
+                <div className="border rounded-md p-4 space-y-4">
+                  <h3 className="font-medium">Authorized Contact</h3>
+                  <FormField
+                    control={form.control}
+                    name="contactName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                {/* Equipment / Software */}
+                <div className="border rounded-md p-4 space-y-4">
+                  <h3 className="font-medium">Equipment / Software</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="terminalGateway"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Terminal/Gateway Used</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="E.g., VX 520, Authorize.net, NMI" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="shoppingCart"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Shopping Cart (if applicable)</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                          <p className="text-xs text-gray-500">If using Shopify, request Authorize.net Gateway</p>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+                
+                {/* Business Location */}
+                <div className="border rounded-md p-4 space-y-4">
+                  <h3 className="font-medium">Business Location</h3>
+                  <FormField
+                    control={form.control}
+                    name="employeeCount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Number of Employees</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="locationType"
+                    render={({ field }) => (
+                      <FormItem className="space-y-1">
+                        <FormLabel>Location Type</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-1 md:grid-cols-3 gap-2"
+                          >
+                            {['Home/Residential', 'Office/Business District', 'Storefront'].map((option) => (
+                              <FormItem key={option} className="flex items-center space-x-2">
+                                <FormControl>
+                                  <RadioGroupItem value={option} />
+                                </FormControl>
+                                <FormLabel className="font-normal">{option}</FormLabel>
+                              </FormItem>
+                            ))}
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="ownOrRent"
+                    render={({ field }) => (
+                      <FormItem className="space-y-1">
+                        <FormLabel>Own or Rent</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-2 gap-2"
+                          >
+                            {['Own', 'Rent'].map((option) => (
+                              <FormItem key={option} className="flex items-center space-x-2">
+                                <FormControl>
+                                  <RadioGroupItem value={option} />
+                                </FormControl>
+                                <FormLabel className="font-normal">{option}</FormLabel>
+                              </FormItem>
+                            ))}
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="squareFootage"
+                    render={({ field }) => (
+                      <FormItem className="space-y-1">
+                        <FormLabel>Approx. Square Footage</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-2 gap-2"
+                          >
+                            {[
+                              { label: '0–500 ft²', value: '0-500' },
+                              { label: '501–2,000 ft²', value: '501-2000' },
+                              { label: '2,001–5,000 ft²', value: '2001-5000' },
+                              { label: '5,000+ ft²', value: '5000+' }
+                            ].map((option) => (
+                              <FormItem key={option.value} className="flex items-center space-x-2">
+                                <FormControl>
+                                  <RadioGroupItem value={option.value} />
+                                </FormControl>
+                                <FormLabel className="font-normal">{option.label}</FormLabel>
+                              </FormItem>
+                            ))}
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </TabsContent>
+              
+              {/* Principal Info Tab */}
+              <TabsContent value="principal-info" className="space-y-4">
+                <div className="bg-blue-50 border border-blue-100 rounded-md p-3 mb-4">
+                  <h3 className="text-sm font-medium text-blue-800 flex items-center">
+                    <Info className="h-4 w-4 mr-1" /> Principal Information
+                  </h3>
+                  <p className="text-xs text-blue-700">
+                    Enter details about the primary business owner or principal.
+                  </p>
+                </div>
+                
+                <div className="border rounded-md p-4 space-y-4">
+                  <h3 className="font-medium">Principal Information</h3>
+                  <FormField
+                    control={form.control}
+                    name="principalName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="ownershipPercentage"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Ownership %</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="hasAdditionalOwners"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-end space-x-2">
+                          <FormControl>
+                            <Checkbox 
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
                             />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-lg font-medium mb-4">3. Authorized Contact</h3>
-                    <div className="grid gap-2">
-                      <Label htmlFor="contactName">Full Name</Label>
-                      <Input
-                        id="contactName"
-                        value={contactName}
-                        onChange={(e) => setContactName(e.target.value)}
-                        placeholder="Enter full name"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-lg font-medium mb-4">4. Equipment / Software</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="terminalGateway">Terminal/Gateway Used</Label>
-                        <Input
-                          id="terminalGateway"
-                          value={terminalGateway}
-                          onChange={(e) => setTerminalGateway(e.target.value)}
-                          placeholder="e.g., VX 520, Authorize.net, NMI"
-                        />
-                      </div>
-                      
-                      <div className="grid gap-2">
-                        <Label htmlFor="shoppingCart">Shopping Cart (if applicable)</Label>
-                        <Input
-                          id="shoppingCart"
-                          value={shoppingCart}
-                          onChange={(e) => setShoppingCart(e.target.value)}
-                          placeholder="e.g., Shopify, WooCommerce"
-                        />
-                        <p className="text-xs text-gray-500">If using Shopify, request Authorize.net Gateway.</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-lg font-medium mb-4">5. Business Location</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="employeeCount">Number of Employees</Label>
-                        <Input
-                          id="employeeCount"
-                          value={employeeCount}
-                          onChange={(e) => setEmployeeCount(e.target.value)}
-                          placeholder="Enter number of employees"
-                          type="number"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="mt-4">
-                      <Label className="block mb-2">Location Type</Label>
-                      <RadioGroup value={locationType} onValueChange={setLocationType}>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="Home/Residential" id="home" />
-                          <Label htmlFor="home">Home/Residential</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="Office/Business District" id="office" />
-                          <Label htmlFor="office">Office/Business District</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="Storefront" id="storefront" />
-                          <Label htmlFor="storefront">Storefront</Label>
-                        </div>
-                      </RadioGroup>
-                    </div>
-                    
-                    <div className="mt-4">
-                      <Label className="block mb-2">Own or Rent</Label>
-                      <RadioGroup value={ownOrRent} onValueChange={setOwnOrRent}>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="Own" id="own" />
-                          <Label htmlFor="own">Own</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="Rent" id="rent" />
-                          <Label htmlFor="rent">Rent</Label>
-                        </div>
-                      </RadioGroup>
-                    </div>
-                    
-                    <div className="mt-4">
-                      <Label className="block mb-2">Approx. Square Footage</Label>
-                      <RadioGroup value={squareFootage} onValueChange={setSquareFootage}>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="0-500" id="ft-0-500" />
-                          <Label htmlFor="ft-0-500">0–500 ft²</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="501-2000" id="ft-501-2000" />
-                          <Label htmlFor="ft-501-2000">501–2,000 ft²</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="2001-5000" id="ft-2001-5000" />
-                          <Label htmlFor="ft-2001-5000">2,001–5,000 ft²</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="5000+" id="ft-5000+" />
-                          <Label htmlFor="ft-5000+">5,000+ ft²</Label>
-                        </div>
-                      </RadioGroup>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="principal-info">
-                <div className="space-y-6">
-                  <h3 className="text-lg font-medium mb-4">6. Principal Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="principalName">Full Name</Label>
-                      <Input
-                        id="principalName"
-                        value={principalName}
-                        onChange={(e) => setPrincipalName(e.target.value)}
-                        placeholder="Enter principal's full name"
-                      />
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="ownershipPercentage">Ownership %</Label>
-                      <div className="flex items-center">
-                        <Input
-                          id="ownershipPercentage"
-                          value={ownershipPercentage}
-                          onChange={(e) => setOwnershipPercentage(e.target.value)}
-                          placeholder="Enter ownership percentage"
-                          type="number"
-                          min="0"
-                          max="100"
-                        />
-                        <span className="ml-2">%</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="additionalOwners"
-                      checked={hasAdditionalOwners}
-                      onCheckedChange={(checked) => setHasAdditionalOwners(checked === true)}
-                    />
-                    <Label htmlFor="additionalOwners">Check here if additional owners/members have 25%+ equity</Label>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="title">Title (Owner, CEO, etc.)</Label>
-                      <Input
-                        id="title"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        placeholder="Enter title"
-                      />
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="homePhone">Home Telephone</Label>
-                      <Input
-                        id="homePhone"
-                        value={homePhone}
-                        onChange={(e) => setHomePhone(e.target.value)}
-                        placeholder="Enter home phone"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                      <Input
-                        id="dateOfBirth"
-                        value={dateOfBirth}
-                        onChange={(e) => setDateOfBirth(e.target.value)}
-                        placeholder="MM/DD/YYYY"
-                      />
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="ssn">SSN</Label>
-                      <Input
-                        id="ssn"
-                        value={ssn}
-                        onChange={(e) => setSsn(e.target.value)}
-                        placeholder="Enter SSN"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="driversLicense">Driver's License #</Label>
-                      <Input
-                        id="driversLicense"
-                        value={driversLicense}
-                        onChange={(e) => setDriversLicense(e.target.value)}
-                        placeholder="Enter driver's license number"
-                      />
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="licenseExpDate">Exp Date</Label>
-                      <Input
-                        id="licenseExpDate"
-                        value={licenseExpDate}
-                        onChange={(e) => setLicenseExpDate(e.target.value)}
-                        placeholder="MM/DD/YYYY"
-                      />
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="licenseState">State</Label>
-                      <Input
-                        id="licenseState"
-                        value={licenseState}
-                        onChange={(e) => setLicenseState(e.target.value)}
-                        placeholder="Enter state"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid gap-2">
-                    <Label htmlFor="homeAddress">Home Address</Label>
-                    <Input
-                      id="homeAddress"
-                      value={homeAddress}
-                      onChange={(e) => setHomeAddress(e.target.value)}
-                      placeholder="Enter home address"
-                    />
-                  </div>
-                  
-                  <div className="grid gap-2">
-                    <Label htmlFor="personalEmail">Personal Email</Label>
-                    <Input
-                      id="personalEmail"
-                      value={personalEmail}
-                      onChange={(e) => setPersonalEmail(e.target.value)}
-                      placeholder="Enter personal email"
-                      type="email"
-                    />
-                  </div>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="bank-info">
-                <div className="space-y-6">
-                  <h3 className="text-lg font-medium mb-4">7. Bank Settlement Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="bankName">Bank Name</Label>
-                      <Input
-                        id="bankName"
-                        value={bankName}
-                        onChange={(e) => setBankName(e.target.value)}
-                        placeholder="Enter bank name"
-                      />
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="bankContact">Contact Name at Bank</Label>
-                      <Input
-                        id="bankContact"
-                        value={bankContact}
-                        onChange={(e) => setBankContact(e.target.value)}
-                        placeholder="Enter bank contact name"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="routingNumber">Routing Number</Label>
-                      <Input
-                        id="routingNumber"
-                        value={routingNumber}
-                        onChange={(e) => setRoutingNumber(e.target.value)}
-                        placeholder="Enter routing number"
-                      />
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="accountNumber">Account Number</Label>
-                      <Input
-                        id="accountNumber"
-                        value={accountNumber}
-                        onChange={(e) => setAccountNumber(e.target.value)}
-                        placeholder="Enter account number"
-                      />
-                    </div>
-                  </div>
-                  
-                  <h3 className="text-lg font-medium mb-4 mt-8">8. Business Description</h3>
-                  <div className="grid gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="productsServices">Products/Services Sold</Label>
-                      <Input
-                        id="productsServices"
-                        value={productsServices}
-                        onChange={(e) => setProductsServices(e.target.value)}
-                        placeholder="Enter products/services"
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="yearsInOperation">Years in Operation</Label>
-                        <Input
-                          id="yearsInOperation"
-                          value={yearsInOperation}
-                          onChange={(e) => setYearsInOperation(e.target.value)}
-                          placeholder="Enter years in operation"
-                        />
-                      </div>
-                      
-                      <div className="grid gap-2">
-                        <Label htmlFor="storageLocation">Storage Location (if applicable)</Label>
-                        <Input
-                          id="storageLocation"
-                          value={storageLocation}
-                          onChange={(e) => setStorageLocation(e.target.value)}
-                          placeholder="Enter storage location"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="processing-info">
-                <div className="space-y-6">
-                  <h3 className="text-lg font-medium mb-4">9. Processing Volume</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="monthlyVolume">Estimated Total Monthly Volume</Label>
-                      <div className="flex items-center">
-                        <span className="bg-gray-100 px-3 py-2 border border-r-0 border-gray-300 rounded-l-md">$</span>
-                        <Input
-                          id="monthlyVolume"
-                          value={monthlyVolume}
-                          onChange={(e) => setMonthlyVolume(e.target.value)}
-                          placeholder="Enter amount"
-                          className="rounded-l-none"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="visaMastercardVolume">Visa/Mastercard Volume</Label>
-                      <div className="flex items-center">
-                        <span className="bg-gray-100 px-3 py-2 border border-r-0 border-gray-300 rounded-l-md">$</span>
-                        <Input
-                          id="visaMastercardVolume"
-                          value={visaMastercardVolume}
-                          onChange={(e) => setVisaMastercardVolume(e.target.value)}
-                          placeholder="Enter amount"
-                          className="rounded-l-none"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="amexVolume">American Express Volume</Label>
-                      <div className="flex items-center">
-                        <span className="bg-gray-100 px-3 py-2 border border-r-0 border-gray-300 rounded-l-md">$</span>
-                        <Input
-                          id="amexVolume"
-                          value={amexVolume}
-                          onChange={(e) => setAmexVolume(e.target.value)}
-                          placeholder="Enter amount"
-                          className="rounded-l-none"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="averageTicket">Average Ticket</Label>
-                      <div className="flex items-center">
-                        <span className="bg-gray-100 px-3 py-2 border border-r-0 border-gray-300 rounded-l-md">$</span>
-                        <Input
-                          id="averageTicket"
-                          value={averageTicket}
-                          onChange={(e) => setAverageTicket(e.target.value)}
-                          placeholder="Enter amount"
-                          className="rounded-l-none"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="highestTicket">Highest Ticket</Label>
-                      <div className="flex items-center">
-                        <span className="bg-gray-100 px-3 py-2 border border-r-0 border-gray-300 rounded-l-md">$</span>
-                        <Input
-                          id="highestTicket"
-                          value={highestTicket}
-                          onChange={(e) => setHighestTicket(e.target.value)}
-                          placeholder="Enter amount"
-                          className="rounded-l-none"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <h3 className="text-lg font-medium mb-4 mt-8">10. Transaction Method (Must Equal 100%)</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="faceToFacePercent">Face-to-Face (Retail)</Label>
-                      <div className="flex items-center">
-                        <Input
-                          id="faceToFacePercent"
-                          value={faceToFacePercent}
-                          onChange={(e) => setFaceToFacePercent(e.target.value)}
-                          placeholder="Enter percentage"
-                          type="number"
-                          min="0"
-                          max="100"
-                        />
-                        <span className="ml-2">%</span>
-                      </div>
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="motoPercent">Telephone/Mail/Email (MOTO)</Label>
-                      <div className="flex items-center">
-                        <Input
-                          id="motoPercent"
-                          value={motoPercent}
-                          onChange={(e) => setMotoPercent(e.target.value)}
-                          placeholder="Enter percentage"
-                          type="number"
-                          min="0"
-                          max="100"
-                        />
-                        <span className="ml-2">%</span>
-                      </div>
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="ecommercePercent">Internet (eCommerce)</Label>
-                      <div className="flex items-center">
-                        <Input
-                          id="ecommercePercent"
-                          value={ecommercePercent}
-                          onChange={(e) => setEcommercePercent(e.target.value)}
-                          placeholder="Enter percentage"
-                          type="number"
-                          min="0"
-                          max="100"
-                        />
-                        <span className="ml-2">%</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm text-gray-500 mt-2">
-                      <strong>Note:</strong> The total percentage across all transaction methods should equal 100%
-                    </p>
-                    <div className="mt-2 p-2 bg-gray-100 rounded-md">
-                      <p className="text-sm">
-                        Total: {parseInt(faceToFacePercent || '0') + parseInt(motoPercent || '0') + parseInt(ecommercePercent || '0')}%
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <h3 className="text-lg font-medium mb-4 mt-8">12. Business Type</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="b2bPercent">B2B (%)</Label>
-                      <div className="flex items-center">
-                        <Input
-                          id="b2bPercent"
-                          value={b2bPercent}
-                          onChange={(e) => setB2bPercent(e.target.value)}
-                          placeholder="Enter percentage"
-                          type="number"
-                          min="0"
-                          max="100"
-                        />
-                        <span className="ml-2">%</span>
-                      </div>
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="b2cPercent">B2C (%)</Label>
-                      <div className="flex items-center">
-                        <Input
-                          id="b2cPercent"
-                          value={b2cPercent}
-                          onChange={(e) => setB2cPercent(e.target.value)}
-                          placeholder="Enter percentage"
-                          type="number"
-                          min="0"
-                          max="100"
-                        />
-                        <span className="ml-2">%</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm text-gray-500 mt-2">
-                      <strong>Note:</strong> The total percentage across B2B and B2C should equal 100%
-                    </p>
-                    <div className="mt-2 p-2 bg-gray-100 rounded-md">
-                      <p className="text-sm">
-                        Total: {parseInt(b2bPercent || '0') + parseInt(b2cPercent || '0')}%
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label className="block mb-2">Seasonal Business?</Label>
-                      <RadioGroup value={isSeasonalBusiness} onValueChange={setIsSeasonalBusiness}>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="Yes" id="seasonal-yes" />
-                          <Label htmlFor="seasonal-yes">Yes</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="No" id="seasonal-no" />
-                          <Label htmlFor="seasonal-no">No</Label>
-                        </div>
-                      </RadioGroup>
-                    </div>
-                    
-                    <div>
-                      <Label className="block mb-2">Recurring Payments/Subscriptions?</Label>
-                      <RadioGroup value={hasRecurringPayments} onValueChange={setHasRecurringPayments}>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="Yes" id="recurring-yes" />
-                          <Label htmlFor="recurring-yes">Yes</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="No" id="recurring-no" />
-                          <Label htmlFor="recurring-no">No</Label>
-                        </div>
-                      </RadioGroup>
-                    </div>
-                  </div>
-                  
-                  {hasRecurringPayments === 'Yes' && (
-                    <div className="grid gap-2">
-                      <Label htmlFor="recurringPaymentsDetails">Specify Recurring Payments</Label>
-                      <Input
-                        id="recurringPaymentsDetails"
-                        value={recurringPaymentsDetails}
-                        onChange={(e) => setRecurringPaymentsDetails(e.target.value)}
-                        placeholder="Describe recurring payment details"
-                      />
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="refund-policy">
-                <div className="space-y-6">
-                  <h3 className="text-lg font-medium mb-4">11. Refund / Cancellation Policy</h3>
-                  
-                  <div>
-                    <Label className="block mb-2">Do you have a refund policy?</Label>
-                    <RadioGroup value={hasRefundPolicy} onValueChange={setHasRefundPolicy}>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Yes" id="refund-yes" />
-                        <Label htmlFor="refund-yes">Yes</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="No" id="refund-no" />
-                        <Label htmlFor="refund-no">No</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-                  
-                  {hasRefundPolicy === 'Yes' && (
-                    <div>
-                      <Label className="block mb-2">Policy Type</Label>
-                      <RadioGroup value={refundPolicyType} onValueChange={setRefundPolicyType}>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="Exchange" id="exchange" />
-                          <Label htmlFor="exchange">Exchange</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="Store Credit" id="store-credit" />
-                          <Label htmlFor="store-credit">Store Credit</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="Refund within 30 days" id="refund-30" />
-                          <Label htmlFor="refund-30">Refund within 30 days</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="Other" id="refund-other" />
-                          <Label htmlFor="refund-other">Other</Label>
-                        </div>
-                      </RadioGroup>
-                      
-                      {refundPolicyType === 'Other' && (
-                        <div className="mt-2 grid gap-2">
-                          <Label htmlFor="otherRefundPolicy">Specify Other Refund Policy</Label>
-                          <Input
-                            id="otherRefundPolicy"
-                            value={otherRefundPolicy}
-                            onChange={(e) => setOtherRefundPolicy(e.target.value)}
-                            placeholder="Enter refund policy details"
-                          />
-                        </div>
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Check here if additional owners/members have 25%+ equity
+                          </FormLabel>
+                        </FormItem>
                       )}
-                    </div>
-                  )}
-                  
-                  <div className="mt-6">
-                    <Label className="block mb-2">Processing History?</Label>
-                    <RadioGroup value={hasProcessingHistory} onValueChange={setHasProcessingHistory}>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Yes" id="history-yes" />
-                        <Label htmlFor="history-yes">Yes</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="No" id="history-no" />
-                        <Label htmlFor="history-no">No</Label>
-                      </div>
-                    </RadioGroup>
-                    
-                    {hasProcessingHistory === 'Yes' && (
-                      <p className="text-sm text-gray-500 mt-2">
-                        Please attach 3 most recent processing statements.
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="grid gap-2">
-                    <Label htmlFor="previousProcessor">Current/Previous Processor(s)</Label>
-                    <Input
-                      id="previousProcessor"
-                      value={previousProcessor}
-                      onChange={(e) => setPreviousProcessor(e.target.value)}
-                      placeholder="Enter previous processor(s)"
                     />
                   </div>
                   
-                  <div>
-                    <Label className="block mb-2">Previous Terminations?</Label>
-                    <RadioGroup value={hasPreviousTerminations} onValueChange={setHasPreviousTerminations}>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Yes" id="terminations-yes" />
-                        <Label htmlFor="terminations-yes">Yes</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="No" id="terminations-no" />
-                        <Label htmlFor="terminations-no">No</Label>
-                      </div>
-                    </RadioGroup>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Title (Owner, CEO, etc.)</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     
-                    {hasPreviousTerminations === 'Yes' && (
-                      <div className="mt-2 grid gap-2">
-                        <Label htmlFor="terminationsExplanation">Explain</Label>
-                        <Input
-                          id="terminationsExplanation"
-                          value={terminationsExplanation}
-                          onChange={(e) => setTerminationsExplanation(e.target.value)}
-                          placeholder="Explain previous terminations"
-                        />
-                      </div>
-                    )}
+                    <FormField
+                      control={form.control}
+                      name="homePhone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Home Telephone</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                   
-                  <div>
-                    <Label className="block mb-2">Bankruptcies?</Label>
-                    <RadioGroup value={hasBankruptcies} onValueChange={setHasBankruptcies}>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Yes" id="bankruptcies-yes" />
-                        <Label htmlFor="bankruptcies-yes">Yes</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="No" id="bankruptcies-no" />
-                        <Label htmlFor="bankruptcies-no">No</Label>
-                      </div>
-                    </RadioGroup>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="dateOfBirth"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Date of Birth (MM/DD/YYYY)</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="MM/DD/YYYY" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     
-                    {hasBankruptcies === 'Yes' && (
-                      <div className="mt-2 grid gap-2">
-                        <Label htmlFor="bankruptciesExplanation">Explain</Label>
-                        <Input
-                          id="bankruptciesExplanation"
-                          value={bankruptciesExplanation}
-                          onChange={(e) => setBankruptciesExplanation(e.target.value)}
-                          placeholder="Explain bankruptcies"
-                        />
-                      </div>
+                    <FormField
+                      control={form.control}
+                      name="ssn"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>SSN</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="driversLicense"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Driver's License #</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="licenseExpDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Exp Date (MM/DD/YYYY)</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="MM/DD/YYYY" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="licenseState"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>State</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <FormField
+                    control={form.control}
+                    name="homeAddress"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Home Address</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
                     )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="personalEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Personal Email</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </TabsContent>
+              
+              {/* Banking Tab */}
+              <TabsContent value="banking" className="space-y-4">
+                <div className="bg-blue-50 border border-blue-100 rounded-md p-3 mb-4">
+                  <h3 className="text-sm font-medium text-blue-800 flex items-center">
+                    <Info className="h-4 w-4 mr-1" /> Banking & Business Description
+                  </h3>
+                  <p className="text-xs text-blue-700">
+                    Enter banking information and business details.
+                  </p>
+                </div>
+                
+                {/* Bank Settlement Information */}
+                <div className="border rounded-md p-4 space-y-4">
+                  <h3 className="font-medium">Bank Settlement Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="bankName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Bank Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="bankContact"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Contact Name at Bank</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="routingNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Routing Number</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="accountNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Account Number</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+                
+                {/* Business Description */}
+                <div className="border rounded-md p-4 space-y-4">
+                  <h3 className="font-medium">Business Description</h3>
+                  <FormField
+                    control={form.control}
+                    name="productsServices"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Products/Services Sold</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="yearsInOperation"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Years in Operation</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="storageLocation"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Storage Location (if applicable)</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </div>
               </TabsContent>
               
-              <TabsContent value="ecommerce">
-                <div className="space-y-6">
-                  <h3 className="text-lg font-medium mb-4">13. eCommerce / Card-Not-Present</h3>
-                  
-                  <div className="grid gap-2">
-                    <Label htmlFor="productPurchaseAddresses">Product Purchase Address(es)</Label>
-                    <Input
-                      id="productPurchaseAddresses"
-                      value={productPurchaseAddresses}
-                      onChange={(e) => setProductPurchaseAddresses(e.target.value)}
-                      placeholder="Enter purchase address(es)"
+              {/* Processing Tab */}
+              <TabsContent value="processing" className="space-y-4">
+                <div className="bg-blue-50 border border-blue-100 rounded-md p-3 mb-4">
+                  <h3 className="text-sm font-medium text-blue-800 flex items-center">
+                    <Info className="h-4 w-4 mr-1" /> Processing Details & History
+                  </h3>
+                  <p className="text-xs text-blue-700">
+                    Enter information about payment processing volumes and history.
+                  </p>
+                </div>
+                
+                {/* Processing Volume */}
+                <div className="border rounded-md p-4 space-y-4">
+                  <h3 className="font-medium">Processing Volume</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="monthlyVolume"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Estimated Total Monthly Volume ($)</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
-                  
-                  <div>
-                    <Label className="block mb-2">Who Owns Inventory?</Label>
-                    <RadioGroup value={inventoryOwner} onValueChange={setInventoryOwner}>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Merchant" id="merchant-inventory" />
-                        <Label htmlFor="merchant-inventory">Merchant</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Vendor (Drop Ship)" id="vendor-inventory" />
-                        <Label htmlFor="vendor-inventory">Vendor (Drop Ship)</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-                  
-                  <div className="grid gap-2">
-                    <Label htmlFor="fulfillmentProviders">Fulfillment Provider(s)</Label>
-                    <Input
-                      id="fulfillmentProviders"
-                      value={fulfillmentProviders}
-                      onChange={(e) => setFulfillmentProviders(e.target.value)}
-                      placeholder="Enter fulfillment provider(s)"
-                    />
-                  </div>
-                  
-                  <div className="grid gap-2">
-                    <Label htmlFor="shoppingCartPlatforms">Shopping Cart / CRM Platform(s)</Label>
-                    <Input
-                      id="shoppingCartPlatforms"
-                      value={shoppingCartPlatforms}
-                      onChange={(e) => setShoppingCartPlatforms(e.target.value)}
-                      placeholder="Enter platform(s)"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label className="block mb-2">How Do Customers Purchase?</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="purchase-inperson" 
-                          checked={purchaseMethods.includes('In Person')} 
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setPurchaseMethods([...purchaseMethods, 'In Person']);
-                            } else {
-                              setPurchaseMethods(purchaseMethods.filter(m => m !== 'In Person'));
-                            }
-                          }} 
-                        />
-                        <Label htmlFor="purchase-inperson">In Person</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="purchase-mail" 
-                          checked={purchaseMethods.includes('Mail/Phone')} 
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setPurchaseMethods([...purchaseMethods, 'Mail/Phone']);
-                            } else {
-                              setPurchaseMethods(purchaseMethods.filter(m => m !== 'Mail/Phone'));
-                            }
-                          }}
-                        />
-                        <Label htmlFor="purchase-mail">Mail/Phone</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="purchase-internet" 
-                          checked={purchaseMethods.includes('Internet')} 
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setPurchaseMethods([...purchaseMethods, 'Internet']);
-                            } else {
-                              setPurchaseMethods(purchaseMethods.filter(m => m !== 'Internet'));
-                            }
-                          }}
-                        />
-                        <Label htmlFor="purchase-internet">Internet</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="purchase-fax" 
-                          checked={purchaseMethods.includes('Fax')} 
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setPurchaseMethods([...purchaseMethods, 'Fax']);
-                            } else {
-                              setPurchaseMethods(purchaseMethods.filter(m => m !== 'Fax'));
-                            }
-                          }}
-                        />
-                        <Label htmlFor="purchase-fax">Fax</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="purchase-other" 
-                          checked={purchaseMethods.includes('Other')} 
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setPurchaseMethods([...purchaseMethods, 'Other']);
-                            } else {
-                              setPurchaseMethods(purchaseMethods.filter(m => m !== 'Other'));
-                            }
-                          }}
-                        />
-                        <Label htmlFor="purchase-other">Other</Label>
-                      </div>
-                    </div>
                     
-                    {purchaseMethods.includes('Other') && (
-                      <div className="mt-2 grid gap-2">
-                        <Label htmlFor="otherPurchaseMethod">Specify Other Purchase Method</Label>
-                        <Input
-                          id="otherPurchaseMethod"
-                          value={otherPurchaseMethod}
-                          onChange={(e) => setOtherPurchaseMethod(e.target.value)}
-                          placeholder="Enter purchase method"
-                        />
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="grid gap-2">
-                    <Label htmlFor="callCenterProviders">Call Center Provider(s)</Label>
-                    <Input
-                      id="callCenterProviders"
-                      value={callCenterProviders}
-                      onChange={(e) => setCallCenterProviders(e.target.value)}
-                      placeholder="Enter call center provider(s)"
+                    <FormField
+                      control={form.control}
+                      name="visaMastercardVolume"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Visa/Mastercard Volume ($)</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                   </div>
                   
-                  <div>
-                    <Label className="block mb-2">Authorization to Shipment Timeframe</Label>
-                    <RadioGroup value={authToShipTimeframe} onValueChange={setAuthToShipTimeframe}>
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="0-7 days" id="ship-0-7" />
-                          <Label htmlFor="ship-0-7">0–7 days</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="8-14 days" id="ship-8-14" />
-                          <Label htmlFor="ship-8-14">8–14 days</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="15-30 days" id="ship-15-30" />
-                          <Label htmlFor="ship-15-30">15–30 days</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="30-90 days" id="ship-30-90" />
-                          <Label htmlFor="ship-30-90">30–90 days</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="90+ days" id="ship-90plus" />
-                          <Label htmlFor="ship-90plus">90+ days</Label>
-                        </div>
-                      </div>
-                    </RadioGroup>
-                  </div>
-                  
-                  <div>
-                    <Label className="block mb-2">Delivery Timeframe to Customer</Label>
-                    <RadioGroup value={deliveryTimeframe} onValueChange={setDeliveryTimeframe}>
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="0-7 days" id="delivery-0-7" />
-                          <Label htmlFor="delivery-0-7">0–7 days</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="8-14 days" id="delivery-8-14" />
-                          <Label htmlFor="delivery-8-14">8–14 days</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="15-30 days" id="delivery-15-30" />
-                          <Label htmlFor="delivery-15-30">15–30 days</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="30-90 days" id="delivery-30-90" />
-                          <Label htmlFor="delivery-30-90">30–90 days</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="90+ days" id="delivery-90plus" />
-                          <Label htmlFor="delivery-90plus">90+ days</Label>
-                        </div>
-                      </div>
-                    </RadioGroup>
-                  </div>
-                  
-                  <div className="grid gap-2">
-                    <Label htmlFor="chargebackSystem">Chargeback Management System (if any)</Label>
-                    <Input
-                      id="chargebackSystem"
-                      value={chargebackSystem}
-                      onChange={(e) => setChargebackSystem(e.target.value)}
-                      placeholder="Enter chargeback management system"
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="amexVolume"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>American Express Volume ($)</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
-                  
-                  <div>
-                    <Label className="block mb-2">Deposits Required?</Label>
-                    <RadioGroup value={requiresDeposits} onValueChange={setRequiresDeposits}>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Yes" id="deposits-yes" />
-                        <Label htmlFor="deposits-yes">Yes</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="No" id="deposits-no" />
-                        <Label htmlFor="deposits-no">No</Label>
-                      </div>
-                    </RadioGroup>
                     
-                    {requiresDeposits === 'Yes' && (
-                      <div className="mt-2 grid gap-2">
-                        <Label htmlFor="depositPercent">% Required</Label>
-                        <div className="flex items-center">
-                          <Input
-                            id="depositPercent"
-                            value={depositPercent}
-                            onChange={(e) => setDepositPercent(e.target.value)}
-                            placeholder="Enter percentage"
-                            type="number"
-                            min="0"
-                            max="100"
-                          />
-                          <span className="ml-2">%</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <Label className="block mb-2">When is Full Payment Received?</Label>
-                    <RadioGroup value={paymentTiming} onValueChange={setPaymentTiming}>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="100% Paid in Advance" id="payment-advance" />
-                        <Label htmlFor="payment-advance">100% Paid in Advance</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="100% Paid on Delivery/Completion" id="payment-delivery" />
-                        <Label htmlFor="payment-delivery">100% Paid on Delivery/Completion</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-                  
-                  <div className="grid gap-2">
-                    <Label htmlFor="salesRegions">Sales Regions</Label>
-                    <Input
-                      id="salesRegions"
-                      value={salesRegions}
-                      onChange={(e) => setSalesRegions(e.target.value)}
-                      placeholder="Enter sales regions"
+                    <FormField
+                      control={form.control}
+                      name="averageTicket"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Average Ticket ($)</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
-                  
-                  <div className="grid gap-2">
-                    <Label htmlFor="internationalPercent">% of International Transactions</Label>
-                    <div className="flex items-center">
-                      <Input
-                        id="internationalPercent"
-                        value={internationalPercent}
-                        onChange={(e) => setInternationalPercent(e.target.value)}
-                        placeholder="Enter percentage"
-                        type="number"
-                        min="0"
-                        max="100"
-                      />
-                      <span className="ml-2">%</span>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label className="block mb-2">Shipping Method</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="shipping-fedex" 
-                          checked={shippingMethods.includes('FedEx')} 
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setShippingMethods([...shippingMethods, 'FedEx']);
-                            } else {
-                              setShippingMethods(shippingMethods.filter(m => m !== 'FedEx'));
-                            }
-                          }} 
-                        />
-                        <Label htmlFor="shipping-fedex">FedEx</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="shipping-ups" 
-                          checked={shippingMethods.includes('UPS')} 
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setShippingMethods([...shippingMethods, 'UPS']);
-                            } else {
-                              setShippingMethods(shippingMethods.filter(m => m !== 'UPS'));
-                            }
-                          }}
-                        />
-                        <Label htmlFor="shipping-ups">UPS</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="shipping-usps" 
-                          checked={shippingMethods.includes('USPS')} 
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setShippingMethods([...shippingMethods, 'USPS']);
-                            } else {
-                              setShippingMethods(shippingMethods.filter(m => m !== 'USPS'));
-                            }
-                          }}
-                        />
-                        <Label htmlFor="shipping-usps">USPS</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="shipping-other" 
-                          checked={shippingMethods.includes('Other')} 
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setShippingMethods([...shippingMethods, 'Other']);
-                            } else {
-                              setShippingMethods(shippingMethods.filter(m => m !== 'Other'));
-                            }
-                          }}
-                        />
-                        <Label htmlFor="shipping-other">Other</Label>
-                      </div>
-                    </div>
                     
-                    {shippingMethods.includes('Other') && (
-                      <div className="mt-2 grid gap-2">
-                        <Label htmlFor="otherShippingMethod">Specify Other Shipping Method</Label>
-                        <Input
-                          id="otherShippingMethod"
-                          value={otherShippingMethod}
-                          onChange={(e) => setOtherShippingMethod(e.target.value)}
-                          placeholder="Enter shipping method"
-                        />
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <Label className="block mb-2">Advertising Channels</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="adv-catalog" 
-                          checked={advertisingChannels.includes('Catalog')} 
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setAdvertisingChannels([...advertisingChannels, 'Catalog']);
-                            } else {
-                              setAdvertisingChannels(advertisingChannels.filter(c => c !== 'Catalog'));
-                            }
-                          }} 
-                        />
-                        <Label htmlFor="adv-catalog">Catalog</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="adv-tv" 
-                          checked={advertisingChannels.includes('TV/Radio')} 
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setAdvertisingChannels([...advertisingChannels, 'TV/Radio']);
-                            } else {
-                              setAdvertisingChannels(advertisingChannels.filter(c => c !== 'TV/Radio'));
-                            }
-                          }}
-                        />
-                        <Label htmlFor="adv-tv">TV/Radio</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="adv-flyers" 
-                          checked={advertisingChannels.includes('Flyers/Direct Mail')} 
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setAdvertisingChannels([...advertisingChannels, 'Flyers/Direct Mail']);
-                            } else {
-                              setAdvertisingChannels(advertisingChannels.filter(c => c !== 'Flyers/Direct Mail'));
-                            }
-                          }}
-                        />
-                        <Label htmlFor="adv-flyers">Flyers/Direct Mail</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="adv-internet" 
-                          checked={advertisingChannels.includes('Internet')} 
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setAdvertisingChannels([...advertisingChannels, 'Internet']);
-                            } else {
-                              setAdvertisingChannels(advertisingChannels.filter(c => c !== 'Internet'));
-                            }
-                          }}
-                        />
-                        <Label htmlFor="adv-internet">Internet</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="adv-other" 
-                          checked={advertisingChannels.includes('Other')} 
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setAdvertisingChannels([...advertisingChannels, 'Other']);
-                            } else {
-                              setAdvertisingChannels(advertisingChannels.filter(c => c !== 'Other'));
-                            }
-                          }}
-                        />
-                        <Label htmlFor="adv-other">Other</Label>
-                      </div>
-                    </div>
-                    
-                    {advertisingChannels.includes('Other') && (
-                      <div className="mt-2 grid gap-2">
-                        <Label htmlFor="otherAdvertisingChannel">Specify Other Advertising Channel</Label>
-                        <Input
-                          id="otherAdvertisingChannel"
-                          value={otherAdvertisingChannel}
-                          onChange={(e) => setOtherAdvertisingChannel(e.target.value)}
-                          placeholder="Enter advertising channel"
-                        />
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <Label className="block mb-2">Warranty / Guarantee Provided By</Label>
-                    <RadioGroup value={warrantyProvider} onValueChange={setWarrantyProvider}>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Merchant" id="warranty-merchant" />
-                        <Label htmlFor="warranty-merchant">Merchant</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Manufacturer" id="warranty-manufacturer" />
-                        <Label htmlFor="warranty-manufacturer">Manufacturer</Label>
-                      </div>
-                    </RadioGroup>
+                    <FormField
+                      control={form.control}
+                      name="highestTicket"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Highest Ticket ($)</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </div>
+                
+                {/* Transaction Method */}
+                <div className="border rounded-md p-4 space-y-4">
+                  <h3 className="font-medium">Transaction Method (Must Equal 100%)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="faceToFacePercent"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Face-to-Face (Retail) %</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="motoPercent"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Telephone/Mail/Email (MOTO) %</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="ecommercePercent"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Internet (eCommerce) %</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  {/* Calculated total */}
+                  {(() => {
+                    const face = parseInt(form.watch('faceToFacePercent') || '0');
+                    const moto = parseInt(form.watch('motoPercent') || '0');
+                    const ecom = parseInt(form.watch('ecommercePercent') || '0');
+                    const total = face + moto + ecom;
+                    
+                    return (
+                      <div className={`text-right text-sm ${total === 100 ? 'text-green-600' : 'text-red-600'}`}>
+                        Total: {total}% {total !== 100 && '(must equal 100%)'}
+                      </div>
+                    );
+                  })()}
+                </div>
+                
+                {/* Refund / Cancellation Policy */}
+                <div className="border rounded-md p-4 space-y-4">
+                  <h3 className="font-medium">Refund / Cancellation Policy</h3>
+                  <FormField
+                    control={form.control}
+                    name="hasRefundPolicy"
+                    render={({ field }) => (
+                      <FormItem className="space-y-1">
+                        <FormLabel>Do you have a refund policy?</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-2 gap-2"
+                          >
+                            {['Yes', 'No'].map((option) => (
+                              <FormItem key={option} className="flex items-center space-x-2">
+                                <FormControl>
+                                  <RadioGroupItem value={option} />
+                                </FormControl>
+                                <FormLabel className="font-normal">{option}</FormLabel>
+                              </FormItem>
+                            ))}
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {form.watch('hasRefundPolicy') === 'Yes' && (
+                    <FormField
+                      control={form.control}
+                      name="refundPolicyType"
+                      render={({ field }) => (
+                        <FormItem className="space-y-1">
+                          <FormLabel>Policy Type</FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              value={field.value}
+                              className="grid grid-cols-2 gap-2"
+                            >
+                              {['Exchange', 'Store Credit', 'Refund within 30 days', 'Other'].map((option) => (
+                                <FormItem key={option} className="flex items-center space-x-2">
+                                  <FormControl>
+                                    <RadioGroupItem value={option} />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">{option}</FormLabel>
+                                </FormItem>
+                              ))}
+                            </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  
+                  {form.watch('refundPolicyType') === 'Other' && (
+                    <FormField
+                      control={form.control}
+                      name="otherRefundPolicy"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Specify Other Refund Policy</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </div>
+                
+                {/* Processing History */}
+                <div className="border rounded-md p-4 space-y-4">
+                  <h3 className="font-medium">Processing History</h3>
+                  <FormField
+                    control={form.control}
+                    name="hasProcessingHistory"
+                    render={({ field }) => (
+                      <FormItem className="space-y-1">
+                        <FormLabel>Processing History?</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-2 gap-2"
+                          >
+                            {['Yes', 'No'].map((option) => (
+                              <FormItem key={option} className="flex items-center space-x-2">
+                                <FormControl>
+                                  <RadioGroupItem value={option} />
+                                </FormControl>
+                                <FormLabel className="font-normal">{option}</FormLabel>
+                              </FormItem>
+                            ))}
+                          </RadioGroup>
+                        </FormControl>
+                        {field.value === 'Yes' && (
+                          <p className="text-xs text-gray-500">Attach 3 most recent processing statements</p>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="previousProcessor"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Current/Previous Processor(s)</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="hasPreviousTerminations"
+                    render={({ field }) => (
+                      <FormItem className="space-y-1">
+                        <FormLabel>Previous Terminations?</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-2 gap-2"
+                          >
+                            {['Yes', 'No'].map((option) => (
+                              <FormItem key={option} className="flex items-center space-x-2">
+                                <FormControl>
+                                  <RadioGroupItem value={option} />
+                                </FormControl>
+                                <FormLabel className="font-normal">{option}</FormLabel>
+                              </FormItem>
+                            ))}
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {form.watch('hasPreviousTerminations') === 'Yes' && (
+                    <FormField
+                      control={form.control}
+                      name="terminationsExplanation"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Explain Previous Terminations</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  
+                  <FormField
+                    control={form.control}
+                    name="hasBankruptcies"
+                    render={({ field }) => (
+                      <FormItem className="space-y-1">
+                        <FormLabel>Bankruptcies?</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-2 gap-2"
+                          >
+                            {['Yes', 'No'].map((option) => (
+                              <FormItem key={option} className="flex items-center space-x-2">
+                                <FormControl>
+                                  <RadioGroupItem value={option} />
+                                </FormControl>
+                                <FormLabel className="font-normal">{option}</FormLabel>
+                              </FormItem>
+                            ))}
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {form.watch('hasBankruptcies') === 'Yes' && (
+                    <FormField
+                      control={form.control}
+                      name="bankruptciesExplanation"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Explain Bankruptcies</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </div>
+                
+                {/* Business Type */}
+                <div className="border rounded-md p-4 space-y-4">
+                  <h3 className="font-medium">Business Type</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="b2bPercent"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>B2B (%)</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="b2cPercent"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>B2C (%)</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <FormField
+                    control={form.control}
+                    name="isSeasonalBusiness"
+                    render={({ field }) => (
+                      <FormItem className="space-y-1">
+                        <FormLabel>Seasonal Business?</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-2 gap-2"
+                          >
+                            {['Yes', 'No'].map((option) => (
+                              <FormItem key={option} className="flex items-center space-x-2">
+                                <FormControl>
+                                  <RadioGroupItem value={option} />
+                                </FormControl>
+                                <FormLabel className="font-normal">{option}</FormLabel>
+                              </FormItem>
+                            ))}
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="hasRecurringPayments"
+                    render={({ field }) => (
+                      <FormItem className="space-y-1">
+                        <FormLabel>Recurring Payments/Subscriptions?</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-2 gap-2"
+                          >
+                            {['Yes', 'No'].map((option) => (
+                              <FormItem key={option} className="flex items-center space-x-2">
+                                <FormControl>
+                                  <RadioGroupItem value={option} />
+                                </FormControl>
+                                <FormLabel className="font-normal">{option}</FormLabel>
+                              </FormItem>
+                            ))}
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {form.watch('hasRecurringPayments') === 'Yes' && (
+                    <FormField
+                      control={form.control}
+                      name="recurringPaymentsDetails"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Specify Recurring Payment Details</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </div>
               </TabsContent>
-            </div>
-          </ScrollArea>
-        </Tabs>
-        
-        <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-between sm:space-x-2">
-          <div className="flex justify-center sm:justify-start gap-2 mt-4 sm:mt-0">
-            <DialogClose asChild>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={processing}
-              >
-                Cancel
-              </Button>
-            </DialogClose>
-          </div>
-          <div className="flex justify-center sm:justify-end gap-2">
-            <Button
-              type="button"
-              className="bg-orange-500 hover:bg-orange-600"
-              onClick={handleGenerate}
-              disabled={processing}
-            >
-              {processing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                'Generate Document'
-              )}
-            </Button>
-          </div>
-        </DialogFooter>
+              
+              {/* eCommerce Tab */}
+              <TabsContent value="ecommerce" className="space-y-4">
+                <div className="bg-blue-50 border border-blue-100 rounded-md p-3 mb-4">
+                  <h3 className="text-sm font-medium text-blue-800 flex items-center">
+                    <Info className="h-4 w-4 mr-1" /> eCommerce & Card-Not-Present Information
+                  </h3>
+                  <p className="text-xs text-blue-700">
+                    Complete details about your online sales and fulfillment processes.
+                  </p>
+                </div>
+                
+                <div className="border rounded-md p-4 space-y-4">
+                  <h3 className="font-medium">eCommerce / Card-Not-Present</h3>
+                  <FormField
+                    control={form.control}
+                    name="productPurchaseAddresses"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Product Purchase Address(es)</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="inventoryOwner"
+                    render={({ field }) => (
+                      <FormItem className="space-y-1">
+                        <FormLabel>Who Owns Inventory?</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-2 gap-2"
+                          >
+                            {['Merchant', 'Vendor (Drop Ship)'].map((option) => (
+                              <FormItem key={option} className="flex items-center space-x-2">
+                                <FormControl>
+                                  <RadioGroupItem value={option} />
+                                </FormControl>
+                                <FormLabel className="font-normal">{option}</FormLabel>
+                              </FormItem>
+                            ))}
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="fulfillmentProviders"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Fulfillment Provider(s)</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="shoppingCartPlatforms"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Shopping Cart / CRM Platform(s)</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  {/* Purchase Methods Checkboxes */}
+                  <h4 className="text-sm font-medium pt-2">How Do Customers Purchase?</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                    {['In Person', 'Mail/Phone', 'Internet', 'Fax', 'Other'].map((option) => (
+                      <FormItem key={option} className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox 
+                            checked={form.watch('purchaseMethods')?.includes(option) || false}
+                            onCheckedChange={(checked) => {
+                              const current = form.watch('purchaseMethods') || [];
+                              if (checked) {
+                                form.setValue('purchaseMethods', [...current, option]);
+                              } else {
+                                form.setValue('purchaseMethods', current.filter(item => item !== option));
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        <FormLabel className="font-normal">{option}</FormLabel>
+                      </FormItem>
+                    ))}
+                  </div>
+                  
+                  {form.watch('purchaseMethods')?.includes('Other') && (
+                    <FormField
+                      control={form.control}
+                      name="otherPurchaseMethod"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Specify Other Purchase Method</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  
+                  <FormField
+                    control={form.control}
+                    name="callCenterProviders"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Call Center Provider(s)</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="authToShipTimeframe"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Authorization to Shipment Timeframe</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select timeframe" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="0–7 days">0–7 days</SelectItem>
+                              <SelectItem value="8–14 days">8–14 days</SelectItem>
+                              <SelectItem value="15–30 days">15–30 days</SelectItem>
+                              <SelectItem value="30–90 days">30–90 days</SelectItem>
+                              <SelectItem value="90+ days">90+ days</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="deliveryTimeframe"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Delivery Timeframe to Customer</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select timeframe" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="0–7 days">0–7 days</SelectItem>
+                              <SelectItem value="8–14 days">8–14 days</SelectItem>
+                              <SelectItem value="15–30 days">15–30 days</SelectItem>
+                              <SelectItem value="30–90 days">30–90 days</SelectItem>
+                              <SelectItem value="90+ days">90+ days</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <FormField
+                    control={form.control}
+                    name="chargebackSystem"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Chargeback Management System (if any)</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="requiresDeposits"
+                    render={({ field }) => (
+                      <FormItem className="space-y-1">
+                        <FormLabel>Deposits Required?</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-2 gap-2"
+                          >
+                            {['Yes', 'No'].map((option) => (
+                              <FormItem key={option} className="flex items-center space-x-2">
+                                <FormControl>
+                                  <RadioGroupItem value={option} />
+                                </FormControl>
+                                <FormLabel className="font-normal">{option}</FormLabel>
+                              </FormItem>
+                            ))}
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {form.watch('requiresDeposits') === 'Yes' && (
+                    <FormField
+                      control={form.control}
+                      name="depositPercent"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>% Required</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  
+                  <FormField
+                    control={form.control}
+                    name="paymentTiming"
+                    render={({ field }) => (
+                      <FormItem className="space-y-1">
+                        <FormLabel>When is Full Payment Received?</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-1 gap-2"
+                          >
+                            {['100% Paid in Advance', '100% Paid on Delivery/Completion'].map((option) => (
+                              <FormItem key={option} className="flex items-center space-x-2">
+                                <FormControl>
+                                  <RadioGroupItem value={option} />
+                                </FormControl>
+                                <FormLabel className="font-normal">{option}</FormLabel>
+                              </FormItem>
+                            ))}
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="salesRegions"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Sales Regions</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="internationalPercent"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>% of International Transactions</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  {/* Shipping Methods Checkboxes */}
+                  <h4 className="text-sm font-medium pt-2">Shipping Method</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {['FedEx', 'UPS', 'USPS', 'Other'].map((option) => (
+                      <FormItem key={option} className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox 
+                            checked={form.watch('shippingMethods')?.includes(option) || false}
+                            onCheckedChange={(checked) => {
+                              const current = form.watch('shippingMethods') || [];
+                              if (checked) {
+                                form.setValue('shippingMethods', [...current, option]);
+                              } else {
+                                form.setValue('shippingMethods', current.filter(item => item !== option));
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        <FormLabel className="font-normal">{option}</FormLabel>
+                      </FormItem>
+                    ))}
+                  </div>
+                  
+                  {form.watch('shippingMethods')?.includes('Other') && (
+                    <FormField
+                      control={form.control}
+                      name="otherShippingMethod"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Specify Other Shipping Method</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  
+                  {/* Advertising Channels Checkboxes */}
+                  <h4 className="text-sm font-medium pt-2">Advertising Channels</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {['Catalog', 'TV/Radio', 'Flyers/Direct Mail', 'Internet', 'Other'].map((option) => (
+                      <FormItem key={option} className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox 
+                            checked={form.watch('advertisingChannels')?.includes(option) || false}
+                            onCheckedChange={(checked) => {
+                              const current = form.watch('advertisingChannels') || [];
+                              if (checked) {
+                                form.setValue('advertisingChannels', [...current, option]);
+                              } else {
+                                form.setValue('advertisingChannels', current.filter(item => item !== option));
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        <FormLabel className="font-normal">{option}</FormLabel>
+                      </FormItem>
+                    ))}
+                  </div>
+                  
+                  {form.watch('advertisingChannels')?.includes('Other') && (
+                    <FormField
+                      control={form.control}
+                      name="otherAdvertisingChannel"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Specify Other Advertising Channel</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  
+                  <FormField
+                    control={form.control}
+                    name="warrantyProvider"
+                    render={({ field }) => (
+                      <FormItem className="space-y-1">
+                        <FormLabel>Warranty / Guarantee Provided By</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-2 gap-2"
+                          >
+                            {['Merchant', 'Manufacturer'].map((option) => (
+                              <FormItem key={option} className="flex items-center space-x-2">
+                                <FormControl>
+                                  <RadioGroupItem value={option} />
+                                </FormControl>
+                                <FormLabel className="font-normal">{option}</FormLabel>
+                              </FormItem>
+                            ))}
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </TabsContent>
+            </Tabs>
+            
+            <DialogFooter className="gap-2 sm:gap-0">
+              <div className="flex space-x-2 items-center">
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Generate Pre-App PDF
+                </Button>
+              </div>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
 };
+

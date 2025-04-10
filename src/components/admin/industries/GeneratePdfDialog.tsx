@@ -41,6 +41,15 @@ export const GeneratePdfDialog: React.FC<GeneratePdfDialogProps> = ({
     setGenerating(true);
 
     try {
+      // Verify user is authenticated
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      
+      if (authError || !session) {
+        toast.error("Authentication error: You must be logged in to generate a PDF");
+        setGenerating(false);
+        return;
+      }
+      
       let leadData = null;
       if (selectedLeadId !== 'blank') {
         const lead = leads.find(l => l.id.toString() === selectedLeadId);
