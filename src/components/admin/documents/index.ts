@@ -8,6 +8,7 @@ import { DocumentViewDialog } from './DocumentViewDialog';
 import { DocumentEditDialog } from './DocumentEditDialog';
 import { DocumentFillDialog } from './DocumentFillDialog';
 import { PreAppModal } from './PreApp';
+import { PreAppGenerationDialog } from './PreAppGenerationDialog';
 
 // Export components
 export {
@@ -18,6 +19,7 @@ export {
   DocumentEditDialog,
   DocumentFillDialog,
   PreAppModal,
+  PreAppGenerationDialog,
 };
 
 // Export types

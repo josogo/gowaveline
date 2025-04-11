@@ -46,6 +46,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
   const [leadData, setLeadData] = useState(null);
   const [error, setError] = useState<string | null>(null);
   const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
+  const [generatedFilename, setGeneratedFilename] = useState<string>('WaveLine_Merchant_Application.pdf');
 
   const form = useForm<PreAppFormValues>({
     resolver: zodResolver(preAppFormSchema),
@@ -83,22 +84,35 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
       const result = await generatePreApp(selectedIndustryId, leadData, data);
       
       console.log('[GENERATE] Pre-app generation successful:', result);
+      
+      if (!result || !result.pdfBase64) {
+        throw new Error('No PDF data returned from the server');
+      }
+      
       toast.success('Merchant application generated successfully');
       
-      if (result && result.pdfBase64) {
+      // Create a clean business name for the filename
+      const businessName = result.businessName || data.businessName || 'Merchant';
+      const cleanBusinessName = businessName.replace(/[^a-zA-Z0-9]/g, '_');
+      const filename = `WaveLine_PreApp_${cleanBusinessName}.pdf`;
+      setGeneratedFilename(filename);
+      
+      // Convert base64 to blob and create download URL
+      try {
         const pdfBlob = base64ToBlob(result.pdfBase64, 'application/pdf');
-        const downloadLink = URL.createObjectURL(pdfBlob);
+        const downloadUrl = URL.createObjectURL(pdfBlob);
+        setGeneratedPdfUrl(downloadUrl);
         
-        const filename = `WaveLine_PreApp_${result.businessName.replace(/\s+/g, '_')}.pdf`;
-        
+        // Trigger download automatically
         const link = document.createElement('a');
-        link.href = downloadLink;
+        link.href = downloadUrl;
         link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
-        setGeneratedPdfUrl(downloadLink);
+      } catch (blobError) {
+        console.error('Error converting PDF base64 to blob:', blobError);
+        throw new Error('Failed to process the generated PDF');
       }
       
       if (onSuccess) onSuccess();
@@ -137,12 +151,25 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
   };
 
   function base64ToBlob(base64: string, type: string = 'application/pdf'): Blob {
-    const binaryString = window.atob(base64);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
+    try {
+      // Make sure to handle padding if needed
+      const paddingNeeded = base64.length % 4;
+      if (paddingNeeded > 0) {
+        base64 += '='.repeat(4 - paddingNeeded);
+      }
+      
+      const binaryString = window.atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      
+      return new Blob([bytes], { type });
+    } catch (e) {
+      console.error('Error in base64ToBlob:', e);
+      throw new Error('Failed to convert PDF data');
     }
-    return new Blob([bytes], { type });
   }
 
   return (
@@ -179,7 +206,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
                 onClick={() => {
                   const link = document.createElement('a');
                   link.href = generatedPdfUrl;
-                  link.download = "WaveLine_Merchant_Application.pdf";
+                  link.download = generatedFilename;
                   document.body.appendChild(link);
                   link.click();
                   document.body.removeChild(link);
@@ -286,4 +313,3 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
     </Dialog>
   );
 };
-
