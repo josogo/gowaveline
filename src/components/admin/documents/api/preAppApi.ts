@@ -1,117 +1,39 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { base64ToBlob } from './utils';
+import { createClient } from '@supabase/supabase-js';
 
 /**
- * Generates a pre-application PDF from the provided data
- * 
- * @param industryId The ID of the industry for the application
- * @param leadData Any lead data to include in the application
- * @param formData Form data to include in the application
- * @returns Promise containing success flag, PDF data, and business name
+ * Generate a pre-application PDF using the edge function.
+ * @param industryId - The ID of the selected industry
+ * @param leadData - Optional lead data to pre-populate fields
+ * @param formData - Form data from the pre-application form
  */
-export async function generatePreApp(
-  industryId: string,
-  leadData: any,
-  formData: any
-): Promise<any> {
+export const generatePreApp = async (industryId: string, leadData: any, formData: any) => {
+  const supabase = createClient(
+    import.meta.env.VITE_SUPABASE_URL,
+    import.meta.env.VITE_SUPABASE_ANON_KEY
+  );
+
   try {
-    console.log('[GENERATE_PRE_APP] Starting generatePreApp function with industry:', industryId);
+    console.log('[API] Generating pre-app with data:', { industryId, formData });
     
-    // Validate input parameters
-    if (!industryId) {
-      throw new Error('Industry ID is required');
-    }
-    
-    if (!formData) {
-      throw new Error('Form data is required');
-    }
-    
-    const edgeFunctionUrl = 'https://rqwrvkkfixrogxogunsk.supabase.co/functions/v1/generate-pre-app';
-    console.log('[GENERATE_PRE_APP] Calling edge function URL:', edgeFunctionUrl);
-    
-    const response = await fetch(edgeFunctionUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ industryId, formData })
+    const { data, error } = await supabase.functions.invoke('generate-pre-app', {
+      body: { industryId, leadData, formData },
     });
     
-    console.log('[GENERATE_PRE_APP] Edge function response status:', response.status);
-    
-    if (!response.ok) {
-      let errorMessage = `PDF generation failed: Server returned ${response.status} ${response.statusText}`;
-      try {
-        const errorData = await response.json();
-        if (errorData && errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (e) {
-        // Fall back to the text if we can't parse JSON
-        const errorText = await response.text();
-        errorMessage = errorText || errorMessage;
-      }
-      
-      console.error('[GENERATE_PRE_APP] Error response:', errorMessage);
-      throw new Error(errorMessage);
+    if (error) {
+      console.error('[API] Error generating pre-app:', error);
+      throw new Error(error.message || 'Failed to generate merchant application');
     }
     
-    // Get the JSON response
-    const result = await response.json();
-    console.log('[GENERATE_PRE_APP] Response received, success:', result.success);
-    
-    // Validate the response structure
-    if (!result.success) {
-      const errorMessage = result?.error || 'Unknown error occurred';
-      console.error('[GENERATE_PRE_APP] Error in response:', result);
-      throw new Error(`PDF generation failed: ${errorMessage}`);
+    if (!data || !data.success) {
+      console.error('[API] API returned unsuccessful response:', data);
+      throw new Error(data?.error || 'Failed to generate merchant application');
     }
     
-    if (!result.pdfBase64) {
-      console.error('[GENERATE_PRE_APP] No PDF data in response:', result);
-      throw new Error('No PDF data received from the server');
-    }
-    
-    // Validate the base64 string
-    if (typeof result.pdfBase64 !== 'string' || result.pdfBase64.trim() === '') {
-      console.error('[GENERATE_PRE_APP] Invalid PDF base64 data:', typeof result.pdfBase64);
-      throw new Error('Invalid PDF data received from the server');
-    }
-    
-    // Log base64 string length for debugging
-    console.log('[GENERATE_PRE_APP] PDF base64 string length:', result.pdfBase64.length);
-    
-    // Test the conversion to make sure the base64 is valid
-    try {
-      const testBlob = base64ToBlob(result.pdfBase64, 'application/pdf');
-      console.log('[GENERATE_PRE_APP] PDF blob created successfully with size:', testBlob.size);
-      
-      if (testBlob.size < 100) {
-        console.warn('[GENERATE_PRE_APP] Warning: PDF blob size is very small:', testBlob.size);
-        
-        if (testBlob.size === 0) {
-          throw new Error('Generated PDF has zero size');
-        }
-      }
-    } catch (convertError: any) {
-      console.error('[GENERATE_PRE_APP] Error converting base64 to blob:', convertError);
-      throw new Error(`Invalid PDF data format: ${convertError.message}`);
-    }
-    
-    console.log('[GENERATE_PRE_APP] PDF generated successfully');
-    
-    const businessName = result.businessName || formData.businessName || 'merchant-application';
-    console.log('[GENERATE_PRE_APP] Using business name for file:', businessName);
-    
-    return {
-      success: true,
-      pdfBase64: result.pdfBase64,
-      businessName: businessName
-    };
-    
+    console.log('[API] Successfully generated pre-app PDF');
+    return data;
   } catch (error: any) {
-    console.error('[GENERATE_PRE_APP] Error generating pre-app document:', error);
-    throw error;
+    console.error('[API] Exception generating pre-app:', error);
+    throw new Error(`Failed to generate merchant application: ${error.message}`);
   }
-}
+};

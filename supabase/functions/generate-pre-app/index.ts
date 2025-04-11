@@ -1,7 +1,7 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.14.0'
 import { jsPDF } from 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/+esm'
+import { encode } from "https://deno.land/std@0.177.0/encoding/base64.ts"
 
 // CORS headers for browser compatibility
 const corsHeaders = {
@@ -117,6 +117,17 @@ async function parseAndValidateRequest(req) {
 }
 
 /**
+ * Convert the WaveLine logo to base64 for embedding in the PDF
+ */
+const getWavelineLogo = async () => {
+  // This is a placeholder with an orange wave and blue "waveline" text
+  // Equivalent to the uploaded waveline logo image
+  const logoBase64 = "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"
+
+  return logoBase64;
+};
+
+/**
  * Main function to generate the merchant application PDF
  * Returns object with base64 PDF data
  */
@@ -131,42 +142,53 @@ async function generateWaveLineMerchantApplication(formData) {
   // Set up document dimensions and constants
   const pageSetup = setupPdfDocument(doc);
   
-  // Add WaveLine logo and header
-  const yAfterHeader = addDocumentHeader(doc, pageSetup);
-  
-  // Add business name as document title
-  const yAfterTitle = addBusinessTitle(doc, formData, yAfterHeader, pageSetup);
-  
-  // Start adding content sections
-  let currentY = yAfterTitle;
-  
-  // Add each section of the form
-  currentY = addBusinessStructureSection(doc, formData, currentY, pageSetup);
-  currentY = addBusinessInfoSection(doc, formData, currentY, pageSetup);
-  
-  // Check if we need to add a page break
-  currentY = checkAndAddPageBreak(doc, currentY, pageSetup, false);
-  
-  currentY = addPrincipalInfoSection(doc, formData, currentY, pageSetup);
-  currentY = addBankInfoSection(doc, formData, currentY, pageSetup);
-  
-  // Check if we need to add a page break
-  currentY = checkAndAddPageBreak(doc, currentY, pageSetup, false);
-  
-  currentY = addProcessingVolumeSection(doc, formData, currentY, pageSetup);
-  currentY = addBusinessTypeSection(doc, formData, currentY, pageSetup);
-  currentY = addTransactionMethodsSection(doc, formData, currentY, pageSetup);
-  
-  // Check if we need another page break
-  currentY = checkAndAddPageBreak(doc, currentY, pageSetup, false);
-  
-  // Add eCommerce section if applicable
-  if (formData.purchaseMethods && formData.purchaseMethods.includes('internet')) {
+  try {
+    // Get WaveLine logo as base64
+    const logoBase64 = await getWavelineLogo();
+    
+    // Add WaveLine logo and header
+    const yAfterHeader = addDocumentHeader(doc, pageSetup, logoBase64);
+    
+    // Add business name as document title
+    const yAfterTitle = addBusinessTitle(doc, formData, yAfterHeader, pageSetup);
+    
+    // Start adding content sections
+    let currentY = yAfterTitle;
+    
+    // Add each section of the form
+    currentY = addBusinessStructureSection(doc, formData, currentY, pageSetup);
+    currentY = addBusinessInfoSection(doc, formData, currentY, pageSetup);
+    currentY = addAuthorizedContactSection(doc, formData, currentY, pageSetup);
+    currentY = addEquipmentSection(doc, formData, currentY, pageSetup);
+    currentY = addBusinessLocationSection(doc, formData, currentY, pageSetup);
+    
+    // Start a new page
+    doc.addPage();
+    currentY = pageSetup.margin + 10;
+    
+    currentY = addPrincipalInfoSection(doc, formData, currentY, pageSetup);
+    currentY = addBankInfoSection(doc, formData, currentY, pageSetup);
+    currentY = addBusinessDescriptionSection(doc, formData, currentY, pageSetup);
+    currentY = addProcessingVolumeSection(doc, formData, currentY, pageSetup);
+    currentY = addTransactionMethodsSection(doc, formData, currentY, pageSetup);
+    
+    // Start a new page
+    doc.addPage();
+    currentY = pageSetup.margin + 10;
+    
+    currentY = addRefundPolicySection(doc, formData, currentY, pageSetup);
+    currentY = addBusinessTypeSection(doc, formData, currentY, pageSetup);
+    
+    // Add eCommerce section if applicable
     currentY = addEcommerceSection(doc, formData, currentY, pageSetup);
+    
+    // Add footer with application ID and date
+    addDocumentFooter(doc, formData.businessName || "WaveLine Merchant Application");
+    
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    throw new Error(`PDF generation failed: ${error.message}`);
   }
-  
-  // Add footer with application ID and date
-  addDocumentFooter(doc, formData.businessName || "WaveLine Merchant Application");
   
   // Convert the document to base64
   const pdfOutput = doc.output('datauristring');
@@ -190,8 +212,9 @@ function setupPdfDocument(doc) {
   const contentWidth = pageWidth - (margin * 2);
   
   // Colors
-  const primaryColor = [14, 165, 233]; // #0EA5E9 (sky blue)
-  const secondaryColor = [51, 65, 85]; // #334155 (slate)
+  const primaryColor = [243, 144, 29]; // Orange (#F3901D)
+  const secondaryColor = [0, 174, 239]; // Blue (#00AEEF)
+  const textColor = [51, 51, 51]; // Dark gray (#333333)
   
   // Standard settings for text
   doc.setFont('helvetica', 'normal');
@@ -207,6 +230,7 @@ function setupPdfDocument(doc) {
     rightMargin: pageWidth - margin,
     primaryColor,
     secondaryColor,
+    textColor,
     lineHeight: 7,
     sectionSpacing: 10
   };
@@ -215,26 +239,28 @@ function setupPdfDocument(doc) {
 /**
  * Adds the document header with logo and title
  */
-function addDocumentHeader(doc, { pageWidth, margin, primaryColor }) {
-  // Add blue header bar
-  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.rect(0, 0, pageWidth, 25, 'F');
+function addDocumentHeader(doc, { pageWidth, margin, primaryColor, secondaryColor }, logoBase64) {
+  // Add logo if available
+  if (logoBase64) {
+    // Add the WaveLine logo centered at the top
+    try {
+      doc.addImage(logoBase64, 'PNG', (pageWidth / 2) - 20, margin, 40, 40);
+    } catch (error) {
+      console.error("Error adding logo:", error);
+    }
+  }
   
-  // Add WaveLine text logo in white
-  doc.setFontSize(20);
-  doc.setTextColor(255, 255, 255);
+  // Add WaveLine Merchant Application title
   doc.setFont('helvetica', 'bold');
-  doc.text("WaveLine", margin, 15);
-  
-  // Add application title
-  doc.setFont('helvetica', 'normal');
-  doc.text("Merchant Application", pageWidth - margin - 45, 15);
+  doc.setFontSize(18);
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text("WaveLine Merchant Application", pageWidth / 2, margin + 50, { align: 'center' });
   
   // Reset text color for the rest of the document
   doc.setTextColor(0, 0, 0);
   
   // Return new Y position after header
-  return 35;
+  return margin + 60;
 }
 
 /**
@@ -244,22 +270,27 @@ function addBusinessTitle(doc, formData, y, { pageWidth, secondaryColor }) {
   doc.setFontSize(16);
   doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
   doc.setFont('helvetica', 'bold');
-  const title = formData.businessName || 'New Business Application';
-  doc.text(title, pageWidth / 2, y, { align: 'center' });
-  
-  // Reset text color for the rest of the document
+  const title = formData.businessName || ' ';
+  if (title.trim() !== '') {
+    doc.text(title, pageWidth / 2, y, { align: 'center' });
+    // Reset text color for the rest of the document
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    return y + 12; // Return new Y position with spacing
+  }
+  // Reset text color even if no title
   doc.setTextColor(0, 0, 0);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
-  
-  return y + 12; // Return new Y position with spacing
+  return y + 5; // Return new Y position with less spacing
 }
 
 /**
  * Adds the business structure section to the PDF
  */
-function addBusinessStructureSection(doc, formData, y, { leftMargin, pageWidth, margin, lineHeight, sectionSpacing }) {
-  y = addSectionHeader(doc, "1. Business Structure", y);
+function addBusinessStructureSection(doc, formData, y, { leftMargin, pageWidth, margin, lineHeight, sectionSpacing, primaryColor }) {
+  y = addSectionHeader(doc, "1. Business Structure", y, primaryColor);
   
   // Checkbox for business structure with better formatting
   const structures = [
@@ -271,465 +302,256 @@ function addBusinessStructureSection(doc, formData, y, { leftMargin, pageWidth, 
     { id: "other", label: "Other" }
   ];
   
-  let currentY = y;
   let currentX = leftMargin;
-  const maxWidth = 80;
+  const checkboxSpacing = 30; // Space between checkboxes
   
   structures.forEach((structure) => {
     const isSelected = formData.businessStructure === structure.id;
     
     // Check if we need to move to a new line
-    if (currentX > pageWidth - margin - maxWidth) {
+    if (currentX + checkboxSpacing > pageWidth - margin) {
       currentX = leftMargin;
-      currentY += lineHeight;
+      y += lineHeight;
     }
     
-    // Draw checkbox
-    doc.rect(currentX, currentY - 3, 3, 3); 
-    
-    // Fill if selected
+    // Draw filled square for selected options
+    doc.rect(currentX, y - 3, 3, 3); 
     if (isSelected) {
       doc.setFillColor(0, 0, 0);
-      doc.rect(currentX, currentY - 3, 3, 3, 'F');
+      doc.rect(currentX, y - 3, 3, 3, 'F');
     }
     
     // Text after checkbox
-    doc.text(structure.label, currentX + 5, currentY);
-    currentX += structure.label.length * 1.8 + 10;
+    doc.text(structure.label, currentX + 5, y);
+    currentX += structure.label.length * 2 + 10; // Adjust spacing based on label length
   });
   
+  y += lineHeight;
+  
   // Add business structure other field if selected
-  if (formData.businessStructure === 'other' && formData.businessStructureOther) {
-    currentY += lineHeight;
-    doc.text(`Other Type: ${formData.businessStructureOther}`, leftMargin, currentY);
+  if (formData.businessStructure === 'other') {
+    doc.text(`Other: ${formData.businessStructureOther || '_______________'}`, leftMargin, y);
+    y += lineHeight;
+  } else {
+    doc.text(`Other: _______________`, leftMargin, y);
+    y += lineHeight;
   }
   
-  return currentY + sectionSpacing;
+  return y + sectionSpacing/2;
 }
 
 /**
  * Adds the business information section to the PDF
  */
-function addBusinessInfoSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing }) {
-  y = addSectionHeader(doc, "2. Business Information", y);
+function addBusinessInfoSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing, primaryColor }) {
+  y = addSectionHeader(doc, "2. Business Information", y, primaryColor);
   
-  // Business Information fields with improved formatting
-  const businessInfo = [
-    { label: "Business Name:", value: formData.businessName || "" },
-    { label: "Street Address:", value: formData.streetAddress || "" },
-    { label: "Mailing Address:", value: formData.mailingAddress || formData.streetAddress || "" },
-    { label: "City, State, ZIP:", value: 
-      formatCityStateZip(formData.city, formData.state, formData.zip) },
-    { label: "Business Phone:", value: formData.businessPhone || "" },
-    { label: "Business Email:", value: formData.businessEmail || "" },
-    { label: "Business Fax:", value: formData.businessFax || "" },
-    { label: "Customer Service Phone:", value: formData.customerServicePhone || "" },
-    { label: "Customer Service Email:", value: formData.customerServiceEmail || "" },
-    { label: "Website/URL:", value: formData.website || "" }
+  // Create a field with label and value or blank line
+  function addField(label, value, yPos) {
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${label} ${value || '_______________'}`, leftMargin, yPos);
+    return yPos + lineHeight;
+  }
+  
+  y = addField("Street (Location) Address:", formData.streetAddress, y);
+  y = addField("Mailing (Legal) Address:", formData.mailingAddress, y);
+  y = addField("Business/Contact Telephone:", formData.businessPhone, y);
+  y = addField("Business/Contact Email:", formData.businessEmail, y);
+  y = addField("Business Fax #:", formData.businessFax, y);
+  y = addField("Customer Service Telephone:", formData.customerServicePhone, y);
+  y = addField("Customer Service Email:", formData.customerServiceEmail, y);
+  y = addField("Website/URL: http://", formData.website, y);
+  
+  return y + sectionSpacing/2;
+}
+
+/**
+ * Adds the authorized contact section to the PDF
+ */
+function addAuthorizedContactSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing, primaryColor }) {
+  y = addSectionHeader(doc, "3. Authorized Contact", y, primaryColor);
+  
+  doc.text(`Full Name: ${formData.authorizedContactName || '________________________________'}`, leftMargin, y);
+  
+  return y + lineHeight + sectionSpacing/2;
+}
+
+/**
+ * Adds the equipment and software section to the PDF
+ */
+function addEquipmentSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing, primaryColor }) {
+  y = addSectionHeader(doc, "4. Equipment / Software", y, primaryColor);
+  
+  doc.text(`Terminal/Gateway Used: (e.g., VX 520, Authorize.net, NMI) ${formData.terminalGateway || '________________'}`, leftMargin, y);
+  y += lineHeight;
+  
+  doc.text(`Shopping Cart (if applicable): ${formData.shoppingCart || '________________'}`, leftMargin, y);
+  y += lineHeight;
+  
+  doc.text("If using Shopify, request Authorize.net Gateway.", leftMargin, y);
+  
+  return y + lineHeight + sectionSpacing/2;
+}
+
+/**
+ * Adds the business location section to the PDF
+ */
+function addBusinessLocationSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing, primaryColor }) {
+  y = addSectionHeader(doc, "5. Business Location", y, primaryColor);
+  
+  doc.text(`Number of Employees: ${formData.employeeCount || '_______'}`, leftMargin, y);
+  y += lineHeight;
+  
+  // Location Type checkboxes
+  doc.text("Location Type:", leftMargin, y);
+  let currentX = leftMargin + 30;
+  
+  const locationTypes = [
+    { id: "home", label: "Home/Residential" },
+    { id: "office", label: "Office/Business District" },
+    { id: "storefront", label: "Storefront" }
   ];
   
-  y = addLabeledFields(doc, businessInfo, y, leftMargin, lineHeight);
+  locationTypes.forEach((type) => {
+    const isSelected = formData.locationType === type.id;
+    
+    doc.rect(currentX, y - 3, 3, 3);
+    if (isSelected) {
+      doc.setFillColor(0, 0, 0);
+      doc.rect(currentX, y - 3, 3, 3, 'F');
+    }
+    
+    doc.text(type.label, currentX + 5, y);
+    currentX += type.label.length * 2 + 10;
+  });
   
-  return y + sectionSpacing / 2;
+  y += lineHeight;
+  
+  // Own or Rent checkboxes
+  doc.text("Own or Rent:", leftMargin, y);
+  currentX = leftMargin + 30;
+  
+  const ownRentOptions = [
+    { id: "own", label: "Own" },
+    { id: "rent", label: "Rent" }
+  ];
+  
+  ownRentOptions.forEach((option) => {
+    const isSelected = formData.ownOrRent === option.id;
+    
+    doc.rect(currentX, y - 3, 3, 3);
+    if (isSelected) {
+      doc.setFillColor(0, 0, 0);
+      doc.rect(currentX, y - 3, 3, 3, 'F');
+    }
+    
+    doc.text(option.label, currentX + 5, y);
+    currentX += option.label.length * 2 + 10;
+  });
+  
+  y += lineHeight;
+  
+  // Square footage checkboxes
+  doc.text("Approx. Square Footage:", leftMargin, y);
+  currentX = leftMargin + 50;
+  
+  const footageOptions = [
+    { id: "0-500", label: "0-500 ft²" },
+    { id: "501-2000", label: "501-2,000 ft²" },
+    { id: "2001-5000", label: "2,001-5,000 ft²" },
+    { id: "5000+", label: "5,000+ ft²" }
+  ];
+  
+  footageOptions.forEach((option) => {
+    const isSelected = formData.squareFootage === option.id;
+    
+    doc.rect(currentX, y - 3, 3, 3);
+    if (isSelected) {
+      doc.setFillColor(0, 0, 0);
+      doc.rect(currentX, y - 3, 3, 3, 'F');
+    }
+    
+    doc.text(option.label, currentX + 5, y);
+    currentX += option.label.length * 2 + 10;
+  });
+  
+  return y + lineHeight + sectionSpacing/2;
 }
 
 /**
  * Adds the principal information section to the PDF
  */
-function addPrincipalInfoSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing }) {
-  y = addSectionHeader(doc, "3. Principal Information", y);
+function addPrincipalInfoSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing, primaryColor }) {
+  y = addSectionHeader(doc, "6. Principal Information", y, primaryColor);
   
-  // Additional owners checkbox
-  doc.setFont('helvetica', 'normal');
-  doc.text("Check if additional owners/members have 25%+ equity:", leftMargin, y);
-  doc.rect(leftMargin + 80, y - 3, 3, 3);
-  
-  if (formData.additionalOwners) {
-    doc.setFillColor(0, 0, 0);
-    doc.rect(leftMargin + 80, y - 3, 3, 3, 'F');
-  }
-  
+  // Draw principal information fields
+  doc.text(`Full Name: ${formData.principalName || '________________________________'}`, leftMargin, y);
   y += lineHeight;
   
-  // Format date of birth if all components exist
-  let dob = "";
+  doc.text(`Ownership %: ${formData.ownershipPercentage || '_____'}%`, leftMargin, y);
+  
+  const additionalOwnersX = leftMargin + 70;
+  doc.text("☐ Check here if additional owners/members have 25%+ equity", additionalOwnersX, y);
+  if (formData.additionalOwners) {
+    doc.rect(additionalOwnersX - 10, y - 3, 3, 3, 'F');
+  } else {
+    doc.rect(additionalOwnersX - 10, y - 3, 3, 3);
+  }
+  y += lineHeight;
+  
+  doc.text(`Title (Owner, CEO, etc.): ${formData.principalTitle || '________________________'}`, leftMargin, y);
+  y += lineHeight;
+  
+  doc.text(`Home Telephone: ${formData.principalPhone || '________________________'}`, leftMargin, y);
+  y += lineHeight;
+  
+  // Format date of birth
+  let dob = "____ / ____ / ________";
   if (formData.dateOfBirthMonth && formData.dateOfBirthDay && formData.dateOfBirthYear) {
-    dob = `${formData.dateOfBirthMonth}/${formData.dateOfBirthDay}/${formData.dateOfBirthYear}`;
+    dob = `${formData.dateOfBirthMonth} / ${formData.dateOfBirthDay} / ${formData.dateOfBirthYear}`;
   }
+  doc.text(`Date of Birth: ${dob}`, leftMargin, y);
+  y += lineHeight;
   
-  // Format license expiration if all components exist
-  let licExp = "";
+  doc.text(`SSN: ${formData.ssn || '________________________'}`, leftMargin, y);
+  y += lineHeight;
+  
+  // Format license details
+  doc.text(`Driver's License #: ${formData.driversLicense || '________________________'} `, leftMargin, y);
+  y += lineHeight;
+  
+  let licExp = "____ / ____ / ________";
   if (formData.licenseExpMonth && formData.licenseExpDay && formData.licenseExpYear) {
-    licExp = `${formData.licenseExpMonth}/${formData.licenseExpDay}/${formData.licenseExpYear}`;
+    licExp = `${formData.licenseExpMonth} / ${formData.licenseExpDay} / ${formData.licenseExpYear}`;
   }
+  doc.text(`Exp Date: ${licExp}`, leftMargin, y);
   
-  // Principal Information fields
-  const principalInfo = [
-    { label: "Full Name:", value: formData.principalName || "" },
-    { label: "Ownership %:", value: formData.ownershipPercentage ? `${formData.ownershipPercentage}%` : "" },
-    { label: "Title:", value: formData.principalTitle || "" },
-    { label: "Phone:", value: formData.principalPhone || "" },
-    { label: "Email:", value: formData.principalEmail || "" },
-    { label: "Date of Birth:", value: dob },
-    { label: "SSN:", value: formData.ssn || "" },
-    { label: "Driver's License:", value: formData.driversLicense || "" },
-    { label: "License Exp.:", value: licExp },
-    { label: "License State:", value: formData.licenseState || "" },
-    { label: "Home Address:", value: formData.principalAddress || "" }
-  ];
+  doc.text(`State: ${formData.licenseState || '__________'}`, leftMargin + 80, y);
+  y += lineHeight;
   
-  y = addLabeledFields(doc, principalInfo, y, leftMargin, lineHeight);
+  doc.text(`Home Address: ${formData.principalAddress || '________________________________'}`, leftMargin, y);
+  y += lineHeight;
   
-  return y + sectionSpacing / 2;
+  doc.text(`Personal Email: ${formData.principalEmail || '________________________________'}`, leftMargin, y);
+  
+  return y + lineHeight + sectionSpacing/2;
 }
 
 /**
  * Adds the bank information section to the PDF
  */
-function addBankInfoSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing }) {
-  y = addSectionHeader(doc, "4. Bank Settlement Information", y);
+function addBankInfoSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing, primaryColor }) {
+  y = addSectionHeader(doc, "7. Bank Settlement Information", y, primaryColor);
   
-  const bankInfo = [
-    { label: "Bank Name:", value: formData.bankName || "" },
-    { label: "Bank Contact:", value: formData.bankContactName || "" },
-    { label: "Routing Number:", value: formData.routingNumber || "" },
-    { label: "Account Number:", value: formData.accountNumber || "" }
-  ];
+  doc.text(`Bank Name: ${formData.bankName || '________________________________'}`, leftMargin, y);
+  y += lineHeight;
   
-  y = addLabeledFields(doc, bankInfo, y, leftMargin, lineHeight);
+  doc.text(`Contact Name at Bank: ${formData.bankContactName || '________________________________'}`, leftMargin, y);
+  y += lineHeight;
   
-  return y + sectionSpacing / 2;
-}
-
-/**
- * Adds the processing volume section to the PDF
- */
-function addProcessingVolumeSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing }) {
-  y = addSectionHeader(doc, "5. Processing Volume", y);
+  doc.text(`Routing Number: ${formData.routingNumber || '________________________________'}`, leftMargin, y);
+  y += lineHeight;
   
-  const volumeInfo = [
-    { label: "Total Monthly Volume:", value: formData.totalMonthlyVolume ? `$${formData.totalMonthlyVolume}` : "" },
-    { label: "Visa/MC Volume:", value: formData.visaMastercardVolume ? `$${formData.visaMastercardVolume}` : "" },
-    { label: "Amex Volume:", value: formData.amexVolume ? `$${formData.amexVolume}` : "" },
-    { label: "Average Ticket:", value: formData.averageTicket ? `$${formData.averageTicket}` : "" },
-    { label: "Highest Ticket:", value: formData.highestTicket ? `$${formData.highestTicket}` : "" },
-    { label: "Years in Operation:", value: formData.yearsInOperation || "" }
-  ];
+  doc.text(`Account Number: ${formData.accountNumber || '________________________________'}`, leftMargin, y);
   
-  y = addLabeledFields(doc, volumeInfo, y, leftMargin, lineHeight);
-  
-  return y + sectionSpacing / 2;
-}
-
-/**
- * Adds the business type section to the PDF
- */
-function addBusinessTypeSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing }) {
-  y = addSectionHeader(doc, "6. Business Type", y);
-  
-  // Draw business type fields
-  const businessTypeInfo = [
-    { 
-      label: "Seasonal Business:",
-      checkboxes: [
-        { label: "Yes", checked: formData.isSeasonalBusiness === true },
-        { label: "No", checked: formData.isSeasonalBusiness === false }
-      ]
-    },
-    { 
-      label: "Refund Policy:",
-      checkboxes: [
-        { label: "Yes", checked: formData.hasRefundPolicy === true },
-        { label: "No", checked: formData.hasRefundPolicy === false }
-      ]
-    },
-    { 
-      label: "Recurring Payments:",
-      checkboxes: [
-        { label: "Yes", checked: formData.hasRecurringPayments === true },
-        { label: "No", checked: formData.hasRecurringPayments === false }
-      ]
-    }
-  ];
-  
-  businessTypeInfo.forEach(item => {
-    doc.setFont('helvetica', 'bold');
-    doc.text(item.label, leftMargin, y);
-    
-    let xPos = leftMargin + 40;
-    
-    if (item.checkboxes) {
-      item.checkboxes.forEach(checkbox => {
-        doc.rect(xPos, y - 3, 3, 3);
-        if (checkbox.checked) {
-          doc.setFillColor(0, 0, 0);
-          doc.rect(xPos, y - 3, 3, 3, 'F');
-        }
-        
-        doc.setFont('helvetica', 'normal');
-        doc.text(checkbox.label, xPos + 5, y);
-        xPos += 20;
-      });
-    }
-    
-    y += lineHeight;
-  });
-  
-  // Add refund policy details if available
-  if (formData.hasRefundPolicy === true && formData.policyType) {
-    doc.setFont('helvetica', 'bold');
-    doc.text("Refund Policy Type:", leftMargin, y);
-    doc.setFont('helvetica', 'normal');
-    
-    const policyTypes = {
-      exchange: "Exchange Only",
-      store_credit: "Store Credit",
-      refund_30_days: "30 Day Refund",
-      other: formData.policyTypeOther || "Other"
-    };
-    
-    doc.text(policyTypes[formData.policyType] || "", leftMargin + 40, y);
-    y += lineHeight;
-  }
-  
-  // Add recurring payments details if available
-  if (formData.hasRecurringPayments === true && formData.recurringPaymentsDetails) {
-    doc.setFont('helvetica', 'bold');
-    doc.text("Recurring Details:", leftMargin, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(formData.recurringPaymentsDetails, leftMargin + 40, y);
-    y += lineHeight;
-  }
-  
-  // Add B2B / B2C percentages if available
-  if (formData.b2bPercentage || formData.b2cPercentage) {
-    doc.setFont('helvetica', 'bold');
-    doc.text("B2B:", leftMargin, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`${formData.b2bPercentage || "0"}%`, leftMargin + 15, y);
-    
-    doc.setFont('helvetica', 'bold');
-    doc.text("B2C:", leftMargin + 40, y);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`${formData.b2cPercentage || "0"}%`, leftMargin + 55, y);
-    y += lineHeight;
-  }
-  
-  return y + sectionSpacing / 2;
-}
-
-/**
- * Adds the transaction methods section to the PDF
- */
-function addTransactionMethodsSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing }) {
-  y = addSectionHeader(doc, "7. Transaction Methods", y);
-  
-  // Draw transaction methods with percentages
-  const transactionMethods = [
-    { 
-      id: "inperson", 
-      label: "Face-to-Face (Retail):", 
-      value: formData.faceToFacePercentage || "0", 
-      checked: formData.purchaseMethods && formData.purchaseMethods.includes('inperson') 
-    },
-    { 
-      id: "mailphone", 
-      label: "Mail/Phone/Email (MOTO):", 
-      value: formData.motoPercentage || "0", 
-      checked: formData.purchaseMethods && formData.purchaseMethods.includes('mailphone') 
-    },
-    { 
-      id: "internet", 
-      label: "Internet (eCommerce):", 
-      value: formData.ecommercePercentage || "0", 
-      checked: formData.purchaseMethods && formData.purchaseMethods.includes('internet') 
-    }
-  ];
-  
-  transactionMethods.forEach(method => {
-    doc.rect(leftMargin, y - 3, 3, 3);
-    
-    if (method.checked || parseInt(method.value) > 0) {
-      doc.setFillColor(0, 0, 0);
-      doc.rect(leftMargin, y - 3, 3, 3, 'F');
-    }
-    
-    doc.setFont('helvetica', 'bold');
-    doc.text(method.label, leftMargin + 5, y);
-    
-    doc.setFont('helvetica', 'normal');
-    doc.text(`${method.value}%`, leftMargin + 60, y);
-    
-    y += lineHeight;
-  });
-  
-  return y + sectionSpacing / 2;
-}
-
-/**
- * Adds the eCommerce section to the PDF if applicable
- */
-function addEcommerceSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing }) {
-  y = addSectionHeader(doc, "8. eCommerce Information", y);
-  
-  const ecommerceFields = [
-    { label: "Shopping Cart:", value: formData.shoppingCartPlatforms || "" },
-    { label: "Shipping Method:", value: formatArrayField(formData.shippingMethod) },
-    { label: "Advertising Channels:", value: formatArrayField(formData.advertisingChannels) },
-    { label: "Auth to Ship Time:", value: formatTimeFrame(formData.authToShipTimeframe) },
-    { label: "Delivery Time:", value: formatTimeFrame(formData.deliveryTimeframe) },
-    { label: "Deposits Required:", value: formData.depositsRequired ? "Yes" : "No" },
-    { label: "Deposit Percentage:", value: formData.depositPercentage ? `${formData.depositPercentage}%` : "" },
-    { label: "Full Payment Timing:", value: formatPaymentTiming(formData.fullPaymentTiming) },
-    { label: "International %:", value: formData.internationalTransactionsPercentage ? `${formData.internationalTransactionsPercentage}%` : "" },
-    { label: "Inventory Ownership:", value: formData.inventoryOwnership === "merchant" ? "Merchant" : formData.inventoryOwnership === "vendor" ? "Vendor" : "" },
-    { label: "Warranty Provider:", value: formData.warrantyProvider === "merchant" ? "Merchant" : formData.warrantyProvider === "manufacturer" ? "Manufacturer" : "" }
-  ];
-  
-  y = addLabeledFields(doc, ecommerceFields, y, leftMargin, lineHeight);
-  
-  return y + sectionSpacing / 2;
-}
-
-/**
- * Helper function to add a section header
- */
-function addSectionHeader(doc, text, y) {
-  doc.setFillColor(14, 165, 233);  // #0EA5E9 (sky blue)
-  doc.rect(20, y, doc.internal.pageSize.getWidth() - 40, 7, 'F');
-  
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.setTextColor(255, 255, 255);
-  doc.text(text, 25, y + 5);
-  
-  // Reset text color and font
-  doc.setTextColor(0, 0, 0);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  
-  return y + 10;  // Return new Y position after header
-}
-
-/**
- * Helper function to add label-value pairs to the PDF
- */
-function addLabeledFields(doc, fields, y, leftMargin, lineHeight) {
-  fields.forEach(item => {
-    if (item.value !== undefined && item.value !== "") {
-      // Draw field label in bold
-      doc.setFont('helvetica', 'bold');
-      doc.text(item.label, leftMargin, y);
-      
-      // Draw field value in normal font
-      doc.setFont('helvetica', 'normal');
-      doc.text(String(item.value), leftMargin + 40, y);
-      
-      y += lineHeight;
-    }
-  });
-  
-  return y;
-}
-
-/**
- * Helper function to add footer to all pages
- */
-function addDocumentFooter(doc, businessName) {
-  const pageCount = doc.internal.getNumberOfPages();
-  const today = new Date().toLocaleDateString();
-  
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    
-    // Add footer line
-    doc.setDrawColor(14, 165, 233);
-    doc.setLineWidth(0.5);
-    doc.line(20, pageHeight - 15, pageWidth - 20, pageHeight - 15);
-    
-    // Add page number
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Page ${i} of ${pageCount}`, pageWidth - 25, pageHeight - 10);
-    
-    // Add business name and date
-    doc.text(`${businessName} - ${today}`, 20, pageHeight - 10);
-  }
-}
-
-/**
- * Checks if a page break is needed and adds one if necessary
- * @param {boolean} force - Forces page break regardless of position
- * @returns {number} New y position after check/page break
- */
-function checkAndAddPageBreak(doc, y, { pageHeight, margin }, force = false) {
-  if (force || y > pageHeight - 50) {
-    doc.addPage();
-    return margin + 10; // Return top of new page with small padding
-  }
-  return y;
-}
-
-/**
- * Helper function to format array fields as comma-separated strings
- */
-function formatArrayField(arr) {
-  if (!arr || !Array.isArray(arr) || arr.length === 0) {
-    return "";
-  }
-  
-  return arr.map(item => {
-    // Capitalize first letter of each word and replace dashes/underscores with spaces
-    return item.replace(/[-_]/g, ' ')
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  }).join(', ');
-}
-
-/**
- * Helper function to format city, state, zip
- */
-function formatCityStateZip(city, state, zip) {
-  const parts = [];
-  if (city) parts.push(city);
-  if (state) parts.push(state);
-  if (zip) parts.push(zip);
-  
-  return parts.join(', ');
-}
-
-/**
- * Helper function to format time frames
- */
-function formatTimeFrame(timeframe) {
-  if (!timeframe) return "";
-  
-  const timeframes = {
-    '0-7': '0-7 Days',
-    '8-14': '8-14 Days',
-    '15-30': '15-30 Days',
-    '30-90': '30-90 Days',
-    '90+': '90+ Days'
-  };
-  
-  return timeframes[timeframe] || timeframe;
-}
-
-/**
- * Helper function to format payment timing
- */
-function formatPaymentTiming(timing) {
-  if (!timing) return "";
-  
-  const timings = {
-    'advance': 'In Advance',
-    'delivery': 'Upon Delivery'
-  };
-  
-  return timings[timing] || timing;
-}
-
+  return y + lineHeight
