@@ -14,12 +14,14 @@ import { useDialogReset } from './hooks/useDialogReset';
 import { useTabNavigation } from './hooks/useTabNavigation';
 
 // Import component files
-import { IndustrySelector } from './components/IndustrySelector';
-import { ErrorDisplay } from './components/ErrorDisplay';
-import { GenerationSuccess } from './components/GenerationSuccess';
-import { TabsNavigation } from './components/TabsNavigation';
-import { FormTabs } from './components/FormTabs';
-import { FormSubmitButton } from './components/FormSubmitButton';
+import { 
+  IndustrySelector,
+  ErrorDisplay,
+  GenerationSuccess,
+  TabsNavigation,
+  FormTabs,
+  FormSubmitButton 
+} from './components';
 
 // Import utility functions
 import { base64ToBlob } from './utils/pdfUtils';
@@ -54,7 +56,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
   const [generatedFilename, setGeneratedFilename] = useState<string>('WaveLine_Merchant_Application.pdf');
   
   // Use custom hooks
-  const { activeTab, setActiveTab, goToNextTab, goToPrevTab } = useTabNavigation();
+  const { activeTab, handleTabChange, goToNextTab, goToPrevTab } = useTabNavigation();
   
   // Create the form instance
   const form = useForm<PreAppFormValues>({
@@ -82,15 +84,13 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
         setGeneratedPdfUrl(null);
       }
       setError(null);
-      setActiveTab('structure');
     }
-  }, [open, setActiveTab]);
+  }, [open]);
 
   const handleReset = () => {
     // Reset form and state
     incrementRetry();
     setSelectedIndustryId('');
-    setActiveTab('structure');
     
     if (generatedPdfUrl) {
       URL.revokeObjectURL(generatedPdfUrl);
@@ -211,7 +211,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
             {/* Apply the form reset key for re-rendering */}
             <Form {...form} key={formResetKey}>
               <form onSubmit={form.handleSubmit(handleGenerate)} className="space-y-6">
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                   <TabsNavigation />
                   <FormTabs 
                     activeTab={activeTab}

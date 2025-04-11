@@ -1,13 +1,18 @@
 
 import { useState } from 'react';
 
-type TabId = 'structure' | 'business' | 'principal' | 'banking' | 'volume' | 'policies' | 'ecommerce';
+export type TabId = 'structure' | 'business' | 'principal' | 'banking' | 'volume' | 'policies' | 'ecommerce';
 
 /**
  * Custom hook for managing tab navigation in multi-step forms
  */
 export const useTabNavigation = (initialTab: TabId = 'structure') => {
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
+
+  // This function handles the type conversion from string to TabId
+  const handleTabChange = (value: string) => {
+    setActiveTab(value as TabId);
+  };
 
   const goToNextTab = () => {
     if (activeTab === 'structure') setActiveTab('business');
@@ -30,6 +35,7 @@ export const useTabNavigation = (initialTab: TabId = 'structure') => {
   return {
     activeTab,
     setActiveTab,
+    handleTabChange, // New function for the Tabs component
     goToNextTab,
     goToPrevTab
   };
