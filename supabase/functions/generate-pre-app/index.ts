@@ -33,14 +33,14 @@ serve(async (req) => {
     console.log(`Generating PDF for business: ${businessName}`);
     
     // Create the PDF with the formatted WaveLine Merchant Application
-    const pdfBase64 = await generateWaveLineMerchantApplication(formData);
+    const pdfResult = await generateWaveLineMerchantApplication(formData);
     console.log("PDF generation completed successfully");
     
     return new Response(
       JSON.stringify({
         success: true,
         message: 'PDF generated successfully',
-        pdfBase64: pdfBase64,
+        pdfBase64: pdfResult.pdfBase64,
         businessName: businessName
       }),
       { 
@@ -68,7 +68,7 @@ serve(async (req) => {
       }
     )
   }
-})
+});
 
 /**
  * Logs the request headers with authorization information sanitized
@@ -118,6 +118,7 @@ async function parseAndValidateRequest(req) {
 
 /**
  * Main function to generate the merchant application PDF
+ * Returns object with base64 PDF data
  */
 async function generateWaveLineMerchantApplication(formData) {
   // Create a new PDF document
@@ -127,7 +128,62 @@ async function generateWaveLineMerchantApplication(formData) {
     format: 'letter'
   });
 
-  // Page dimensions and styles
+  // Set up document dimensions and constants
+  const pageSetup = setupPdfDocument(doc);
+  
+  // Add WaveLine logo and header
+  const yAfterHeader = addDocumentHeader(doc, pageSetup);
+  
+  // Add business name as document title
+  const yAfterTitle = addBusinessTitle(doc, formData, yAfterHeader, pageSetup);
+  
+  // Start adding content sections
+  let currentY = yAfterTitle;
+  
+  // Add each section of the form
+  currentY = addBusinessStructureSection(doc, formData, currentY, pageSetup);
+  currentY = addBusinessInfoSection(doc, formData, currentY, pageSetup);
+  
+  // Check if we need to add a page break
+  currentY = checkAndAddPageBreak(doc, currentY, pageSetup, false);
+  
+  currentY = addPrincipalInfoSection(doc, formData, currentY, pageSetup);
+  currentY = addBankInfoSection(doc, formData, currentY, pageSetup);
+  
+  // Check if we need to add a page break
+  currentY = checkAndAddPageBreak(doc, currentY, pageSetup, false);
+  
+  currentY = addProcessingVolumeSection(doc, formData, currentY, pageSetup);
+  currentY = addBusinessTypeSection(doc, formData, currentY, pageSetup);
+  currentY = addTransactionMethodsSection(doc, formData, currentY, pageSetup);
+  
+  // Check if we need another page break
+  currentY = checkAndAddPageBreak(doc, currentY, pageSetup, false);
+  
+  // Add eCommerce section if applicable
+  if (formData.purchaseMethods && formData.purchaseMethods.includes('internet')) {
+    currentY = addEcommerceSection(doc, formData, currentY, pageSetup);
+  }
+  
+  // Add footer with application ID and date
+  addDocumentFooter(doc, formData.businessName || "WaveLine Merchant Application");
+  
+  // Convert the document to base64
+  const pdfOutput = doc.output('datauristring');
+  
+  // Return just the base64 part
+  const base64Data = pdfOutput.split(',')[1];
+  
+  return {
+    pdfBase64: base64Data,
+    pageCount: doc.internal.getNumberOfPages()
+  };
+}
+
+/**
+ * Sets up the PDF document with standard dimensions and styles
+ */
+function setupPdfDocument(doc) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 20;
@@ -137,70 +193,34 @@ async function generateWaveLineMerchantApplication(formData) {
   const primaryColor = [14, 165, 233]; // #0EA5E9 (sky blue)
   const secondaryColor = [51, 65, 85]; // #334155 (slate)
   
-  // Starting position
-  let y = margin;
-  const leftMargin = margin;
-  const rightMargin = pageWidth - margin;
-  const lineHeight = 7;
-  const sectionSpacing = 10;
-  
-  // Add document header
-  y = addDocumentHeader(doc, pageWidth, margin, primaryColor);
-  
-  // Add business name as document title
-  y = addDocumentTitle(doc, formData.businessName, pageWidth, y, secondaryColor);
-  
-  // Set standard text format
+  // Standard settings for text
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(0, 0, 0);
-
-  // Add all sections
-  y = addBusinessStructureSection(doc, formData, y, leftMargin, pageWidth, margin, lineHeight, sectionSpacing);
-  y = addBusinessInfoSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing);
-  y = addPrincipalInfoSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing);
-  y = addBankInfoSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing);
   
-  // Check if we need to add a new page
-  if (y > pageHeight - 60) {
-    doc.addPage();
-    y = margin;
-  }
-  
-  y = addProcessingVolumeSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing);
-  y = addBusinessTypeSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing);
-  y = addTransactionMethodsSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing);
-  
-  // Check if we need another page
-  if (y > pageHeight - 60) {
-    doc.addPage();
-    y = margin;
-  }
-  
-  // Add eCommerce section if applicable
-  if (formData.purchaseMethods && formData.purchaseMethods.includes('internet')) {
-    y = addEcommerceSection(doc, formData, y, leftMargin, lineHeight);
-  }
-  
-  // Add footer with application ID and date
-  addFooter(doc, formData.businessName || "WaveLine Merchant Application");
-  
-  // Convert the document to base64
-  const pdfOutput = doc.output('datauristring');
-  
-  // Return just the base64 part
-  const base64Data = pdfOutput.split(',')[1];
-  return base64Data;
+  return {
+    pageWidth,
+    pageHeight,
+    margin,
+    contentWidth,
+    leftMargin: margin,
+    rightMargin: pageWidth - margin,
+    primaryColor,
+    secondaryColor,
+    lineHeight: 7,
+    sectionSpacing: 10
+  };
 }
 
 /**
  * Adds the document header with logo and title
  */
-function addDocumentHeader(doc, pageWidth, margin, primaryColor) {
+function addDocumentHeader(doc, { pageWidth, margin, primaryColor }) {
+  // Add blue header bar
   doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
   doc.rect(0, 0, pageWidth, 25, 'F');
   
-  // Add logo text in white
+  // Add WaveLine text logo in white
   doc.setFontSize(20);
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
@@ -210,36 +230,53 @@ function addDocumentHeader(doc, pageWidth, margin, primaryColor) {
   doc.setFont('helvetica', 'normal');
   doc.text("Merchant Application", pageWidth - margin - 45, 15);
   
-  // Reset position after header
-  return 35; // New Y position
+  // Reset text color for the rest of the document
+  doc.setTextColor(0, 0, 0);
+  
+  // Return new Y position after header
+  return 35;
 }
 
 /**
- * Adds the document title (business name)
+ * Adds the business name as document title
  */
-function addDocumentTitle(doc, businessName, pageWidth, y, secondaryColor) {
+function addBusinessTitle(doc, formData, y, { pageWidth, secondaryColor }) {
   doc.setFontSize(16);
   doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
   doc.setFont('helvetica', 'bold');
-  const title = businessName || 'New Business';
+  const title = formData.businessName || 'New Business Application';
   doc.text(title, pageWidth / 2, y, { align: 'center' });
+  
+  // Reset text color for the rest of the document
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  
   return y + 12; // Return new Y position with spacing
 }
 
 /**
  * Adds the business structure section to the PDF
  */
-function addBusinessStructureSection(doc, formData, y, leftMargin, pageWidth, margin, lineHeight, sectionSpacing) {
+function addBusinessStructureSection(doc, formData, y, { leftMargin, pageWidth, margin, lineHeight, sectionSpacing }) {
   y = addSectionHeader(doc, "1. Business Structure", y);
   
   // Checkbox for business structure with better formatting
-  const structures = ["Sole Proprietorship", "Corporation", "LLC", "Non-profit (401(c))", "Government", "Other"];
+  const structures = [
+    { id: "sole_proprietorship", label: "Sole Proprietorship" },
+    { id: "corporation", label: "Corporation" },
+    { id: "llc", label: "LLC" },
+    { id: "non_profit", label: "Non-profit (401c)" },
+    { id: "government", label: "Government" }, 
+    { id: "other", label: "Other" }
+  ];
+  
   let currentY = y;
   let currentX = leftMargin;
   const maxWidth = 80;
   
   structures.forEach((structure) => {
-    const isSelected = formData.businessStructure === structure.toLowerCase().replace(/\s+/g, '');
+    const isSelected = formData.businessStructure === structure.id;
     
     // Check if we need to move to a new line
     if (currentX > pageWidth - margin - maxWidth) {
@@ -251,16 +288,21 @@ function addBusinessStructureSection(doc, formData, y, leftMargin, pageWidth, ma
     doc.rect(currentX, currentY - 3, 3, 3); 
     
     // Fill if selected
-    if (isSelected || 
-        (structure.toLowerCase().includes(formData.businessStructure))) {
+    if (isSelected) {
       doc.setFillColor(0, 0, 0);
       doc.rect(currentX, currentY - 3, 3, 3, 'F');
     }
     
     // Text after checkbox
-    doc.text(structure, currentX + 5, currentY);
-    currentX += structure.length * 1.8 + 8;
+    doc.text(structure.label, currentX + 5, currentY);
+    currentX += structure.label.length * 1.8 + 10;
   });
+  
+  // Add business structure other field if selected
+  if (formData.businessStructure === 'other' && formData.businessStructureOther) {
+    currentY += lineHeight;
+    doc.text(`Other Type: ${formData.businessStructureOther}`, leftMargin, currentY);
+  }
   
   return currentY + sectionSpacing;
 }
@@ -268,17 +310,21 @@ function addBusinessStructureSection(doc, formData, y, leftMargin, pageWidth, ma
 /**
  * Adds the business information section to the PDF
  */
-function addBusinessInfoSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing) {
+function addBusinessInfoSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing }) {
   y = addSectionHeader(doc, "2. Business Information", y);
   
   // Business Information fields with improved formatting
   const businessInfo = [
     { label: "Business Name:", value: formData.businessName || "" },
-    { label: "Street Address:", value: formData.businessAddress || "" },
-    { label: "City, State, ZIP:", value: formData.businessCity ? 
-      `${formData.businessCity}, ${formData.businessState || 'CA'} ${formData.businessZip || ''}` : "" },
+    { label: "Street Address:", value: formData.streetAddress || "" },
+    { label: "Mailing Address:", value: formData.mailingAddress || formData.streetAddress || "" },
+    { label: "City, State, ZIP:", value: 
+      formatCityStateZip(formData.city, formData.state, formData.zip) },
     { label: "Business Phone:", value: formData.businessPhone || "" },
     { label: "Business Email:", value: formData.businessEmail || "" },
+    { label: "Business Fax:", value: formData.businessFax || "" },
+    { label: "Customer Service Phone:", value: formData.customerServicePhone || "" },
+    { label: "Customer Service Email:", value: formData.customerServiceEmail || "" },
     { label: "Website/URL:", value: formData.website || "" }
   ];
   
@@ -290,7 +336,7 @@ function addBusinessInfoSection(doc, formData, y, leftMargin, lineHeight, sectio
 /**
  * Adds the principal information section to the PDF
  */
-function addPrincipalInfoSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing) {
+function addPrincipalInfoSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing }) {
   y = addSectionHeader(doc, "3. Principal Information", y);
   
   // Additional owners checkbox
@@ -305,14 +351,31 @@ function addPrincipalInfoSection(doc, formData, y, leftMargin, lineHeight, secti
   
   y += lineHeight;
   
+  // Format date of birth if all components exist
+  let dob = "";
+  if (formData.dateOfBirthMonth && formData.dateOfBirthDay && formData.dateOfBirthYear) {
+    dob = `${formData.dateOfBirthMonth}/${formData.dateOfBirthDay}/${formData.dateOfBirthYear}`;
+  }
+  
+  // Format license expiration if all components exist
+  let licExp = "";
+  if (formData.licenseExpMonth && formData.licenseExpDay && formData.licenseExpYear) {
+    licExp = `${formData.licenseExpMonth}/${formData.licenseExpDay}/${formData.licenseExpYear}`;
+  }
+  
   // Principal Information fields
   const principalInfo = [
     { label: "Full Name:", value: formData.principalName || "" },
-    { label: "Ownership %:", value: formData.ownershipPct ? `${formData.ownershipPct}%` : "" },
+    { label: "Ownership %:", value: formData.ownershipPercentage ? `${formData.ownershipPercentage}%` : "" },
     { label: "Title:", value: formData.principalTitle || "" },
     { label: "Phone:", value: formData.principalPhone || "" },
-    { label: "Email:", value: formData.personalEmail || "" },
-    { label: "Home Address:", value: formData.homeAddress || "" }
+    { label: "Email:", value: formData.principalEmail || "" },
+    { label: "Date of Birth:", value: dob },
+    { label: "SSN:", value: formData.ssn || "" },
+    { label: "Driver's License:", value: formData.driversLicense || "" },
+    { label: "License Exp.:", value: licExp },
+    { label: "License State:", value: formData.licenseState || "" },
+    { label: "Home Address:", value: formData.principalAddress || "" }
   ];
   
   y = addLabeledFields(doc, principalInfo, y, leftMargin, lineHeight);
@@ -323,11 +386,12 @@ function addPrincipalInfoSection(doc, formData, y, leftMargin, lineHeight, secti
 /**
  * Adds the bank information section to the PDF
  */
-function addBankInfoSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing) {
+function addBankInfoSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing }) {
   y = addSectionHeader(doc, "4. Bank Settlement Information", y);
   
   const bankInfo = [
     { label: "Bank Name:", value: formData.bankName || "" },
+    { label: "Bank Contact:", value: formData.bankContactName || "" },
     { label: "Routing Number:", value: formData.routingNumber || "" },
     { label: "Account Number:", value: formData.accountNumber || "" }
   ];
@@ -340,13 +404,16 @@ function addBankInfoSection(doc, formData, y, leftMargin, lineHeight, sectionSpa
 /**
  * Adds the processing volume section to the PDF
  */
-function addProcessingVolumeSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing) {
+function addProcessingVolumeSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing }) {
   y = addSectionHeader(doc, "5. Processing Volume", y);
   
   const volumeInfo = [
-    { label: "Monthly Volume:", value: formData.monthlyVolume ? `$${formData.monthlyVolume}` : "" },
+    { label: "Total Monthly Volume:", value: formData.totalMonthlyVolume ? `$${formData.totalMonthlyVolume}` : "" },
+    { label: "Visa/MC Volume:", value: formData.visaMastercardVolume ? `$${formData.visaMastercardVolume}` : "" },
+    { label: "Amex Volume:", value: formData.amexVolume ? `$${formData.amexVolume}` : "" },
     { label: "Average Ticket:", value: formData.averageTicket ? `$${formData.averageTicket}` : "" },
-    { label: "Highest Ticket:", value: formData.highestTicket ? `$${formData.highestTicket}` : "" }
+    { label: "Highest Ticket:", value: formData.highestTicket ? `$${formData.highestTicket}` : "" },
+    { label: "Years in Operation:", value: formData.yearsInOperation || "" }
   ];
   
   y = addLabeledFields(doc, volumeInfo, y, leftMargin, lineHeight);
@@ -357,7 +424,7 @@ function addProcessingVolumeSection(doc, formData, y, leftMargin, lineHeight, se
 /**
  * Adds the business type section to the PDF
  */
-function addBusinessTypeSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing) {
+function addBusinessTypeSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing }) {
   y = addSectionHeader(doc, "6. Business Type", y);
   
   // Draw business type fields
@@ -374,6 +441,13 @@ function addBusinessTypeSection(doc, formData, y, leftMargin, lineHeight, sectio
       checkboxes: [
         { label: "Yes", checked: formData.hasRefundPolicy === true },
         { label: "No", checked: formData.hasRefundPolicy === false }
+      ]
+    },
+    { 
+      label: "Recurring Payments:",
+      checkboxes: [
+        { label: "Yes", checked: formData.hasRecurringPayments === true },
+        { label: "No", checked: formData.hasRecurringPayments === false }
       ]
     }
   ];
@@ -401,20 +475,75 @@ function addBusinessTypeSection(doc, formData, y, leftMargin, lineHeight, sectio
     y += lineHeight;
   });
   
+  // Add refund policy details if available
+  if (formData.hasRefundPolicy === true && formData.policyType) {
+    doc.setFont('helvetica', 'bold');
+    doc.text("Refund Policy Type:", leftMargin, y);
+    doc.setFont('helvetica', 'normal');
+    
+    const policyTypes = {
+      exchange: "Exchange Only",
+      store_credit: "Store Credit",
+      refund_30_days: "30 Day Refund",
+      other: formData.policyTypeOther || "Other"
+    };
+    
+    doc.text(policyTypes[formData.policyType] || "", leftMargin + 40, y);
+    y += lineHeight;
+  }
+  
+  // Add recurring payments details if available
+  if (formData.hasRecurringPayments === true && formData.recurringPaymentsDetails) {
+    doc.setFont('helvetica', 'bold');
+    doc.text("Recurring Details:", leftMargin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(formData.recurringPaymentsDetails, leftMargin + 40, y);
+    y += lineHeight;
+  }
+  
+  // Add B2B / B2C percentages if available
+  if (formData.b2bPercentage || formData.b2cPercentage) {
+    doc.setFont('helvetica', 'bold');
+    doc.text("B2B:", leftMargin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${formData.b2bPercentage || "0"}%`, leftMargin + 15, y);
+    
+    doc.setFont('helvetica', 'bold');
+    doc.text("B2C:", leftMargin + 40, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${formData.b2cPercentage || "0"}%`, leftMargin + 55, y);
+    y += lineHeight;
+  }
+  
   return y + sectionSpacing / 2;
 }
 
 /**
  * Adds the transaction methods section to the PDF
  */
-function addTransactionMethodsSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing) {
+function addTransactionMethodsSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing }) {
   y = addSectionHeader(doc, "7. Transaction Methods", y);
   
   // Draw transaction methods with percentages
   const transactionMethods = [
-    { label: "Face-to-Face (Retail):", value: formData.faceToFacePct || "0", checked: formData.purchaseMethods && formData.purchaseMethods.includes('inperson') },
-    { label: "Mail/Phone/Email (MOTO):", value: formData.motoPct || "0", checked: formData.purchaseMethods && formData.purchaseMethods.includes('mailphone') },
-    { label: "Internet (eCommerce):", value: formData.ecommercePct || "0", checked: formData.purchaseMethods && formData.purchaseMethods.includes('internet') }
+    { 
+      id: "inperson", 
+      label: "Face-to-Face (Retail):", 
+      value: formData.faceToFacePercentage || "0", 
+      checked: formData.purchaseMethods && formData.purchaseMethods.includes('inperson') 
+    },
+    { 
+      id: "mailphone", 
+      label: "Mail/Phone/Email (MOTO):", 
+      value: formData.motoPercentage || "0", 
+      checked: formData.purchaseMethods && formData.purchaseMethods.includes('mailphone') 
+    },
+    { 
+      id: "internet", 
+      label: "Internet (eCommerce):", 
+      value: formData.ecommercePercentage || "0", 
+      checked: formData.purchaseMethods && formData.purchaseMethods.includes('internet') 
+    }
   ];
   
   transactionMethods.forEach(method => {
@@ -440,18 +569,26 @@ function addTransactionMethodsSection(doc, formData, y, leftMargin, lineHeight, 
 /**
  * Adds the eCommerce section to the PDF if applicable
  */
-function addEcommerceSection(doc, formData, y, leftMargin, lineHeight) {
+function addEcommerceSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing }) {
   y = addSectionHeader(doc, "8. eCommerce Information", y);
   
   const ecommerceFields = [
-    { label: "Shopping Cart:", value: formData.shoppingCartPlatform || "" },
+    { label: "Shopping Cart:", value: formData.shoppingCartPlatforms || "" },
     { label: "Shipping Method:", value: formatArrayField(formData.shippingMethod) },
-    { label: "Advertising Channels:", value: formatArrayField(formData.advertisingChannels) }
+    { label: "Advertising Channels:", value: formatArrayField(formData.advertisingChannels) },
+    { label: "Auth to Ship Time:", value: formatTimeFrame(formData.authToShipTimeframe) },
+    { label: "Delivery Time:", value: formatTimeFrame(formData.deliveryTimeframe) },
+    { label: "Deposits Required:", value: formData.depositsRequired ? "Yes" : "No" },
+    { label: "Deposit Percentage:", value: formData.depositPercentage ? `${formData.depositPercentage}%` : "" },
+    { label: "Full Payment Timing:", value: formatPaymentTiming(formData.fullPaymentTiming) },
+    { label: "International %:", value: formData.internationalTransactionsPercentage ? `${formData.internationalTransactionsPercentage}%` : "" },
+    { label: "Inventory Ownership:", value: formData.inventoryOwnership === "merchant" ? "Merchant" : formData.inventoryOwnership === "vendor" ? "Vendor" : "" },
+    { label: "Warranty Provider:", value: formData.warrantyProvider === "merchant" ? "Merchant" : formData.warrantyProvider === "manufacturer" ? "Manufacturer" : "" }
   ];
   
   y = addLabeledFields(doc, ecommerceFields, y, leftMargin, lineHeight);
   
-  return y;
+  return y + sectionSpacing / 2;
 }
 
 /**
@@ -479,15 +616,17 @@ function addSectionHeader(doc, text, y) {
  */
 function addLabeledFields(doc, fields, y, leftMargin, lineHeight) {
   fields.forEach(item => {
-    // Draw field label in bold
-    doc.setFont('helvetica', 'bold');
-    doc.text(item.label, leftMargin, y);
-    
-    // Draw field value in normal font
-    doc.setFont('helvetica', 'normal');
-    doc.text(String(item.value), leftMargin + 40, y);
-    
-    y += lineHeight;
+    if (item.value !== undefined && item.value !== "") {
+      // Draw field label in bold
+      doc.setFont('helvetica', 'bold');
+      doc.text(item.label, leftMargin, y);
+      
+      // Draw field value in normal font
+      doc.setFont('helvetica', 'normal');
+      doc.text(String(item.value), leftMargin + 40, y);
+      
+      y += lineHeight;
+    }
   });
   
   return y;
@@ -496,7 +635,7 @@ function addLabeledFields(doc, fields, y, leftMargin, lineHeight) {
 /**
  * Helper function to add footer to all pages
  */
-function addFooter(doc, businessName) {
+function addDocumentFooter(doc, businessName) {
   const pageCount = doc.internal.getNumberOfPages();
   const today = new Date().toLocaleDateString();
   
@@ -522,6 +661,19 @@ function addFooter(doc, businessName) {
 }
 
 /**
+ * Checks if a page break is needed and adds one if necessary
+ * @param {boolean} force - Forces page break regardless of position
+ * @returns {number} New y position after check/page break
+ */
+function checkAndAddPageBreak(doc, y, { pageHeight, margin }, force = false) {
+  if (force || y > pageHeight - 50) {
+    doc.addPage();
+    return margin + 10; // Return top of new page with small padding
+  }
+  return y;
+}
+
+/**
  * Helper function to format array fields as comma-separated strings
  */
 function formatArrayField(arr) {
@@ -537,3 +689,47 @@ function formatArrayField(arr) {
       .join(' ');
   }).join(', ');
 }
+
+/**
+ * Helper function to format city, state, zip
+ */
+function formatCityStateZip(city, state, zip) {
+  const parts = [];
+  if (city) parts.push(city);
+  if (state) parts.push(state);
+  if (zip) parts.push(zip);
+  
+  return parts.join(', ');
+}
+
+/**
+ * Helper function to format time frames
+ */
+function formatTimeFrame(timeframe) {
+  if (!timeframe) return "";
+  
+  const timeframes = {
+    '0-7': '0-7 Days',
+    '8-14': '8-14 Days',
+    '15-30': '15-30 Days',
+    '30-90': '30-90 Days',
+    '90+': '90+ Days'
+  };
+  
+  return timeframes[timeframe] || timeframe;
+}
+
+/**
+ * Helper function to format payment timing
+ */
+function formatPaymentTiming(timing) {
+  if (!timing) return "";
+  
+  const timings = {
+    'advance': 'In Advance',
+    'delivery': 'Upon Delivery'
+  };
+  
+  return timings[timing] || timing;
+}
+
