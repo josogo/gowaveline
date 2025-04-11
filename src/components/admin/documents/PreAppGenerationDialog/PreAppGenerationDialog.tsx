@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs } from '@/components/ui/tabs';
-import { generatePreApp } from '../api';
 import { toast } from 'sonner';
 import { Form } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
@@ -12,6 +11,7 @@ import { preAppFormSchema, type PreAppFormValues } from '../PreAppFormSchema';
 // Import hooks
 import { useDialogReset } from './hooks/useDialogReset';
 import { useTabNavigation } from './hooks/useTabNavigation';
+import { usePreAppGeneration } from './hooks/usePreAppGeneration';
 
 // Import component files
 import { 
@@ -22,9 +22,6 @@ import {
   FormTabs,
   FormSubmitButton 
 } from './components';
-
-// Import utility functions
-import { base64ToBlob } from './utils/pdfUtils';
 
 interface PreAppGenerationDialogProps {
   open: boolean;
@@ -49,14 +46,20 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
   onSuccess,
 }) => {
   const [selectedIndustryId, setSelectedIndustryId] = useState<string>('');
-  const [isGenerating, setIsGenerating] = useState(false);
   const [leadData, setLeadData] = useState(null);
-  const [error, setError] = useState<string | null>(null);
-  const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
-  const [generatedFilename, setGeneratedFilename] = useState<string>('WaveLine_Merchant_Application.pdf');
   
   // Use custom hooks
   const { activeTab, handleTabChange, goToNextTab, goToPrevTab } = useTabNavigation();
+  const { 
+    isGenerating, 
+    error, 
+    generatedPdfUrl, 
+    generatedFilename, 
+    handleGenerate, 
+    handleRetry, 
+    cleanupUrls,
+    setError
+  } = usePreAppGeneration({ onSuccess });
   
   // Create the form instance
   const form = useForm<PreAppFormValues>({
@@ -70,20 +73,14 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
   // Cleanup URLs on unmount or when dialog closes
   useEffect(() => {
     return () => {
-      if (generatedPdfUrl) {
-        URL.revokeObjectURL(generatedPdfUrl);
-      }
+      cleanupUrls();
     };
-  }, [generatedPdfUrl]);
+  }, []);
 
   useEffect(() => {
     if (!open) {
       // Reset state when dialog closes
-      if (generatedPdfUrl) {
-        URL.revokeObjectURL(generatedPdfUrl);
-        setGeneratedPdfUrl(null);
-      }
-      setError(null);
+      cleanupUrls();
     }
   }, [open]);
 
@@ -91,90 +88,17 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
     // Reset form and state
     incrementRetry();
     setSelectedIndustryId('');
-    
-    if (generatedPdfUrl) {
-      URL.revokeObjectURL(generatedPdfUrl);
-      setGeneratedPdfUrl(null);
-    }
-    setError(null);
+    cleanupUrls();
   };
 
-  const handleGenerate = async (data: PreAppFormValues) => {
-    if (!selectedIndustryId) {
-      toast.error('Please select an industry');
-      return;
-    }
-
-    try {
-      setIsGenerating(true);
-      setError(null);
-      setGeneratedPdfUrl(null);
-      
-      console.log('[GENERATE] Starting PDF generation process');
-      console.log('[GENERATE] Selected industry:', selectedIndustryId);
-      console.log('[GENERATE] Form data:', data);
-      
-      const result = await generatePreApp(selectedIndustryId, leadData, data);
-      
-      console.log('[GENERATE] Pre-app generation successful:', result);
-      
-      if (!result || !result.pdfBase64) {
-        throw new Error('No PDF data returned from the server');
-      }
-      
-      toast.success('Merchant application generated successfully');
-      
-      // Create a clean business name for the filename
-      const businessName = result.businessName || data.businessName || 'Merchant';
-      const cleanBusinessName = businessName.replace(/[^a-zA-Z0-9]/g, '_');
-      const filename = `WaveLine_PreApp_${cleanBusinessName}.pdf`;
-      setGeneratedFilename(filename);
-      
-      // Convert base64 to blob and create download URL
-      try {
-        // Create a fresh blob with the PDF data
-        const pdfBlob = base64ToBlob(result.pdfBase64, 'application/pdf');
-        
-        // Verify blob is valid
-        if (!pdfBlob || pdfBlob.size === 0) {
-          throw new Error('Generated PDF has zero size or is invalid');
-        }
-        
-        console.log('[GENERATE] Created PDF blob with size:', pdfBlob.size, 'bytes');
-        
-        // Create a download URL from the blob
-        const downloadUrl = URL.createObjectURL(pdfBlob);
-        setGeneratedPdfUrl(downloadUrl);
-        
-        // Trigger automatic download
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        console.log('[GENERATE] PDF download URL created:', downloadUrl);
-      } catch (blobError: any) {
-        console.error('[GENERATE] Error converting PDF base64 to blob:', blobError);
-        throw new Error(`Failed to process the generated PDF: ${blobError.message}`);
-      }
-      
-      if (onSuccess) onSuccess();
-    } catch (error: any) {
-      console.error('[GENERATE] Error generating pre-app:', error);
-      setError(error.message || 'Unknown error occurred');
-      toast.error(`Failed to generate merchant application: ${error.message || 'Unknown error'}`);
-    } finally {
-      setIsGenerating(false);
-    }
+  const onSubmitForm = async (data: PreAppFormValues) => {
+    await handleGenerate(selectedIndustryId, leadData, data);
   };
 
-  const handleRetry = () => {
+  const onRetry = () => {
     incrementRetry();
-    setError(null);
     const formData = form.getValues();
-    handleGenerate(formData);
+    handleRetry(selectedIndustryId, leadData, formData);
   };
 
   return (
@@ -191,7 +115,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
         
         <ErrorDisplay 
           error={error} 
-          onRetry={handleRetry}
+          onRetry={onRetry}
         />
         
         {generatedPdfUrl ? (
@@ -210,7 +134,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
 
             {/* Apply the form reset key for re-rendering */}
             <Form {...form} key={formResetKey}>
-              <form onSubmit={form.handleSubmit(handleGenerate)} className="space-y-6">
+              <form onSubmit={form.handleSubmit(onSubmitForm)} className="space-y-6">
                 <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                   <TabsNavigation />
                   <FormTabs 
