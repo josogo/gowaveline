@@ -3,16 +3,21 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { FileText, Loader2, Download } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { fetchIndustries, generatePreApp } from '../api';
+import { FileText, Loader2 } from 'lucide-react';
+import { generatePreApp } from '../api';
 import { toast } from 'sonner';
 import { Form } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { preAppFormSchema, type PreAppFormValues } from '../PreAppFormSchema';
+
+// Import utility functions
+import { base64ToBlob } from './utils/pdfUtils';
+
+// Import component files
+import { IndustrySelector } from './components/IndustrySelector';
+import { ErrorDisplay } from './components/ErrorDisplay';
+import { GenerationSuccess } from './components/GenerationSuccess';
 
 // Import all tab components
 import { BusinessStructureTab } from './tabs/BusinessStructureTab';
@@ -22,12 +27,6 @@ import { BankingInfoTab } from './tabs/BankingInfoTab';
 import { ProcessingVolumeTab } from './tabs/ProcessingVolumeTab';
 import { PoliciesTab } from './tabs/PoliciesTab';
 import { EcommerceTab } from './tabs/EcommerceTab';
-
-interface Industry {
-  id: string;
-  name: string;
-  description?: string;
-}
 
 interface PreAppGenerationDialogProps {
   open: boolean;
@@ -59,11 +58,6 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
       additionalOwners: false,
       businessName: '',
     },
-  });
-
-  const { data: industries, isLoading: industriesLoading } = useQuery<Industry[]>({
-    queryKey: ['industries'],
-    queryFn: fetchIndustries,
   });
 
   const handleGenerate = async (data: PreAppFormValues) => {
@@ -150,28 +144,6 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
     setActiveTab('structure');
   };
 
-  function base64ToBlob(base64: string, type: string = 'application/pdf'): Blob {
-    try {
-      // Make sure to handle padding if needed
-      const paddingNeeded = base64.length % 4;
-      if (paddingNeeded > 0) {
-        base64 += '='.repeat(4 - paddingNeeded);
-      }
-      
-      const binaryString = window.atob(base64);
-      const bytes = new Uint8Array(binaryString.length);
-      
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      
-      return new Blob([bytes], { type });
-    } catch (e) {
-      console.error('Error in base64ToBlob:', e);
-      throw new Error('Failed to convert PDF data');
-    }
-  }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -185,67 +157,20 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
         
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
-            <p className="text-sm text-red-600">
-              {error}
-            </p>
-          </div>
-        )}
+        <ErrorDisplay error={error} />
         
         {generatedPdfUrl ? (
-          <div className="space-y-6">
-            <div className="bg-green-50 border border-green-200 rounded-md p-4">
-              <p className="text-green-600 font-medium mb-2">Application generated successfully!</p>
-              <p className="text-sm text-gray-600">Your download should start automatically. If it doesn't, use the button below.</p>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/80 flex items-center"
-                onClick={() => {
-                  const link = document.createElement('a');
-                  link.href = generatedPdfUrl;
-                  link.download = generatedFilename;
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                }}
-              >
-                <Download className="mr-2 h-4 w-4" /> Download Application
-              </Button>
-              
-              <Button 
-                variant="outline"
-                onClick={handleReset}
-              >
-                Create Another Application
-              </Button>
-            </div>
-          </div>
+          <GenerationSuccess 
+            generatedPdfUrl={generatedPdfUrl}
+            generatedFilename={generatedFilename}
+            handleReset={handleReset}
+          />
         ) : (
           <>
-            <div className="mb-4">
-              <Label htmlFor="industry" className="block font-medium mb-1">Select Industry</Label>
-              <Select value={selectedIndustryId} onValueChange={setSelectedIndustryId}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select an industry" />
-                </SelectTrigger>
-                <SelectContent>
-                  {industriesLoading ? (
-                    <SelectItem value="loading" disabled>Loading industries...</SelectItem>
-                  ) : industries && industries.length > 0 ? (
-                    industries.map((industry) => (
-                      <SelectItem key={industry.id} value={industry.id}>
-                        {industry.name}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="none" disabled>No industries available</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+            <IndustrySelector 
+              selectedIndustryId={selectedIndustryId} 
+              setSelectedIndustryId={setSelectedIndustryId} 
+            />
 
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleGenerate)} className="space-y-6">
