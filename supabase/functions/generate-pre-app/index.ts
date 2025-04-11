@@ -69,23 +69,8 @@ serve(async (req) => {
 
     console.log('Authenticated user:', user.id, '(Email:', user.email, ')');
     
-    // Verify the user has admin role
-    const { data: hasAdminRole, error: roleError } = await supabase.rpc('has_role', {
-      user_id: user.id,
-      role: 'admin'
-    });
-    
-    if (roleError) {
-      console.error('Role check error details:', JSON.stringify(roleError, null, 2));
-      throw new Error(`Failed to verify admin role: ${roleError.message}`);
-    }
-    
-    if (!hasAdminRole) {
-      console.error('User is not admin:', user.id);
-      throw new Error('Admin privileges required to generate PDF');
-    }
-    
-    console.log('Admin role verified for user:', user.id);
+    // We're removing the admin role check - any authenticated user can generate PDFs
+    console.log('Authentication successful, proceeding with PDF generation');
 
     // Get the request data
     let requestData;

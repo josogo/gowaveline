@@ -1,4 +1,3 @@
-
 import { DocumentItem, DocumentItemType } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { PreAppFormValues } from './PreAppFormSchema';
@@ -289,25 +288,6 @@ export async function generatePreApp(
     }
     
     console.log('[GENERATE_PRE_APP] User authenticated:', user.id, '(Email:', user.email, ')');
-    
-    // Check if user has admin role
-    console.log('[GENERATE_PRE_APP] Checking admin role...');
-    const { data: isAdmin, error: roleError } = await supabase.rpc('has_role', {
-      user_id: user.id,
-      role: 'admin'
-    });
-    
-    if (roleError) {
-      console.error('[GENERATE_PRE_APP] Error checking admin role:', roleError);
-      throw new Error(`Failed to verify permission level: ${roleError.message}`);
-    }
-    
-    if (!isAdmin) {
-      console.error('[GENERATE_PRE_APP] User is not admin:', user.id);
-      throw new Error('Admin permissions required to generate applications');
-    }
-    
-    console.log('[GENERATE_PRE_APP] Admin role verified for user:', user.id);
     
     const metadata = {
       industryId,

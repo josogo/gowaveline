@@ -48,7 +48,6 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [authCheckComplete, setAuthCheckComplete] = useState(false);
   const [sessionChecked, setSessionChecked] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(false);
@@ -72,7 +71,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
     queryFn: fetchIndustries,
   });
 
-  // Check authentication status and admin role
+  // Check authentication status
   useEffect(() => {
     if (open && !sessionChecked && !isAuthChecking) {
       checkAuth();
@@ -115,7 +114,6 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
       if (!session || !currentUser) {
         console.log('[AUTH CHECK] No active session or user found');
         setIsAuthenticated(false);
-        setIsAdmin(false);
         setError('Authentication required. Please log in to generate applications.');
         toast.error('You must be logged in to generate applications');
         setAuthCheckComplete(true);
@@ -128,41 +126,8 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
       console.log('[AUTH CHECK] User authenticated:', currentUser.id, '(Email:', currentUser.email, ')');
       setIsAuthenticated(true);
       setUserId(currentUser.id);
-      
-      // Check if user is admin
-      try {
-        console.log('[AUTH CHECK] Checking admin role for user:', currentUser.id);
-        const { data: hasAdminRole, error: roleError } = await supabase.rpc('has_role', {
-          user_id: currentUser.id,
-          role: 'admin'
-        });
-        
-        if (roleError) {
-          console.error('[AUTH CHECK] Error checking admin status:', roleError);
-          setError(`Failed to verify admin permissions: ${roleError.message}`);
-          setIsAdmin(false);
-          toast.error('Failed to verify admin permissions');
-        } else {
-          console.log('[AUTH CHECK] Admin role check result:', hasAdminRole);
-          setIsAdmin(!!hasAdminRole);
-          
-          if (!hasAdminRole) {
-            console.log('[AUTH CHECK] User is not admin');
-            setError('You need admin permissions to generate applications');
-            toast.error('Admin permissions required');
-          } else {
-            console.log('[AUTH CHECK] User confirmed as admin');
-            toast.success('Authentication successful');
-            // Clear any previous auth errors
-            setError(null);
-          }
-        }
-      } catch (e: any) {
-        console.error('[AUTH CHECK] Error checking admin role:', e);
-        setError(`Failed to verify admin permissions: ${e.message}`);
-        setIsAdmin(false);
-        toast.error('Error checking admin permissions');
-      }
+      setError(null);
+      toast.success('Authentication successful');
       
       setAuthCheckComplete(true);
       setSessionChecked(true);
@@ -171,7 +136,6 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
       console.error('[AUTH CHECK] Error in authentication check:', e);
       setError(`Failed to verify authentication status: ${e.message}`);
       setIsAuthenticated(false);
-      setIsAdmin(false);
       setAuthCheckComplete(true);
       setSessionChecked(true);
       setIsAuthChecking(false);
@@ -187,11 +151,6 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
 
     if (!isAuthenticated) {
       toast.error('You must be logged in to generate applications');
-      return;
-    }
-    
-    if (!isAdmin) {
-      toast.error('You need admin permissions to generate applications');
       return;
     }
 
@@ -319,11 +278,11 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
           </div>
         )}
         
-        {isAuthenticated === true && isAdmin === true && authCheckComplete && (
+        {isAuthenticated === true && authCheckComplete && (
           <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-4">
             <p className="text-sm text-green-600 flex items-center">
               <Check className="h-4 w-4 mr-2" />
-              Logged in as admin. You can generate applications.
+              Logged in successfully. You can generate applications.
             </p>
           </div>
         )}
@@ -356,15 +315,6 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
                 Go to Login
               </Button>
             </div>
-          </div>
-        )}
-        
-        {isAuthenticated === true && isAdmin === false && authCheckComplete && (
-          <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-4">
-            <p className="text-sm text-amber-600 flex items-center">
-              <AlertCircle className="h-4 w-4 mr-2" />
-              You need admin permissions to generate applications.
-            </p>
           </div>
         )}
         
@@ -451,7 +401,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
               <Button 
                 type="submit" 
                 className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/80" 
-                disabled={isGenerating || !authCheckComplete || !isAuthenticated || isAdmin === false || !selectedIndustryId}
+                disabled={isGenerating || !authCheckComplete || !isAuthenticated || !selectedIndustryId}
               >
                 {isGenerating ? (
                   <>
