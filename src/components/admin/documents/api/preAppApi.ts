@@ -57,24 +57,9 @@ export async function generatePreApp(
       throw new Error(errorMessage);
     }
     
-    // Get the raw text response first to validate its structure
-    const responseText = await response.text();
-    console.log('[GENERATE_PRE_APP] Raw response length:', responseText.length);
-    
-    if (!responseText || responseText.trim() === '') {
-      throw new Error('Empty response received from PDF generation service');
-    }
-    
-    console.log('[GENERATE_PRE_APP] Response starts with:', responseText.substring(0, 100));
-    
-    // Parse the response as JSON
-    let result;
-    try {
-      result = JSON.parse(responseText);
-    } catch (parseError) {
-      console.error('[GENERATE_PRE_APP] Error parsing response as JSON:', parseError);
-      throw new Error(`Failed to parse response from PDF generation service: ${responseText.substring(0, 100)}...`);
-    }
+    // Get the JSON response
+    const result = await response.json();
+    console.log('[GENERATE_PRE_APP] Response received, success:', result.success);
     
     // Validate the response structure
     if (!result.success) {
@@ -94,10 +79,14 @@ export async function generatePreApp(
       throw new Error('Invalid PDF data received from the server');
     }
     
+    // Log base64 string length for debugging
+    console.log('[GENERATE_PRE_APP] PDF base64 string length:', result.pdfBase64.length);
+    
     // Test the conversion to make sure the base64 is valid
     try {
       const testBlob = base64ToBlob(result.pdfBase64, 'application/pdf');
       console.log('[GENERATE_PRE_APP] PDF blob created successfully with size:', testBlob.size);
+      
       if (testBlob.size < 100) {
         console.warn('[GENERATE_PRE_APP] Warning: PDF blob size is very small:', testBlob.size);
         
@@ -110,7 +99,6 @@ export async function generatePreApp(
       throw new Error(`Invalid PDF data format: ${convertError.message}`);
     }
     
-    console.log('[GENERATE_PRE_APP] PDF base64 string length:', result.pdfBase64.length);
     console.log('[GENERATE_PRE_APP] PDF generated successfully');
     
     const businessName = result.businessName || formData.businessName || 'merchant-application';

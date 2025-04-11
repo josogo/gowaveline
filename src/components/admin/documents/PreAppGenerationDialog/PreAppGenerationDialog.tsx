@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Loader2 } from 'lucide-react';
+import { FileText, Loader2, RefreshCcw } from 'lucide-react';
 import { generatePreApp } from '../api';
 import { toast } from 'sonner';
 import { Form } from '@/components/ui/form';
@@ -46,6 +46,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
   const [generatedFilename, setGeneratedFilename] = useState<string>('WaveLine_Merchant_Application.pdf');
+  const [retryAttempt, setRetryAttempt] = useState(0);
 
   const form = useForm<PreAppFormValues>({
     resolver: zodResolver(preAppFormSchema),
@@ -59,6 +60,26 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
       businessName: '',
     },
   });
+
+  // Cleanup URLs on unmount or when dialog closes
+  useEffect(() => {
+    return () => {
+      if (generatedPdfUrl) {
+        URL.revokeObjectURL(generatedPdfUrl);
+      }
+    };
+  }, [generatedPdfUrl]);
+
+  useEffect(() => {
+    if (!open) {
+      // Reset state when dialog closes
+      if (generatedPdfUrl) {
+        URL.revokeObjectURL(generatedPdfUrl);
+        setGeneratedPdfUrl(null);
+      }
+      setError(null);
+    }
+  }, [open]);
 
   const handleGenerate = async (data: PreAppFormValues) => {
     if (!selectedIndustryId) {
@@ -93,20 +114,32 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
       
       // Convert base64 to blob and create download URL
       try {
+        // Create a fresh blob with the PDF data
         const pdfBlob = base64ToBlob(result.pdfBase64, 'application/pdf');
+        
+        // Verify blob is valid
+        if (!pdfBlob || pdfBlob.size === 0) {
+          throw new Error('Generated PDF has zero size or is invalid');
+        }
+        
+        console.log('[GENERATE] Created PDF blob with size:', pdfBlob.size, 'bytes');
+        
+        // Create a download URL from the blob
         const downloadUrl = URL.createObjectURL(pdfBlob);
         setGeneratedPdfUrl(downloadUrl);
         
-        // Trigger download automatically
+        // Trigger automatic download
         const link = document.createElement('a');
         link.href = downloadUrl;
         link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-      } catch (blobError) {
-        console.error('Error converting PDF base64 to blob:', blobError);
-        throw new Error('Failed to process the generated PDF');
+        
+        console.log('[GENERATE] PDF download URL created:', downloadUrl);
+      } catch (blobError: any) {
+        console.error('[GENERATE] Error converting PDF base64 to blob:', blobError);
+        throw new Error(`Failed to process the generated PDF: ${blobError.message}`);
       }
       
       if (onSuccess) onSuccess();
@@ -117,6 +150,13 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const handleRetry = () => {
+    setRetryAttempt(prev => prev + 1);
+    setError(null);
+    const formData = form.getValues();
+    handleGenerate(formData);
   };
 
   const goToNextTab = () => {
@@ -138,6 +178,9 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
   };
 
   const handleReset = () => {
+    if (generatedPdfUrl) {
+      URL.revokeObjectURL(generatedPdfUrl);
+    }
     form.reset();
     setGeneratedPdfUrl(null);
     setError(null);
@@ -157,13 +200,17 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
         
-        <ErrorDisplay error={error} />
+        <ErrorDisplay 
+          error={error} 
+          onRetry={handleRetry}
+        />
         
         {generatedPdfUrl ? (
           <GenerationSuccess 
             generatedPdfUrl={generatedPdfUrl}
             generatedFilename={generatedFilename}
             handleReset={handleReset}
+            retryAttempt={retryAttempt}
           />
         ) : (
           <>
