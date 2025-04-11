@@ -3,11 +3,13 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.14.0'
 import { jsPDF } from 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/+esm'
 
+// CORS headers for browser compatibility
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Main handler function
 serve(async (req) => {
   // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
@@ -19,50 +21,21 @@ serve(async (req) => {
     console.log("======== Edge function started: generate-pre-app ========");
     console.log("Request method:", req.method);
     
-    // Log headers (except authorization)
-    const headersLog = {};
-    for (const [key, value] of req.headers.entries()) {
-      if (key.toLowerCase() === 'authorization') {
-        headersLog[key] = 'Bearer [token-hidden]';
-      } else {
-        headersLog[key] = value;
-      }
-    }
-    console.log("Request headers:", JSON.stringify(headersLog, null, 2));
+    // Log sanitized headers (hide auth token)
+    logSanitizedHeaders(req.headers);
     
-    // Get the request data
-    let requestData;
-    try {
-      requestData = await req.json();
-      console.log("Request data received");
-    } catch (parseError) {
-      console.error("Error parsing request JSON:", parseError);
-      throw new Error('Invalid JSON in request body');
-    }
-    
+    // Get and validate request data
+    const requestData = await parseAndValidateRequest(req);
     const { industryId, formData } = requestData;
     
-    console.log("Request data contents:", {
-      industryId: industryId || "Missing",
-      formData: formData ? "Present" : "Missing"
-    });
-    
-    if (!industryId) {
-      throw new Error('Industry ID is required')
-    }
-    
-    if (!formData) {
-      throw new Error('Form data is required')
-    }
-
-    // Generate a PDF with the submitted business data
+    // Generate PDF with form data
     const businessName = formData.businessName || 'New Business';
     console.log(`Generating PDF for business: ${businessName}`);
     
     // Create the PDF with the formatted WaveLine Merchant Application
     const pdfBase64 = await generateWaveLineMerchantApplication(formData);
-
     console.log("PDF generation completed successfully");
+    
     return new Response(
       JSON.stringify({
         success: true,
@@ -98,9 +71,55 @@ serve(async (req) => {
 })
 
 /**
- * Generates a formatted WaveLine Merchant Application PDF based on the provided form data
+ * Logs the request headers with authorization information sanitized
  */
-async function generateWaveLineMerchantApplication(formData: any): Promise<string> {
+function logSanitizedHeaders(headers) {
+  const headersLog = {};
+  for (const [key, value] of headers.entries()) {
+    if (key.toLowerCase() === 'authorization') {
+      headersLog[key] = 'Bearer [token-hidden]';
+    } else {
+      headersLog[key] = value;
+    }
+  }
+  console.log("Request headers:", JSON.stringify(headersLog, null, 2));
+}
+
+/**
+ * Parses and validates the request data
+ */
+async function parseAndValidateRequest(req) {
+  let requestData;
+  try {
+    requestData = await req.json();
+    console.log("Request data received");
+  } catch (parseError) {
+    console.error("Error parsing request JSON:", parseError);
+    throw new Error('Invalid JSON in request body');
+  }
+  
+  const { industryId, formData } = requestData;
+  
+  console.log("Request data contents:", {
+    industryId: industryId || "Missing",
+    formData: formData ? "Present" : "Missing"
+  });
+  
+  if (!industryId) {
+    throw new Error('Industry ID is required');
+  }
+  
+  if (!formData) {
+    throw new Error('Form data is required');
+  }
+  
+  return requestData;
+}
+
+/**
+ * Main function to generate the merchant application PDF
+ */
+async function generateWaveLineMerchantApplication(formData) {
   // Create a new PDF document
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -108,7 +127,7 @@ async function generateWaveLineMerchantApplication(formData: any): Promise<strin
     format: 'letter'
   });
 
-  // Page dimensions
+  // Page dimensions and styles
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 20;
@@ -125,7 +144,59 @@ async function generateWaveLineMerchantApplication(formData: any): Promise<strin
   const lineHeight = 7;
   const sectionSpacing = 10;
   
-  // Add header with logo and title
+  // Add document header
+  y = addDocumentHeader(doc, pageWidth, margin, primaryColor);
+  
+  // Add business name as document title
+  y = addDocumentTitle(doc, formData.businessName, pageWidth, y, secondaryColor);
+  
+  // Set standard text format
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(0, 0, 0);
+
+  // Add all sections
+  y = addBusinessStructureSection(doc, formData, y, leftMargin, pageWidth, margin, lineHeight, sectionSpacing);
+  y = addBusinessInfoSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing);
+  y = addPrincipalInfoSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing);
+  y = addBankInfoSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing);
+  
+  // Check if we need to add a new page
+  if (y > pageHeight - 60) {
+    doc.addPage();
+    y = margin;
+  }
+  
+  y = addProcessingVolumeSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing);
+  y = addBusinessTypeSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing);
+  y = addTransactionMethodsSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing);
+  
+  // Check if we need another page
+  if (y > pageHeight - 60) {
+    doc.addPage();
+    y = margin;
+  }
+  
+  // Add eCommerce section if applicable
+  if (formData.purchaseMethods && formData.purchaseMethods.includes('internet')) {
+    y = addEcommerceSection(doc, formData, y, leftMargin, lineHeight);
+  }
+  
+  // Add footer with application ID and date
+  addFooter(doc, formData.businessName || "WaveLine Merchant Application");
+  
+  // Convert the document to base64
+  const pdfOutput = doc.output('datauristring');
+  
+  // Return just the base64 part
+  const base64Data = pdfOutput.split(',')[1];
+  return base64Data;
+}
+
+/**
+ * Adds the document header with logo and title
+ */
+function addDocumentHeader(doc, pageWidth, margin, primaryColor) {
   doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
   doc.rect(0, 0, pageWidth, 25, 'F');
   
@@ -133,29 +204,32 @@ async function generateWaveLineMerchantApplication(formData: any): Promise<strin
   doc.setFontSize(20);
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.text("WaveLine", leftMargin, 15);
+  doc.text("WaveLine", margin, 15);
   
   // Add application title
   doc.setFont('helvetica', 'normal');
   doc.text("Merchant Application", pageWidth - margin - 45, 15);
   
   // Reset position after header
-  y = 35;
-  
-  // Add business name as document title
+  return 35; // New Y position
+}
+
+/**
+ * Adds the document title (business name)
+ */
+function addDocumentTitle(doc, businessName, pageWidth, y, secondaryColor) {
   doc.setFontSize(16);
   doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
   doc.setFont('helvetica', 'bold');
-  const businessName = formData.businessName || 'New Business';
-  doc.text(businessName, pageWidth / 2, y, { align: 'center' });
-  y += lineHeight + 5;
-  
-  // Set standard text format
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.setTextColor(0, 0, 0);
+  const title = businessName || 'New Business';
+  doc.text(title, pageWidth / 2, y, { align: 'center' });
+  return y + 12; // Return new Y position with spacing
+}
 
-  // Section 1. Business Structure
+/**
+ * Adds the business structure section to the PDF
+ */
+function addBusinessStructureSection(doc, formData, y, leftMargin, pageWidth, margin, lineHeight, sectionSpacing) {
   y = addSectionHeader(doc, "1. Business Structure", y);
   
   // Checkbox for business structure with better formatting
@@ -188,9 +262,13 @@ async function generateWaveLineMerchantApplication(formData: any): Promise<strin
     currentX += structure.length * 1.8 + 8;
   });
   
-  y = currentY + sectionSpacing;
-  
-  // Section 2. Business Information
+  return currentY + sectionSpacing;
+}
+
+/**
+ * Adds the business information section to the PDF
+ */
+function addBusinessInfoSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing) {
   y = addSectionHeader(doc, "2. Business Information", y);
   
   // Business Information fields with improved formatting
@@ -204,24 +282,18 @@ async function generateWaveLineMerchantApplication(formData: any): Promise<strin
     { label: "Website/URL:", value: formData.website || "" }
   ];
   
-  businessInfo.forEach(item => {
-    // Draw field label in bold
-    doc.setFont('helvetica', 'bold');
-    doc.text(item.label, leftMargin, y);
-    
-    // Draw field value in normal font
-    doc.setFont('helvetica', 'normal');
-    doc.text(String(item.value), leftMargin + 40, y);
-    
-    y += lineHeight;
-  });
+  y = addLabeledFields(doc, businessInfo, y, leftMargin, lineHeight);
   
-  y += sectionSpacing / 2;
-  
-  // Section 3. Principal Information
+  return y + sectionSpacing / 2;
+}
+
+/**
+ * Adds the principal information section to the PDF
+ */
+function addPrincipalInfoSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing) {
   y = addSectionHeader(doc, "3. Principal Information", y);
   
-  // Additional owners checkbox with better positioning
+  // Additional owners checkbox
   doc.setFont('helvetica', 'normal');
   doc.text("Check if additional owners/members have 25%+ equity:", leftMargin, y);
   doc.rect(leftMargin + 80, y - 3, 3, 3);
@@ -233,7 +305,7 @@ async function generateWaveLineMerchantApplication(formData: any): Promise<strin
   
   y += lineHeight;
   
-  // Principal Information fields with improved formatting
+  // Principal Information fields
   const principalInfo = [
     { label: "Full Name:", value: formData.principalName || "" },
     { label: "Ownership %:", value: formData.ownershipPct ? `${formData.ownershipPct}%` : "" },
@@ -243,19 +315,15 @@ async function generateWaveLineMerchantApplication(formData: any): Promise<strin
     { label: "Home Address:", value: formData.homeAddress || "" }
   ];
   
-  principalInfo.forEach(item => {
-    doc.setFont('helvetica', 'bold');
-    doc.text(item.label, leftMargin, y);
-    
-    doc.setFont('helvetica', 'normal');
-    doc.text(String(item.value), leftMargin + 40, y);
-    
-    y += lineHeight;
-  });
+  y = addLabeledFields(doc, principalInfo, y, leftMargin, lineHeight);
   
-  y += sectionSpacing / 2;
-  
-  // Section 4. Bank Information
+  return y + sectionSpacing / 2;
+}
+
+/**
+ * Adds the bank information section to the PDF
+ */
+function addBankInfoSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing) {
   y = addSectionHeader(doc, "4. Bank Settlement Information", y);
   
   const bankInfo = [
@@ -264,25 +332,15 @@ async function generateWaveLineMerchantApplication(formData: any): Promise<strin
     { label: "Account Number:", value: formData.accountNumber || "" }
   ];
   
-  bankInfo.forEach(item => {
-    doc.setFont('helvetica', 'bold');
-    doc.text(item.label, leftMargin, y);
-    
-    doc.setFont('helvetica', 'normal');
-    doc.text(String(item.value), leftMargin + 40, y);
-    
-    y += lineHeight;
-  });
+  y = addLabeledFields(doc, bankInfo, y, leftMargin, lineHeight);
   
-  y += sectionSpacing / 2;
-  
-  // Check if we need to add a new page
-  if (y > pageHeight - 60) {
-    doc.addPage();
-    y = margin;
-  }
-  
-  // Section 5. Processing Volume
+  return y + sectionSpacing / 2;
+}
+
+/**
+ * Adds the processing volume section to the PDF
+ */
+function addProcessingVolumeSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing) {
   y = addSectionHeader(doc, "5. Processing Volume", y);
   
   const volumeInfo = [
@@ -291,19 +349,15 @@ async function generateWaveLineMerchantApplication(formData: any): Promise<strin
     { label: "Highest Ticket:", value: formData.highestTicket ? `$${formData.highestTicket}` : "" }
   ];
   
-  volumeInfo.forEach(item => {
-    doc.setFont('helvetica', 'bold');
-    doc.text(item.label, leftMargin, y);
-    
-    doc.setFont('helvetica', 'normal');
-    doc.text(String(item.value), leftMargin + 40, y);
-    
-    y += lineHeight;
-  });
+  y = addLabeledFields(doc, volumeInfo, y, leftMargin, lineHeight);
   
-  y += sectionSpacing / 2;
-  
-  // Section 6. Business Type
+  return y + sectionSpacing / 2;
+}
+
+/**
+ * Adds the business type section to the PDF
+ */
+function addBusinessTypeSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing) {
   y = addSectionHeader(doc, "6. Business Type", y);
   
   // Draw business type fields
@@ -347,9 +401,13 @@ async function generateWaveLineMerchantApplication(formData: any): Promise<strin
     y += lineHeight;
   });
   
-  y += sectionSpacing / 2;
-  
-  // Section 7. Transaction Methods
+  return y + sectionSpacing / 2;
+}
+
+/**
+ * Adds the transaction methods section to the PDF
+ */
+function addTransactionMethodsSection(doc, formData, y, leftMargin, lineHeight, sectionSpacing) {
   y = addSectionHeader(doc, "7. Transaction Methods", y);
   
   // Draw transaction methods with percentages
@@ -376,48 +434,30 @@ async function generateWaveLineMerchantApplication(formData: any): Promise<strin
     y += lineHeight;
   });
   
-  // Check if we need another page
-  if (y > pageHeight - 60) {
-    doc.addPage();
-    y = margin;
-  }
+  return y + sectionSpacing / 2;
+}
+
+/**
+ * Adds the eCommerce section to the PDF if applicable
+ */
+function addEcommerceSection(doc, formData, y, leftMargin, lineHeight) {
+  y = addSectionHeader(doc, "8. eCommerce Information", y);
   
-  // Section 8. eCommerce Information (if applicable)
-  if (formData.purchaseMethods && formData.purchaseMethods.includes('internet')) {
-    y = addSectionHeader(doc, "8. eCommerce Information", y);
-    
-    const ecommerceFields = [
-      { label: "Shopping Cart:", value: formData.shoppingCartPlatform || "" },
-      { label: "Shipping Method:", value: formatArrayField(formData.shippingMethod) },
-      { label: "Advertising Channels:", value: formatArrayField(formData.advertisingChannels) }
-    ];
-    
-    ecommerceFields.forEach(item => {
-      doc.setFont('helvetica', 'bold');
-      doc.text(item.label, leftMargin, y);
-      
-      doc.setFont('helvetica', 'normal');
-      doc.text(String(item.value), leftMargin + 40, y);
-      
-      y += lineHeight;
-    });
-  }
+  const ecommerceFields = [
+    { label: "Shopping Cart:", value: formData.shoppingCartPlatform || "" },
+    { label: "Shipping Method:", value: formatArrayField(formData.shippingMethod) },
+    { label: "Advertising Channels:", value: formatArrayField(formData.advertisingChannels) }
+  ];
   
-  // Add footer with application ID and date
-  addFooter(doc, formData.businessName || "WaveLine Merchant Application");
+  y = addLabeledFields(doc, ecommerceFields, y, leftMargin, lineHeight);
   
-  // Convert the document to base64
-  const pdfOutput = doc.output('datauristring');
-  
-  // Return just the base64 part
-  const base64Data = pdfOutput.split(',')[1];
-  return base64Data;
+  return y;
 }
 
 /**
  * Helper function to add a section header
  */
-function addSectionHeader(doc: any, text: string, y: number): number {
+function addSectionHeader(doc, text, y) {
   doc.setFillColor(14, 165, 233);  // #0EA5E9 (sky blue)
   doc.rect(20, y, doc.internal.pageSize.getWidth() - 40, 7, 'F');
   
@@ -435,9 +475,28 @@ function addSectionHeader(doc: any, text: string, y: number): number {
 }
 
 /**
+ * Helper function to add label-value pairs to the PDF
+ */
+function addLabeledFields(doc, fields, y, leftMargin, lineHeight) {
+  fields.forEach(item => {
+    // Draw field label in bold
+    doc.setFont('helvetica', 'bold');
+    doc.text(item.label, leftMargin, y);
+    
+    // Draw field value in normal font
+    doc.setFont('helvetica', 'normal');
+    doc.text(String(item.value), leftMargin + 40, y);
+    
+    y += lineHeight;
+  });
+  
+  return y;
+}
+
+/**
  * Helper function to add footer to all pages
  */
-function addFooter(doc: any, businessName: string): void {
+function addFooter(doc, businessName) {
   const pageCount = doc.internal.getNumberOfPages();
   const today = new Date().toLocaleDateString();
   
@@ -465,7 +524,7 @@ function addFooter(doc: any, businessName: string): void {
 /**
  * Helper function to format array fields as comma-separated strings
  */
-function formatArrayField(arr: string[] | undefined): string {
+function formatArrayField(arr) {
   if (!arr || !Array.isArray(arr) || arr.length === 0) {
     return "";
   }
@@ -478,4 +537,3 @@ function formatArrayField(arr: string[] | undefined): string {
       .join(' ');
   }).join(', ');
 }
-
