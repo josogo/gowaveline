@@ -1,5 +1,5 @@
 
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Generate a pre-application PDF using the edge function.
@@ -8,11 +8,6 @@ import { createClient } from '@supabase/supabase-js';
  * @param formData - Form data from the pre-application form
  */
 export const generatePreApp = async (industryId: string, leadData: any, formData: any) => {
-  const supabase = createClient(
-    import.meta.env.VITE_SUPABASE_URL,
-    import.meta.env.VITE_SUPABASE_ANON_KEY
-  );
-
   try {
     console.log('[API] Generating pre-app with data:', { industryId, formData });
     
