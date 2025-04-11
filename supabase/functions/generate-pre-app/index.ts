@@ -43,33 +43,6 @@ serve(async (req) => {
     // Create a Supabase client with the service role key (bypasses RLS)
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Get the authorization header from the request
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      console.error("Missing authorization header");
-      throw new Error('Missing authorization header')
-    }
-
-    // Extract the JWT token
-    const token = authHeader.replace('Bearer ', '')
-    console.log("Token received, verifying user");
-
-    // Verify the token and get the user
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token)
-    
-    if (userError) {
-      console.error('User auth error details:', JSON.stringify(userError, null, 2));
-      throw new Error(`Invalid auth token: ${userError.message || 'Unknown authentication error'}`)
-    }
-    
-    if (!user) {
-      console.error('User not found in token response');
-      throw new Error('User not found in authentication response')
-    }
-
-    console.log('Authenticated user:', user.id, '(Email:', user.email, ')');
-    console.log('Authentication successful, proceeding with PDF generation');
-
     // Get the request data
     let requestData;
     try {

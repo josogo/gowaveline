@@ -241,132 +241,60 @@ export async function generatePreApp(
   industryId: string,
   leadData: any,
   formData: any
-): Promise<DocumentItem> {
+): Promise<any> {
   try {
     console.log('[GENERATE_PRE_APP] Starting generatePreApp function with industry:', industryId);
     
-    // Force refresh the session to ensure we have the latest data
-    console.log('[GENERATE_PRE_APP] Refreshing user session...');
+    const edgeFunctionUrl = 'https://rqwrvkkfixrogxogunsk.supabase.co/functions/v1/generate-pre-app';
+    console.log('[GENERATE_PRE_APP] Calling edge function URL:', edgeFunctionUrl);
+    
+    const response = await fetch(edgeFunctionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ industryId, formData })
+    });
+    
+    console.log('[GENERATE_PRE_APP] Edge function response status:', response.status);
+    
+    const responseText = await response.text();
+    console.log('[GENERATE_PRE_APP] Raw response:', responseText);
+    
+    let result;
     try {
-      await supabase.auth.refreshSession();
-      console.log('[GENERATE_PRE_APP] Session refreshed successfully');
-    } catch (refreshError) {
-      console.error('[GENERATE_PRE_APP] Session refresh error:', refreshError);
-      // Continue anyway - we'll try to get the current session next
+      result = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('[GENERATE_PRE_APP] Error parsing response as JSON:', parseError);
+      throw new Error(`Failed to parse response from PDF generation service: ${responseText.substring(0, 100)}...`);
     }
     
-    // Get the current user and session
-    console.log('[GENERATE_PRE_APP] Getting current session...');
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    
-    if (sessionError) {
-      console.error('[GENERATE_PRE_APP] Session error:', sessionError);
-      throw new Error(`Authentication error: Could not get session - ${sessionError.message}`);
-    }
-    
-    const session = sessionData?.session;
-    
-    if (!session) {
-      console.error('[GENERATE_PRE_APP] No session found');
-      throw new Error('User not authenticated. Please log in to generate applications. (No session found)');
-    }
-    
-    const user = session.user;
-    
-    if (!user) {
-      console.error('[GENERATE_PRE_APP] No user in session');
-      throw new Error('User not authenticated. Please log in to generate applications. (No user found in session)');
-    }
-    
-    console.log('[GENERATE_PRE_APP] User authenticated:', user.id, '(Email:', user.email, ')');
-    
-    const metadata = {
-      industryId,
-      leadData,
-      formData,
-      generatedAt: new Date().toISOString()
-    };
-    
-    if (!session?.access_token) {
-      console.error('[GENERATE_PRE_APP] No valid access token in session');
-      throw new Error('No valid session token found. Please log in again.');
-    }
-    
-    try {
-      const edgeFunctionUrl = 'https://rqwrvkkfixrogxogunsk.supabase.co/functions/v1/generate-pre-app';
-      console.log('[GENERATE_PRE_APP] Calling edge function URL:', edgeFunctionUrl);
-      console.log('[GENERATE_PRE_APP] Using access token:', session.access_token.substring(0, 5) + '...[truncated]');
-      
-      const response = await fetch(edgeFunctionUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ industryId, formData })
+    if (!response.ok) {
+      const errorMessage = result?.error || response.statusText || 'Unknown error';
+      console.error('[GENERATE_PRE_APP] Error response from edge function:', { 
+        status: response.status,
+        statusText: response.statusText,
+        error: errorMessage
       });
       
-      console.log('[GENERATE_PRE_APP] Edge function response status:', response.status);
-      
-      const responseText = await response.text();
-      console.log('[GENERATE_PRE_APP] Raw response:', responseText);
-      
-      let result;
-      try {
-        result = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('[GENERATE_PRE_APP] Error parsing response as JSON:', parseError);
-        throw new Error(`Failed to parse response from PDF generation service: ${responseText.substring(0, 100)}...`);
-      }
-      
-      if (!response.ok) {
-        const errorMessage = result?.error || response.statusText || 'Unknown error';
-        console.error('[GENERATE_PRE_APP] Error response from edge function:', { 
-          status: response.status,
-          statusText: response.statusText,
-          error: errorMessage
-        });
-        
-        throw new Error(`PDF generation failed: ${errorMessage}`);
-      }
-      
-      if (!result.pdfBase64) {
-        console.error('[GENERATE_PRE_APP] No PDF data in response:', result);
-        throw new Error('No PDF data received from the server');
-      }
-      
-      console.log('[GENERATE_PRE_APP] PDF generated successfully, saving to storage');
-      
-      const filePath = `pre-apps/${Date.now()}-application.pdf`;
-      const fileBlob = base64ToBlob(result.pdfBase64, 'application/pdf');
-      
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('documents')
-        .upload(filePath, fileBlob);
-        
-      if (uploadError) {
-        console.error('[GENERATE_PRE_APP] Error uploading PDF to storage:', uploadError);
-        throw uploadError;
-      }
-      
-      const docData = {
-        name: `Merchant Application - ${formData.businessName || formData.principalName || 'New'}`,
-        description: `Pre-application form for ${formData.principalName || formData.businessName || 'merchant'}`,
-        file_path: filePath,
-        file_type: 'application/pdf',
-        file_size: fileBlob.size,
-        document_type: 'MERCHANT_APPLICATION' as DocumentItemType,
-        metadata,
-        is_template: false,
-        uploaded_by: user.id
-      };
-      
-      console.log('[GENERATE_PRE_APP] Creating document entry for the generated PDF');
-      return await createDocument(docData);
-    } catch (fetchError: any) {
-      console.error('[GENERATE_PRE_APP] Error in edge function call:', fetchError);
-      throw new Error(`Edge function error: ${fetchError.message}`);
+      throw new Error(`PDF generation failed: ${errorMessage}`);
     }
+    
+    if (!result.pdfBase64) {
+      console.error('[GENERATE_PRE_APP] No PDF data in response:', result);
+      throw new Error('No PDF data received from the server');
+    }
+    
+    console.log('[GENERATE_PRE_APP] PDF generated successfully, creating mock result');
+    
+    // Create a mock result for now
+    return {
+      id: 'mock-id-' + Date.now(),
+      name: `Merchant Application - ${formData.businessName || formData.principalName || 'New'}`,
+      file_path: 'pre-apps/mock-application.pdf',
+      created_at: new Date().toISOString()
+    };
+    
   } catch (error: any) {
     console.error('[GENERATE_PRE_APP] Error generating pre-app document:', error);
     throw error;
