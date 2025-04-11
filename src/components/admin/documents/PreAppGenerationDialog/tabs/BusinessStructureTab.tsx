@@ -1,80 +1,79 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { UseFormReturn } from 'react-hook-form';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import type { UseFormReturn } from 'react-hook-form';
-import type { PreAppFormValues } from '../../PreAppFormSchema';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 
 interface BusinessStructureTabProps {
-  form: UseFormReturn<PreAppFormValues>;
+  form: UseFormReturn<any>;
   goToNextTab: () => void;
 }
 
 export const BusinessStructureTab: React.FC<BusinessStructureTabProps> = ({ form, goToNextTab }) => {
+  const showOtherField = form.watch('businessStructure') === 'other';
+
   return (
     <div className="space-y-4">
-      <div className="bg-[#0EA5E9]/5 p-4 rounded-lg mb-4">
-        <h3 className="font-semibold text-xl text-[#0EA5E9] mb-4">1. Business Structure</h3>
-        
+      <div>
+        <h3 className="text-lg font-medium mb-2">Business Structure</h3>
+        <p className="text-sm text-gray-500 mb-4">Select your business type</p>
+
         <FormField
           control={form.control}
           name="businessStructure"
           render={({ field }) => (
-            <FormItem className="space-y-2">
-              <FormLabel>Business Structure</FormLabel>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                <FormControl>
+            <FormItem className="space-y-3">
+              <FormControl>
+                <RadioGroup
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  className="grid grid-cols-2 gap-4"
+                >
                   <div className="flex items-center space-x-2">
-                    <RadioGroup 
-                      onValueChange={field.onChange} 
-                      value={field.value}
-                      className="flex flex-col space-y-2"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="sole_proprietorship" id="sole_proprietorship" />
-                        <Label htmlFor="sole_proprietorship">Sole Proprietorship</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="corporation" id="corporation" />
-                        <Label htmlFor="corporation">Corporation</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="llc" id="llc" />
-                        <Label htmlFor="llc">LLC</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="non_profit" id="non_profit" />
-                        <Label htmlFor="non_profit">Non-profit (401(c))</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="government" id="government" />
-                        <Label htmlFor="government">Government</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="other" id="other" />
-                        <Label htmlFor="other">Other</Label>
-                      </div>
-                    </RadioGroup>
+                    <RadioGroupItem value="sole_proprietorship" id="sole_proprietorship" />
+                    <Label htmlFor="sole_proprietorship">Sole Proprietorship</Label>
                   </div>
-                </FormControl>
-              </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="corporation" id="corporation" />
+                    <Label htmlFor="corporation">Corporation</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="llc" id="llc" />
+                    <Label htmlFor="llc">LLC</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="non_profit" id="non_profit" />
+                    <Label htmlFor="non_profit">Non-profit (401c)</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="government" id="government" />
+                    <Label htmlFor="government">Government</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="other" id="other" />
+                    <Label htmlFor="other">Other</Label>
+                  </div>
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
 
-        {form.watch('businessStructure') === 'other' && (
+        {showOtherField && (
           <FormField
             control={form.control}
             name="businessStructureOther"
             render={({ field }) => (
-              <FormItem className="mt-2">
-                <FormLabel>Please specify</FormLabel>
+              <FormItem className="mt-4">
+                <FormLabel>Please specify other business type</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder="Specify other business structure" />
+                  <Input {...field} placeholder="Enter business type" />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -82,7 +81,7 @@ export const BusinessStructureTab: React.FC<BusinessStructureTabProps> = ({ form
       </div>
 
       <div className="flex justify-end">
-        <Button type="button" onClick={goToNextTab} className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/80">
+        <Button type="button" onClick={goToNextTab}>
           Next
         </Button>
       </div>

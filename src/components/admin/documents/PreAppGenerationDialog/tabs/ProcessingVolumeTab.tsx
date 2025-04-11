@@ -1,13 +1,12 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
+import { UseFormReturn } from 'react-hook-form';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import type { UseFormReturn } from 'react-hook-form';
-import type { PreAppFormValues } from '../../PreAppFormSchema';
+import { Button } from '@/components/ui/button';
 
 interface ProcessingVolumeTabProps {
-  form: UseFormReturn<PreAppFormValues>;
+  form: UseFormReturn<any>;
   goToNextTab: () => void;
   goToPrevTab: () => void;
 }
@@ -15,26 +14,25 @@ interface ProcessingVolumeTabProps {
 export const ProcessingVolumeTab: React.FC<ProcessingVolumeTabProps> = ({ 
   form, 
   goToNextTab,
-  goToPrevTab 
+  goToPrevTab
 }) => {
   return (
     <div className="space-y-4">
-      <div className="bg-[#0EA5E9]/5 p-4 rounded-lg mb-4">
-        <h3 className="font-semibold text-xl text-[#0EA5E9] mb-4">9. Processing Volume</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <h3 className="text-lg font-medium mb-2">Processing Volume</h3>
+        <p className="text-sm text-gray-500 mb-4">Enter your transaction processing details</p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="totalMonthlyVolume"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Estimated Total Monthly Volume (All payment types)</FormLabel>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
-                  <FormControl>
-                    <Input {...field} placeholder="0.00" className="pl-8" />
-                  </FormControl>
-                </div>
+                <FormLabel>Total Monthly Volume ($)</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="10000" />
+                </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -44,29 +42,25 @@ export const ProcessingVolumeTab: React.FC<ProcessingVolumeTabProps> = ({
             name="visaMastercardVolume"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Visa/Mastercard Volume</FormLabel>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
-                  <FormControl>
-                    <Input {...field} placeholder="0.00" className="pl-8" />
-                  </FormControl>
-                </div>
+                <FormLabel>Visa/Mastercard Volume ($)</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="8000" />
+                </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
-          
+
           <FormField
             control={form.control}
             name="amexVolume"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>American Express Volume</FormLabel>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
-                  <FormControl>
-                    <Input {...field} placeholder="0.00" className="pl-8" />
-                  </FormControl>
-                </div>
+                <FormLabel>American Express Volume ($)</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="2000" />
+                </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -76,13 +70,11 @@ export const ProcessingVolumeTab: React.FC<ProcessingVolumeTabProps> = ({
             name="averageTicket"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Average Ticket</FormLabel>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
-                  <FormControl>
-                    <Input {...field} placeholder="0.00" className="pl-8" />
-                  </FormControl>
-                </div>
+                <FormLabel>Average Transaction Amount ($)</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="100" />
+                </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -92,65 +84,25 @@ export const ProcessingVolumeTab: React.FC<ProcessingVolumeTabProps> = ({
             name="highestTicket"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Highest Ticket</FormLabel>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
-                  <FormControl>
-                    <Input {...field} placeholder="0.00" className="pl-8" />
-                  </FormControl>
-                </div>
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <h3 className="font-semibold text-xl text-[#0EA5E9] mt-6 mb-4">10. Transaction Method (Must Equal 100%)</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <FormField
-            control={form.control}
-            name="faceToFacePercentage"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Face-to-Face (Retail)</FormLabel>
-                <div className="relative">
-                  <FormControl>
-                    <Input {...field} placeholder="0" className="pr-8" />
-                  </FormControl>
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2">%</span>
-                </div>
+                <FormLabel>Highest Transaction Amount ($)</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="500" />
+                </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
           
           <FormField
             control={form.control}
-            name="motoPercentage"
+            name="yearsInOperation"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Telephone/Mail/Email (MOTO)</FormLabel>
-                <div className="relative">
-                  <FormControl>
-                    <Input {...field} placeholder="0" className="pr-8" />
-                  </FormControl>
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2">%</span>
-                </div>
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="ecommercePercentage"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Internet (eCommerce)</FormLabel>
-                <div className="relative">
-                  <FormControl>
-                    <Input {...field} placeholder="0" className="pr-8" />
-                  </FormControl>
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2">%</span>
-                </div>
+                <FormLabel>Years in Operation</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="5" />
+                </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -158,10 +110,10 @@ export const ProcessingVolumeTab: React.FC<ProcessingVolumeTabProps> = ({
       </div>
 
       <div className="flex justify-between">
-        <Button type="button" onClick={goToPrevTab} variant="outline">
+        <Button type="button" variant="outline" onClick={goToPrevTab}>
           Previous
         </Button>
-        <Button type="button" onClick={goToNextTab} className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/80">
+        <Button type="button" onClick={goToNextTab}>
           Next
         </Button>
       </div>

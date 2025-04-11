@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect, useId } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { generatePreApp } from '../api';
 import { toast } from 'sonner';
 import { Form } from '@/components/ui/form';
@@ -13,6 +13,7 @@ import { preAppFormSchema, type PreAppFormValues } from '../PreAppFormSchema';
 
 // Import utility functions
 import { base64ToBlob } from './utils/pdfUtils';
+import { useDialogReset } from './hooks/useDialogReset';
 
 // Import component files
 import { IndustrySelector } from './components/IndustrySelector';
@@ -34,6 +35,17 @@ interface PreAppGenerationDialogProps {
   onSuccess?: () => void;
 }
 
+// Default form values
+const defaultFormValues = {
+  businessStructure: 'llc',
+  hasRefundPolicy: true,
+  purchaseMethods: [],
+  shippingMethod: [],
+  advertisingChannels: [],
+  additionalOwners: false,
+  businessName: '',
+};
+
 export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
   open,
   onOpenChange,
@@ -46,39 +58,15 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
   const [generatedFilename, setGeneratedFilename] = useState<string>('WaveLine_Merchant_Application.pdf');
-  const [retryAttempt, setRetryAttempt] = useState(0);
   
-  // Use React's useId for generating unique form IDs instead of using a key in the form config
-  const formResetKey = useId() + retryAttempt;
-
   // Create the form instance
   const form = useForm<PreAppFormValues>({
     resolver: zodResolver(preAppFormSchema),
-    defaultValues: {
-      businessStructure: 'llc',
-      hasRefundPolicy: true,
-      purchaseMethods: [],
-      shippingMethod: [],
-      advertisingChannels: [],
-      additionalOwners: false,
-      businessName: '',
-    }
+    defaultValues: defaultFormValues
   });
 
-  // Reset form when needed using the key for re-rendering
-  useEffect(() => {
-    // This effect will run when formResetKey changes
-    // Reset form to initial state
-    form.reset({
-      businessStructure: 'llc',
-      hasRefundPolicy: true,
-      purchaseMethods: [],
-      shippingMethod: [],
-      advertisingChannels: [],
-      additionalOwners: false,
-      businessName: '',
-    });
-  }, [formResetKey, form]);
+  // Use custom hook for form reset management
+  const { formResetKey, retryAttempt, incrementRetry } = useDialogReset(open, form, defaultFormValues);
 
   // Cleanup URLs on unmount or when dialog closes
   useEffect(() => {
@@ -97,18 +85,21 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
         setGeneratedPdfUrl(null);
       }
       setError(null);
-      
-      // Reset form to initial state on close using setRetryAttempt to trigger a re-render
-      setRetryAttempt(prev => prev + 1);
+      setActiveTab('structure');
     }
   }, [open]);
 
-  const resetForm = () => {
-    // Increment retry attempt to trigger the useEffect for form reset
-    setRetryAttempt(prev => prev + 1);
-    
+  const handleReset = () => {
+    // Reset form and state
+    incrementRetry();
     setSelectedIndustryId('');
     setActiveTab('structure');
+    
+    if (generatedPdfUrl) {
+      URL.revokeObjectURL(generatedPdfUrl);
+      setGeneratedPdfUrl(null);
+    }
+    setError(null);
   };
 
   const handleGenerate = async (data: PreAppFormValues) => {
@@ -183,7 +174,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
   };
 
   const handleRetry = () => {
-    setRetryAttempt(prev => prev + 1);
+    incrementRetry();
     setError(null);
     const formData = form.getValues();
     handleGenerate(formData);
@@ -207,22 +198,11 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
     else if (activeTab === 'business') setActiveTab('structure');
   };
 
-  const handleReset = () => {
-    if (generatedPdfUrl) {
-      URL.revokeObjectURL(generatedPdfUrl);
-    }
-    resetForm();
-    setGeneratedPdfUrl(null);
-    setError(null);
-    setActiveTab('structure');
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-[#0EA5E9] flex items-center">
-            <FileText className="mr-2 h-6 w-6" />
             WaveLine Merchant Application
           </DialogTitle>
           <DialogDescription>
@@ -249,7 +229,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
               setSelectedIndustryId={setSelectedIndustryId} 
             />
 
-            {/* Use a key on the Form component itself to force re-render when needed */}
+            {/* Apply the form reset key for re-rendering */}
             <Form {...form} key={formResetKey}>
               <form onSubmit={form.handleSubmit(handleGenerate)} className="space-y-6">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
