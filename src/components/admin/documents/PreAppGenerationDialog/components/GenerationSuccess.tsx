@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, FileCheck, ArrowRight, AlertTriangle } from 'lucide-react';
+import { Download, FileCheck, ArrowRight, AlertTriangle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface GenerationSuccessProps {
@@ -17,6 +17,8 @@ export const GenerationSuccess: React.FC<GenerationSuccessProps> = ({
 }) => {
   const [pdfLoaded, setPdfLoaded] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
 
   const handleDownload = () => {
     try {
@@ -27,6 +29,7 @@ export const GenerationSuccess: React.FC<GenerationSuccessProps> = ({
         return;
       }
       
+      // Create a download link and trigger it
       const link = document.createElement('a');
       link.href = generatedPdfUrl;
       link.download = generatedFilename;
@@ -41,37 +44,58 @@ export const GenerationSuccess: React.FC<GenerationSuccessProps> = ({
     }
   };
   
-  useEffect(() => {
+  const handleRetry = () => {
+    if (retryCount >= maxRetries) {
+      toast.error('Maximum retry attempts reached. Please generate a new document.');
+      return;
+    }
+    
+    setPdfLoaded(false);
+    setPdfError(null);
+    setRetryCount(prev => prev + 1);
+    
+    // Force re-validation of the PDF URL
+    validateUrl();
+  };
+  
+  const validateUrl = async () => {
     if (!generatedPdfUrl) {
       console.error('Generated PDF URL is empty or invalid');
       setPdfError('PDF URL is missing or invalid');
       return;
     }
     
-    console.log('PDF URL is available, length:', generatedPdfUrl.length);
+    console.log('Validating PDF URL, length:', generatedPdfUrl.length);
     
-    // Validate that the URL is working by attempting to fetch it
-    const validateUrl = async () => {
-      try {
-        const response = await fetch(generatedPdfUrl);
+    try {
+      // For blob URLs, we can't use fetch, so we'll check indirectly
+      if (generatedPdfUrl.startsWith('blob:')) {
+        // We'll assume it's valid initially and let the iframe handle errors
+        console.log('Blob URL detected, will validate via iframe loading');
+        setPdfLoaded(false);
+      } else {
+        // For HTTP/HTTPS URLs, we can validate with fetch
+        const response = await fetch(generatedPdfUrl, { method: 'HEAD' });
         if (!response.ok) {
           throw new Error(`Failed to load PDF: ${response.status} ${response.statusText}`);
         }
         setPdfLoaded(true);
-        
-        // Trigger download automatically with a slight delay
-        const timer = setTimeout(() => {
-          handleDownload();
-        }, 500);
-        return () => clearTimeout(timer);
-      } catch (error) {
-        console.error('Error validating PDF URL:', error);
-        setPdfError(`Error loading PDF: ${error.message}`);
       }
-    };
-    
+      
+      // Trigger download automatically with a slight delay
+      const timer = setTimeout(() => {
+        handleDownload();
+      }, 1000);
+      return () => clearTimeout(timer);
+    } catch (error: any) {
+      console.error('Error validating PDF URL:', error);
+      setPdfError(`Error loading PDF: ${error.message}`);
+    }
+  };
+  
+  useEffect(() => {
     validateUrl();
-  }, [generatedPdfUrl]);
+  }, [generatedPdfUrl, retryCount]);
 
   return (
     <div className="space-y-6">
@@ -90,9 +114,15 @@ export const GenerationSuccess: React.FC<GenerationSuccessProps> = ({
           <iframe 
             src={generatedPdfUrl} 
             className="w-full h-full" 
-            title="Generated PDF Preview" 
-            onLoad={() => setPdfLoaded(true)}
-            onError={() => setPdfError('Failed to load PDF preview')}
+            title="Generated PDF Preview"
+            onLoad={() => {
+              console.log('PDF iframe loaded successfully');
+              setPdfLoaded(true);
+            }}
+            onError={(e) => {
+              console.error('Error loading PDF in iframe:', e);
+              setPdfError('Failed to load PDF preview');
+            }}
           />
           {!pdfLoaded && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
@@ -109,6 +139,17 @@ export const GenerationSuccess: React.FC<GenerationSuccessProps> = ({
             <AlertTriangle className="h-8 w-8 mb-2" />
             <p>{pdfError || 'PDF preview not available'}</p>
             <p className="text-sm mt-2">Try downloading the file directly using the button below</p>
+            
+            {pdfError && retryCount < maxRetries && (
+              <Button 
+                variant="outline" 
+                className="mt-4 flex items-center"
+                onClick={handleRetry}
+              >
+                <RefreshCw className="mr-2 h-4 w-4" /> 
+                Retry Loading PDF
+              </Button>
+            )}
           </div>
         </div>
       )}

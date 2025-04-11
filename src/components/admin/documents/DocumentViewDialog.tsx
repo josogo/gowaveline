@@ -8,7 +8,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Loader2, Download, Calendar, FileText } from 'lucide-react';
+import { Loader2, Download, Calendar, FileText, AlertTriangle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { DocumentItem } from './types';
@@ -27,53 +27,68 @@ export const DocumentViewDialog: React.FC<DocumentViewDialogProps> = ({
 }) => {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
 
   useEffect(() => {
     if (document && open) {
-      setLoading(true);
-      
-      const fetchDocument = async () => {
-        try {
-          if (document.isStandard) {
-            // For standard documents, use a direct URL
-            // This assumes you've uploaded these files to the Supabase storage
-            // and made them publicly accessible
-            const { data, error } = await supabase.storage
-              .from('documents')
-              .createSignedUrl(document.file_path, 3600); // 1 hour expiry
-
-            if (error) throw error;
-            
-            setPdfUrl(data.signedUrl);
-          } else {
-            // For regular documents, get the signed URL
-            const { data, error } = await supabase.storage
-              .from('documents')
-              .createSignedUrl(document.file_path, 3600); // 1 hour expiry
-            
-            if (error) throw error;
-            
-            setPdfUrl(data.signedUrl);
-          }
-          
-          setLoading(false);
-        } catch (error: any) {
-          console.error('Error fetching document:', error);
-          toast.error('Failed to load document');
-          setLoading(false);
-        }
-      };
-      
       fetchDocument();
     } else {
       setPdfUrl(null);
+      setLoadError(null);
+      setRetryCount(0);
     }
   }, [document, open]);
+
+  const fetchDocument = async () => {
+    if (!document) return;
+    
+    setLoading(true);
+    setLoadError(null);
+    
+    try {
+      console.log('Fetching document:', document.file_path);
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(document.file_path, 3600); // 1 hour expiry
+      
+      if (error) {
+        console.error('Error fetching document URL:', error);
+        throw error;
+      }
+      
+      if (!data?.signedUrl) {
+        throw new Error('No signed URL returned');
+      }
+      
+      console.log('Document URL fetched successfully, length:', data.signedUrl.length);
+      setPdfUrl(data.signedUrl);
+      setLoading(false);
+    } catch (error: any) {
+      console.error('Error fetching document:', error);
+      setLoadError(error.message || 'Failed to load document');
+      setLoading(false);
+      toast.error('Failed to load document');
+    }
+  };
+  
+  const handleRetry = () => {
+    if (retryCount >= maxRetries) {
+      toast.error('Maximum retry attempts reached');
+      return;
+    }
+    
+    setRetryCount(prev => prev + 1);
+    fetchDocument();
+  };
   
   const handleDownload = async () => {
     if (!document || !pdfUrl) return;
     
     try {
+      console.log('Downloading document:', document.name);
+      
       // Create a link element and trigger the download
       const link = window.document.createElement('a');
       link.href = pdfUrl;
@@ -109,6 +124,20 @@ export const DocumentViewDialog: React.FC<DocumentViewDialogProps> = ({
           <div className="flex-grow flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
+        ) : loadError ? (
+          <div className="flex-grow flex flex-col items-center justify-center text-red-500">
+            <AlertTriangle className="h-12 w-12 mb-4" />
+            <p className="text-center mb-4">{loadError}</p>
+            <Button 
+              variant="outline" 
+              onClick={handleRetry}
+              disabled={retryCount >= maxRetries}
+              className="flex items-center"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" /> 
+              Retry Loading Document
+            </Button>
+          </div>
         ) : (
           <>
             <div className="flex-grow overflow-hidden">
@@ -117,6 +146,10 @@ export const DocumentViewDialog: React.FC<DocumentViewDialogProps> = ({
                   src={`${pdfUrl}#toolbar=0`}
                   className="w-full h-full border-0"
                   title={document?.name || 'Document'}
+                  onError={() => {
+                    console.error('Error loading PDF in iframe');
+                    setLoadError('Failed to load document preview');
+                  }}
                 />
               ) : (
                 <div className="flex h-full items-center justify-center text-gray-500">
