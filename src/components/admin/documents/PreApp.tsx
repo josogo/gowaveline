@@ -8,7 +8,11 @@ interface PreAppModalProps {
   onSuccess?: () => void;
 }
 
-export const PreAppModal: React.FC<PreAppModalProps> = ({ open, onOpenChange, onSuccess }) => {
+export const PreAppModal: React.FC<PreAppModalProps> = ({ 
+  open, 
+  onOpenChange, 
+  onSuccess 
+}) => {
   return (
     <PreAppGenerationDialog
       open={open}
