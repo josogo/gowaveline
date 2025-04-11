@@ -8,9 +8,9 @@ import {
   DocumentViewDialog,
   DocumentEditDialog,
   DocumentFillDialog,
-  PreAppGenerationDialog,
   DocumentItem,
 } from '@/components/admin/documents';
+import { PreAppModal } from '@/components/admin/documents/PreApp';
 import { checkUserIsAdmin, fetchDocuments, deleteDocument } from '@/components/admin/documents/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -186,7 +186,7 @@ const DocumentsPage = () => {
           onSuccess={handleRefresh}
         />
         
-        <PreAppGenerationDialog
+        <PreAppModal
           open={preAppDialogOpen}
           onOpenChange={setPreAppDialogOpen}
           onSuccess={handleRefresh}

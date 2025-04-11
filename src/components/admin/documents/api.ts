@@ -44,7 +44,6 @@ export async function createDocument(document: {
   is_template: boolean;
 }): Promise<DocumentItem> {
   try {
-    // Get the current authenticated user
     const { data, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError) {
@@ -61,7 +60,6 @@ export async function createDocument(document: {
     
     console.log('Creating document with authenticated user:', user.id);
     
-    // Check if user has admin role
     const { data: isAdmin, error: roleError } = await supabase.rpc('has_role', {
       user_id: user.id,
       role: 'admin'
@@ -80,13 +78,11 @@ export async function createDocument(document: {
     console.log('Admin role verified for user:', user.id);
     console.log('Creating document with data:', document);
     
-    // Create a document object with the authenticated user's ID
     const documentToInsert = {
       ...document,
       uploaded_by: user.id
     };
     
-    // First try with normal client
     try {
       const { data, error } = await supabase
         .from('documents')
@@ -98,16 +94,11 @@ export async function createDocument(document: {
         return data[0] as DocumentItem;
       }
       
-      // If there was an RLS error, log it but continue to try alternative method
       console.warn('Error with standard insert (might be RLS):', error);
     } catch (insertError) {
       console.warn('Standard insert failed:', insertError);
     }
     
-    // If we're here, the normal insert failed - attempt to create document through the edge function
-    console.log('Attempting to create document through edge function');
-    
-    // Verify we have a valid session token
     if (!session?.access_token) {
       throw new Error('No valid session token found. Please log in again.');
     }
@@ -249,7 +240,7 @@ export async function fetchIndustries(): Promise<Industry[]> {
 export async function generatePreApp(
   industryId: string,
   leadData: any,
-  formData: PreAppFormValues
+  formData: any
 ): Promise<DocumentItem> {
   try {
     console.log('[GENERATE_PRE_APP] Starting generatePreApp function with industry:', industryId);
@@ -296,17 +287,12 @@ export async function generatePreApp(
       generatedAt: new Date().toISOString()
     };
     
-    // Verify we have a valid session token
     if (!session?.access_token) {
       console.error('[GENERATE_PRE_APP] No valid access token in session');
       throw new Error('No valid session token found. Please log in again.');
     }
     
-    // Call the Supabase Edge Function to generate the PDF
-    console.log('[GENERATE_PRE_APP] Calling edge function to generate PDF');
-    
     try {
-      // Use the complete URL explicitly
       const edgeFunctionUrl = 'https://rqwrvkkfixrogxogunsk.supabase.co/functions/v1/generate-pre-app';
       console.log('[GENERATE_PRE_APP] Calling edge function URL:', edgeFunctionUrl);
       console.log('[GENERATE_PRE_APP] Using access token:', session.access_token.substring(0, 5) + '...[truncated]');
@@ -317,18 +303,16 @@ export async function generatePreApp(
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`
         },
-        body: JSON.stringify({ industryId, leadData, formData })
+        body: JSON.stringify({ industryId, formData })
       });
       
       console.log('[GENERATE_PRE_APP] Edge function response status:', response.status);
       
-      // Get the full response text for debugging
       const responseText = await response.text();
       console.log('[GENERATE_PRE_APP] Raw response:', responseText);
       
       let result;
       try {
-        // Try to parse as JSON
         result = JSON.parse(responseText);
       } catch (parseError) {
         console.error('[GENERATE_PRE_APP] Error parsing response as JSON:', parseError);
@@ -353,7 +337,6 @@ export async function generatePreApp(
       
       console.log('[GENERATE_PRE_APP] PDF generated successfully, saving to storage');
       
-      // Upload the PDF to storage
       const filePath = `pre-apps/${Date.now()}-application.pdf`;
       const fileBlob = base64ToBlob(result.pdfBase64, 'application/pdf');
       
@@ -366,7 +349,6 @@ export async function generatePreApp(
         throw uploadError;
       }
       
-      // Create document entry in the database
       const docData = {
         name: `Merchant Application - ${formData.businessName || formData.principalName || 'New'}`,
         description: `Pre-application form for ${formData.principalName || formData.businessName || 'merchant'}`,
@@ -379,7 +361,6 @@ export async function generatePreApp(
         uploaded_by: user.id
       };
       
-      // Create the document
       console.log('[GENERATE_PRE_APP] Creating document entry for the generated PDF');
       return await createDocument(docData);
     } catch (fetchError: any) {
@@ -392,7 +373,6 @@ export async function generatePreApp(
   }
 }
 
-// Helper function to convert base64 to Blob
 function base64ToBlob(base64: string, type: string): Blob {
   const binaryString = atob(base64);
   const bytes = new Uint8Array(binaryString.length);

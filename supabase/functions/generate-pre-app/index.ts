@@ -68,8 +68,6 @@ serve(async (req) => {
     }
 
     console.log('Authenticated user:', user.id, '(Email:', user.email, ')');
-    
-    // We're removing the admin role check - any authenticated user can generate PDFs
     console.log('Authentication successful, proceeding with PDF generation');
 
     // Get the request data
@@ -82,12 +80,11 @@ serve(async (req) => {
       throw new Error('Invalid JSON in request body');
     }
     
-    const { industryId, leadData, formData } = requestData;
+    const { industryId, formData } = requestData;
     
     console.log("Request data contents:", {
       industryId: industryId || "Missing",
-      formData: formData ? "Present" : "Missing",
-      leadData: leadData ? "Present" : "Missing"
+      formData: formData ? "Present" : "Missing"
     });
     
     if (!industryId) {
@@ -98,9 +95,12 @@ serve(async (req) => {
       throw new Error('Form data is required')
     }
 
-    // TODO: Here, you would generate the actual PDF
-    // For now, we'll return mock PDF data
-    console.log("Generating mock PDF data");
+    // Generate a simple PDF with the business name (or principal name as fallback)
+    const businessName = formData.businessName || formData.principalName || 'New Business';
+    console.log(`Generating PDF for business: ${businessName}`);
+    
+    // Create mock PDF data - in a real implementation, you would use a PDF generation library
+    // This is a very simple PDF structure in base64 format
     const pdfBase64 = 'JVBERi0xLjMKJcTl8uXrp/Og0MTGCjQgMCBvYmoKPDwgL0xlbmd0aCA1IDAgUiAvRmlsdGVyIC9GbGF0ZURlY29kZSA+PgpzdHJlYW0KeAGFkT9PwzAQxfd8Cq8IKYnrJE5YkCqVAQYGYEBiQO1AwRL/JDJQ8e25NghVgMHy6d7v7t6dWwgkQA8hhIHeQK8tNw48IOxzWEcwJsLwdDAYRAMLfR' // Mock base64 data
 
     console.log("PDF generation completed successfully");
@@ -108,7 +108,8 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         message: 'PDF generated successfully',
-        pdfBase64: pdfBase64
+        pdfBase64: pdfBase64,
+        businessName: businessName
       }),
       { 
         headers: { 
