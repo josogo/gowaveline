@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { base64ToBlob } from './utils';
 
 export async function generatePreApp(
   industryId: string,
@@ -22,8 +23,19 @@ export async function generatePreApp(
     
     console.log('[GENERATE_PRE_APP] Edge function response status:', response.status);
     
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[GENERATE_PRE_APP] Error response:', errorText);
+      throw new Error(`PDF generation failed: Server returned ${response.status} ${response.statusText}`);
+    }
+    
     const responseText = await response.text();
     console.log('[GENERATE_PRE_APP] Raw response length:', responseText.length);
+    
+    if (!responseText || responseText.trim() === '') {
+      throw new Error('Empty response received from PDF generation service');
+    }
+    
     console.log('[GENERATE_PRE_APP] Response starts with:', responseText.substring(0, 100));
     
     let result;
@@ -34,14 +46,9 @@ export async function generatePreApp(
       throw new Error(`Failed to parse response from PDF generation service: ${responseText.substring(0, 100)}...`);
     }
     
-    if (!response.ok) {
-      const errorMessage = result?.error || response.statusText || 'Unknown error';
-      console.error('[GENERATE_PRE_APP] Error response from edge function:', { 
-        status: response.status,
-        statusText: response.statusText,
-        error: errorMessage
-      });
-      
+    if (!result.success) {
+      const errorMessage = result?.error || 'Unknown error occurred';
+      console.error('[GENERATE_PRE_APP] Error in response:', result);
       throw new Error(`PDF generation failed: ${errorMessage}`);
     }
     
@@ -54,6 +61,18 @@ export async function generatePreApp(
     if (typeof result.pdfBase64 !== 'string' || result.pdfBase64.trim() === '') {
       console.error('[GENERATE_PRE_APP] Invalid PDF base64 data:', typeof result.pdfBase64);
       throw new Error('Invalid PDF data received from the server');
+    }
+    
+    // Test the conversion to make sure the base64 is valid
+    try {
+      const testBlob = base64ToBlob(result.pdfBase64, 'application/pdf');
+      console.log('[GENERATE_PRE_APP] PDF blob created successfully with size:', testBlob.size);
+      if (testBlob.size < 100) {
+        console.warn('[GENERATE_PRE_APP] Warning: PDF blob size is very small:', testBlob.size);
+      }
+    } catch (convertError) {
+      console.error('[GENERATE_PRE_APP] Error converting base64 to blob:', convertError);
+      throw new Error(`Invalid PDF data format: ${convertError.message}`);
     }
     
     console.log('[GENERATE_PRE_APP] PDF base64 string length:', result.pdfBase64.length);

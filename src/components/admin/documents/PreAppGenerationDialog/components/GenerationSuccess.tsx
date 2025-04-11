@@ -1,7 +1,7 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, FileCheck, ArrowRight } from 'lucide-react';
+import { Download, FileCheck, ArrowRight, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface GenerationSuccessProps {
@@ -15,6 +15,9 @@ export const GenerationSuccess: React.FC<GenerationSuccessProps> = ({
   generatedFilename,
   handleReset
 }) => {
+  const [pdfLoaded, setPdfLoaded] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+
   const handleDownload = () => {
     try {
       console.log('Triggering download for:', generatedFilename);
@@ -38,18 +41,36 @@ export const GenerationSuccess: React.FC<GenerationSuccessProps> = ({
     }
   };
   
-  // Validate PDF URL on component mount
   useEffect(() => {
     if (!generatedPdfUrl) {
       console.error('Generated PDF URL is empty or invalid');
-    } else {
-      console.log('PDF URL is valid, length:', generatedPdfUrl.length);
-      // Trigger download automatically with a slight delay
-      const timer = setTimeout(() => {
-        handleDownload();
-      }, 500);
-      return () => clearTimeout(timer);
+      setPdfError('PDF URL is missing or invalid');
+      return;
     }
+    
+    console.log('PDF URL is available, length:', generatedPdfUrl.length);
+    
+    // Validate that the URL is working by attempting to fetch it
+    const validateUrl = async () => {
+      try {
+        const response = await fetch(generatedPdfUrl);
+        if (!response.ok) {
+          throw new Error(`Failed to load PDF: ${response.status} ${response.statusText}`);
+        }
+        setPdfLoaded(true);
+        
+        // Trigger download automatically with a slight delay
+        const timer = setTimeout(() => {
+          handleDownload();
+        }, 500);
+        return () => clearTimeout(timer);
+      } catch (error) {
+        console.error('Error validating PDF URL:', error);
+        setPdfError(`Error loading PDF: ${error.message}`);
+      }
+    };
+    
+    validateUrl();
   }, [generatedPdfUrl]);
 
   return (
@@ -64,17 +85,31 @@ export const GenerationSuccess: React.FC<GenerationSuccessProps> = ({
         </div>
       </div>
       
-      {generatedPdfUrl ? (
-        <div className="border rounded-md overflow-hidden h-64 mb-4">
+      {generatedPdfUrl && !pdfError ? (
+        <div className="border rounded-md overflow-hidden h-64 mb-4 relative">
           <iframe 
             src={generatedPdfUrl} 
             className="w-full h-full" 
             title="Generated PDF Preview" 
+            onLoad={() => setPdfLoaded(true)}
+            onError={() => setPdfError('Failed to load PDF preview')}
           />
+          {!pdfLoaded && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
+                <p>Loading PDF preview...</p>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="border rounded-md p-4 text-center text-red-500 h-64 mb-4 flex items-center justify-center">
-          <p>PDF preview not available</p>
+          <div className="flex flex-col items-center">
+            <AlertTriangle className="h-8 w-8 mb-2" />
+            <p>{pdfError || 'PDF preview not available'}</p>
+            <p className="text-sm mt-2">Try downloading the file directly using the button below</p>
+          </div>
         </div>
       )}
       
