@@ -285,14 +285,12 @@ export async function generatePreApp(
       throw new Error('No PDF data received from the server');
     }
     
-    console.log('[GENERATE_PRE_APP] PDF generated successfully, creating mock result');
+    console.log('[GENERATE_PRE_APP] PDF generated successfully');
     
-    // Create a mock result for now
     return {
-      id: 'mock-id-' + Date.now(),
-      name: `Merchant Application - ${formData.businessName || formData.principalName || 'New'}`,
-      file_path: 'pre-apps/mock-application.pdf',
-      created_at: new Date().toISOString()
+      success: true,
+      pdfBase64: result.pdfBase64,
+      businessName: result.businessName || formData.businessName || 'merchant-application'
     };
     
   } catch (error: any) {

@@ -29,20 +29,6 @@ serve(async (req) => {
     }
     console.log("Request headers:", JSON.stringify(headersLog, null, 2));
     
-    // Get API keys from environment variables
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      console.error("Missing Supabase environment variables");
-      throw new Error('Missing Supabase environment variables')
-    }
-    
-    console.log("Supabase URL and service key are available");
-
-    // Create a Supabase client with the service role key (bypasses RLS)
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
     // Get the request data
     let requestData;
     try {

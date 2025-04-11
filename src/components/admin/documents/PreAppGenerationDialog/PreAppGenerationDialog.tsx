@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -13,15 +12,6 @@ import { Form } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { preAppFormSchema, type PreAppFormValues } from '../PreAppFormSchema';
-
-// Import Tab Components
-import { BusinessStructureTab } from './tabs/BusinessStructureTab';
-import { BusinessInfoTab } from './tabs/BusinessInfoTab';
-import { PrincipalInfoTab } from './tabs/PrincipalInfoTab';
-import { BankingInfoTab } from './tabs/BankingInfoTab';
-import { ProcessingVolumeTab } from './tabs/ProcessingVolumeTab';
-import { PoliciesTab } from './tabs/PoliciesTab';
-import { EcommerceTab } from './tabs/EcommerceTab';
 
 interface Industry {
   id: string;
@@ -60,7 +50,6 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
     },
   });
 
-  // Fetch industries with proper typing
   const { data: industries, isLoading: industriesLoading } = useQuery<Industry[]>({
     queryKey: ['industries'],
     queryFn: fetchIndustries,
@@ -81,16 +70,25 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
       console.log('[GENERATE] Selected industry:', selectedIndustryId);
       console.log('[GENERATE] Form data:', data);
       
-      // Generate Pre-App PDF
       const result = await generatePreApp(selectedIndustryId, leadData, data);
       
       console.log('[GENERATE] Pre-app generation successful:', result);
       toast.success('Merchant application generated successfully');
       
-      // Set the URL for download button
-      if (result && result.file_path) {
-        const pdfUrl = `https://rqwrvkkfixrogxogunsk.supabase.co/storage/v1/object/public/documents/${result.file_path}`;
-        setGeneratedPdfUrl(pdfUrl);
+      if (result && result.pdfBase64) {
+        const pdfBlob = base64ToBlob(result.pdfBase64, 'application/pdf');
+        const downloadLink = URL.createObjectURL(pdfBlob);
+        
+        const filename = `WaveLine_PreApp_${result.businessName.replace(/\s+/g, '_')}.pdf`;
+        
+        const link = document.createElement('a');
+        link.href = downloadLink;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        setGeneratedPdfUrl(downloadLink);
       }
       
       if (onSuccess) onSuccess();
@@ -128,6 +126,15 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
     setActiveTab('structure');
   };
 
+  function base64ToBlob(base64: string, type: string = 'application/pdf'): Blob {
+    const binaryString = window.atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return new Blob([bytes], { type });
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -153,13 +160,20 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
           <div className="space-y-6">
             <div className="bg-green-50 border border-green-200 rounded-md p-4">
               <p className="text-green-600 font-medium mb-2">Application generated successfully!</p>
-              <p className="text-sm text-gray-600">You can download your application using the button below.</p>
+              <p className="text-sm text-gray-600">Your download should start automatically. If it doesn't, use the button below.</p>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/80 flex items-center"
-                onClick={() => window.open(generatedPdfUrl, '_blank')}
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = generatedPdfUrl;
+                  link.download = "WaveLine_Merchant_Application.pdf";
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
               >
                 <Download className="mr-2 h-4 w-4" /> Download Application
               </Button>
@@ -209,7 +223,6 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
                     <TabsTrigger value="ecommerce" className="text-xs md:text-sm">eCommerce</TabsTrigger>
                   </TabsList>
 
-                  {/* Tabs Content */}
                   <TabsContent value="structure">
                     <BusinessStructureTab form={form} goToNextTab={goToNextTab} />
                   </TabsContent>
