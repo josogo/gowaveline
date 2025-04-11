@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   Table, 
   TableBody, 
@@ -19,7 +19,7 @@ import {
   CompanyInfo,
   EmptyState
 } from './components';
-import { ArrowUpDown } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 
 interface ContactsListProps {
   contacts: Contact[];
@@ -30,10 +30,10 @@ interface ContactsListProps {
   setSelectedContacts?: React.Dispatch<React.SetStateAction<string[]>>;
   onEditContact?: (contact: Contact) => void;
   onDeleteContact?: (id: string) => void;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
 }
-
-type SortField = 'name' | 'email' | 'company' | 'type' | 'status' | 'createdAt';
-type SortDirection = 'asc' | 'desc';
 
 export const ContactsList: React.FC<ContactsListProps> = ({
   contacts,
@@ -43,11 +43,11 @@ export const ContactsList: React.FC<ContactsListProps> = ({
   selectedContacts = [],
   setSelectedContacts,
   onEditContact,
-  onDeleteContact
+  onDeleteContact,
+  sortField = 'createdAt',
+  sortDirection = 'desc',
+  onSort
 }) => {
-  const [sortField, setSortField] = useState<SortField>('createdAt');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-
   if (contacts.length === 0) {
     return <EmptyState />;
   }
@@ -74,17 +74,7 @@ export const ContactsList: React.FC<ContactsListProps> = ({
     }
   };
 
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      // Toggle direction if already sorting by this field
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      // Set new sort field and default to ascending
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
-
+  // Sort contacts based on selected field and direction
   const sortedContacts = [...contacts].sort((a, b) => {
     let comparison = 0;
     
@@ -118,15 +108,25 @@ export const ContactsList: React.FC<ContactsListProps> = ({
   const handleEdit = onEdit || onEditContact;
   const handleDelete = onDelete || onDeleteContact;
 
-  const SortableHeader = ({ field, label }: { field: SortField, label: string }) => (
-    <div 
-      onClick={() => handleSort(field)}
-      className="flex items-center cursor-pointer hover:text-orange-500 transition-colors"
-    >
-      {label}
-      <ArrowUpDown className="ml-1 h-4 w-4" />
-    </div>
-  );
+  const SortableHeader = ({ field, label }: { field: string, label: string }) => {
+    const isActive = sortField === field;
+    
+    return (
+      <div 
+        onClick={() => onSort ? onSort(field) : null}
+        className={`flex items-center cursor-pointer hover:text-orange-500 transition-colors ${isActive ? 'text-orange-500' : ''}`}
+      >
+        {label}
+        {isActive ? (
+          sortDirection === 'asc' ? 
+            <ArrowUp className="ml-1 h-4 w-4" /> : 
+            <ArrowDown className="ml-1 h-4 w-4" />
+        ) : (
+          <ArrowUpDown className="ml-1 h-4 w-4 opacity-50" />
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="overflow-x-auto">

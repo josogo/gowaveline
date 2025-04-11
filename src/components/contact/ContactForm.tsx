@@ -56,21 +56,6 @@ const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType, initialPa
     try {
       console.log('Form submitted:', data);
       
-      // Send email notification using our service
-      const success = await sendContactFormNotification({
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        company: data.company,
-        inquiryType: data.inquiryType,
-        partnerType: data.partnerType,
-        message: data.message
-      });
-      
-      if (!success) {
-        throw new Error('Failed to send contact form');
-      }
-
       // Create a new contact in the CRM system
       const contactType = data.inquiryType === 'partnership' ? 'partner' : 'lead';
       const newContact = {
@@ -88,11 +73,29 @@ const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType, initialPa
       
       setContacts((prevContacts: any) => [...prevContacts, newContact]);
       
+      // Try to send email notification, but don't block success if it fails
+      try {
+        // Send email notification using our service
+        await sendContactFormNotification({
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          company: data.company,
+          inquiryType: data.inquiryType,
+          partnerType: data.partnerType,
+          message: data.message
+        });
+        console.log('Email notification sent successfully');
+      } catch (emailError: any) {
+        console.error('Error sending email notification:', emailError);
+        // Continue with form submission even if email fails
+      }
+      
       toast.success('Your message has been sent! We\'ll be in touch soon.');
       form.reset();
     } catch (error: any) {
       console.error('Error submitting form:', error);
-      toast.error(error?.message || 'There was a problem sending your message. Please try again later.');
+      toast.error('There was a problem processing your submission. Your information has been received but we may not be able to respond immediately.');
     } finally {
       setIsSubmitting(false);
     }

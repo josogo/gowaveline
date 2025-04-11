@@ -16,7 +16,8 @@ export const generatePreApp = async (industryId: string, leadData: any, formData
         industryId, 
         leadData, 
         formData,
-        includeLogo: formData.includeLogo || true // Include logo by default
+        includeLogo: true, // Always include logo by default
+        logoPosition: 'topLeft' // Position the logo at the top left
       },
     });
     
