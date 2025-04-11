@@ -36,8 +36,8 @@ interface PreAppGenerationDialogProps {
 }
 
 // Default form values
-const defaultFormValues = {
-  businessStructure: 'llc',
+const defaultFormValues: Partial<PreAppFormValues> = {
+  businessStructure: 'llc' as const,
   hasRefundPolicy: true,
   purchaseMethods: [],
   shippingMethod: [],
