@@ -1,7 +1,8 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, FileCheck, ArrowRight } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface GenerationSuccessProps {
   generatedPdfUrl: string;
@@ -17,25 +18,39 @@ export const GenerationSuccess: React.FC<GenerationSuccessProps> = ({
   const handleDownload = () => {
     try {
       console.log('Triggering download for:', generatedFilename);
+      
+      if (!generatedPdfUrl) {
+        toast.error('PDF URL is not available');
+        return;
+      }
+      
       const link = document.createElement('a');
       link.href = generatedPdfUrl;
       link.download = generatedFilename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      
+      toast.success('Document downloaded successfully');
     } catch (error) {
       console.error('Error during download:', error);
-      alert('There was an error downloading the file. Please try again.');
+      toast.error('Failed to download the document. Please try again.');
     }
   };
   
-  // Trigger download automatically on component mount
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      handleDownload();
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
+  // Validate PDF URL on component mount
+  useEffect(() => {
+    if (!generatedPdfUrl) {
+      console.error('Generated PDF URL is empty or invalid');
+    } else {
+      console.log('PDF URL is valid, length:', generatedPdfUrl.length);
+      // Trigger download automatically with a slight delay
+      const timer = setTimeout(() => {
+        handleDownload();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [generatedPdfUrl]);
 
   return (
     <div className="space-y-6">
@@ -49,10 +64,25 @@ export const GenerationSuccess: React.FC<GenerationSuccessProps> = ({
         </div>
       </div>
       
+      {generatedPdfUrl ? (
+        <div className="border rounded-md overflow-hidden h-64 mb-4">
+          <iframe 
+            src={generatedPdfUrl} 
+            className="w-full h-full" 
+            title="Generated PDF Preview" 
+          />
+        </div>
+      ) : (
+        <div className="border rounded-md p-4 text-center text-red-500 h-64 mb-4 flex items-center justify-center">
+          <p>PDF preview not available</p>
+        </div>
+      )}
+      
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Button 
           className="bg-[#0EA5E9] hover:bg-[#0EA5E9]/80 flex items-center"
           onClick={handleDownload}
+          disabled={!generatedPdfUrl}
         >
           <Download className="mr-2 h-4 w-4" /> Download Application
         </Button>

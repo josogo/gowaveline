@@ -1,18 +1,17 @@
+
 export function base64ToBlob(base64: string, type: string = 'application/pdf'): Blob {
   try {
-    // Remove any non-base64 characters that might cause decoding errors
-    // Keep only valid base64 characters (A-Z, a-z, 0-9, +, /, =)
-    const cleanBase64 = base64.replace(/[^A-Za-z0-9+/=]/g, '');
+    // Remove header if present (data:application/pdf;base64,)
+    const base64Data = base64.includes(',') ? base64.split(',')[1] : base64;
     
     // Make sure to handle padding if needed
-    let paddedBase64 = cleanBase64;
-    const paddingNeeded = cleanBase64.length % 4;
+    let paddedBase64 = base64Data;
+    const paddingNeeded = paddedBase64.length % 4;
     if (paddingNeeded > 0) {
       paddedBase64 += '='.repeat(4 - paddingNeeded);
     }
     
-    // Log for debugging
-    console.log('Converting base64 to blob (first 50 chars):', paddedBase64.substring(0, 50) + '...');
+    console.log('Converting base64 to blob, string length:', paddedBase64.length);
     
     const binaryString = window.atob(paddedBase64);
     const bytes = new Uint8Array(binaryString.length);
@@ -24,6 +23,6 @@ export function base64ToBlob(base64: string, type: string = 'application/pdf'): 
     return new Blob([bytes], { type });
   } catch (e) {
     console.error('Error in base64ToBlob:', e);
-    throw new Error('Failed to convert PDF data');
+    throw new Error(`Failed to convert PDF data: ${e.message}`);
   }
 }

@@ -23,7 +23,8 @@ export async function generatePreApp(
     console.log('[GENERATE_PRE_APP] Edge function response status:', response.status);
     
     const responseText = await response.text();
-    console.log('[GENERATE_PRE_APP] Raw response:', responseText);
+    console.log('[GENERATE_PRE_APP] Raw response length:', responseText.length);
+    console.log('[GENERATE_PRE_APP] Response starts with:', responseText.substring(0, 100));
     
     let result;
     try {
@@ -49,6 +50,13 @@ export async function generatePreApp(
       throw new Error('No PDF data received from the server');
     }
     
+    // Validate the base64 string
+    if (typeof result.pdfBase64 !== 'string' || result.pdfBase64.trim() === '') {
+      console.error('[GENERATE_PRE_APP] Invalid PDF base64 data:', typeof result.pdfBase64);
+      throw new Error('Invalid PDF data received from the server');
+    }
+    
+    console.log('[GENERATE_PRE_APP] PDF base64 string length:', result.pdfBase64.length);
     console.log('[GENERATE_PRE_APP] PDF generated successfully');
     
     return {
