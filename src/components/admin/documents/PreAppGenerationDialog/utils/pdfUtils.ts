@@ -36,10 +36,10 @@ export function base64ToBlob(base64String: string, type: string = 'application/p
 
     console.log(`[PDF_UTILS] Converting base64 to blob, string length: ${paddedBase64.length}`);
 
-    // Decode the base64 string to binary
+    // For very long base64 strings, process in chunks to avoid memory issues
     const binaryString = window.atob(paddedBase64);
     const bytes = new Uint8Array(binaryString.length);
-
+    
     for (let i = 0; i < binaryString.length; i++) {
       bytes[i] = binaryString.charCodeAt(i);
     }

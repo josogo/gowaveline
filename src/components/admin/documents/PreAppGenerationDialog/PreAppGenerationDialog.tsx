@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Loader2, RefreshCcw } from 'lucide-react';
+import { FileText, Loader2 } from 'lucide-react';
 import { generatePreApp } from '../api';
 import { toast } from 'sonner';
 import { Form } from '@/components/ui/form';
@@ -47,6 +47,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
   const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
   const [generatedFilename, setGeneratedFilename] = useState<string>('WaveLine_Merchant_Application.pdf');
   const [retryAttempt, setRetryAttempt] = useState(0);
+  const [formKey, setFormKey] = useState(Date.now()); // Used to reset form when needed
 
   const form = useForm<PreAppFormValues>({
     resolver: zodResolver(preAppFormSchema),
@@ -59,6 +60,9 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
       additionalOwners: false,
       businessName: '',
     },
+    // Important: This key helps React identify if the form should be re-initialized
+    // when we want to reset it completely
+    key: formKey.toString(),
   });
 
   // Cleanup URLs on unmount or when dialog closes
@@ -78,8 +82,30 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
         setGeneratedPdfUrl(null);
       }
       setError(null);
+      
+      // Reset form to initial state on close
+      resetForm();
     }
   }, [open]);
+
+  const resetForm = () => {
+    // Generate a new key to force React to remount the form
+    setFormKey(Date.now());
+    
+    // Reset form state with default values
+    form.reset({
+      businessStructure: 'llc',
+      hasRefundPolicy: true,
+      purchaseMethods: [],
+      shippingMethod: [],
+      advertisingChannels: [],
+      additionalOwners: false,
+      businessName: '',
+    });
+    
+    setSelectedIndustryId('');
+    setActiveTab('structure');
+  };
 
   const handleGenerate = async (data: PreAppFormValues) => {
     if (!selectedIndustryId) {
@@ -181,7 +207,7 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
     if (generatedPdfUrl) {
       URL.revokeObjectURL(generatedPdfUrl);
     }
-    form.reset();
+    resetForm();
     setGeneratedPdfUrl(null);
     setError(null);
     setActiveTab('structure');

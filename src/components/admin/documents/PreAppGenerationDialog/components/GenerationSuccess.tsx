@@ -18,11 +18,17 @@ export const GenerationSuccess: React.FC<GenerationSuccessProps> = ({
 }) => {
   const [loading, setLoading] = useState(true);
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     setPdfError(null);
     setLoading(true);
+    
+    // Reset retry count when a new PDF is generated
+    if (retryAttempt > 0) {
+      setRetryCount(0);
+    }
   }, [generatedPdfUrl, retryAttempt]);
 
   const handleIframeLoad = () => {
@@ -31,7 +37,23 @@ export const GenerationSuccess: React.FC<GenerationSuccessProps> = ({
 
   const handleIframeError = () => {
     setLoading(false);
-    setPdfError('Failed to load the PDF. Please download it to view locally.');
+    
+    // Increment retry count when iframe errors
+    setRetryCount(prev => prev + 1);
+    
+    // After 3 retries, show the error message
+    if (retryCount >= 2) {
+      setPdfError('Failed to load the PDF in the preview. Please download it to view locally.');
+    } else {
+      // Try to reload the iframe
+      if (iframeRef.current) {
+        setTimeout(() => {
+          if (iframeRef.current) {
+            iframeRef.current.src = String(generatedPdfUrl);
+          }
+        }, 1000);
+      }
+    }
   };
 
   const handleDownload = () => {

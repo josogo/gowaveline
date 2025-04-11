@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.14.0'
 import { jsPDF } from 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/+esm'
@@ -100,709 +101,310 @@ serve(async (req) => {
  * Generates a formatted WaveLine Merchant Application PDF based on the provided form data
  */
 async function generateWaveLineMerchantApplication(formData: any): Promise<string> {
+  // Create a new PDF document
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
     format: 'letter'
   });
 
-  // Set global font
-  doc.setFont('helvetica');
+  // Page dimensions
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 20;
+  const contentWidth = pageWidth - (margin * 2);
   
-  // Add WaveLine logo (text representation)
-  const logoText = "WaveLine";
-  doc.setFontSize(28);
-  doc.setTextColor(247, 148, 29); // Orange color
-  doc.text(logoText, doc.internal.pageSize.getWidth() / 2, 30, { align: 'center' });
+  // Colors
+  const primaryColor = [14, 165, 233]; // #0EA5E9 (sky blue)
+  const secondaryColor = [51, 65, 85]; // #334155 (slate)
   
-  // Add application title
-  doc.setFontSize(24);
-  doc.setTextColor(247, 148, 29); // Orange color
-  doc.text("WaveLine Merchant Application", doc.internal.pageSize.getWidth() / 2, 45, { align: 'center' });
-  
-  // Set text color to black for the rest of the document
-  doc.setTextColor(0, 0, 0);
-  
-  // Start Y position for content
-  let y = 65;
-  const leftMargin = 20;
+  // Starting position
+  let y = margin;
+  const leftMargin = margin;
+  const rightMargin = pageWidth - margin;
   const lineHeight = 7;
   const sectionSpacing = 10;
   
-  // Section 1. Business Structure
+  // Add header with logo and title
+  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.rect(0, 0, pageWidth, 25, 'F');
+  
+  // Add logo text in white
+  doc.setFontSize(20);
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.text("WaveLine", leftMargin, 15);
+  
+  // Add application title
+  doc.setFont('helvetica', 'normal');
+  doc.text("Merchant Application", pageWidth - margin - 45, 15);
+  
+  // Reset position after header
+  y = 35;
+  
+  // Add business name as document title
   doc.setFontSize(16);
-  doc.setTextColor(247, 148, 29); // Orange for section titles
-  doc.text("1. Business Structure", leftMargin, y);
-  doc.setTextColor(0, 0, 0); // Back to black
+  doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+  doc.setFont('helvetica', 'bold');
+  const businessName = formData.businessName || 'New Business';
+  doc.text(businessName, pageWidth / 2, y, { align: 'center' });
   y += lineHeight + 5;
   
-  doc.setFontSize(11);
+  // Set standard text format
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(0, 0, 0);
+
+  // Section 1. Business Structure
+  y = addSectionHeader(doc, "1. Business Structure", y);
   
-  // Checkboxes for business structure
+  // Checkbox for business structure with better formatting
   const structures = ["Sole Proprietorship", "Corporation", "LLC", "Non-profit (401(c))", "Government", "Other"];
-  let xPos = leftMargin;
+  let currentY = y;
+  let currentX = leftMargin;
+  const maxWidth = 80;
   
-  doc.setFillColor(0, 0, 0);
-  
-  structures.forEach((structure, index) => {
+  structures.forEach((structure) => {
     const isSelected = formData.businessStructure === structure.toLowerCase().replace(/\s+/g, '');
     
+    // Check if we need to move to a new line
+    if (currentX > pageWidth - margin - maxWidth) {
+      currentX = leftMargin;
+      currentY += lineHeight;
+    }
+    
     // Draw checkbox
-    doc.rect(xPos, y - 4, 4, 4);
+    doc.rect(currentX, currentY - 3, 3, 3); 
     
     // Fill if selected
-    if (structure.toLowerCase().includes(formData.businessStructure)) {
-      doc.rect(xPos, y - 4, 4, 4, 'F');
+    if (isSelected || 
+        (structure.toLowerCase().includes(formData.businessStructure))) {
+      doc.setFillColor(0, 0, 0);
+      doc.rect(currentX, currentY - 3, 3, 3, 'F');
     }
     
     // Text after checkbox
-    doc.text(structure, xPos + 6, y);
-    xPos += structure.length * 2 + 15;
+    doc.text(structure, currentX + 5, currentY);
+    currentX += structure.length * 1.8 + 8;
   });
   
-  y += sectionSpacing + 5;
+  y = currentY + sectionSpacing;
   
   // Section 2. Business Information
-  doc.setFontSize(16);
-  doc.setTextColor(247, 148, 29); // Orange for section titles
-  doc.text("2. Business Information", leftMargin, y);
-  doc.setTextColor(0, 0, 0); // Back to black
-  y += lineHeight + 5;
+  y = addSectionHeader(doc, "2. Business Information", y);
   
-  doc.setFontSize(11);
-  
-  // Business Information fields
+  // Business Information fields with improved formatting
   const businessInfo = [
-    { label: "Street (Location) Address:", value: formData.businessAddress || "" },
-    { label: "Mailing (Legal) Address:", value: formData.mailingAddress || "" },
-    { label: "Business/Contact Telephone:", value: formData.businessPhone || "" },
-    { label: "Business/Contact Email:", value: formData.businessEmail || "" },
-    { label: "Business Fax #:", value: formData.businessFax || "" },
-    { label: "Customer Service Telephone:", value: formData.customerServicePhone || "" },
-    { label: "Customer Service Email:", value: formData.customerServiceEmail || "" },
+    { label: "Business Name:", value: formData.businessName || "" },
+    { label: "Street Address:", value: formData.businessAddress || "" },
+    { label: "City, State, ZIP:", value: formData.businessCity ? 
+      `${formData.businessCity}, ${formData.businessState || 'CA'} ${formData.businessZip || ''}` : "" },
+    { label: "Business Phone:", value: formData.businessPhone || "" },
+    { label: "Business Email:", value: formData.businessEmail || "" },
     { label: "Website/URL:", value: formData.website || "" }
   ];
   
   businessInfo.forEach(item => {
+    // Draw field label in bold
+    doc.setFont('helvetica', 'bold');
     doc.text(item.label, leftMargin, y);
-    doc.text(item.value, 80, y);
+    
+    // Draw field value in normal font
+    doc.setFont('helvetica', 'normal');
+    doc.text(String(item.value), leftMargin + 40, y);
+    
     y += lineHeight;
   });
   
-  y += sectionSpacing;
+  y += sectionSpacing / 2;
   
-  // Section 3. Authorized Contact
-  doc.setFontSize(16);
-  doc.setTextColor(247, 148, 29); // Orange for section titles
-  doc.text("3. Authorized Contact", leftMargin, y);
-  doc.setTextColor(0, 0, 0); // Back to black
-  y += lineHeight + 5;
+  // Section 3. Principal Information
+  y = addSectionHeader(doc, "3. Principal Information", y);
   
-  doc.setFontSize(11);
+  // Additional owners checkbox with better positioning
+  doc.setFont('helvetica', 'normal');
+  doc.text("Check if additional owners/members have 25%+ equity:", leftMargin, y);
+  doc.rect(leftMargin + 80, y - 3, 3, 3);
   
-  // Authorized Contact fields
-  doc.text("Full Name:", leftMargin, y);
-  doc.text(formData.principalName || "", 80, y);
-  
-  y += sectionSpacing + 10;
-  
-  // Section 4. Equipment / Software
-  doc.setFontSize(16);
-  doc.setTextColor(247, 148, 29); // Orange for section titles
-  doc.text("4. Equipment / Software", leftMargin, y);
-  doc.setTextColor(0, 0, 0); // Back to black
-  y += lineHeight + 5;
-  
-  doc.setFontSize(11);
-  
-  // Equipment info
-  doc.text("Terminal/Gateway Used (e.g., VX 520, Authorize.net, NMI):", leftMargin, y);
-  doc.text(formData.terminalType || "", 125, y);
-  y += lineHeight;
-  
-  doc.text("Shopping Cart (if applicable):", leftMargin, y);
-  doc.text(formData.shoppingCart || "", 80, y);
-  y += lineHeight;
-  
-  doc.text("If using Shopify, request Authorize.net Gateway.", leftMargin, y);
-  
-  y += sectionSpacing + 10;
-  
-  // Section 5. Business Location
-  doc.setFontSize(16);
-  doc.setTextColor(247, 148, 29); // Orange for section titles
-  doc.text("5. Business Location", leftMargin, y);
-  doc.setTextColor(0, 0, 0); // Back to black
-  y += lineHeight + 5;
-  
-  doc.setFontSize(11);
-  
-  // Business Location info
-  doc.text("Number of Employees:", leftMargin, y);
-  doc.text(formData.numEmployees || "", 80, y);
-  y += lineHeight;
-  
-  // Location Type checkboxes
-  doc.text("Location Type:", leftMargin, y);
-  const locationTypes = ["Home/Residential", "Office/Business District", "Storefront"];
-  xPos = 80;
-  
-  locationTypes.forEach(type => {
-    doc.rect(xPos, y - 4, 4, 4);
-    
-    // Fill if selected
-    if (formData.locationType === type.toLowerCase().replace(/\s+/g, '')) {
-      doc.rect(xPos, y - 4, 4, 4, 'F');
-    }
-    
-    doc.text(type, xPos + 6, y);
-    xPos += type.length * 2 + 15;
-  });
+  if (formData.additionalOwners) {
+    doc.setFillColor(0, 0, 0);
+    doc.rect(leftMargin + 80, y - 3, 3, 3, 'F');
+  }
   
   y += lineHeight;
   
-  // Own or Rent
-  doc.text("Own or Rent:", leftMargin, y);
-  const ownRent = ["Own", "Rent"];
-  xPos = 80;
-  
-  ownRent.forEach(option => {
-    doc.rect(xPos, y - 4, 4, 4);
-    
-    // Fill if selected
-    if (formData.ownOrRent === option.toLowerCase()) {
-      doc.rect(xPos, y - 4, 4, 4, 'F');
-    }
-    
-    doc.text(option, xPos + 6, y);
-    xPos += option.length * 2 + 15;
-  });
-  
-  y += lineHeight;
-  
-  // Square Footage
-  doc.text("Approx. Square Footage:", leftMargin, y);
-  const footageOptions = ["0–500 ft²", "501–2,000 ft²", "2,001–5,000 ft²", "5,000+ ft²"];
-  xPos = 80;
-  
-  footageOptions.forEach(option => {
-    doc.rect(xPos, y - 4, 4, 4);
-    
-    // Fill if selected
-    if (formData.squareFootage === option.toLowerCase().replace(/[^a-z0-9]/g, '')) {
-      doc.rect(xPos, y - 4, 4, 4, 'F');
-    }
-    
-    doc.text(option, xPos + 6, y);
-    xPos += option.length * 1.8 + 5;
-  });
-  
-  // Add a new page for the remaining sections
-  doc.addPage();
-  y = 20; // Reset Y position
-  
-  // Section 6. Principal Information
-  doc.setFontSize(16);
-  doc.setTextColor(247, 148, 29); // Orange for section titles
-  doc.text("6. Principal Information", leftMargin, y);
-  doc.setTextColor(0, 0, 0); // Back to black
-  y += lineHeight + 5;
-  
-  doc.setFontSize(11);
-  
-  // Principal Information fields
+  // Principal Information fields with improved formatting
   const principalInfo = [
     { label: "Full Name:", value: formData.principalName || "" },
     { label: "Ownership %:", value: formData.ownershipPct ? `${formData.ownershipPct}%` : "" },
-    { label: "Title (Owner, CEO, etc.):", value: formData.principalTitle || "" },
-    { label: "Home Telephone:", value: formData.principalPhone || "" },
-    { label: "Date of Birth:", value: formData.dob || "" },
-    { label: "SSN:", value: formData.ssn || "" },
-    { label: "Driver's License #:", value: formData.driversLicense || "" },
-    { label: "Home Address:", value: formData.homeAddress || "" },
-    { label: "Personal Email:", value: formData.personalEmail || "" }
+    { label: "Title:", value: formData.principalTitle || "" },
+    { label: "Phone:", value: formData.principalPhone || "" },
+    { label: "Email:", value: formData.personalEmail || "" },
+    { label: "Home Address:", value: formData.homeAddress || "" }
   ];
   
-  // Additional owners checkbox
-  doc.text("Check here if additional owners/members have 25%+ equity", 100, y - lineHeight);
-  doc.rect(90, y - lineHeight - 4, 4, 4);
-  if (formData.additionalOwners) {
-    doc.rect(90, y - lineHeight - 4, 4, 4, 'F');
-  }
-  
   principalInfo.forEach(item => {
+    doc.setFont('helvetica', 'bold');
     doc.text(item.label, leftMargin, y);
-    doc.text(item.value, 80, y);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.text(String(item.value), leftMargin + 40, y);
+    
     y += lineHeight;
   });
   
-  y += sectionSpacing;
+  y += sectionSpacing / 2;
   
-  // Section 7. Bank Settlement Information
-  doc.setFontSize(16);
-  doc.setTextColor(247, 148, 29); // Orange for section titles
-  doc.text("7. Bank Settlement Information", leftMargin, y);
-  doc.setTextColor(0, 0, 0); // Back to black
-  y += lineHeight + 5;
+  // Section 4. Bank Information
+  y = addSectionHeader(doc, "4. Bank Settlement Information", y);
   
-  doc.setFontSize(11);
-  
-  // Bank info
   const bankInfo = [
     { label: "Bank Name:", value: formData.bankName || "" },
-    { label: "Contact Name at Bank:", value: formData.bankContactName || "" },
     { label: "Routing Number:", value: formData.routingNumber || "" },
     { label: "Account Number:", value: formData.accountNumber || "" }
   ];
   
   bankInfo.forEach(item => {
+    doc.setFont('helvetica', 'bold');
     doc.text(item.label, leftMargin, y);
-    doc.text(item.value, 80, y);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.text(String(item.value), leftMargin + 40, y);
+    
     y += lineHeight;
   });
   
-  y += sectionSpacing;
+  y += sectionSpacing / 2;
   
-  // Section 8. Business Description
-  doc.setFontSize(16);
-  doc.setTextColor(247, 148, 29); // Orange for section titles
-  doc.text("8. Business Description", leftMargin, y);
-  doc.setTextColor(0, 0, 0); // Back to black
-  y += lineHeight + 5;
+  // Check if we need to add a new page
+  if (y > pageHeight - 60) {
+    doc.addPage();
+    y = margin;
+  }
   
-  doc.setFontSize(11);
+  // Section 5. Processing Volume
+  y = addSectionHeader(doc, "5. Processing Volume", y);
   
-  // Business Description fields
-  doc.text("Products/Services Sold:", leftMargin, y);
-  doc.text(formData.productsServices || "", 80, y);
-  y += lineHeight;
-  
-  doc.text("Years in Operation:", leftMargin, y);
-  doc.text(formData.yearsInBusiness || "", 80, y);
-  y += lineHeight;
-  
-  doc.text("Storage Location (if applicable):", leftMargin, y);
-  doc.text(formData.storageLocation || "", 80, y);
-  
-  y += sectionSpacing + 5;
-  
-  // Section 9. Processing Volume
-  doc.setFontSize(16);
-  doc.setTextColor(247, 148, 29); // Orange for section titles
-  doc.text("9. Processing Volume", leftMargin, y);
-  doc.setTextColor(0, 0, 0); // Back to black
-  y += lineHeight + 5;
-  
-  doc.setFontSize(11);
-  
-  // Processing Volume fields
   const volumeInfo = [
-    { label: "Estimated Total Monthly Volume (All payment types): $", value: formData.monthlyVolume || "" },
-    { label: "Visa/Mastercard Volume: $", value: formData.visaMcVolume || "" },
-    { label: "American Express Volume: $", value: formData.amexVolume || "" },
-    { label: "Average Ticket: $", value: formData.averageTicket || "" },
-    { label: "Highest Ticket: $", value: formData.highestTicket || "" }
+    { label: "Monthly Volume:", value: formData.monthlyVolume ? `$${formData.monthlyVolume}` : "" },
+    { label: "Average Ticket:", value: formData.averageTicket ? `$${formData.averageTicket}` : "" },
+    { label: "Highest Ticket:", value: formData.highestTicket ? `$${formData.highestTicket}` : "" }
   ];
   
   volumeInfo.forEach(item => {
+    doc.setFont('helvetica', 'bold');
     doc.text(item.label, leftMargin, y);
-    doc.text(item.value, leftMargin + 120, y);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.text(String(item.value), leftMargin + 40, y);
+    
     y += lineHeight;
   });
   
-  y += sectionSpacing;
+  y += sectionSpacing / 2;
   
-  // Section 10. Transaction Method
-  doc.setFontSize(16);
-  doc.setTextColor(247, 148, 29); // Orange for section titles
-  doc.text("10. Transaction Method (Must Equal 100%)", leftMargin, y);
-  doc.setTextColor(0, 0, 0); // Back to black
-  y += lineHeight + 5;
+  // Section 6. Business Type
+  y = addSectionHeader(doc, "6. Business Type", y);
   
-  doc.setFontSize(11);
+  // Draw business type fields
+  const businessTypeInfo = [
+    { 
+      label: "Seasonal Business:",
+      checkboxes: [
+        { label: "Yes", checked: formData.isSeasonalBusiness === true },
+        { label: "No", checked: formData.isSeasonalBusiness === false }
+      ]
+    },
+    { 
+      label: "Refund Policy:",
+      checkboxes: [
+        { label: "Yes", checked: formData.hasRefundPolicy === true },
+        { label: "No", checked: formData.hasRefundPolicy === false }
+      ]
+    }
+  ];
   
-  // Transaction Methods
+  businessTypeInfo.forEach(item => {
+    doc.setFont('helvetica', 'bold');
+    doc.text(item.label, leftMargin, y);
+    
+    let xPos = leftMargin + 40;
+    
+    if (item.checkboxes) {
+      item.checkboxes.forEach(checkbox => {
+        doc.rect(xPos, y - 3, 3, 3);
+        if (checkbox.checked) {
+          doc.setFillColor(0, 0, 0);
+          doc.rect(xPos, y - 3, 3, 3, 'F');
+        }
+        
+        doc.setFont('helvetica', 'normal');
+        doc.text(checkbox.label, xPos + 5, y);
+        xPos += 20;
+      });
+    }
+    
+    y += lineHeight;
+  });
+  
+  y += sectionSpacing / 2;
+  
+  // Section 7. Transaction Methods
+  y = addSectionHeader(doc, "7. Transaction Methods", y);
+  
+  // Draw transaction methods with percentages
   const transactionMethods = [
-    { label: "Face-to-Face (Retail):", value: formData.faceToFacePct || "" },
-    { label: "Telephone/Mail/Email (MOTO):", value: formData.motoPct || "" },
-    { label: "Internet (eCommerce):", value: formData.ecommercePct || "" }
+    { label: "Face-to-Face (Retail):", value: formData.faceToFacePct || "0", checked: formData.purchaseMethods && formData.purchaseMethods.includes('inperson') },
+    { label: "Mail/Phone/Email (MOTO):", value: formData.motoPct || "0", checked: formData.purchaseMethods && formData.purchaseMethods.includes('mailphone') },
+    { label: "Internet (eCommerce):", value: formData.ecommercePct || "0", checked: formData.purchaseMethods && formData.purchaseMethods.includes('internet') }
   ];
   
   transactionMethods.forEach(method => {
-    doc.rect(leftMargin, y - 4, 4, 4);
+    doc.rect(leftMargin, y - 3, 3, 3);
     
-    // Fill checkbox based on if percentage exists
-    if (method.value && parseInt(method.value) > 0) {
-      doc.rect(leftMargin, y - 4, 4, 4, 'F');
+    if (method.checked || parseInt(method.value) > 0) {
+      doc.setFillColor(0, 0, 0);
+      doc.rect(leftMargin, y - 3, 3, 3, 'F');
     }
     
-    doc.text(method.label, leftMargin + 6, y);
-    doc.text(method.value ? `${method.value}%` : "", leftMargin + 80, y);
+    doc.setFont('helvetica', 'bold');
+    doc.text(method.label, leftMargin + 5, y);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${method.value}%`, leftMargin + 60, y);
+    
     y += lineHeight;
   });
   
-  // Add a new page for the remaining sections
-  doc.addPage();
-  y = 20; // Reset Y position
-  
-  // Section 11. Refund / Cancellation Policy
-  doc.setFontSize(16);
-  doc.setTextColor(247, 148, 29); // Orange for section titles
-  doc.text("11. Refund / Cancellation Policy", leftMargin, y);
-  doc.setTextColor(0, 0, 0); // Back to black
-  y += lineHeight + 5;
-  
-  doc.setFontSize(11);
-  
-  // Refund policy checkbox
-  doc.text("Do you have a refund policy?", leftMargin, y);
-  
-  doc.rect(125, y - 4, 4, 4); // Yes
-  if (formData.hasRefundPolicy) {
-    doc.rect(125, y - 4, 4, 4, 'F');
+  // Check if we need another page
+  if (y > pageHeight - 60) {
+    doc.addPage();
+    y = margin;
   }
-  doc.text("Yes", 131, y);
   
-  doc.rect(145, y - 4, 4, 4); // No
-  if (formData.hasRefundPolicy === false) {
-    doc.rect(145, y - 4, 4, 4, 'F');
-  }
-  doc.text("No", 151, y);
-  
-  y += lineHeight;
-  
-  // Policy Type
-  doc.text("Policy Type:", leftMargin, y);
-  const policyTypes = ["Exchange", "Store Credit", "Refund within 30 days", "Other"];
-  xPos = 60;
-  
-  policyTypes.forEach(type => {
-    doc.rect(xPos, y - 4, 4, 4);
+  // Section 8. eCommerce Information (if applicable)
+  if (formData.purchaseMethods && formData.purchaseMethods.includes('internet')) {
+    y = addSectionHeader(doc, "8. eCommerce Information", y);
     
-    // Fill if selected
-    if (formData.policyType === type.toLowerCase().replace(/\s+/g, '')) {
-      doc.rect(xPos, y - 4, 4, 4, 'F');
-    }
+    const ecommerceFields = [
+      { label: "Shopping Cart:", value: formData.shoppingCartPlatform || "" },
+      { label: "Shipping Method:", value: formatArrayField(formData.shippingMethod) },
+      { label: "Advertising Channels:", value: formatArrayField(formData.advertisingChannels) }
+    ];
     
-    doc.text(type, xPos + 6, y);
-    xPos += type.length * 1.8 + 8;
-  });
-  
-  y += lineHeight;
-  
-  // Additional fields
-  const refundPolicyInfo = [
-    { 
-      label: "Processing History?",
-      checkboxes: [
-        { label: "Yes", checked: formData.hasProcessingHistory === true },
-        { label: "No", checked: formData.hasProcessingHistory === false }
-      ]
-    },
-    { label: "If yes, attach 3 most recent processing statements.", value: "" },
-    { label: "Current/Previous Processor(s):", value: formData.previousProcessor || "" },
-    {
-      label: "Previous Terminations?",
-      checkboxes: [
-        { label: "Yes", checked: formData.previousTerminations === true },
-        { label: "No", checked: formData.previousTerminations === false }
-      ],
-      valueLabel: "If Yes, explain:",
-      value: formData.terminationsExplanation || ""
-    },
-    {
-      label: "Bankruptcies?",
-      checkboxes: [
-        { label: "Yes", checked: formData.hasBankruptcy === true },
-        { label: "No", checked: formData.hasBankruptcy === false }
-      ],
-      valueLabel: "If Yes, explain:",
-      value: formData.bankruptcyExplanation || ""
-    }
-  ];
-  
-  refundPolicyInfo.forEach(item => {
-    doc.text(item.label, leftMargin, y);
-    
-    if (item.checkboxes) {
-      xPos = 80;
-      item.checkboxes.forEach(checkbox => {
-        doc.rect(xPos, y - 4, 4, 4);
-        if (checkbox.checked) {
-          doc.rect(xPos, y - 4, 4, 4, 'F');
-        }
-        doc.text(checkbox.label, xPos + 6, y);
-        xPos += checkbox.label.length * 2 + 15;
-      });
+    ecommerceFields.forEach(item => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(item.label, leftMargin, y);
       
-      if (item.valueLabel) {
-        doc.text(item.valueLabel, xPos + 10, y);
-        doc.text(item.value, xPos + 50, y);
-      }
-    } else if (item.value !== undefined) {
-      doc.text(item.value, 80, y);
-    }
-    
-    y += lineHeight;
-  });
-  
-  y += sectionSpacing;
-  
-  // Section 12. Business Type
-  doc.setFontSize(16);
-  doc.setTextColor(247, 148, 29); // Orange for section titles
-  doc.text("12. Business Type", leftMargin, y);
-  doc.setTextColor(0, 0, 0); // Back to black
-  y += lineHeight + 5;
-  
-  doc.setFontSize(11);
-  
-  // B2B/B2C percentages
-  doc.text("B2B (%):", leftMargin, y);
-  doc.text(formData.b2bPct || "", leftMargin + 30, y);
-  
-  doc.text("B2C (%):", leftMargin + 60, y);
-  doc.text(formData.b2cPct || "", leftMargin + 90, y);
-  y += lineHeight;
-  
-  // Seasonal Business checkboxes
-  doc.text("Seasonal Business?", leftMargin, y);
-  
-  doc.rect(80, y - 4, 4, 4); // Yes
-  if (formData.isSeasonalBusiness === true) {
-    doc.rect(80, y - 4, 4, 4, 'F');
-  }
-  doc.text("Yes", 86, y);
-  
-  doc.rect(105, y - 4, 4, 4); // No
-  if (formData.isSeasonalBusiness === false) {
-    doc.rect(105, y - 4, 4, 4, 'F');
-  }
-  doc.text("No", 111, y);
-  y += lineHeight;
-  
-  // Recurring Payments checkboxes
-  doc.text("Recurring Payments/Subscriptions?", leftMargin, y);
-  
-  doc.rect(80, y - 4, 4, 4); // Yes
-  if (formData.hasRecurringPayments === true) {
-    doc.rect(80, y - 4, 4, 4, 'F');
-  }
-  doc.text("Yes", 86, y);
-  
-  doc.rect(105, y - 4, 4, 4); // No
-  if (formData.hasRecurringPayments === false) {
-    doc.rect(105, y - 4, 4, 4, 'F');
-  }
-  doc.text("No", 111, y);
-  
-  doc.text("If yes, specify:", 125, y);
-  doc.text(formData.recurringPaymentsDesc || "", 165, y);
-  
-  y += sectionSpacing + 5;
-  
-  // Section 13. eCommerce / Card-Not-Present
-  doc.setFontSize(16);
-  doc.setTextColor(247, 148, 29); // Orange for section titles
-  doc.text("13. eCommerce / Card-Not-Present", leftMargin, y);
-  doc.setTextColor(0, 0, 0); // Back to black
-  y += lineHeight + 5;
-  
-  doc.setFontSize(11);
-  
-  // eCommerce fields
-  const ecommerceFields = [
-    { label: "Product Purchase Address(es):", value: formData.purchaseAddresses || "" }
-  ];
-  
-  ecommerceFields.forEach(field => {
-    doc.text(field.label, leftMargin, y);
-    doc.text(field.value, 80, y);
-    y += lineHeight;
-  });
-  
-  // Who owns inventory
-  doc.text("Who Owns Inventory?", leftMargin, y);
-  
-  doc.rect(80, y - 4, 4, 4); // Merchant
-  if (formData.inventoryOwner === 'merchant') {
-    doc.rect(80, y - 4, 4, 4, 'F');
-  }
-  doc.text("Merchant", 86, y);
-  
-  doc.rect(120, y - 4, 4, 4); // Vendor (Drop Ship)
-  if (formData.inventoryOwner === 'vendor') {
-    doc.rect(120, y - 4, 4, 4, 'F');
-  }
-  doc.text("Vendor (Drop Ship)", 126, y);
-  y += lineHeight;
-  
-  // Additional eCommerce fields
-  const moreEcommerceFields = [
-    { label: "Fulfillment Provider(s):", value: formData.fulfillmentProvider || "" },
-    { label: "Shopping Cart / CRM Platform(s):", value: formData.shoppingCartPlatform || "" }
-  ];
-  
-  moreEcommerceFields.forEach(field => {
-    doc.text(field.label, leftMargin, y);
-    doc.text(field.value, 80, y);
-    y += lineHeight;
-  });
-  
-  // Purchase methods checkboxes
-  doc.text("How Do Customers Purchase?", leftMargin, y);
-  
-  const purchaseMethods = ["In Person", "Mail/Phone", "Internet", "Fax"];
-  xPos = 80;
-  purchaseMethods.forEach((method, index) => {
-    doc.rect(xPos, y - 4, 4, 4);
-    
-    // Check if this method is in the formData.purchaseMethods array
-    if (formData.purchaseMethods && formData.purchaseMethods.includes(method.toLowerCase().replace(/\//g, ''))) {
-      doc.rect(xPos, y - 4, 4, 4, 'F');
-    }
-    
-    doc.text(method, xPos + 6, y);
-    xPos += method.length * 2 + 10;
-  });
-  y += lineHeight;
-  
-  // Additional fields
-  const finalEcommerceFields = [
-    { label: "Call Center Provider(s):", value: formData.callCenterProvider || "" }
-  ];
-  
-  finalEcommerceFields.forEach(field => {
-    doc.text(field.label, leftMargin, y);
-    doc.text(field.value, 80, y);
-    y += lineHeight;
-  });
-  
-  // Add shipment timeframes
-  doc.text("Authorization to Shipment Timeframe:", leftMargin, y);
-  const shipmentTimeframes = ["0–7 days", "8–14 days", "15–30 days", "30–90 days", "90+ days"];
-  xPos = 80;
-  shipmentTimeframes.forEach(timeframe => {
-    doc.rect(xPos, y - 4, 4, 4);
-    
-    if (formData.shipmentTimeframe === timeframe.toLowerCase().replace(/[^a-z0-9]/g, '')) {
-      doc.rect(xPos, y - 4, 4, 4, 'F');
-    }
-    
-    doc.text(timeframe, xPos + 6, y);
-    xPos += timeframe.length * 2 + 5;
-  });
-  y += lineHeight;
-  
-  // Add delivery timeframes (same options)
-  doc.text("Delivery Timeframe to Customer:", leftMargin, y);
-  xPos = 80;
-  shipmentTimeframes.forEach(timeframe => {
-    doc.rect(xPos, y - 4, 4, 4);
-    
-    if (formData.deliveryTimeframe === timeframe.toLowerCase().replace(/[^a-z0-9]/g, '')) {
-      doc.rect(xPos, y - 4, 4, 4, 'F');
-    }
-    
-    doc.text(timeframe, xPos + 6, y);
-    xPos += timeframe.length * 2 + 5;
-  });
-  y += lineHeight;
-  
-  // Other eCommerce fields
-  const finalFields = [
-    { label: "Chargeback Management System (if any):", value: formData.chargebackSystem || "" },
-    { 
-      label: "Deposits Required?",
-      checkboxes: [
-        { label: "Yes", checked: formData.depositsRequired === true },
-        { label: "No", checked: formData.depositsRequired === false }
-      ],
-      valueLabel: "If Yes, % Required:",
-      value: formData.depositPercentage ? `${formData.depositPercentage}%` : ""
-    },
-    {
-      label: "When is Full Payment Received?",
-      checkboxes: [
-        { label: "100% Paid in Advance", checked: formData.paymentReceived === 'advance' },
-        { label: "100% Paid on Delivery/Completion", checked: formData.paymentReceived === 'delivery' }
-      ]
-    },
-    { label: "Sales Regions:", value: formData.salesRegions || "" },
-    { label: "% of International Transactions:", value: formData.internationalPct ? `${formData.internationalPct}%` : "" }
-  ];
-  
-  finalFields.forEach(field => {
-    doc.text(field.label, leftMargin, y);
-    
-    if (field.checkboxes) {
-      xPos = 80;
-      field.checkboxes.forEach(checkbox => {
-        doc.rect(xPos, y - 4, 4, 4);
-        if (checkbox.checked) {
-          doc.rect(xPos, y - 4, 4, 4, 'F');
-        }
-        doc.text(checkbox.label, xPos + 6, y);
-        xPos += checkbox.label.length * 2 + 10;
-      });
+      doc.setFont('helvetica', 'normal');
+      doc.text(String(item.value), leftMargin + 40, y);
       
-      if (field.valueLabel) {
-        doc.text(field.valueLabel, xPos + 10, y);
-        doc.text(field.value, xPos + 50, y);
-      }
-    } else {
-      doc.text(field.value, 80, y);
-    }
-    
-    y += lineHeight;
-  });
-  
-  // Add shipping methods
-  doc.text("Shipping Method:", leftMargin, y);
-  const shippingMethods = ["FedEx", "UPS", "USPS"];
-  xPos = 80;
-  shippingMethods.forEach(method => {
-    doc.rect(xPos, y - 4, 4, 4);
-    
-    if (formData.shippingMethod && formData.shippingMethod.includes(method.toLowerCase())) {
-      doc.rect(xPos, y - 4, 4, 4, 'F');
-    }
-    
-    doc.text(method, xPos + 6, y);
-    xPos += method.length * 2 + 10;
-  });
-  y += lineHeight;
-  
-  // Add advertising channels
-  doc.text("Advertising Channels:", leftMargin, y);
-  const adChannels = ["Catalog", "TV/Radio", "Flyers/Direct Mail", "Internet"];
-  xPos = 80;
-  adChannels.forEach(channel => {
-    doc.rect(xPos, y - 4, 4, 4);
-    
-    if (formData.advertisingChannels && formData.advertisingChannels.includes(channel.toLowerCase().replace(/[^a-z]/g, ''))) {
-      doc.rect(xPos, y - 4, 4, 4, 'F');
-    }
-    
-    doc.text(channel, xPos + 6, y);
-    xPos += channel.length * 2 + 5;
-  });
-  y += lineHeight;
-  
-  // Warranty provider
-  doc.text("Warranty / Guarantee Provided By:", leftMargin, y);
-  
-  doc.rect(80, y - 4, 4, 4); // Merchant
-  if (formData.warrantyProvider === 'merchant') {
-    doc.rect(80, y - 4, 4, 4, 'F');
+      y += lineHeight;
+    });
   }
-  doc.text("Merchant", 86, y);
   
-  doc.rect(125, y - 4, 4, 4); // Manufacturer
-  if (formData.warrantyProvider === 'manufacturer') {
-    doc.rect(125, y - 4, 4, 4, 'F');
-  }
-  doc.text("Manufacturer", 131, y);
+  // Add footer with application ID and date
+  addFooter(doc, formData.businessName || "WaveLine Merchant Application");
   
   // Convert the document to base64
   const pdfOutput = doc.output('datauristring');
@@ -811,3 +413,69 @@ async function generateWaveLineMerchantApplication(formData: any): Promise<strin
   const base64Data = pdfOutput.split(',')[1];
   return base64Data;
 }
+
+/**
+ * Helper function to add a section header
+ */
+function addSectionHeader(doc: any, text: string, y: number): number {
+  doc.setFillColor(14, 165, 233);  // #0EA5E9 (sky blue)
+  doc.rect(20, y, doc.internal.pageSize.getWidth() - 40, 7, 'F');
+  
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(255, 255, 255);
+  doc.text(text, 25, y + 5);
+  
+  // Reset text color and font
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  
+  return y + 10;  // Return new Y position after header
+}
+
+/**
+ * Helper function to add footer to all pages
+ */
+function addFooter(doc: any, businessName: string): void {
+  const pageCount = doc.internal.getNumberOfPages();
+  const today = new Date().toLocaleDateString();
+  
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    
+    // Add footer line
+    doc.setDrawColor(14, 165, 233);
+    doc.setLineWidth(0.5);
+    doc.line(20, pageHeight - 15, pageWidth - 20, pageHeight - 15);
+    
+    // Add page number
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Page ${i} of ${pageCount}`, pageWidth - 25, pageHeight - 10);
+    
+    // Add business name and date
+    doc.text(`${businessName} - ${today}`, 20, pageHeight - 10);
+  }
+}
+
+/**
+ * Helper function to format array fields as comma-separated strings
+ */
+function formatArrayField(arr: string[] | undefined): string {
+  if (!arr || !Array.isArray(arr) || arr.length === 0) {
+    return "";
+  }
+  
+  return arr.map(item => {
+    // Capitalize first letter of each word and replace dashes/underscores with spaces
+    return item.replace(/[-_]/g, ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }).join(', ');
+}
+
