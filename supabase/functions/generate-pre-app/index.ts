@@ -122,7 +122,7 @@ async function parseAndValidateRequest(req) {
 const getWavelineLogo = async () => {
   // This is a placeholder with an orange wave and blue "waveline" text
   // Equivalent to the uploaded waveline logo image
-  const logoBase64 = "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"
+  const logoBase64 = "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"
 
   return logoBase64;
 };
@@ -554,4 +554,365 @@ function addBankInfoSection(doc, formData, y, { leftMargin, lineHeight, sectionS
   
   doc.text(`Account Number: ${formData.accountNumber || '________________________________'}`, leftMargin, y);
   
-  return y + lineHeight
+  return y + lineHeight + sectionSpacing/2;
+}
+
+/**
+ * Adds the business description section to the PDF
+ */
+function addBusinessDescriptionSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing, primaryColor }) {
+  y = addSectionHeader(doc, "8. Business Description", y, primaryColor);
+  
+  doc.text(`Products/Services Sold: ${formData.productsServices || '________________________________'}`, leftMargin, y);
+  y += lineHeight;
+  
+  doc.text(`Years in Operation: ${formData.yearsInOperation || '_______'}`, leftMargin, y);
+  y += lineHeight;
+  
+  doc.text(`Storage Location (if applicable): ${formData.storageLocation || '________________________________'}`, leftMargin, y);
+  
+  return y + lineHeight + sectionSpacing/2;
+}
+
+/**
+ * Adds the processing volume section to the PDF
+ */
+function addProcessingVolumeSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing, primaryColor }) {
+  y = addSectionHeader(doc, "9. Processing Volume", y, primaryColor);
+  
+  doc.text(`Total Monthly Volume: $${formData.totalMonthlyVolume || '____________'}`, leftMargin, y);
+  y += lineHeight;
+  
+  doc.text(`VISA/MC Volume: $${formData.visaMastercardVolume || '____________'}`, leftMargin, y);
+  y += lineHeight;
+  
+  doc.text(`AMEX Volume: $${formData.amexVolume || '____________'}`, leftMargin, y);
+  y += lineHeight;
+  
+  doc.text(`Average Ticket: $${formData.averageTicket || '____________'}`, leftMargin, y);
+  y += lineHeight;
+  
+  doc.text(`Highest Ticket: $${formData.highestTicket || '____________'}`, leftMargin, y);
+  
+  return y + lineHeight + sectionSpacing/2;
+}
+
+/**
+ * Adds the transaction methods section to the PDF
+ */
+function addTransactionMethodsSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing, primaryColor }) {
+  y = addSectionHeader(doc, "10. Transaction Method (Must total 100%)", y, primaryColor);
+  
+  doc.text(`Face-to-Face: ${formData.faceToFacePercentage || '______'}%`, leftMargin, y);
+  y += lineHeight;
+  
+  doc.text(`Telephone/Mail/Email: ${formData.motoPercentage || '______'}%`, leftMargin, y);
+  y += lineHeight;
+  
+  doc.text(`Internet: ${formData.ecommercePercentage || '______'}%`, leftMargin, y);
+  
+  return y + lineHeight + sectionSpacing/2;
+}
+
+/**
+ * Adds the refund policy section to the PDF
+ */
+function addRefundPolicySection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing, primaryColor }) {
+  y = addSectionHeader(doc, "11. Refund / Cancellation Policy", y, primaryColor);
+  
+  // Has refund policy checkbox
+  doc.text("Refund Policy:", leftMargin, y);
+  doc.rect(leftMargin + 30, y - 3, 3, 3);
+  if (formData.hasRefundPolicy) {
+    doc.setFillColor(0, 0, 0);
+    doc.rect(leftMargin + 30, y - 3, 3, 3, 'F');
+  }
+  doc.text("Yes", leftMargin + 35, y);
+  
+  doc.rect(leftMargin + 50, y - 3, 3, 3);
+  if (!formData.hasRefundPolicy) {
+    doc.setFillColor(0, 0, 0);
+    doc.rect(leftMargin + 50, y - 3, 3, 3, 'F');
+  }
+  doc.text("No", leftMargin + 55, y);
+  y += lineHeight;
+  
+  // Policy type
+  if (formData.hasRefundPolicy) {
+    doc.text("Policy Type:", leftMargin, y);
+    
+    const policyTypes = [
+      { id: "exchange", label: "Exchange" },
+      { id: "store_credit", label: "Store Credit" },
+      { id: "refund_30_days", label: "Refund within 30 days" },
+      { id: "other", label: "Other" }
+    ];
+    
+    let currentX = leftMargin + 30;
+    
+    policyTypes.forEach((type) => {
+      const isSelected = formData.policyType === type.id;
+      
+      doc.rect(currentX, y - 3, 3, 3);
+      if (isSelected) {
+        doc.setFillColor(0, 0, 0);
+        doc.rect(currentX, y - 3, 3, 3, 'F');
+      }
+      
+      doc.text(type.label, currentX + 5, y);
+      currentX += type.label.length * 2 + 10;
+      
+      // Move to next line if running out of space
+      if (currentX > (doc.internal.pageSize.getWidth() - 30)) {
+        currentX = leftMargin + 30;
+        y += lineHeight;
+      }
+    });
+    
+    y += lineHeight;
+    
+    // Other policy type
+    if (formData.policyType === 'other') {
+      doc.text(`Other: ${formData.policyTypeOther || '_______________'}`, leftMargin, y);
+      y += lineHeight;
+    }
+  }
+  
+  // Processing History
+  doc.text("Processing History:", leftMargin, y);
+  doc.rect(leftMargin + 40, y - 3, 3, 3);
+  if (formData.hasProcessingHistory) {
+    doc.setFillColor(0, 0, 0);
+    doc.rect(leftMargin + 40, y - 3, 3, 3, 'F');
+  }
+  doc.text("Yes", leftMargin + 45, y);
+  
+  doc.rect(leftMargin + 60, y - 3, 3, 3);
+  if (!formData.hasProcessingHistory) {
+    doc.setFillColor(0, 0, 0);
+    doc.rect(leftMargin + 60, y - 3, 3, 3, 'F');
+  }
+  doc.text("No", leftMargin + 65, y);
+  y += lineHeight;
+  
+  if (formData.hasProcessingHistory) {
+    doc.text(`Current/Previous Processor(s): ${formData.currentPreviousProcessors || '________________________________'}`, leftMargin, y);
+    y += lineHeight;
+  }
+  
+  // Previous Terminations
+  doc.text("Previous Terminations:", leftMargin, y);
+  doc.rect(leftMargin + 45, y - 3, 3, 3);
+  if (formData.hasPreviousTerminations) {
+    doc.setFillColor(0, 0, 0);
+    doc.rect(leftMargin + 45, y - 3, 3, 3, 'F');
+  }
+  doc.text("Yes", leftMargin + 50, y);
+  
+  doc.rect(leftMargin + 65, y - 3, 3, 3);
+  if (!formData.hasPreviousTerminations) {
+    doc.setFillColor(0, 0, 0);
+    doc.rect(leftMargin + 65, y - 3, 3, 3, 'F');
+  }
+  doc.text("No", leftMargin + 70, y);
+  y += lineHeight;
+  
+  if (formData.hasPreviousTerminations) {
+    doc.text(`Explanation: ${formData.terminationsExplanation || '________________________________'}`, leftMargin, y);
+    y += lineHeight;
+  }
+  
+  // Bankruptcies
+  doc.text("Bankruptcies:", leftMargin, y);
+  doc.rect(leftMargin + 30, y - 3, 3, 3);
+  if (formData.hasBankruptcies) {
+    doc.setFillColor(0, 0, 0);
+    doc.rect(leftMargin + 30, y - 3, 3, 3, 'F');
+  }
+  doc.text("Yes", leftMargin + 35, y);
+  
+  doc.rect(leftMargin + 50, y - 3, 3, 3);
+  if (!formData.hasBankruptcies) {
+    doc.setFillColor(0, 0, 0);
+    doc.rect(leftMargin + 50, y - 3, 3, 3, 'F');
+  }
+  doc.text("No", leftMargin + 55, y);
+  y += lineHeight;
+  
+  if (formData.hasBankruptcies) {
+    doc.text(`Explanation: ${formData.bankruptciesExplanation || '________________________________'}`, leftMargin, y);
+    y += lineHeight;
+  }
+  
+  return y + sectionSpacing/2;
+}
+
+/**
+ * Adds the business type section to the PDF
+ */
+function addBusinessTypeSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing, primaryColor }) {
+  y = addSectionHeader(doc, "12. Business Type", y, primaryColor);
+  
+  doc.text(`Business to Business (B2B): ${formData.b2bPercentage || '______'}%`, leftMargin, y);
+  y += lineHeight;
+  
+  doc.text(`Business to Consumer (B2C): ${formData.b2cPercentage || '______'}%`, leftMargin, y);
+  y += lineHeight;
+  
+  // Seasonal Business
+  doc.text("Seasonal Business:", leftMargin, y);
+  doc.rect(leftMargin + 40, y - 3, 3, 3);
+  if (formData.isSeasonalBusiness) {
+    doc.setFillColor(0, 0, 0);
+    doc.rect(leftMargin + 40, y - 3, 3, 3, 'F');
+  }
+  doc.text("Yes", leftMargin + 45, y);
+  
+  doc.rect(leftMargin + 60, y - 3, 3, 3);
+  if (!formData.isSeasonalBusiness) {
+    doc.setFillColor(0, 0, 0);
+    doc.rect(leftMargin + 60, y - 3, 3, 3, 'F');
+  }
+  doc.text("No", leftMargin + 65, y);
+  y += lineHeight;
+  
+  // Recurring Payments
+  doc.text("Recurring Payments:", leftMargin, y);
+  doc.rect(leftMargin + 40, y - 3, 3, 3);
+  if (formData.hasRecurringPayments) {
+    doc.setFillColor(0, 0, 0);
+    doc.rect(leftMargin + 40, y - 3, 3, 3, 'F');
+  }
+  doc.text("Yes", leftMargin + 45, y);
+  
+  doc.rect(leftMargin + 60, y - 3, 3, 3);
+  if (!formData.hasRecurringPayments) {
+    doc.setFillColor(0, 0, 0);
+    doc.rect(leftMargin + 60, y - 3, 3, 3, 'F');
+  }
+  doc.text("No", leftMargin + 65, y);
+  y += lineHeight;
+  
+  if (formData.hasRecurringPayments) {
+    doc.text(`Details: ${formData.recurringPaymentsDetails || '________________________________'}`, leftMargin, y);
+    y += lineHeight;
+  }
+  
+  return y + sectionSpacing/2;
+}
+
+/**
+ * Adds the ecommerce section to the PDF if applicable
+ */
+function addEcommerceSection(doc, formData, y, { leftMargin, lineHeight, sectionSpacing, primaryColor }) {
+  // Only add this section if there's ecommerce percentage
+  if (!formData.ecommercePercentage || parseFloat(formData.ecommercePercentage) <= 0) {
+    return y; // Skip this section
+  }
+  
+  y = addSectionHeader(doc, "13. eCommerce / Card-Not-Present", y, primaryColor);
+  
+  doc.text(`Product Purchase Address(es): ${formData.productPurchaseAddresses || '________________________________'}`, leftMargin, y);
+  y += lineHeight;
+  
+  // Inventory Ownership
+  doc.text("Inventory Ownership:", leftMargin, y);
+  doc.rect(leftMargin + 40, y - 3, 3, 3);
+  if (formData.inventoryOwnership === 'merchant') {
+    doc.setFillColor(0, 0, 0);
+    doc.rect(leftMargin + 40, y - 3, 3, 3, 'F');
+  }
+  doc.text("Merchant", leftMargin + 45, y);
+  
+  doc.rect(leftMargin + 80, y - 3, 3, 3);
+  if (formData.inventoryOwnership === 'vendor') {
+    doc.setFillColor(0, 0, 0);
+    doc.rect(leftMargin + 80, y - 3, 3, 3, 'F');
+  }
+  doc.text("Vendor (Drop Ship)", leftMargin + 85, y);
+  y += lineHeight;
+  
+  doc.text(`Fulfillment Provider(s): ${formData.fulfillmentProviders || '________________________________'}`, leftMargin, y);
+  y += lineHeight;
+  
+  doc.text(`Shopping Cart Platform(s): ${formData.shoppingCartPlatforms || '________________________________'}`, leftMargin, y);
+  y += lineHeight;
+  
+  // Purchase Methods
+  doc.text("Purchase Methods:", leftMargin, y);
+  y += lineHeight;
+  
+  const purchaseMethods = [
+    { id: "in_person", label: "In Person" },
+    { id: "mail_phone", label: "Mail/Phone" },
+    { id: "internet", label: "Internet" },
+    { id: "fax", label: "Fax" },
+    { id: "other", label: "Other" }
+  ];
+  
+  let currentX = leftMargin + 10;
+  purchaseMethods.forEach((method) => {
+    const isSelected = formData.purchaseMethods && formData.purchaseMethods.includes(method.id);
+    
+    doc.rect(currentX, y - 3, 3, 3);
+    if (isSelected) {
+      doc.setFillColor(0, 0, 0);
+      doc.rect(currentX, y - 3, 3, 3, 'F');
+    }
+    
+    doc.text(method.label, currentX + 5, y);
+    currentX += method.label.length * 2 + 15;
+    
+    // Move to next line if running out of space
+    if (currentX > (doc.internal.pageSize.getWidth() - 30)) {
+      currentX = leftMargin + 10;
+      y += lineHeight;
+    }
+  });
+  
+  y += lineHeight;
+  
+  if (formData.purchaseMethods && formData.purchaseMethods.includes('other')) {
+    doc.text(`Other: ${formData.purchaseMethodsOther || '_______________'}`, leftMargin, y);
+    y += lineHeight;
+  }
+  
+  return y + sectionSpacing/2;
+}
+
+/**
+ * Adds section headers with proper styling
+ */
+function addSectionHeader(doc, title, y, primaryColor) {
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text(title, 20, y);
+  
+  // Reset text formatting
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(0, 0, 0);
+  
+  return y + 7; // Return position after header with some spacing
+}
+
+/**
+ * Adds a footer to each page of the document
+ */
+function addDocumentFooter(doc, title) {
+  const pageCount = doc.internal.getNumberOfPages();
+  const date = new Date().toLocaleDateString();
+  
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    
+    // Add footer text
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`${title} - Generated on ${date} - Page ${i} of ${pageCount}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+  }
+}
