@@ -31,7 +31,11 @@ export const usePreAppGeneration = ({ onSuccess }: UsePreAppGenerationProps = {}
       console.log('[GENERATE] Selected industry:', selectedIndustryId);
       console.log('[GENERATE] Form data:', data);
       
-      const result = await generatePreApp(selectedIndustryId, leadData, data);
+      // Add flag to include logo in the PDF
+      const result = await generatePreApp(selectedIndustryId, leadData, {
+        ...data,
+        includeLogo: true // Tell the API to include the Waveline logo
+      });
       
       console.log('[GENERATE] Pre-app generation successful:', result);
       

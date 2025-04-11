@@ -12,7 +12,12 @@ export const generatePreApp = async (industryId: string, leadData: any, formData
     console.log('[API] Generating pre-app with data:', { industryId, formData });
     
     const { data, error } = await supabase.functions.invoke('generate-pre-app', {
-      body: { industryId, leadData, formData },
+      body: { 
+        industryId, 
+        leadData, 
+        formData,
+        includeLogo: formData.includeLogo || true // Include logo by default
+      },
     });
     
     if (error) {

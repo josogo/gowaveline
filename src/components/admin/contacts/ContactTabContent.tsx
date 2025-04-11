@@ -9,7 +9,7 @@ interface ContactTabContentProps {
   setSelectedContacts: React.Dispatch<React.SetStateAction<string[]>>;
   onEditContact: (contact: Contact) => void;
   onDeleteContact: (id: string) => void;
-  navigateToDeals?: () => void;
+  navigateToDeals: () => void;
 }
 
 export const ContactTabContent: React.FC<ContactTabContentProps> = ({
@@ -21,13 +21,15 @@ export const ContactTabContent: React.FC<ContactTabContentProps> = ({
   navigateToDeals
 }) => {
   return (
-    <ContactsList 
-      contacts={contacts}
-      selectedContacts={selectedContacts}
-      setSelectedContacts={setSelectedContacts}
-      onEditContact={onEditContact}
-      onDeleteContact={onDeleteContact}
-      navigateToDeals={navigateToDeals}
-    />
+    <div className="bg-white rounded-lg shadow-sm border">
+      <ContactsList
+        contacts={contacts}
+        selectedContacts={selectedContacts}
+        setSelectedContacts={setSelectedContacts}
+        onEditContact={onEditContact}
+        onDeleteContact={onDeleteContact}
+        navigateToDeals={navigateToDeals}
+      />
+    </div>
   );
 };

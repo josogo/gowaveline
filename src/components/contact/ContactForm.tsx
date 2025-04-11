@@ -14,6 +14,7 @@ import {
   SubmitButton 
 } from './form';
 import { sendContactFormNotification } from '@/services/notificationService';
+import { useCrmData } from '@/contexts/CrmDataContext';
 
 interface ContactFormProps {
   initialInquiryType?: string;
@@ -23,6 +24,7 @@ interface ContactFormProps {
 const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType, initialPartnerType }) => {
   const [isPartner, setIsPartner] = useState(initialInquiryType === 'partnership');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { setContacts } = useCrmData();
   
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(formSchema),
@@ -68,6 +70,23 @@ const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType, initialPa
       if (!success) {
         throw new Error('Failed to send contact form');
       }
+
+      // Create a new contact in the CRM system
+      const contactType = data.inquiryType === 'partnership' ? 'partner' : 'lead';
+      const newContact = {
+        id: `c-${Date.now()}`,
+        name: data.name,
+        email: data.email,
+        phone: data.phone || '',
+        company: data.company || '',
+        type: contactType,
+        status: 'new',
+        tags: data.inquiryType === 'partnership' ? [data.partnerType] : ['website-inquiry'],
+        notes: data.message,
+        createdAt: new Date().toISOString().split('T')[0]
+      };
+      
+      setContacts((prevContacts: any) => [...prevContacts, newContact]);
       
       toast.success('Your message has been sent! We\'ll be in touch soon.');
       form.reset();
