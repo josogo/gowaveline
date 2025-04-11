@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -47,8 +47,11 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
   const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
   const [generatedFilename, setGeneratedFilename] = useState<string>('WaveLine_Merchant_Application.pdf');
   const [retryAttempt, setRetryAttempt] = useState(0);
-  const [formKey, setFormKey] = useState(Date.now()); // Used to reset form when needed
+  
+  // Use React's useId for generating unique form IDs instead of using a key in the form config
+  const formResetKey = useId() + retryAttempt;
 
+  // Create the form instance
   const form = useForm<PreAppFormValues>({
     resolver: zodResolver(preAppFormSchema),
     defaultValues: {
@@ -59,11 +62,23 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
       advertisingChannels: [],
       additionalOwners: false,
       businessName: '',
-    },
-    // Important: This key helps React identify if the form should be re-initialized
-    // when we want to reset it completely
-    key: formKey.toString(),
+    }
   });
+
+  // Reset form when needed using the key for re-rendering
+  useEffect(() => {
+    // This effect will run when formResetKey changes
+    // Reset form to initial state
+    form.reset({
+      businessStructure: 'llc',
+      hasRefundPolicy: true,
+      purchaseMethods: [],
+      shippingMethod: [],
+      advertisingChannels: [],
+      additionalOwners: false,
+      businessName: '',
+    });
+  }, [formResetKey, form]);
 
   // Cleanup URLs on unmount or when dialog closes
   useEffect(() => {
@@ -83,25 +98,14 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
       }
       setError(null);
       
-      // Reset form to initial state on close
-      resetForm();
+      // Reset form to initial state on close using setRetryAttempt to trigger a re-render
+      setRetryAttempt(prev => prev + 1);
     }
   }, [open]);
 
   const resetForm = () => {
-    // Generate a new key to force React to remount the form
-    setFormKey(Date.now());
-    
-    // Reset form state with default values
-    form.reset({
-      businessStructure: 'llc',
-      hasRefundPolicy: true,
-      purchaseMethods: [],
-      shippingMethod: [],
-      advertisingChannels: [],
-      additionalOwners: false,
-      businessName: '',
-    });
+    // Increment retry attempt to trigger the useEffect for form reset
+    setRetryAttempt(prev => prev + 1);
     
     setSelectedIndustryId('');
     setActiveTab('structure');
@@ -245,7 +249,8 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
               setSelectedIndustryId={setSelectedIndustryId} 
             />
 
-            <Form {...form}>
+            {/* Use a key on the Form component itself to force re-render when needed */}
+            <Form {...form} key={formResetKey}>
               <form onSubmit={form.handleSubmit(handleGenerate)} className="space-y-6">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="grid grid-cols-7 mb-4">
