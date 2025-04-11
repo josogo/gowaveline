@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,15 @@ import { Form } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { preAppFormSchema, type PreAppFormValues } from '../PreAppFormSchema';
+
+// Import all tab components
+import { BusinessStructureTab } from './tabs/BusinessStructureTab';
+import { BusinessInfoTab } from './tabs/BusinessInfoTab';
+import { PrincipalInfoTab } from './tabs/PrincipalInfoTab';
+import { BankingInfoTab } from './tabs/BankingInfoTab';
+import { ProcessingVolumeTab } from './tabs/ProcessingVolumeTab';
+import { PoliciesTab } from './tabs/PoliciesTab';
+import { EcommerceTab } from './tabs/EcommerceTab';
 
 interface Industry {
   id: string;
@@ -276,3 +286,4 @@ export const PreAppGenerationDialog: React.FC<PreAppGenerationDialogProps> = ({
     </Dialog>
   );
 };
+
