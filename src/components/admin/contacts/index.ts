@@ -1,6 +1,6 @@
 
 export { ContactFilters } from './ContactFilters';
-export { ContactsList } from './ContactsList';
+export { ContactsList } from './list';
 export { ContactActions as ContactActionButtons } from './ContactActions';
 export { ContactFormDialog } from './ContactFormDialog';
 export { ImportExportDialog } from './ImportExportDialog';
