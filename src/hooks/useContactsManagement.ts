@@ -68,6 +68,12 @@ export const useContactsManagement = () => {
     setFilteredContacts(filtered);
   };
   
+  // Navigation to deals
+  const navigateToDeals = () => {
+    // TODO: Implement navigation to deals
+    console.log("Navigate to deals");
+  };
+  
   // Contact CRUD operations
   const handleAddContact = (contactData: any) => {
     // Convert to CRM contact format before adding
@@ -162,6 +168,7 @@ export const useContactsManagement = () => {
     handleAddContact,
     handleUpdateContact,
     handleDeleteContact,
-    handleBulkDelete
+    handleBulkDelete,
+    navigateToDeals
   };
 };
