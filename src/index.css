@@ -86,3 +86,21 @@
   max-height: 70vh;
   overflow-y: auto;
 }
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .dialog-scroll-container {
+    max-height: 80vh;
+  }
+  
+  /* Improve tap targets on mobile */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Better form field spacing on small screens */
+  .form-group {
+    margin-bottom: 1rem;
+  }
+}

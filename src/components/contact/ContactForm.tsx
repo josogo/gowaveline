@@ -109,11 +109,11 @@ const ContactForm: React.FC<ContactFormProps> = ({ initialInquiryType, initialPa
   };
   
   return (
-    <div className="bg-white rounded-lg shadow-md p-8">
-      <h2 className="text-2xl font-bold text-orange-500 mb-6">Send Us a Message</h2>
+    <div className="bg-white rounded-lg shadow-md p-4 sm:p-8">
+      <h2 className="text-xl sm:text-2xl font-bold text-orange-500 mb-4 sm:mb-6">Send Us a Message</h2>
       
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
           <NameEmailFields form={form} />
           <PhoneCompanyFields form={form} />
           <InquiryFields 

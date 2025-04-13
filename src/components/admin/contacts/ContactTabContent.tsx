@@ -10,6 +10,7 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ContactTabContentProps {
   contacts: Contact[];
@@ -30,6 +31,7 @@ export const ContactTabContent: React.FC<ContactTabContentProps> = ({
 }) => {
   const [sortField, setSortField] = useState<string>('createdAt');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const isMobile = useIsMobile();
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -42,12 +44,12 @@ export const ContactTabContent: React.FC<ContactTabContentProps> = ({
 
   return (
     <div className="bg-white rounded-lg shadow-sm border">
-      <div className="p-4 border-b">
-        <div className="flex items-center space-x-4">
-          <div className="w-48">
+      <div className="p-2 sm:p-4 border-b">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+          <div className="w-full sm:w-48">
             <Label htmlFor="sortBy" className="text-xs text-gray-500">Sort By</Label>
             <Select value={sortField} onValueChange={setSortField}>
-              <SelectTrigger id="sortBy">
+              <SelectTrigger id="sortBy" className="w-full">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
@@ -60,10 +62,10 @@ export const ContactTabContent: React.FC<ContactTabContentProps> = ({
               </SelectContent>
             </Select>
           </div>
-          <div className="w-40">
+          <div className="w-full sm:w-40">
             <Label htmlFor="sortDirection" className="text-xs text-gray-500">Direction</Label>
             <Select value={sortDirection} onValueChange={(value: string) => setSortDirection(value as 'asc' | 'desc')}>
-              <SelectTrigger id="sortDirection">
+              <SelectTrigger id="sortDirection" className="w-full">
                 <SelectValue placeholder="Direction" />
               </SelectTrigger>
               <SelectContent>
@@ -84,6 +86,7 @@ export const ContactTabContent: React.FC<ContactTabContentProps> = ({
         sortField={sortField}
         sortDirection={sortDirection}
         onSort={handleSort}
+        isMobile={isMobile}
       />
     </div>
   );
