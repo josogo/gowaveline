@@ -33,6 +33,7 @@ interface ContactsListProps {
   sortField?: string;
   sortDirection?: 'asc' | 'desc';
   onSort?: (field: string) => void;
+  isMobile?: boolean; // Add the isMobile prop
 }
 
 export const ContactsList: React.FC<ContactsListProps> = ({
@@ -46,7 +47,8 @@ export const ContactsList: React.FC<ContactsListProps> = ({
   onDeleteContact,
   sortField = 'createdAt',
   sortDirection = 'desc',
-  onSort
+  onSort,
+  isMobile = false // Add default value
 }) => {
   if (contacts.length === 0) {
     return <EmptyState />;
@@ -128,6 +130,55 @@ export const ContactsList: React.FC<ContactsListProps> = ({
     );
   };
 
+  // Responsive table for mobile
+  if (isMobile) {
+    return (
+      <div className="space-y-4">
+        {sortedContacts.map((contact) => (
+          <div 
+            key={contact.id} 
+            className="bg-white p-4 rounded-lg shadow-sm border border-gray-100"
+          >
+            <div className="flex justify-between items-start mb-2">
+              <div className="font-medium">{contact.name}</div>
+              {setSelectedContacts && (
+                <Checkbox 
+                  checked={selectedContacts.includes(contact.id)}
+                  onCheckedChange={() => handleToggleSelect(contact.id)}
+                />
+              )}
+            </div>
+            
+            <div className="space-y-2 text-sm text-gray-600">
+              <ContactInfo contact={contact} />
+              <div><span className="font-medium">Company:</span> {contact.company || 'N/A'}</div>
+              <div className="flex items-center space-x-2">
+                <span className="font-medium">Type:</span> <TypeBadge type={contact.type} />
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="font-medium">Status:</span> <StatusBadge status={contact.status} />
+              </div>
+              <div>
+                <span className="font-medium">Tags:</span>
+                <TagList tags={contact.tags} />
+              </div>
+            </div>
+            
+            <div className="mt-4 flex justify-end">
+              <ContactActions 
+                contact={contact}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                navigateToDeals={navigateToDeals}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // Standard desktop table view
   return (
     <div className="overflow-x-auto">
       <Table>
