@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from 'next-themes';
@@ -33,6 +32,7 @@ import ContactManagement from './pages/admin/ContactManagement';
 import SettingsPage from './pages/admin/Settings';
 import IndustryDocuments from './pages/admin/IndustryDocuments';
 import DocumentsPage from './pages/admin/DocumentsPage';
+import OneClickSubmit from './pages/admin/OneClickSubmit';
 
 const AppRoutes = () => {
   return (
@@ -64,6 +64,7 @@ const AppRoutes = () => {
       <Route path="/admin/settings" element={<SettingsPage />} />
       <Route path="/admin/industry-documents" element={<IndustryDocuments />} />
       <Route path="/admin/documents" element={<DocumentsPage />} />
+      <Route path="/admin/one-click-submit" element={<OneClickSubmit />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

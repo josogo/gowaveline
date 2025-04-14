@@ -12,7 +12,8 @@ import {
   ContactIcon,
   Settings,
   Building,
-  FileArchive
+  FileArchive,
+  SendToBack
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -33,6 +34,7 @@ export const AdminSidebar = () => {
     { name: 'Commissions', href: '/admin/commission-tracking', icon: DollarSign },
     { name: 'Training', href: '/admin/training-hub', icon: Scroll },
     { name: 'Contacts', href: '/admin/contacts', icon: ContactIcon },
+    { name: 'One Click Submit', href: '/admin/one-click-submit', icon: SendToBack },
     { name: 'Industries', href: '/admin/industry-documents', icon: Building },
     { name: 'Documents', href: '/admin/documents', icon: FileArchive },
     { name: 'Settings', href: '/admin/settings', icon: Settings }
