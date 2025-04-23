@@ -7,7 +7,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ApplicationFlow } from './ApplicationFlow';
 import { DocumentUploadSection } from './DocumentUploadSection';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Save } from 'lucide-react';
@@ -23,7 +22,7 @@ export const ApplicationDialog: React.FC<ApplicationDialogProps> = ({
   onOpenChange,
   application
 }) => {
-  const [activeTab, setActiveTab] = useState('application');
+  const [activeTab, setActiveTab] = useState('documents');
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -35,13 +34,8 @@ export const ApplicationDialog: React.FC<ApplicationDialogProps> = ({
         <div className="flex-grow overflow-y-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="mb-4">
-              <TabsTrigger value="application">Application Form</TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
             </TabsList>
-            
-            <TabsContent value="application" className="h-full pb-16">
-              <ApplicationFlow merchantApplication={application} />
-            </TabsContent>
             
             <TabsContent value="documents" className="h-full pb-16">
               <DocumentUploadSection applicationId={application?.id} />

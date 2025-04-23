@@ -2,11 +2,12 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
-export const TitleSection: React.FC = () => {
-  const navigate = useNavigate();
-  
+interface TitleSectionProps {
+  onOpenNewApp?: () => void;
+}
+
+export const TitleSection: React.FC<TitleSectionProps> = ({ onOpenNewApp }) => {
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
       <div>
@@ -18,7 +19,7 @@ export const TitleSection: React.FC = () => {
       
       <Button 
         className="bg-gradient-to-r from-blue-500 to-blue-600"
-        onClick={() => navigate('/admin/one-click-submit?tab=new')}
+        onClick={onOpenNewApp}
       >
         <Plus className="mr-2 h-4 w-4" />
         New Application
