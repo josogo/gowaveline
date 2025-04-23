@@ -10,11 +10,12 @@ import { FinancialInfoForm } from './forms/FinancialInfoForm';
 import { ProcessingInfoForm } from './forms/ProcessingInfoForm';
 import { DocumentsForm } from './forms/DocumentsForm';
 import { BankRoutingSystem } from './BankRoutingSystem';
-import { ArrowRight, ArrowLeft, CheckCircle, Save, SendHorizontal } from 'lucide-react';
+import { ArrowRight, ArrowLeft, CheckCircle, Save, SendHorizontal, MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 import { MerchantInitialForm } from './forms/MerchantInitialForm';
 import { SendToMerchantDialog } from './SendToMerchantDialog';
 import { supabase } from "@/integrations/supabase/client";
+import DeclineRemoveDialog from "./DeclineRemoveDialog";
 
 export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({
   merchantApplication,
@@ -33,6 +34,11 @@ export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({
   const [formData, setFormData] = useState({});
   const [showSendDialog, setShowSendDialog] = useState(false);
   const [merchantAppId, setMerchantAppId] = useState(merchantApplication?.id);
+  const [declineRemoveDialog, setDeclineRemoveDialog] = useState<{
+    open: boolean;
+    action: null | "declined" | "removed";
+  }>({ open: false, action: null });
+  const [cardActionApp, setCardActionApp] = useState<any>(null);
 
   const tabs = [
     { id: 'business', label: 'Business' },
@@ -104,6 +110,48 @@ export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({
     if (!error) toast.success("Application submitted, thank you!");
   };
 
+  const handleDeclineRemove = (action: "declined" | "removed", appData?: any) => {
+    setCardActionApp(appData || merchantApplication);
+    setDeclineRemoveDialog({ open: true, action });
+  };
+
+  const processDeclineRemove = async (reason: string) => {
+    const app = cardActionApp || merchantApplication;
+    try {
+      const { error: updateError } = await supabase
+        .from("merchant_applications")
+        .update({
+          status: declineRemoveDialog.action,
+          action_reason: reason,
+          actioned_by: "admin",
+          actioned_at: new Date().toISOString(),
+        })
+        .eq("id", app.id);
+
+      const { error: logError } = await supabase
+        .from("applications_action_log")
+        .insert({
+          application_id: app.id,
+          action: declineRemoveDialog.action,
+          reason,
+          actioned_by: "admin",
+          actioned_at: new Date().toISOString(),
+        });
+
+      if (updateError || logError) {
+        throw new Error(updateError?.message || logError?.message || "Failed to process request.");
+      }
+      toast.success(
+        declineRemoveDialog.action === "declined"
+          ? "Application declined and logged"
+          : "Application removed and logged"
+      );
+      setDeclineRemoveDialog({ open: false, action: null });
+    } catch (e: any) {
+      toast.error(e.message || "Failed, please try again.");
+    }
+  };
+
   const getAllFormData = () => {
     return {
       ...initialData,
@@ -136,6 +184,45 @@ export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({
               <span>{Math.round(applicationProgress)}%</span>
             </div>
           </div>
+
+          {merchantApplication && (
+            <div className="flex justify-end mb-2">
+              <div className="relative">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="More actions"
+                  className="rounded-full"
+                  onClick={() => setDeclineRemoveDialog({open: true, action: null})}
+                >
+                  <MoreHorizontal />
+                </Button>
+                {declineRemoveDialog.open && !declineRemoveDialog.action && (
+                  <div className="absolute right-0 mt-2 w-40 z-10 bg-white shadow-lg rounded border">
+                    <button
+                      className="block w-full px-4 py-2 text-left hover:bg-amber-50 text-amber-800"
+                      onClick={() => handleDeclineRemove("declined", merchantApplication)}
+                    >
+                      Decline Application
+                    </button>
+                    <button
+                      className="block w-full px-4 py-2 text-left hover:bg-red-50 text-red-700"
+                      onClick={() => handleDeclineRemove("removed", merchantApplication)}
+                    >
+                      Remove Application
+                    </button>
+                    <button
+                      className="block w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-500"
+                      onClick={() => setDeclineRemoveDialog({ open: false, action: null })}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {!merchantApplication && step === "init" ? (
             <MerchantInitialForm onNext={handleInitialNext} />
           ) : (
@@ -243,6 +330,15 @@ export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({
         open={showSendDialog}
         onOpenChange={setShowSendDialog}
         applicationData={getAllFormData()}
+      />
+
+      <DeclineRemoveDialog
+        open={!!declineRemoveDialog.action}
+        onOpenChange={open =>
+          setDeclineRemoveDialog({ open, action: open ? declineRemoveDialog.action : null })
+        }
+        action={declineRemoveDialog.action || "declined"}
+        onSubmit={processDeclineRemove}
       />
     </div>
   );

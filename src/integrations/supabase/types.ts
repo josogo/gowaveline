@@ -48,6 +48,33 @@ export type Database = {
         }
         Relationships: []
       }
+      applications_action_log: {
+        Row: {
+          action: string
+          actioned_at: string
+          actioned_by: string
+          application_id: string
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          action: string
+          actioned_at?: string
+          actioned_by: string
+          application_id: string
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          action?: string
+          actioned_at?: string
+          actioned_by?: string
+          application_id?: string
+          id?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
       calendar_events: {
         Row: {
           attendees: Json | null
@@ -349,6 +376,9 @@ export type Database = {
       }
       merchant_applications: {
         Row: {
+          action_reason: string | null
+          actioned_at: string | null
+          actioned_by: string | null
           application_data: Json
           completed: boolean
           created_at: string
@@ -357,9 +387,13 @@ export type Database = {
           merchant_email: string
           merchant_name: string
           otp: string
+          status: string | null
           updated_at: string
         }
         Insert: {
+          action_reason?: string | null
+          actioned_at?: string | null
+          actioned_by?: string | null
           application_data: Json
           completed?: boolean
           created_at?: string
@@ -368,9 +402,13 @@ export type Database = {
           merchant_email: string
           merchant_name: string
           otp: string
+          status?: string | null
           updated_at?: string
         }
         Update: {
+          action_reason?: string | null
+          actioned_at?: string | null
+          actioned_by?: string | null
           application_data?: Json
           completed?: boolean
           created_at?: string
@@ -379,6 +417,7 @@ export type Database = {
           merchant_email?: string
           merchant_name?: string
           otp?: string
+          status?: string | null
           updated_at?: string
         }
         Relationships: []
