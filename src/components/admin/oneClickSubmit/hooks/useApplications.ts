@@ -51,10 +51,17 @@ export function useApplications() {
         } else if (app.merchant_name) {
           businessName = app.merchant_name;
         }
+        
+        // Map the status to one of the allowed values
+        let status: "complete" | "incomplete" | "submitted" = "incomplete";
+        if (app.completed) {
+          status = "complete";
+        }
+        
         return {
           id: app.id,
           businessName,
-          status: app.completed ? "complete" : "incomplete",
+          status,
           lastEdited: app.updated_at,
           progress: calculateProgress(app.application_data),
           rawData: app,

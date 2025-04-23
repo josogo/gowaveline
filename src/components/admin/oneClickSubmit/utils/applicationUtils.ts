@@ -24,21 +24,21 @@ export function generateMockApplications() {
     {
       id: "1",
       businessName: "Acme CBD Wellness",
-      status: "complete",
+      status: "complete" as const,
       lastEdited: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
       progress: 100,
     },
     {
       id: "2",
       businessName: "Natural Supplements Co.",
-      status: "incomplete",
+      status: "incomplete" as const,
       lastEdited: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
       progress: 65,
     },
     {
       id: "3",
       businessName: "FitLife Subscription",
-      status: "incomplete",
+      status: "incomplete" as const,
       lastEdited: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
       progress: 30,
     },
