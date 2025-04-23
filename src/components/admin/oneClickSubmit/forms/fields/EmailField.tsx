@@ -11,11 +11,17 @@ interface EmailFieldProps {
 export const EmailField = ({ defaultValue }: EmailFieldProps) => {
   const form = useFormContext();
 
+  React.useEffect(() => {
+    if (defaultValue && defaultValue !== form.getValues('businessEmail')) {
+      form.setValue('businessEmail', defaultValue);
+    }
+  }, [form, defaultValue]);
+
   return (
     <FormField
       control={form.control}
       name="businessEmail"
-      defaultValue={defaultValue}
+      defaultValue={defaultValue || ''}
       render={({ field }) => (
         <FormItem>
           <FormLabel>Business Email</FormLabel>

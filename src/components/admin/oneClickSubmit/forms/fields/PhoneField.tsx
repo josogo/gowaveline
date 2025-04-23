@@ -11,11 +11,17 @@ interface PhoneFieldProps {
 export const PhoneField = ({ defaultValue }: PhoneFieldProps) => {
   const form = useFormContext();
 
+  React.useEffect(() => {
+    if (defaultValue && defaultValue !== form.getValues('businessPhone')) {
+      form.setValue('businessPhone', defaultValue);
+    }
+  }, [form, defaultValue]);
+
   return (
     <FormField
       control={form.control}
       name="businessPhone"
-      defaultValue={defaultValue}
+      defaultValue={defaultValue || ''}
       render={({ field }) => (
         <FormItem>
           <FormLabel>Business Phone</FormLabel>

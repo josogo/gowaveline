@@ -1,8 +1,19 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
-export function useFormData() {
-  const [formData, setFormData] = useState<any>({});
+export function useFormData(initialData: any = {}) {
+  const [formData, setFormData] = useState<any>(initialData);
+  const [isDirty, setIsDirty] = useState(false);
+
+  // Update formData when initialData changes (e.g., when loading from API)
+  useEffect(() => {
+    if (Object.keys(initialData).length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        ...initialData
+      }));
+    }
+  }, [initialData]);
 
   const updateFormData = useCallback((newData: any) => {
     console.log("Updating form data with:", newData);
@@ -12,9 +23,14 @@ export function useFormData() {
         ...newData
       };
       console.log("Updated form data:", updatedData);
+      setIsDirty(true);
       return updatedData;
     });
   }, []);
 
-  return { formData, updateFormData };
+  const resetDirtyState = useCallback(() => {
+    setIsDirty(false);
+  }, []);
+
+  return { formData, updateFormData, isDirty, resetDirtyState };
 }
