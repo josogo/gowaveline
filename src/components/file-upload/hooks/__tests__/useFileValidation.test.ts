@@ -95,4 +95,3 @@ describe('useFileValidation', () => {
     expect(txtResult.isValid).toBe(false);
   });
 });
-
