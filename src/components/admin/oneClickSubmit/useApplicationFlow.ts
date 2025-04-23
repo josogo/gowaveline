@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -35,7 +35,7 @@ export function useApplicationFlow(merchantApplication: any) {
     { id: 'documents', label: 'Documents' },
   ];
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
     if (currentIndex < tabs.length - 1) {
       setActiveTab(tabs[currentIndex + 1].id);
@@ -43,65 +43,80 @@ export function useApplicationFlow(merchantApplication: any) {
     } else {
       setShowBankRouting(true);
     }
-  };
+  }, [activeTab, tabs, setActiveTab, setApplicationProgress, setShowBankRouting]);
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
     if (currentIndex > 0) {
       setActiveTab(tabs[currentIndex - 1].id);
       setApplicationProgress(Math.max(0, ((currentIndex) / tabs.length) * 100));
     }
-  };
+  }, [activeTab, tabs, setActiveTab, setApplicationProgress]);
 
-  const handleSaveDraft = () => {
+  const handleSaveDraft = useCallback(() => {
     toast.success("Application draft saved successfully");
-  };
+  }, []);
 
-  const handleInitialNext = async (values: any) => {
-    setInitialData(values);
-    setFormData({ ...formData, ...values });
-    const { data, error } = await supabase
-      .from('merchant_applications')
-      .insert([
-        {
-          merchant_name: values.businessName,
-          merchant_email: values.email,
-          application_data: values,
-          completed: false,
-          otp: (Math.floor(100000 + Math.random() * 900000)).toString(),
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-        }
-      ])
-      .select()
-      .single();
+  const handleInitialNext = useCallback(async (values: any) => {
+    try {
+      setInitialData(values);
+      setFormData({ ...formData, ...values });
+      const { data, error } = await supabase
+        .from('merchant_applications')
+        .insert([
+          {
+            merchant_name: values.businessName,
+            merchant_email: values.email,
+            application_data: values,
+            completed: false,
+            otp: (Math.floor(100000 + Math.random() * 900000)).toString(),
+            expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+          }
+        ])
+        .select()
+        .single();
 
-    if (error) {
-      toast.error("Failed to create application. Please try again.");
-      return;
+      if (error) {
+        toast.error("Failed to create application. Please try again.");
+        return;
+      }
+      
+      setMerchantAppId(data.id);
+      toast.success("New application created!");
+      setStep("main");
+    } catch (error) {
+      console.error("Error in handleInitialNext:", error);
+      toast.error("An unexpected error occurred. Please try again.");
     }
-    setMerchantAppId(data.id);
-    toast.success("New application created!");
-    setStep("main");
-  };
+  }, [formData, setInitialData, setFormData, setMerchantAppId, setStep]);
 
-  const handleSendToMerchant = () => {
+  const handleSendToMerchant = useCallback(() => {
     setShowSendDialog(true);
-  };
+  }, [setShowSendDialog]);
 
-  const handleMerchantSubmit = async () => {
+  const handleMerchantSubmit = useCallback(async () => {
     if (!merchantAppId) return;
-    const { error } = await import('@/services/merchantApplicationService')
-      .then(service => service.completeMerchantApplication(merchantAppId));
-    if (!error) toast.success("Application submitted, thank you!");
-  };
+    try {
+      const { error } = await import('@/services/merchantApplicationService')
+        .then(service => service.completeMerchantApplication(merchantAppId));
+      if (!error) {
+        toast.success("Application submitted, thank you!");
+      } else {
+        toast.error("Failed to submit application. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error in handleMerchantSubmit:", error);
+      toast.error("An unexpected error occurred. Please try again.");
+    }
+  }, [merchantAppId]);
 
-  const handleDeclineRemove = (action: "declined" | "removed", appData?: any) => {
+  const handleDeclineRemove = useCallback((action: "declined" | "removed", appData?: any) => {
     setCardActionApp(appData || merchantApplication);
     setDeclineRemoveDialog({ open: true, action });
     setShowActionMenu(false);
-  };
+  }, [merchantApplication, setCardActionApp, setDeclineRemoveDialog, setShowActionMenu]);
 
-  const processDeclineRemove = async (reason: string) => {
+  const processDeclineRemove = useCallback(async (reason: string) => {
     const app = cardActionApp || merchantApplication;
     try {
       const { error: updateError } = await supabase
@@ -127,25 +142,27 @@ export function useApplicationFlow(merchantApplication: any) {
       if (updateError || logError) {
         throw new Error(updateError?.message || logError?.message || "Failed to process request.");
       }
+      
       toast.success(
         declineRemoveDialog.action === "declined"
           ? "Application declined and logged"
           : "Application removed and logged"
       );
+      
       setDeclineRemoveDialog({ open: false, action: null });
     } catch (e: any) {
       toast.error(e.message || "Failed, please try again.");
     }
-  };
+  }, [cardActionApp, merchantApplication, declineRemoveDialog, setDeclineRemoveDialog]);
 
-  const getAllFormData = () => {
+  const getAllFormData = useCallback(() => {
     return {
       ...initialData,
       ...formData,
       progress: applicationProgress,
       currentTab: activeTab,
     };
-  };
+  }, [initialData, formData, applicationProgress, activeTab]);
 
   return {
     step,
