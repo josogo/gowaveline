@@ -82,8 +82,12 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
     }
   };
 
+  // Adds responsive scroll area and better padding/styling
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-3xl mx-auto bg-white rounded-lg shadow-lg border animate-fade-in transition-all
+        max-h-[85vh] overflow-y-auto p-4 md:p-8"
+        style={{ minHeight: 400 }}
+    >
       {onClose && (
         <div className="flex justify-end">
           <Button variant="ghost" size="icon" onClick={onClose}>
@@ -95,7 +99,7 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
       <ApplicationProgressBar progress={applicationProgress} />
       
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="w-full flex overflow-x-auto mb-8">
+        <TabsList className="w-full flex overflow-x-auto mb-8 sticky top-0 bg-white z-20">
           {tabs.map((tab) => (
             <TabsTrigger 
               key={tab.id} 
@@ -173,5 +177,4 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
   );
 };
 
-// Make sure to add the default export as well
 export default ApplicationFlow;
