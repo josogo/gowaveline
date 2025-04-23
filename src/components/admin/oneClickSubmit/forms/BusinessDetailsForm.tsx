@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form } from "@/components/ui/form";
-import { useApplicationFlow } from '../useApplicationFlow';
+import { useFormData } from '../hooks/useFormData';
 
 import BusinessNameField from './fields/BusinessNameField';
 import BusinessTypeField from './fields/BusinessTypeField';
@@ -34,7 +34,7 @@ const schema = z.object({
 type BusinessFormValues = z.infer<typeof schema>;
 
 export const BusinessDetailsForm: React.FC = () => {
-  const { formData, updateFormData } = useApplicationFlow();
+  const { formData, updateFormData } = useFormData();
 
   // Initialize form with existing data or defaults
   const form = useForm<BusinessFormValues>({

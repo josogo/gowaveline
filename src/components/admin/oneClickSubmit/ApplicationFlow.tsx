@@ -1,7 +1,10 @@
 
-import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight, Send } from 'lucide-react';
+
+// Import forms
 import { BusinessDetailsForm } from './forms/BusinessDetailsForm';
 import { OwnershipForm } from './forms/OwnershipForm';
 import { OperationalDetailsForm } from './forms/OperationalDetailsForm';
@@ -9,186 +12,149 @@ import { MarketingForm } from './forms/MarketingForm';
 import { FinancialInfoForm } from './forms/FinancialInfoForm';
 import { ProcessingInfoForm } from './forms/ProcessingInfoForm';
 import { DocumentsForm } from './forms/DocumentsForm';
-import { MerchantInitialForm } from './forms/MerchantInitialForm';
-import { SendToMerchantDialog } from './SendToMerchantDialog';
-import DeclineRemoveDialog from "./DeclineRemoveDialog";
-import { BankRoutingSystem } from './BankRoutingSystem';
-import { ArrowRight, ArrowLeft, CheckCircle, Save, SendHorizontal, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
-import { useApplicationFlow } from './useApplicationFlow';
-import { ApplicationActionMenu } from './ApplicationActionMenu';
+// Import hooks
+import { useApplicationTabs } from './hooks/useApplicationTabs';
+import { useApplicationProgress } from './hooks/useApplicationProgress';
+import { useApplicationActions } from './hooks/useApplicationActions';
+import { useFormData } from './hooks/useFormData';
+
+// Import components
+import { SendToMerchantDialog } from './SendToMerchantDialog';
 import { ApplicationProgressBar } from './ApplicationProgressBar';
 
-interface ApplicationFlowProps {
+type ApplicationFlowProps = {
   merchantApplication?: any;
-  onClose?: () => void;
-}
+  readOnly?: boolean;
+};
 
-export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
-  merchantApplication,
-  onClose
+const ApplicationFlow: React.FC<ApplicationFlowProps> = ({ 
+  merchantApplication, 
+  readOnly = false 
 }) => {
-  const flow = useApplicationFlow(merchantApplication);
+  const tabs = useApplicationTabs();
+  const { formData, updateFormData } = useFormData();
+  const { applicationProgress, setApplicationProgress, activeTab, setActiveTab } = 
+    useApplicationProgress(merchantApplication);
+  
+  const [showSendDialog, setShowSendDialog] = useState(false);
+  const { saveApplicationData, handleSendToMerchant } = 
+    useApplicationActions(
+      merchantApplication?.id,
+      formData,
+      applicationProgress,
+      activeTab,
+      setShowSendDialog
+    );
 
-  if (flow.showBankRouting) {
-    return <BankRoutingSystem onBack={() => flow.setShowBankRouting(false)} />;
-  }
+  // Initialize form data from merchant application if available
+  useEffect(() => {
+    if (merchantApplication?.application_data) {
+      updateFormData(merchantApplication.application_data);
+    }
+  }, [merchantApplication, updateFormData]);
+
+  // Find current tab index
+  const currentTabIndex = tabs.findIndex(tab => tab.id === activeTab);
+  
+  // Handle tab change
+  const handleTabChange = (tabId: string) => {
+    saveApplicationData();
+    setActiveTab(tabId);
+    
+    // Update progress when changing tabs
+    const newTabIndex = tabs.findIndex(tab => tab.id === tabId);
+    const progressPerStep = 100 / tabs.length;
+    const newProgress = Math.ceil((newTabIndex + 1) * progressPerStep);
+    setApplicationProgress(newProgress);
+  };
+
+  // Navigate to next or previous tab
+  const navigateTab = (direction: 'next' | 'prev') => {
+    if (direction === 'next' && currentTabIndex < tabs.length - 1) {
+      handleTabChange(tabs[currentTabIndex + 1].id);
+    } else if (direction === 'prev' && currentTabIndex > 0) {
+      handleTabChange(tabs[currentTabIndex - 1].id);
+    }
+  };
 
   return (
     <div className="space-y-6">
-      {onClose && (
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Edit Application</h1>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={onClose}
-            className="hover:bg-gray-100"
-          >
-            <X className="h-4 w-4 mr-1" /> Close
-          </Button>
-        </div>
-      )}
+      <ApplicationProgressBar progress={applicationProgress} />
       
-      <Card>
-        <CardContent className="pt-6">
-          <div className="mb-6">
-            <ApplicationProgressBar progress={flow.applicationProgress} />
-          </div>
-
-          {merchantApplication && (
-            <div className="flex justify-end mb-2">
-              <ApplicationActionMenu
-                merchantApplication={merchantApplication}
-                showActionMenu={flow.showActionMenu}
-                setShowActionMenu={flow.setShowActionMenu}
-                handleDeclineRemove={flow.handleDeclineRemove}
-              />
-            </div>
-          )}
-
-          {!merchantApplication && flow.step === "init" ? (
-            <MerchantInitialForm onNext={flow.handleInitialNext} />
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
+        <TabsList className="w-full flex overflow-x-auto mb-8">
+          {tabs.map((tab) => (
+            <TabsTrigger 
+              key={tab.id} 
+              value={tab.id}
+              className="flex-1 min-w-max"
+            >
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        
+        <TabsContent value="business">
+          <BusinessDetailsForm />
+        </TabsContent>
+        
+        <TabsContent value="ownership">
+          <OwnershipForm />
+        </TabsContent>
+        
+        <TabsContent value="operations">
+          <OperationalDetailsForm />
+        </TabsContent>
+        
+        <TabsContent value="marketing">
+          <MarketingForm />
+        </TabsContent>
+        
+        <TabsContent value="financial">
+          <FinancialInfoForm />
+        </TabsContent>
+        
+        <TabsContent value="processing">
+          <ProcessingInfoForm />
+        </TabsContent>
+        
+        <TabsContent value="documents">
+          <DocumentsForm />
+        </TabsContent>
+      </Tabs>
+      
+      <div className="flex justify-between mt-8">
+        <Button
+          variant="outline"
+          onClick={() => navigateTab('prev')}
+          disabled={currentTabIndex === 0}
+        >
+          <ChevronLeft className="mr-2 h-4 w-4" />
+          Previous
+        </Button>
+        
+        <div className="flex gap-2">
+          {currentTabIndex === tabs.length - 1 ? (
+            <Button onClick={handleSendToMerchant} disabled={readOnly}>
+              <Send className="mr-2 h-4 w-4" />
+              Send to Merchant
+            </Button>
           ) : (
-            <>
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold mb-2">
-                  Complete Your Application
-                </h2>
-                <p className="text-gray-600">
-                  Please review and complete all remaining fields below. When
-                  finished, click submit.
-                </p>
-              </div>
-              <Tabs
-                value={flow.activeTab}
-                onValueChange={(value) => {
-                  // Save data before changing tabs
-                  flow.saveApplicationData().then(() => {
-                    flow.setActiveTab(value);
-                  });
-                }}
-                className="w-full"
-              >
-                <TabsList className="grid grid-cols-7 w-full mb-6">
-                  {flow.tabs.map(tab => (
-                    <TabsTrigger 
-                      key={tab.id} 
-                      value={tab.id}
-                      className="text-xs sm:text-sm"
-                    >
-                      {tab.label}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-                
-                <TabsContent value="business">
-                  <BusinessDetailsForm />
-                </TabsContent>
-                
-                <TabsContent value="ownership">
-                  <OwnershipForm />
-                </TabsContent>
-                
-                <TabsContent value="operations">
-                  <OperationalDetailsForm />
-                </TabsContent>
-                
-                <TabsContent value="marketing">
-                  <MarketingForm />
-                </TabsContent>
-                
-                <TabsContent value="financial">
-                  <FinancialInfoForm />
-                </TabsContent>
-                
-                <TabsContent value="processing">
-                  <ProcessingInfoForm />
-                </TabsContent>
-                
-                <TabsContent value="documents">
-                  <DocumentsForm />
-                </TabsContent>
-              </Tabs>
-              
-              <div className="flex justify-between mt-6 pt-6 border-t">
-                <Button 
-                  variant="outline" 
-                  onClick={flow.handlePrevious}
-                  disabled={flow.activeTab === 'business'}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Previous
-                </Button>
-                
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={flow.handleSendToMerchant}
-                    className="bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200"
-                  >
-                    <SendHorizontal className="mr-2 h-4 w-4" />
-                    Send to Merchant
-                  </Button>
-                
-                  <Button variant="outline" onClick={flow.handleSaveDraft}>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Draft
-                  </Button>
-                  
-                  <Button onClick={flow.handleNext}>
-                    {flow.activeTab === 'documents' ? (
-                      <>
-                        <CheckCircle className="mr-2 h-4 w-4" />
-                        Complete
-                      </>
-                    ) : (
-                      <>
-                        Next
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </>
+            <Button onClick={() => navigateTab('next')}>
+              Next
+              <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+      
       <SendToMerchantDialog
-        open={flow.showSendDialog}
-        onOpenChange={flow.setShowSendDialog}
-        applicationData={flow.getAllFormData()}
-      />
-
-      <DeclineRemoveDialog
-        open={!!flow.declineRemoveDialog.action}
-        onOpenChange={open =>
-          flow.setDeclineRemoveDialog({ open, action: open ? flow.declineRemoveDialog.action : null })
-        }
-        action={flow.declineRemoveDialog.action || "declined"}
-        onSubmit={flow.processDeclineRemove}
+        open={showSendDialog}
+        onOpenChange={setShowSendDialog}
+        applicationId={merchantApplication?.id}
+        merchantEmail={merchantApplication?.merchant_email}
+        merchantName={merchantApplication?.merchant_name}
       />
     </div>
   );
