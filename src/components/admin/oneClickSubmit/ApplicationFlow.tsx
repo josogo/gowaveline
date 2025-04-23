@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 
@@ -21,7 +22,7 @@ import { SendToMerchantDialog } from './SendToMerchantDialog';
 import { ApplicationHeader } from './components/ApplicationHeader';
 import { ApplicationTabs } from './components/ApplicationTabs';
 import { NavigationControls } from './components/NavigationControls';
-import BankRoutingSystem from './BankRoutingSystem';
+import BankRoutingSystem from './bankRouting/BankRoutingSystem';
 
 export type ApplicationFlowProps = {
   merchantApplication?: any;

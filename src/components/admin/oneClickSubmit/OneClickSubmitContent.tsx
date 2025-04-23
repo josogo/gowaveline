@@ -13,7 +13,7 @@ const ApplicationsList = lazy(() => import('./ApplicationsList'));
 const ApplicationFlow = lazy(() => import('./ApplicationFlow'));
 const BankManagement = lazy(() => 
   Promise.all([
-    import('./BankRoutingSystem'),
+    import('./bankRouting/BankRoutingSystem'),
     new Promise(resolve => setTimeout(resolve, 100))
   ])
   .then(([moduleExports]) => moduleExports)
