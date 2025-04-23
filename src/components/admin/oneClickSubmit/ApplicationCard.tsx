@@ -6,16 +6,10 @@ import { Clock, CheckCircle, FileText, MoreVertical } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ApplicationListItem } from './hooks/useApplications';
 
 interface ApplicationCardProps {
-  application: {
-    id: string;
-    businessName: string;
-    status: 'incomplete' | 'complete' | 'submitted' | 'declined' | 'removed';
-    lastEdited: string;
-    progress: number;
-    rawData?: any;
-  };
+  application: ApplicationListItem;
   onClick: () => void;
   onDecline?: (app: any) => void;
   onRemove?: (app: any) => void;

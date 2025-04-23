@@ -7,7 +7,7 @@ import { calculateProgress, generateMockApplications, formatApplicationData } fr
 export type ApplicationListItem = {
   id: string;
   businessName: string;
-  status: "complete" | "incomplete" | "submitted";
+  status: "complete" | "incomplete" | "submitted" | "declined" | "removed";
   lastEdited: string;
   progress: number;
   rawData?: any;

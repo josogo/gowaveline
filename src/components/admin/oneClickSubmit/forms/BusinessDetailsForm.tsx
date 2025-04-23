@@ -75,7 +75,7 @@ export const BusinessDetailsForm: React.FC = () => {
         monthlyVolume: businessData.monthlyVolume || "",
       });
     }
-  }, [formData, form.reset]);
+  }, [formData, form]);
 
   // Save form data when values change
   const handleFormChange = (values: BusinessFormValues) => {

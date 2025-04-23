@@ -1,6 +1,8 @@
-import { formatDistanceToNow } from 'date-fns';
 
-export const formatApplicationData = (rawData: any) => {
+import { formatDistanceToNow } from 'date-fns';
+import { ApplicationListItem } from '../hooks/useApplications';
+
+export const formatApplicationData = (rawData: any): ApplicationListItem => {
   // Get business name from different possible sources
   const businessName = rawData.merchant_name || 
                         rawData.application_data?.business?.businessName || 
@@ -10,7 +12,7 @@ export const formatApplicationData = (rawData: any) => {
   const progress = rawData.application_data?.progress || 0;
 
   // Determine status based on different factors
-  let status = "incomplete";
+  let status: ApplicationListItem["status"] = "incomplete";
   if (rawData.status === "declined") {
     status = "declined";
   } else if (rawData.status === "removed") {
@@ -60,7 +62,7 @@ export const generateMockApplications = () => {
     {
       id: '1',
       businessName: 'ACME Corp',
-      status: 'incomplete',
+      status: 'incomplete' as const,
       lastEdited: new Date().toString(),
       progress: 30,
       rawData: {
@@ -76,7 +78,7 @@ export const generateMockApplications = () => {
     {
       id: '2',
       businessName: 'XYZ Industries',
-      status: 'complete',
+      status: 'complete' as const,
       lastEdited: new Date(Date.now() - 86400000).toString(), // 1 day ago
       progress: 100,
       rawData: {
