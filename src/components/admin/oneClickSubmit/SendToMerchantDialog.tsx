@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,13 +16,12 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { RefreshCcw } from 'lucide-react';
+import { createMerchantApplication } from "@/services/merchantApplicationService";
 
 const generateOTP = () => {
-  // Generate a 6-digit OTP
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Validation schema
 const formSchema = z.object({
   merchantName: z.string().min(2, "Merchant name is required"),
   merchantEmail: z.string().email("Enter a valid email address"),
@@ -59,12 +57,23 @@ export const SendToMerchantDialog: React.FC<SendToMerchantDialogProps> = ({
       // Generate OTP
       const generatedOTP = generateOTP();
       setOtp(generatedOTP);
-      
-      // Save application data with OTP
       const applicationId = crypto.randomUUID();
       const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 48); // OTP expires in 48 hours
-      
+      expiresAt.setHours(expiresAt.getHours() + 48);
+
+      // Store in DB first
+      const { error: storeError } = await createMerchantApplication({
+        applicationData: applicationData,
+        merchantName: values.merchantName,
+        merchantEmail: values.merchantEmail,
+        otp: generatedOTP,
+        expiresAt: expiresAt.toISOString(),
+        applicationId,
+      });
+      if (storeError) {
+        throw new Error(`Could not save application: ${storeError.message}`);
+      }
+
       // Send email with link and OTP
       const { error } = await supabase.functions.invoke('send-merchant-email', {
         body: {

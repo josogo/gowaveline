@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,21 +8,21 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { RefreshCcw } from 'lucide-react';
 import { toast } from 'sonner';
+import { validateMerchantLogin } from '@/services/merchantApplicationService';
 
-// Validation schema
 const formSchema = z.object({
   email: z.string().email("Enter a valid email address"),
   otp: z.string().min(6, "Enter the 6-digit code").max(6, "Enter the 6-digit code"),
 });
 
 type MerchantLoginFormProps = {
-  onSuccessfulLogin: () => void;
+  onSuccessfulLogin: (applicationData?: any) => void;
   applicationId?: string;
 };
 
-export const MerchantLoginForm: React.FC<MerchantLoginFormProps> = ({ 
+export const MerchantLoginForm: React.FC<MerchantLoginFormProps> = ({
   onSuccessfulLogin,
-  applicationId 
+  applicationId
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
@@ -39,18 +38,21 @@ export const MerchantLoginForm: React.FC<MerchantLoginFormProps> = ({
   const handleSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsSubmitting(true);
-      
-      // For this demo, we'll just simulate OTP validation
-      // In a real implementation, you'd validate against stored OTP
-      setTimeout(() => {
-        // Successful login
-        toast.success("Login successful");
-        onSuccessfulLogin();
-      }, 1500);
-      
+      const { valid, application, error } = await validateMerchantLogin({
+        email: values.email,
+        otp: values.otp,
+        applicationId,
+      });
+      if (!valid) {
+        toast.error(error || "Invalid email or OTP. Please try again.");
+        setIsSubmitting(false);
+        return;
+      }
+      toast.success("Login successful");
+      onSuccessfulLogin(application);
     } catch (error) {
       console.error("Login error:", error);
-      toast.error("Invalid email or OTP. Please try again.");
+      toast.error("Login failed. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -66,7 +68,6 @@ export const MerchantLoginForm: React.FC<MerchantLoginFormProps> = ({
     try {
       setIsResending(true);
       
-      // Simulate resending OTP
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       toast.success("If your email is in our system, a new OTP has been sent");

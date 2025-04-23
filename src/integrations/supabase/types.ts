@@ -347,6 +347,42 @@ export type Database = {
         }
         Relationships: []
       }
+      merchant_applications: {
+        Row: {
+          application_data: Json
+          completed: boolean
+          created_at: string
+          expires_at: string
+          id: string
+          merchant_email: string
+          merchant_name: string
+          otp: string
+          updated_at: string
+        }
+        Insert: {
+          application_data: Json
+          completed?: boolean
+          created_at?: string
+          expires_at: string
+          id?: string
+          merchant_email: string
+          merchant_name: string
+          otp: string
+          updated_at?: string
+        }
+        Update: {
+          application_data?: Json
+          completed?: boolean
+          created_at?: string
+          expires_at?: string
+          id?: string
+          merchant_email?: string
+          merchant_name?: string
+          otp?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       merchant_documents: {
         Row: {
           created_at: string

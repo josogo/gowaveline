@@ -6,9 +6,15 @@ import { ApplicationFlow } from '@/components/admin/oneClickSubmit/ApplicationFl
 
 const MerchantApplication = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [merchantApp, setMerchantApp] = useState<any>(null);
   const { applicationId } = useParams();
   const [searchParams] = useSearchParams();
   const email = searchParams.get('email');
+
+  const handleSuccessfulLogin = (appData: any) => {
+    setIsAuthenticated(true);
+    setMerchantApp(appData || null);
+  };
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -20,13 +26,14 @@ const MerchantApplication = () => {
               Complete your payment processing application
             </p>
           </div>
-          <MerchantLoginForm 
-            onSuccessfulLogin={() => setIsAuthenticated(true)} 
+          <MerchantLoginForm
+            onSuccessfulLogin={handleSuccessfulLogin}
             applicationId={applicationId}
           />
         </div>
       ) : (
-        <ApplicationFlow />
+        // Pass application data if authenticated
+        <ApplicationFlow merchantApplication={merchantApp} />
       )}
     </div>
   );

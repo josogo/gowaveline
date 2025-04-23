@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,14 +15,21 @@ import { toast } from 'sonner';
 import { MerchantInitialForm } from './forms/MerchantInitialForm';
 import { SendToMerchantDialog } from './SendToMerchantDialog';
 
-export const ApplicationFlow: React.FC = () => {
-  const [step, setStep] = useState<"init" | "main">("init");
-  const [initialData, setInitialData] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState('business');
-  const [applicationProgress, setApplicationProgress] = useState(0);
+export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({ merchantApplication }) => {
+  const [step, setStep] = useState<"init" | "main">(
+    merchantApplication ? "main" : "init"
+  );
+  const [initialData, setInitialData] = useState<any>(
+    merchantApplication ? merchantApplication.application_data : null
+  );
+  const [activeTab, setActiveTab] = useState(merchantApplication?.currentTab || 'business');
+  const [applicationProgress, setApplicationProgress] = useState(
+    merchantApplication?.progress || 0
+  );
   const [showBankRouting, setShowBankRouting] = useState(false);
   const [formData, setFormData] = useState({});
   const [showSendDialog, setShowSendDialog] = useState(false);
+  const [merchantAppId] = useState(merchantApplication?.id);
 
   const tabs = [
     { id: 'business', label: 'Business' },
@@ -34,7 +40,7 @@ export const ApplicationFlow: React.FC = () => {
     { id: 'processing', label: 'Processing' },
     { id: 'documents', label: 'Documents' },
   ];
-  
+
   const handleNext = () => {
     const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
     if (currentIndex < tabs.length - 1) {
@@ -44,7 +50,7 @@ export const ApplicationFlow: React.FC = () => {
       setShowBankRouting(true);
     }
   };
-  
+
   const handlePrevious = () => {
     const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
     if (currentIndex > 0) {
@@ -67,6 +73,13 @@ export const ApplicationFlow: React.FC = () => {
     setShowSendDialog(true);
   };
 
+  const handleMerchantSubmit = async () => {
+    if (!merchantAppId) return;
+    const { error } = await import('@/services/merchantApplicationService')
+      .then(service => service.completeMerchantApplication(merchantAppId));
+    if (!error) toast.success("Application submitted, thank you!");
+  };
+
   const getAllFormData = () => {
     return {
       ...initialData,
@@ -79,7 +92,7 @@ export const ApplicationFlow: React.FC = () => {
   if (showBankRouting) {
     return <BankRoutingSystem onBack={() => setShowBankRouting(false)} />;
   }
-  
+
   return (
     <div className="space-y-6">
       <Card>
@@ -97,11 +110,15 @@ export const ApplicationFlow: React.FC = () => {
               <span>{Math.round(applicationProgress)}%</span>
             </div>
           </div>
-          
-          {step === "init" ? (
-            <MerchantInitialForm onNext={handleInitialNext} />
-          ) : (
+
+          {merchantApplication ? (
             <>
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold mb-2">Complete Your Application</h2>
+                <p className="text-gray-600">
+                  Please review and complete all remaining fields below. When finished, click submit.
+                </p>
+              </div>
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid grid-cols-7 w-full mb-6">
                   {tabs.map(tab => (
@@ -184,6 +201,111 @@ export const ApplicationFlow: React.FC = () => {
                   </Button>
                 </div>
               </div>
+            </>
+          ) : (
+            <>
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold mb-2">Merchant Application</h2>
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div 
+                    className="bg-blue-600 h-2.5 rounded-full" 
+                    style={{ width: `${applicationProgress}%` }}
+                  />
+                </div>
+                <div className="flex justify-between mt-1 text-xs text-gray-500">
+                  <span>Application Progress</span>
+                  <span>{Math.round(applicationProgress)}%</span>
+                </div>
+              </div>
+              
+              {step === "init" ? (
+                <MerchantInitialForm onNext={handleInitialNext} />
+              ) : (
+                <>
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <TabsList className="grid grid-cols-7 w-full mb-6">
+                      {tabs.map(tab => (
+                        <TabsTrigger 
+                          key={tab.id} 
+                          value={tab.id}
+                          className="text-xs sm:text-sm"
+                        >
+                          {tab.label}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                    
+                    <TabsContent value="business">
+                      <BusinessDetailsForm />
+                    </TabsContent>
+                    
+                    <TabsContent value="ownership">
+                      <OwnershipForm />
+                    </TabsContent>
+                    
+                    <TabsContent value="operations">
+                      <OperationalDetailsForm />
+                    </TabsContent>
+                    
+                    <TabsContent value="marketing">
+                      <MarketingForm />
+                    </TabsContent>
+                    
+                    <TabsContent value="financial">
+                      <FinancialInfoForm />
+                    </TabsContent>
+                    
+                    <TabsContent value="processing">
+                      <ProcessingInfoForm />
+                    </TabsContent>
+                    
+                    <TabsContent value="documents">
+                      <DocumentsForm />
+                    </TabsContent>
+                  </Tabs>
+                  
+                  <div className="flex justify-between mt-6 pt-6 border-t">
+                    <Button 
+                      variant="outline" 
+                      onClick={handlePrevious}
+                      disabled={activeTab === 'business'}
+                    >
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Previous
+                    </Button>
+                    
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        onClick={handleSendToMerchant}
+                        className="bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200"
+                      >
+                        <SendHorizontal className="mr-2 h-4 w-4" />
+                        Send to Merchant
+                      </Button>
+                    
+                      <Button variant="outline" onClick={handleSaveDraft}>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Draft
+                      </Button>
+                      
+                      <Button onClick={handleNext}>
+                        {activeTab === 'documents' ? (
+                          <>
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Complete
+                          </>
+                        ) : (
+                          <>
+                            Next
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
             </>
           )}
         </CardContent>
