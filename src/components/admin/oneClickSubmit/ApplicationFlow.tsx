@@ -12,11 +12,13 @@ import { ProcessingInfoForm } from './forms/ProcessingInfoForm';
 import { DocumentsForm } from './forms/DocumentsForm';
 import { BankRoutingSystem } from './BankRoutingSystem';
 import { ArrowRight, ArrowLeft, CheckCircle, Save } from 'lucide-react';
+import { toast } from 'sonner';
 
 export const ApplicationFlow: React.FC = () => {
   const [activeTab, setActiveTab] = useState('business');
   const [applicationProgress, setApplicationProgress] = useState(0);
   const [showBankRouting, setShowBankRouting] = useState(false);
+  const [formData, setFormData] = useState({});
 
   const tabs = [
     { id: 'business', label: 'Business' },
@@ -45,6 +47,10 @@ export const ApplicationFlow: React.FC = () => {
       setActiveTab(tabs[currentIndex - 1].id);
       setApplicationProgress(Math.max(0, ((currentIndex) / tabs.length) * 100));
     }
+  };
+
+  const handleSaveDraft = () => {
+    toast.success("Application draft saved successfully");
   };
   
   if (showBankRouting) {
@@ -122,7 +128,7 @@ export const ApplicationFlow: React.FC = () => {
             </Button>
             
             <div className="flex gap-2">
-              <Button variant="outline">
+              <Button variant="outline" onClick={handleSaveDraft}>
                 <Save className="mr-2 h-4 w-4" />
                 Save Draft
               </Button>
