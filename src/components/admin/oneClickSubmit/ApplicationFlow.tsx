@@ -1,8 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Send, X } from 'lucide-react';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 
 // Import forms
 import { BusinessDetailsForm } from './forms/BusinessDetailsForm';
@@ -21,7 +19,9 @@ import { useFormData } from './hooks/useFormData';
 
 // Import components
 import { SendToMerchantDialog } from './SendToMerchantDialog';
-import { ApplicationProgressBar } from './ApplicationProgressBar';
+import { ApplicationHeader } from './components/ApplicationHeader';
+import { ApplicationTabs } from './components/ApplicationTabs';
+import { NavigationControls } from './components/NavigationControls';
 
 export type ApplicationFlowProps = {
   merchantApplication?: any;
@@ -82,87 +82,52 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
     }
   };
 
-  // Adds responsive scroll area and better padding/styling
   return (
-    <div className="w-full max-w-3xl mx-auto bg-white rounded-lg shadow-lg border animate-fade-in transition-all
-        max-h-[85vh] overflow-y-auto p-4 md:p-8"
-        style={{ minHeight: 400 }}
-    >
-      {onClose && (
-        <div className="flex justify-end">
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
-      )}
-      
-      <ApplicationProgressBar progress={applicationProgress} />
-      
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="w-full flex overflow-x-auto mb-8 sticky top-0 bg-white z-20">
-          {tabs.map((tab) => (
-            <TabsTrigger 
-              key={tab.id} 
-              value={tab.id}
-              className="flex-1 min-w-max"
-            >
-              {tab.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+    <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg border animate-fade-in transition-all">
+      <div className="h-[90vh] overflow-y-auto p-4 md:p-8">
+        <ApplicationHeader onClose={onClose} progress={applicationProgress} />
         
-        <TabsContent value="business">
-          <BusinessDetailsForm />
-        </TabsContent>
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="mt-4">
+          <ApplicationTabs activeTab={activeTab} />
+          
+          <div className="min-h-[60vh] pb-20">
+            <TabsContent value="business">
+              <BusinessDetailsForm />
+            </TabsContent>
+            
+            <TabsContent value="ownership">
+              <OwnershipForm />
+            </TabsContent>
+            
+            <TabsContent value="operations">
+              <OperationalDetailsForm />
+            </TabsContent>
+            
+            <TabsContent value="marketing">
+              <MarketingForm />
+            </TabsContent>
+            
+            <TabsContent value="financial">
+              <FinancialInfoForm />
+            </TabsContent>
+            
+            <TabsContent value="processing">
+              <ProcessingInfoForm />
+            </TabsContent>
+            
+            <TabsContent value="documents">
+              <DocumentsForm />
+            </TabsContent>
+          </div>
+        </Tabs>
         
-        <TabsContent value="ownership">
-          <OwnershipForm />
-        </TabsContent>
-        
-        <TabsContent value="operations">
-          <OperationalDetailsForm />
-        </TabsContent>
-        
-        <TabsContent value="marketing">
-          <MarketingForm />
-        </TabsContent>
-        
-        <TabsContent value="financial">
-          <FinancialInfoForm />
-        </TabsContent>
-        
-        <TabsContent value="processing">
-          <ProcessingInfoForm />
-        </TabsContent>
-        
-        <TabsContent value="documents">
-          <DocumentsForm />
-        </TabsContent>
-      </Tabs>
-      
-      <div className="flex justify-between mt-8">
-        <Button
-          variant="outline"
-          onClick={() => navigateTab('prev')}
-          disabled={currentTabIndex === 0}
-        >
-          <ChevronLeft className="mr-2 h-4 w-4" />
-          Previous
-        </Button>
-        
-        <div className="flex gap-2">
-          {currentTabIndex === tabs.length - 1 ? (
-            <Button onClick={handleSendToMerchant} disabled={readOnly}>
-              <Send className="mr-2 h-4 w-4" />
-              Send to Merchant
-            </Button>
-          ) : (
-            <Button onClick={() => navigateTab('next')}>
-              Next
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-          )}
-        </div>
+        <NavigationControls
+          currentTabIndex={currentTabIndex}
+          totalTabs={tabs.length}
+          onNavigate={navigateTab}
+          onSendToMerchant={handleSendToMerchant}
+          readOnly={readOnly}
+        />
       </div>
       
       <SendToMerchantDialog
