@@ -15,7 +15,7 @@ export function useApplicationFlow(merchantApplication: any) {
     merchantApplication?.progress || 0
   );
   const [showBankRouting, setShowBankRouting] = useState(false);
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState(merchantApplication?.application_data || {});
   const [showSendDialog, setShowSendDialog] = useState(false);
   const [merchantAppId, setMerchantAppId] = useState(merchantApplication?.id);
   const [declineRemoveDialog, setDeclineRemoveDialog] = useState<{
@@ -35,7 +35,53 @@ export function useApplicationFlow(merchantApplication: any) {
     { id: 'documents', label: 'Documents' },
   ];
 
-  const handleNext = useCallback(() => {
+  // Update form data with the current tab's data
+  const updateFormData = useCallback((tabData: any) => {
+    setFormData(prevData => ({
+      ...prevData,
+      [activeTab]: tabData
+    }));
+  }, [activeTab]);
+
+  // Save the current form data to the database
+  const saveApplicationData = useCallback(async () => {
+    if (!merchantAppId) return;
+    
+    try {
+      const applicationData = {
+        ...formData,
+        progress: applicationProgress,
+        currentTab: activeTab,
+      };
+      
+      const { error } = await supabase
+        .from('merchant_applications')
+        .update({
+          application_data: applicationData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', merchantAppId);
+      
+      if (error) {
+        console.error("Error saving application data:", error);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error in saveApplicationData:", error);
+      return false;
+    }
+  }, [merchantAppId, formData, applicationProgress, activeTab]);
+
+  const handleNext = useCallback(async () => {
+    // Save current tab data before moving to next tab
+    const saved = await saveApplicationData();
+    if (!saved) {
+      toast.error("Failed to save your progress. Please try again.");
+      return;
+    }
+    
     const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
     if (currentIndex < tabs.length - 1) {
       setActiveTab(tabs[currentIndex + 1].id);
@@ -43,31 +89,50 @@ export function useApplicationFlow(merchantApplication: any) {
     } else {
       setShowBankRouting(true);
     }
-  }, [activeTab, tabs, setActiveTab, setApplicationProgress, setShowBankRouting]);
+  }, [activeTab, tabs, saveApplicationData, setActiveTab, setApplicationProgress, setShowBankRouting]);
 
-  const handlePrevious = useCallback(() => {
+  const handlePrevious = useCallback(async () => {
+    // Save current tab data before moving to previous tab
+    const saved = await saveApplicationData();
+    if (!saved) {
+      toast.error("Failed to save your progress. Please try again.");
+      return;
+    }
+    
     const currentIndex = tabs.findIndex(tab => tab.id === activeTab);
     if (currentIndex > 0) {
       setActiveTab(tabs[currentIndex - 1].id);
       setApplicationProgress(Math.max(0, ((currentIndex) / tabs.length) * 100));
     }
-  }, [activeTab, tabs, setActiveTab, setApplicationProgress]);
+  }, [activeTab, tabs, saveApplicationData, setActiveTab, setApplicationProgress]);
 
-  const handleSaveDraft = useCallback(() => {
-    toast.success("Application draft saved successfully");
-  }, []);
+  const handleSaveDraft = useCallback(async () => {
+    const saved = await saveApplicationData();
+    if (saved) {
+      toast.success("Application draft saved successfully");
+    } else {
+      toast.error("Failed to save application draft. Please try again.");
+    }
+  }, [saveApplicationData]);
 
   const handleInitialNext = useCallback(async (values: any) => {
     try {
       setInitialData(values);
-      setFormData({ ...formData, ...values });
+      setFormData({ 
+        business: values,  // Store initial data in the business tab
+      });
+      
       const { data, error } = await supabase
         .from('merchant_applications')
         .insert([
           {
             merchant_name: values.businessName,
             merchant_email: values.email,
-            application_data: values,
+            application_data: {
+              business: values,
+              progress: 14, // Initial progress (1/7 tabs)
+              currentTab: 'business'
+            },
             completed: false,
             otp: (Math.floor(100000 + Math.random() * 900000)).toString(),
             expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
@@ -82,21 +147,31 @@ export function useApplicationFlow(merchantApplication: any) {
       }
       
       setMerchantAppId(data.id);
+      setApplicationProgress(14); // Set initial progress
       toast.success("New application created!");
       setStep("main");
     } catch (error) {
       console.error("Error in handleInitialNext:", error);
       toast.error("An unexpected error occurred. Please try again.");
     }
-  }, [formData, setInitialData, setFormData, setMerchantAppId, setStep]);
+  }, [setInitialData, setFormData, setMerchantAppId, setStep, setApplicationProgress]);
 
   const handleSendToMerchant = useCallback(() => {
-    setShowSendDialog(true);
-  }, [setShowSendDialog]);
+    saveApplicationData().then(saved => {
+      if (saved) {
+        setShowSendDialog(true);
+      } else {
+        toast.error("Failed to save application before sending. Please try again.");
+      }
+    });
+  }, [saveApplicationData, setShowSendDialog]);
 
   const handleMerchantSubmit = useCallback(async () => {
     if (!merchantAppId) return;
     try {
+      // First save any pending changes
+      await saveApplicationData();
+      
       const { error } = await import('@/services/merchantApplicationService')
         .then(service => service.completeMerchantApplication(merchantAppId));
       if (!error) {
@@ -108,7 +183,7 @@ export function useApplicationFlow(merchantApplication: any) {
       console.error("Error in handleMerchantSubmit:", error);
       toast.error("An unexpected error occurred. Please try again.");
     }
-  }, [merchantAppId]);
+  }, [merchantAppId, saveApplicationData]);
 
   const handleDeclineRemove = useCallback((action: "declined" | "removed", appData?: any) => {
     setCardActionApp(appData || merchantApplication);
@@ -157,12 +232,11 @@ export function useApplicationFlow(merchantApplication: any) {
 
   const getAllFormData = useCallback(() => {
     return {
-      ...initialData,
       ...formData,
       progress: applicationProgress,
       currentTab: activeTab,
     };
-  }, [initialData, formData, applicationProgress, activeTab]);
+  }, [formData, applicationProgress, activeTab]);
 
   return {
     step,
@@ -177,6 +251,7 @@ export function useApplicationFlow(merchantApplication: any) {
     setShowBankRouting,
     formData,
     setFormData,
+    updateFormData,
     showSendDialog,
     setShowSendDialog,
     merchantAppId,
@@ -197,5 +272,6 @@ export function useApplicationFlow(merchantApplication: any) {
     handleDeclineRemove,
     processDeclineRemove,
     getAllFormData,
+    saveApplicationData,
   };
 }

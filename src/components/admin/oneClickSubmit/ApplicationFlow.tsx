@@ -170,4 +170,3 @@ export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({
 };
 
 export default ApplicationFlow;
-
