@@ -81,9 +81,14 @@ export const ApplicationsList: React.FC = () => {
   const calculateProgress = (applicationData: any): number => {
     if (!applicationData) return 0;
     
+    // Parse the data if it's a string
+    const appData = typeof applicationData === 'string'
+      ? JSON.parse(applicationData)
+      : applicationData;
+    
     // Simple calculation based on fields filled
     const totalFields = 20; // Estimate of total fields across all tabs
-    const filledFields = Object.keys(applicationData).length;
+    const filledFields = appData ? Object.keys(appData).length : 0;
     
     return Math.min(100, Math.round((filledFields / totalFields) * 100));
   };
