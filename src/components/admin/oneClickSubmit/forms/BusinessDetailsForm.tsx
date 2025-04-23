@@ -3,23 +3,19 @@ import React, { useEffect } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { useApplicationFlow } from '../useApplicationFlow';
+
+import BusinessNameField from './fields/BusinessNameField';
+import BusinessTypeField from './fields/BusinessTypeField';
+import EmailField from './fields/EmailField';
+import PhoneNumberField from './fields/PhoneNumberField';
+import WebsiteField from './fields/WebsiteField';
+import MonthlyVolumeField from './fields/MonthlyVolumeField';
+import AddressField from './fields/AddressField';
+import CityField from './fields/CityField';
+import StateField from './fields/StateField';
+import ZipCodeField from './fields/ZipCodeField';
 
 // Define validation schema for business details
 const schema = z.object({
@@ -39,7 +35,7 @@ type BusinessFormValues = z.infer<typeof schema>;
 
 export const BusinessDetailsForm: React.FC = () => {
   const { formData, updateFormData } = useApplicationFlow();
-  
+
   // Initialize form with existing data or defaults
   const form = useForm<BusinessFormValues>({
     resolver: zodResolver(schema),
@@ -84,176 +80,21 @@ export const BusinessDetailsForm: React.FC = () => {
 
   return (
     <Form {...form}>
-      <form 
-        className="space-y-6" 
+      <form
+        className="space-y-6"
         onChange={form.handleSubmit(handleFormChange)}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Business Name */}
-          <FormField
-            control={form.control}
-            name="businessName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Business Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="ACME Corp" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Business Type */}
-          <FormField
-            control={form.control}
-            name="businessType"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Business Type</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="retail">Retail</SelectItem>
-                    <SelectItem value="ecommerce">E-commerce</SelectItem>
-                    <SelectItem value="restaurant">Restaurant</SelectItem>
-                    <SelectItem value="service">Service</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Email */}
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Business Email</FormLabel>
-                <FormControl>
-                  <Input placeholder="you@email.com" type="email" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Phone */}
-          <FormField
-            control={form.control}
-            name="phoneNumber"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Business Phone</FormLabel>
-                <FormControl>
-                  <Input placeholder="(123) 456-7890" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Website */}
-          <FormField
-            control={form.control}
-            name="website"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Website</FormLabel>
-                <FormControl>
-                  <Input placeholder="https://www.example.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Monthly Volume */}
-          <FormField
-            control={form.control}
-            name="monthlyVolume"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Monthly Card Volume (USD)</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="50000"
-                    type="number"
-                    inputMode="numeric"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Address */}
-          <FormField
-            control={form.control}
-            name="address"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Address</FormLabel>
-                <FormControl>
-                  <Input placeholder="123 Main St" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* City */}
-          <FormField
-            control={form.control}
-            name="city"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>City</FormLabel>
-                <FormControl>
-                  <Input placeholder="New York" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* State */}
-          <FormField
-            control={form.control}
-            name="state"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>State</FormLabel>
-                <FormControl>
-                  <Input placeholder="NY" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Zip Code */}
-          <FormField
-            control={form.control}
-            name="zipCode"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Zip Code</FormLabel>
-                <FormControl>
-                  <Input placeholder="10001" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <BusinessNameField control={form.control} />
+          <BusinessTypeField control={form.control} />
+          <EmailField control={form.control} />
+          <PhoneNumberField control={form.control} />
+          <WebsiteField control={form.control} />
+          <MonthlyVolumeField control={form.control} />
+          <AddressField control={form.control} />
+          <CityField control={form.control} />
+          <StateField control={form.control} />
+          <ZipCodeField control={form.control} />
         </div>
       </form>
     </Form>
