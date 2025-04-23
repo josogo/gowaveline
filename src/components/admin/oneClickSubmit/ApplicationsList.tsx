@@ -1,4 +1,3 @@
-
 import React, { useState, Suspense, lazy, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ApplicationFilters } from './ApplicationFilters';
@@ -36,10 +35,8 @@ export const ApplicationsList: React.FC = () => {
     fetchApplications,
   } = useApplications();
   
-  // Handle openApp query parameter to open application directly
   useEffect(() => {
     if (openAppId) {
-      // Fetch the application and open it
       const fetchAndOpenApplication = async () => {
         try {
           const { data, error } = await supabase
@@ -64,9 +61,6 @@ export const ApplicationsList: React.FC = () => {
       
       fetchAndOpenApplication();
       
-      // Clear the URL parameter after handling it
-      // This is done by getting the current URL, removing the query parameter,
-      // and replacing the current history entry with the new URL
       const url = new URL(window.location.href);
       url.searchParams.delete('openApp');
       window.history.replaceState({}, '', url);
@@ -75,7 +69,6 @@ export const ApplicationsList: React.FC = () => {
 
   const handleOpenApplication = async (app: any) => {
     try {
-      // Fetch the latest application data from the database
       if (app.id) {
         const { data, error } = await supabase
           .from('merchant_applications')
@@ -94,14 +87,12 @@ export const ApplicationsList: React.FC = () => {
         }
       }
       
-      // If we're here, either there was no ID or we didn't find data
       setSelectedApplication(app.rawData || app);
       setDialogOpen(true);
     } catch (error) {
       console.error("Error fetching application details:", error);
       toast.error("Failed to load application details");
       
-      // Fall back to the passed app data
       setSelectedApplication(app.rawData || app);
       setDialogOpen(true);
     }
@@ -159,7 +150,6 @@ export const ApplicationsList: React.FC = () => {
       );
       
       setDeclineRemoveDialog({ open: false, action: null });
-      // Refresh the applications list
       fetchApplications();
       
     } catch (e: any) {
@@ -170,7 +160,7 @@ export const ApplicationsList: React.FC = () => {
 
   const handleCloseApplicationFlow = () => {
     setAppFlowOpen(false);
-    fetchApplications(); // Refresh applications list when closing
+    fetchApplications();
   };
 
   return (

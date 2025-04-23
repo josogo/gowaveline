@@ -29,7 +29,7 @@ export type ApplicationFlowProps = {
   onClose?: () => void;
 };
 
-const ApplicationFlow: React.FC<ApplicationFlowProps> = ({ 
+export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({ 
   merchantApplication, 
   readOnly = false,
   onClose
@@ -170,4 +170,5 @@ const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
   );
 };
 
+// Make sure to add the default export as well
 export default ApplicationFlow;

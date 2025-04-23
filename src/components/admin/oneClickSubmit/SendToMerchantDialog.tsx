@@ -51,7 +51,7 @@ export const SendToMerchantDialog: React.FC<SendToMerchantDialogProps> = ({
             email_sent_at: new Date().toISOString(),
             status: 'sent',
           })
-          .eq('id', applicationId);
+          .eq('id', applicationId.toString()); // Convert applicationId to string
 
         if (error) throw error;
       }
@@ -59,7 +59,7 @@ export const SendToMerchantDialog: React.FC<SendToMerchantDialogProps> = ({
       // Trigger email sending via Supabase Edge Function
       const { error: sendError } = await supabase.functions.invoke('send-merchant-email', {
         body: {
-          applicationId,
+          applicationId: applicationId ? applicationId.toString() : '', // Convert to string
           merchantEmail: email,
           merchantName: name,
           applicationData,
@@ -120,3 +120,5 @@ export const SendToMerchantDialog: React.FC<SendToMerchantDialogProps> = ({
     </Dialog>
   );
 };
+
+export default SendToMerchantDialog;
