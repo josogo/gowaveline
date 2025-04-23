@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,9 +14,11 @@ import { ArrowRight, ArrowLeft, CheckCircle, Save, SendHorizontal } from 'lucide
 import { toast } from 'sonner';
 import { MerchantInitialForm } from './forms/MerchantInitialForm';
 import { SendToMerchantDialog } from './SendToMerchantDialog';
-import { supabase } from "@/integrations/supabase/client"; // Add this import
+import { supabase } from "@/integrations/supabase/client";
 
-export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({ merchantApplication }) => {
+export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({
+  merchantApplication,
+}) => {
   const [step, setStep] = useState<"init" | "main">(
     merchantApplication ? "main" : "init"
   );
@@ -65,13 +66,9 @@ export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({ merch
     toast.success("Application draft saved successfully");
   };
 
-  // (1) Remove EIN from initial flow, already handled in MerchantInitialForm
-
-  // (2) On initial step, immediately create the app after Next.
   const handleInitialNext = async (values: any) => {
     setInitialData(values);
     setFormData({ ...formData, ...values });
-    // Immediately create a new application card in Supabase
     const { data, error } = await supabase
       .from('merchant_applications')
       .insert([
@@ -80,8 +77,8 @@ export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({ merch
           merchant_email: values.email,
           application_data: values,
           completed: false,
-          otp: (Math.floor(100000 + Math.random() * 900000)).toString(), // dummy OTP for now
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 1 week from now
+          otp: (Math.floor(100000 + Math.random() * 900000)).toString(),
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
         }
       ])
       .select()
@@ -91,8 +88,7 @@ export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({ merch
       toast.error("Failed to create application. Please try again.");
       return;
     }
-    setMerchantAppId(data.id); // set the application ID 
-    // Optionally, broadcast event to update application list if your app has global state/hooks
+    setMerchantAppId(data.id);
     toast.success("New application created!");
     setStep("main");
   };
@@ -125,12 +121,13 @@ export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({ merch
     <div className="space-y-6">
       <Card>
         <CardContent className="pt-6">
-          {/* Only ONE progress bar shown */}
           <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-2">Merchant Application</h2>
+            <h2 className="text-xl font-semibold mb-2">
+              Merchant Application
+            </h2>
             <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div 
-                className="bg-blue-600 h-2.5 rounded-full" 
+              <div
+                className="bg-blue-600 h-2.5 rounded-full"
                 style={{ width: `${applicationProgress}%` }}
               />
             </div>
@@ -139,16 +136,24 @@ export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({ merch
               <span>{Math.round(applicationProgress)}%</span>
             </div>
           </div>
-
-          {merchantApplication ? (
+          {!merchantApplication && step === "init" ? (
+            <MerchantInitialForm onNext={handleInitialNext} />
+          ) : (
             <>
               <div className="mb-6">
-                <h2 className="text-xl font-semibold mb-2">Complete Your Application</h2>
+                <h2 className="text-xl font-semibold mb-2">
+                  Complete Your Application
+                </h2>
                 <p className="text-gray-600">
-                  Please review and complete all remaining fields below. When finished, click submit.
+                  Please review and complete all remaining fields below. When
+                  finished, click submit.
                 </p>
               </div>
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="w-full"
+              >
                 <TabsList className="grid grid-cols-7 w-full mb-6">
                   {tabs.map(tab => (
                     <TabsTrigger 
@@ -231,105 +236,12 @@ export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({ merch
                 </div>
               </div>
             </>
-          ) : (
-            <>
-              {/* Only ONE progress bar */}
-              {step === "init" ? (
-                <MerchantInitialForm onNext={handleInitialNext} />
-              ) : (
-                <>
-                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid grid-cols-7 w-full mb-6">
-                      {tabs.map(tab => (
-                        <TabsTrigger 
-                          key={tab.id} 
-                          value={tab.id}
-                          className="text-xs sm:text-sm"
-                        >
-                          {tab.label}
-                        </TabsTrigger>
-                      ))}
-                    </TabsList>
-                    
-                    <TabsContent value="business">
-                      <BusinessDetailsForm />
-                    </TabsContent>
-                    
-                    <TabsContent value="ownership">
-                      <OwnershipForm />
-                    </TabsContent>
-                    
-                    <TabsContent value="operations">
-                      <OperationalDetailsForm />
-                    </TabsContent>
-                    
-                    <TabsContent value="marketing">
-                      <MarketingForm />
-                    </TabsContent>
-                    
-                    <TabsContent value="financial">
-                      <FinancialInfoForm />
-                    </TabsContent>
-                    
-                    <TabsContent value="processing">
-                      <ProcessingInfoForm />
-                    </TabsContent>
-                    
-                    <TabsContent value="documents">
-                      <DocumentsForm />
-                    </TabsContent>
-                  </Tabs>
-                  
-                  <div className="flex justify-between mt-6 pt-6 border-t">
-                    <Button 
-                      variant="outline" 
-                      onClick={handlePrevious}
-                      disabled={activeTab === 'business'}
-                    >
-                      <ArrowLeft className="mr-2 h-4 w-4" />
-                      Previous
-                    </Button>
-                    
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        onClick={handleSendToMerchant}
-                        className="bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200"
-                      >
-                        <SendHorizontal className="mr-2 h-4 w-4" />
-                        Send to Merchant
-                      </Button>
-                    
-                      <Button variant="outline" onClick={handleSaveDraft}>
-                        <Save className="mr-2 h-4 w-4" />
-                        Save Draft
-                      </Button>
-                      
-                      <Button onClick={handleNext}>
-                        {activeTab === 'documents' ? (
-                          <>
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Complete
-                          </>
-                        ) : (
-                          <>
-                            Next
-                            <ArrowRight className="ml-2 h-4 w-4" />
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </>
           )}
         </CardContent>
       </Card>
-
-      <SendToMerchantDialog 
-        open={showSendDialog} 
-        onOpenChange={setShowSendDialog} 
+      <SendToMerchantDialog
+        open={showSendDialog}
+        onOpenChange={setShowSendDialog}
         applicationData={getAllFormData()}
       />
     </div>

@@ -4,9 +4,22 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
 
 // Validation schema with ONLY the required fields for the initial screen
 const schema = z.object({
@@ -17,7 +30,9 @@ const schema = z.object({
 });
 type MerchantInitialFormValues = z.infer<typeof schema>;
 
-export const MerchantInitialForm: React.FC<{ onNext: (data: MerchantInitialFormValues) => void }> = ({ onNext }) => {
+export const MerchantInitialForm: React.FC<{
+  onNext: (data: MerchantInitialFormValues) => void;
+}> = ({ onNext }) => {
   const form = useForm<MerchantInitialFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -26,7 +41,7 @@ export const MerchantInitialForm: React.FC<{ onNext: (data: MerchantInitialFormV
       email: "",
       monthlyVolume: "",
     },
-    mode: "onChange"
+    mode: "onChange",
   });
 
   // Handle submission
@@ -36,7 +51,10 @@ export const MerchantInitialForm: React.FC<{ onNext: (data: MerchantInitialFormV
 
   return (
     <Form {...form}>
-      <form className="space-y-6 max-w-lg mx-auto" onSubmit={form.handleSubmit(handleSubmit)}>
+      <form
+        className="space-y-6 max-w-lg mx-auto"
+        onSubmit={form.handleSubmit(handleSubmit)}
+      >
         {/* Business Name */}
         <FormField
           control={form.control}
@@ -110,7 +128,11 @@ export const MerchantInitialForm: React.FC<{ onNext: (data: MerchantInitialFormV
           )}
         />
         {/* Continue/Next */}
-        <Button type="submit" className="w-full mt-6" disabled={!form.formState.isValid}>
+        <Button
+          type="submit"
+          className="w-full mt-6"
+          disabled={!form.formState.isValid}
+        >
           Next
         </Button>
       </form>
