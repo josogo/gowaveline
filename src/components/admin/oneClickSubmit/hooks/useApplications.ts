@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { calculateProgress, generateMockApplications } from "../utils/applicationUtils";
+import { calculateProgress, generateMockApplications, formatApplicationData } from "../utils/applicationUtils";
 
 export type ApplicationListItem = {
   id: string;
@@ -41,32 +41,7 @@ export function useApplications() {
 
       if (error) throw error;
 
-      const formattedData: ApplicationListItem[] = data.map(app => {
-        let businessName = "Unknown Business";
-        if (app.application_data) {
-          const appData = typeof app.application_data === "string"
-            ? JSON.parse(app.application_data)
-            : app.application_data;
-          businessName = appData?.businessName || app.merchant_name || "Unknown Business";
-        } else if (app.merchant_name) {
-          businessName = app.merchant_name;
-        }
-        
-        // Map the status to one of the allowed values
-        let status: "complete" | "incomplete" | "submitted" = "incomplete";
-        if (app.completed) {
-          status = "complete";
-        }
-        
-        return {
-          id: app.id,
-          businessName,
-          status,
-          lastEdited: app.updated_at,
-          progress: calculateProgress(app.application_data),
-          rawData: app,
-        };
-      });
+      const formattedData: ApplicationListItem[] = data.map(formatApplicationData);
 
       setApplications(formattedData);
       setFilteredApplications(formattedData);

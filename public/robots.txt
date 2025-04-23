@@ -1,14 +1,23 @@
-User-agent: Googlebot
+
+# Allow all crawlers full access
+User-agent: *
 Allow: /
 
+# Googlebot-specific rules
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+# Bingbot-specific rules
 User-agent: Bingbot
 Allow: /
 
+# Social Media Bots
 User-agent: Twitterbot
 Allow: /
 
 User-agent: facebookexternalhit
 Allow: /
 
-User-agent: *
-Allow: /
+# Sitemap location
+Sitemap: https://wavelinepayments.com/sitemap.xml
