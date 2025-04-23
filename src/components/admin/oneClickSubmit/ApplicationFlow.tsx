@@ -13,15 +13,21 @@ import { MerchantInitialForm } from './forms/MerchantInitialForm';
 import { SendToMerchantDialog } from './SendToMerchantDialog';
 import DeclineRemoveDialog from "./DeclineRemoveDialog";
 import { BankRoutingSystem } from './BankRoutingSystem';
-import { ArrowRight, ArrowLeft, CheckCircle, Save, SendHorizontal } from 'lucide-react';
+import { ArrowRight, ArrowLeft, CheckCircle, Save, SendHorizontal, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 import { useApplicationFlow } from './useApplicationFlow';
 import { ApplicationActionMenu } from './ApplicationActionMenu';
 import { ApplicationProgressBar } from './ApplicationProgressBar';
 
-export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({
+interface ApplicationFlowProps {
+  merchantApplication?: any;
+  onClose?: () => void;
+}
+
+export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
   merchantApplication,
+  onClose
 }) => {
   const flow = useApplicationFlow(merchantApplication);
 
@@ -31,6 +37,20 @@ export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({
 
   return (
     <div className="space-y-6">
+      {onClose && (
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Edit Application</h1>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onClose}
+            className="hover:bg-gray-100"
+          >
+            <X className="h-4 w-4 mr-1" /> Close
+          </Button>
+        </div>
+      )}
+      
       <Card>
         <CardContent className="pt-6">
           <div className="mb-6">

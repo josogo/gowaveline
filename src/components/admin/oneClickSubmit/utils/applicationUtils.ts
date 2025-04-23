@@ -1,72 +1,94 @@
+import { formatDistanceToNow } from 'date-fns';
 
-import { ApplicationListItem } from "../hooks/useApplications";
+export const formatApplicationData = (rawData: any) => {
+  // Get business name from different possible sources
+  const businessName = rawData.merchant_name || 
+                        rawData.application_data?.business?.businessName || 
+                        "Unnamed Business";
 
-/**
- * Calculate the progress of an application based on completed tabs
- */
-export function calculateProgress(applicationData: any): number {
+  // Calculate progress - either from stored value or default to 0
+  const progress = rawData.application_data?.progress || 0;
+
+  // Determine status based on different factors
+  let status = "incomplete";
+  if (rawData.status === "declined") {
+    status = "declined";
+  } else if (rawData.status === "removed") {
+    status = "removed";
+  } else if (rawData.completed) {
+    status = "complete";
+  } else if (progress === 100) {
+    status = "submitted";
+  }
+
+  return {
+    id: rawData.id,
+    businessName,
+    status,
+    lastEdited: rawData.updated_at || rawData.created_at,
+    progress,
+    rawData, // Include the raw data for reference
+  };
+};
+
+export const calculateProgress = (applicationData: any) => {
   if (!applicationData) return 0;
   
-  // If progress is already calculated, return it
-  if (applicationData.progress) {
-    return applicationData.progress;
-  }
+  // If the application already has a progress value, return it
+  if (applicationData.progress) return applicationData.progress;
   
-  // Count tabs with data
-  const tabs = ['business', 'ownership', 'operations', 'marketing', 'financial', 'processing', 'documents'];
-  const completedTabs = tabs.filter(tab => !!applicationData[tab]);
+  // Otherwise calculate based on completion of sections
+  const sections = [
+    'business',
+    'ownership',
+    'operations',
+    'marketing',
+    'financial',
+    'processing',
+    'documents'
+  ];
   
-  // Calculate percentage
-  return Math.round((completedTabs.length / tabs.length) * 100);
-}
+  const completedSections = sections.filter(section => 
+    applicationData[section] && Object.keys(applicationData[section]).length > 0
+  );
+  
+  return Math.round((completedSections.length / sections.length) * 100);
+};
 
-/**
- * Generate mock applications for development/demo purposes
- */
-export function generateMockApplications(): ApplicationListItem[] {
-  // Mock data generated here
+export const generateMockApplications = () => {
   return [
     {
       id: '1',
-      businessName: 'Example Business',
+      businessName: 'ACME Corp',
       status: 'incomplete',
-      lastEdited: new Date().toISOString(),
-      progress: 42,
+      lastEdited: new Date().toString(),
+      progress: 30,
+      rawData: {
+        id: '1',
+        merchant_name: 'ACME Corp',
+        application_data: {
+          progress: 30,
+          business: { businessName: 'ACME Corp' }
+        },
+        updated_at: new Date().toString(),
+      }
     },
     {
       id: '2',
-      businessName: 'Test Company LLC',
+      businessName: 'XYZ Industries',
       status: 'complete',
-      lastEdited: new Date(Date.now() - 86400000).toISOString(),
+      lastEdited: new Date(Date.now() - 86400000).toString(), // 1 day ago
       progress: 100,
-    },
-  ] as ApplicationListItem[];
-}
-
-/**
- * Format application data from database to the format used in the UI
- */
-export function formatApplicationData(app: any): ApplicationListItem {
-  let businessName = app.merchant_name;
-  let progress = 0;
-  
-  // Extract business name from application data if available
-  if (app.application_data) {
-    // Try to use the business name from the application data
-    if (app.application_data.business?.businessName) {
-      businessName = app.application_data.business.businessName;
+      rawData: {
+        id: '2',
+        merchant_name: 'XYZ Industries',
+        completed: true,
+        application_data: {
+          progress: 100,
+          business: { businessName: 'XYZ Industries' }
+        },
+        updated_at: new Date(Date.now() - 86400000).toString(),
+      }
     }
-    
-    // Try to use stored progress or calculate it
-    progress = app.application_data.progress || calculateProgress(app.application_data);
-  }
-  
-  return {
-    id: app.id,
-    businessName: businessName || 'Unnamed Business',
-    status: app.status || (app.completed ? 'complete' : 'incomplete'),
-    lastEdited: app.updated_at || app.created_at,
-    progress: progress,
-    rawData: app, // Store the original data for reference
-  };
-}
+  ];
+};
