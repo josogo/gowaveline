@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 
@@ -37,6 +38,7 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
   const { formData, updateFormData } = useFormData();
   const { applicationProgress, setApplicationProgress, activeTab, setActiveTab } = 
     useApplicationProgress(merchantApplication);
+  const [showSendDialog, setShowSendDialog] = useState(false);
 
   // Initialize form data from merchant application if available
   useEffect(() => {
@@ -51,6 +53,15 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
       console.log("Initializing form data from merchant application:", initialData);
     }
   }, [merchantApplication, updateFormData]);
+
+  // Get application actions (save, send to merchant)
+  const { saveApplicationData, handleSendToMerchant } = useApplicationActions(
+    merchantApplication?.id,
+    formData,
+    applicationProgress,
+    activeTab,
+    setShowSendDialog
+  );
 
   // Find current tab index
   const currentTabIndex = tabs.findIndex(tab => tab.id === activeTab);

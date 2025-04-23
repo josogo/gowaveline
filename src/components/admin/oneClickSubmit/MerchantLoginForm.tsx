@@ -1,69 +1,92 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-export const MerchantLoginForm: React.FC<{
-  onSuccessfulLogin: (appData: any) => void;
+const loginSchema = z.object({
+  email: z.string().email('Please enter a valid email'),
+  otp: z.string().min(6, 'Please enter the 6-digit code'),
+});
+
+type MerchantLoginFormProps = {
+  onSuccessfulLogin: (applicationData: any) => void;
   applicationId?: string;
-}> = ({ onSuccessfulLogin, applicationId }) => {
-  const [otp, setOtp] = useState('');
-  const navigate = useNavigate();
+};
 
-  const handleVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+export const MerchantLoginForm = ({ onSuccessfulLogin, applicationId }: MerchantLoginFormProps) => {
+  const form = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      otp: '',
+    },
+  });
+
+  const handleSubmit = async (values: z.infer<typeof loginSchema>) => {
     try {
+      // Verify the email and OTP against the database
       const { data, error } = await supabase
         .from('merchant_applications')
         .select('*')
+        .eq('merchant_email', values.email)
+        .eq('otp', values.otp)
         .eq('id', applicationId)
-        .eq('otp', otp)
         .single();
 
-      if (error) throw error;
-
-      if (data) {
-        // Load the application data including the initial form data
-        onSuccessfulLogin({
-          ...data,
-          application_data: {
-            ...data.application_data,
-            businessName: data.merchant_name,
-            businessEmail: data.merchant_email,
-          }
-        });
+      if (error) {
+        throw error;
       }
-    } catch (error) {
-      console.error('Error verifying OTP:', error);
-      toast.error('Invalid verification code');
+
+      // If successful, call the onSuccessfulLogin callback with the data
+      toast.success('Authentication successful!');
+      onSuccessfulLogin(data);
+    } catch (error: any) {
+      console.error('Login error:', error);
+      toast.error('Failed to authenticate. Please check your email and code.');
     }
   };
 
   return (
-    <form onSubmit={handleVerify} className="space-y-4">
-      <div>
-        <label htmlFor="otp" className="block text-sm font-medium text-gray-700">
-          Verification Code
-        </label>
-        <div className="mt-1">
-          <Input
-            type="text"
-            id="otp"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-            placeholder="Enter code"
-            className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-          />
-        </div>
-      </div>
-      <div>
-        <Button type="submit" className="w-full">
-          Verify
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter your business email" type="email" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="otp"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Authentication Code</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter your 6-digit code" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+          {form.formState.isSubmitting ? 'Authenticating...' : 'Continue Application'}
         </Button>
-      </div>
-    </form>
+      </form>
+    </Form>
   );
 };
