@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { TitleSection } from './TitleSection';
 import { ApplicationFlow } from './ApplicationFlow';
 import { ApplicationsList } from './ApplicationsList';
@@ -8,12 +8,13 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 const OneClickSubmitContent: React.FC = () => {
   const isMobile = useIsMobile();
+  const [activeTab, setActiveTab] = useState('applications');
 
   return (
     <div className="space-y-6">
       <TitleSection />
       
-      <Tabs defaultValue="applications" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="applications">Applications</TabsTrigger>
           <TabsTrigger value="new">New Application</TabsTrigger>
