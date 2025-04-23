@@ -39,6 +39,7 @@ export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({
     action: null | "declined" | "removed";
   }>({ open: false, action: null });
   const [cardActionApp, setCardActionApp] = useState<any>(null);
+  const [showActionMenu, setShowActionMenu] = useState(false);
 
   const tabs = [
     { id: 'business', label: 'Business' },
@@ -113,6 +114,7 @@ export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({
   const handleDeclineRemove = (action: "declined" | "removed", appData?: any) => {
     setCardActionApp(appData || merchantApplication);
     setDeclineRemoveDialog({ open: true, action });
+    setShowActionMenu(false);
   };
 
   const processDeclineRemove = async (reason: string) => {
@@ -193,11 +195,11 @@ export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({
                   size="icon"
                   aria-label="More actions"
                   className="rounded-full"
-                  onClick={() => setDeclineRemoveDialog({open: true, action: null})}
+                  onClick={() => setShowActionMenu(!showActionMenu)}
                 >
                   <MoreHorizontal />
                 </Button>
-                {declineRemoveDialog.open && !declineRemoveDialog.action && (
+                {showActionMenu && (
                   <div className="absolute right-0 mt-2 w-40 z-10 bg-white shadow-lg rounded border">
                     <button
                       className="block w-full px-4 py-2 text-left hover:bg-amber-50 text-amber-800"
@@ -213,7 +215,7 @@ export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({
                     </button>
                     <button
                       className="block w-full px-4 py-2 text-left hover:bg-gray-100 text-gray-500"
-                      onClick={() => setDeclineRemoveDialog({ open: false, action: null })}
+                      onClick={() => setShowActionMenu(false)}
                     >
                       Cancel
                     </button>

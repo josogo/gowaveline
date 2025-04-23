@@ -8,6 +8,8 @@ interface ApplicationsGridProps {
   loading: boolean;
   applications: any[];
   onOpenApplication: (app: any) => void;
+  onDeclineApplication?: (app: any) => void;
+  onRemoveApplication?: (app: any) => void;
 }
 
 export const ApplicationsGrid: React.FC<ApplicationsGridProps> = ({
@@ -15,6 +17,8 @@ export const ApplicationsGrid: React.FC<ApplicationsGridProps> = ({
   loading,
   applications,
   onOpenApplication,
+  onDeclineApplication,
+  onRemoveApplication,
 }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -23,6 +27,8 @@ export const ApplicationsGrid: React.FC<ApplicationsGridProps> = ({
           key={app.id}
           application={app}
           onClick={() => onOpenApplication(app)}
+          onDecline={onDeclineApplication}
+          onRemove={onRemoveApplication}
         />
       ))}
       {filteredApplications.length === 0 && !loading && (
