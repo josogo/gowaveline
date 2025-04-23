@@ -38,6 +38,12 @@ export const useContactsManagement = () => {
   const [isImportExportDialogOpen, setIsImportExportDialogOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTab, setSelectedTab] = useState('all');
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isContactFormOpen, setIsContactFormOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [contactToDelete, setContactToDelete] = useState<Contact | null>(null);
   
   // Update filtered contacts when contacts change
   useEffect(() => {
@@ -75,7 +81,7 @@ export const useContactsManagement = () => {
   };
   
   // Contact CRUD operations
-  const handleAddContact = (contactData: any) => {
+  const handleCreateContact = (contactData: any) => {
     // Convert to CRM contact format before adding
     const newCrmContact = {
       id: `c-${Date.now()}`,
@@ -98,6 +104,11 @@ export const useContactsManagement = () => {
         toast.error('Failed to create deal for prospect');
       }
     }
+  };
+  
+  const handleEditContact = (contact: Contact) => {
+    setEditingContact(contact);
+    setIsContactFormOpen(true);
   };
   
   const handleUpdateContact = (contactData: any) => {
@@ -165,10 +176,24 @@ export const useContactsManagement = () => {
     selectedContacts,
     setSelectedContacts,
     handleFilter,
-    handleAddContact,
+    handleAddContact: handleCreateContact,
     handleUpdateContact,
     handleDeleteContact,
     handleBulkDelete,
-    navigateToDeals
+    navigateToDeals,
+    searchTerm,
+    setSearchTerm,
+    selectedTab, 
+    setSelectedTab,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
+    isContactFormOpen,
+    setIsContactFormOpen,
+    handleCreateContact,
+    isImportDialogOpen,
+    setIsImportDialogOpen,
+    contactToDelete,
+    setContactToDelete,
+    handleEditContact
   };
 };

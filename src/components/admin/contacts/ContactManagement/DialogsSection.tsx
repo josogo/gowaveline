@@ -9,49 +9,64 @@ import { toast } from 'sonner';
 
 interface DialogsSectionProps {
   isAddDialogOpen: boolean;
-  isImportExportDialogOpen: boolean;
-  editingContact: Contact | null;
   setIsAddDialogOpen: (isOpen: boolean) => void;
+  isImportExportDialogOpen: boolean;
   setIsImportExportDialogOpen: (isOpen: boolean) => void;
-  setEditingContact: (contact: Contact | null) => void;
-  handleAddContact: (data: any) => void;
-  handleUpdateContact: (data: any) => void;
-  contacts: Contact[];
+  isDeleteDialogOpen: boolean;
+  setIsDeleteDialogOpen: (isOpen: boolean) => void;
+  isContactFormOpen: boolean;
+  setIsContactFormOpen: (isOpen: boolean) => void;
+  isImportDialogOpen: boolean;
+  setIsImportDialogOpen: (isOpen: boolean) => void;
+  handleCreateContact: (data: any) => void;
+  editingContact: Contact | null;
+  setEditingContact: React.Dispatch<React.SetStateAction<Contact | null>>;
+  contactToDelete: Contact | null;
+  setContactToDelete: React.Dispatch<React.SetStateAction<Contact | null>>;
 }
 
 export const DialogsSection: React.FC<DialogsSectionProps> = ({
   isAddDialogOpen,
-  isImportExportDialogOpen,
-  editingContact,
   setIsAddDialogOpen,
+  isImportExportDialogOpen,
   setIsImportExportDialogOpen,
+  isDeleteDialogOpen,
+  setIsDeleteDialogOpen,
+  isContactFormOpen,
+  setIsContactFormOpen,
+  isImportDialogOpen,
+  setIsImportDialogOpen,
+  handleCreateContact,
+  editingContact,
   setEditingContact,
-  handleAddContact,
-  handleUpdateContact,
-  contacts
+  contactToDelete,
+  setContactToDelete
 }) => {
   return (
     <>
       {/* Contact Form Dialog */}
       <ContactFormDialog 
-        isOpen={isAddDialogOpen || editingContact !== null}
+        isOpen={isContactFormOpen || editingContact !== null}
         onClose={() => {
-          setIsAddDialogOpen(false);
+          setIsContactFormOpen(false);
           setEditingContact(null);
         }}
-        onSubmit={(data) => editingContact ? handleUpdateContact(data) : handleAddContact(data)}
+        onSubmit={(data) => handleCreateContact(data)}
         contact={editingContact}
       />
       
       {/* Import/Export Dialog */}
       <ImportExportDialog 
-        isOpen={isImportExportDialogOpen}
-        onClose={() => setIsImportExportDialogOpen(false)}
+        isOpen={isImportDialogOpen || isImportExportDialogOpen}
+        onClose={() => {
+          setIsImportDialogOpen(false);
+          setIsImportExportDialogOpen(false);
+        }}
         onImport={(data) => {
           // Handle import logic
           toast.success(`Imported ${Array.isArray(data) ? data.length : 1} contacts`);
         }}
-        contactsCount={contacts.length}
+        contactsCount={0}
         onExport={() => {
           // Export logic would go here
           toast.success('Contacts exported successfully');
