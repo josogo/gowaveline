@@ -1,4 +1,3 @@
-
 export type ContactInfo = {
   companyName?: string;
   email?: string;

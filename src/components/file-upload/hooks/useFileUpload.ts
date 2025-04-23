@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFileValidation } from './useFileValidation';
@@ -14,7 +15,6 @@ export const useFileUpload = ({
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const navigate = useNavigate();
 
   const { validateFile } = useFileValidation({ maxSize, accept });
   const { uploadToStorage } = useFileStorage();
