@@ -1,145 +1,81 @@
+
 import React, { useState } from 'react';
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle,
-  DialogFooter,
-  DialogDescription
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { RefreshCcw } from 'lucide-react';
-import { createMerchantApplication } from "@/services/merchantApplicationService";
 
-const generateOTP = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-};
-
-const formSchema = z.object({
-  merchantName: z.string().min(2, "Merchant name is required"),
-  merchantEmail: z.string().email("Enter a valid email address"),
-});
-
-type SendToMerchantDialogProps = {
+export type SendToMerchantDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  applicationData: any; // The current application data
+  applicationId?: string | number;
+  applicationData?: any;
+  merchantEmail?: string;
+  merchantName?: string;
 };
 
-export const SendToMerchantDialog: React.FC<SendToMerchantDialogProps> = ({ 
-  open, 
+export const SendToMerchantDialog: React.FC<SendToMerchantDialogProps> = ({
+  open,
   onOpenChange,
-  applicationData
+  applicationId,
+  applicationData,
+  merchantEmail = '',
+  merchantName = '',
 }) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [otp, setOtp] = useState<string>("");
-  const [linkSent, setLinkSent] = useState(false);
+  const [email, setEmail] = useState(merchantEmail || '');
+  const [name, setName] = useState(merchantName || '');
+  const [isSending, setIsSending] = useState(false);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      merchantName: "",
-      merchantEmail: "",
-    },
-  });
-
-  const handleSubmit = async (values: z.infer<typeof formSchema>) => {
-    try {
-      setIsSubmitting(true);
-      
-      // Generate OTP
-      const generatedOTP = generateOTP();
-      setOtp(generatedOTP);
-      const applicationId = crypto.randomUUID();
-      const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 48);
-
-      // Store in DB first
-      const { error: storeError } = await createMerchantApplication({
-        applicationData: applicationData,
-        merchantName: values.merchantName,
-        merchantEmail: values.merchantEmail,
-        otp: generatedOTP,
-        expiresAt: expiresAt.toISOString(),
-        applicationId,
-      });
-      if (storeError) {
-        throw new Error(`Could not save application: ${storeError.message}`);
-      }
-
-      // Send email with link and OTP
-      const { error } = await supabase.functions.invoke('send-merchant-email', {
-        body: {
-          merchantName: values.merchantName,
-          merchantEmail: values.merchantEmail,
-          applicationData: applicationData,
-          otp: generatedOTP,
-          applicationId,
-          expiresAt: expiresAt.toISOString()
-        }
-      });
-      
-      if (error) {
-        throw new Error(`Failed to send email: ${error.message}`);
-      }
-      
-      setLinkSent(true);
-      toast.success("Application link sent to merchant");
-    } catch (error) {
-      console.error("Error sending to merchant:", error);
-      toast.error("Failed to send application to merchant");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleResendOTP = async () => {
-    if (!form.getValues("merchantEmail") || !form.getValues("merchantName")) {
+  const handleSend = async () => {
+    if (!email.trim()) {
+      toast.error('Please enter an email address');
       return;
     }
-    
-    setIsSubmitting(true);
-    try {
-      // Generate new OTP
-      const newOTP = generateOTP();
-      setOtp(newOTP);
-      
-      // Resend email
-      const { error } = await supabase.functions.invoke('send-merchant-email', {
-        body: {
-          merchantName: form.getValues("merchantName"),
-          merchantEmail: form.getValues("merchantEmail"),
-          applicationData: applicationData,
-          otp: newOTP,
-          resend: true
-        }
-      });
-      
-      if (error) {
-        throw new Error(`Failed to resend email: ${error.message}`);
-      }
-      
-      toast.success("Application link resent to merchant");
-    } catch (error) {
-      console.error("Error resending to merchant:", error);
-      toast.error("Failed to resend application to merchant");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
-  const handleClose = () => {
-    form.reset();
-    setLinkSent(false);
-    setOtp("");
-    onOpenChange(false);
+    if (!name.trim()) {
+      toast.error('Please enter a merchant name');
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      // Update the application with merchant details
+      if (applicationId) {
+        const { error } = await supabase
+          .from('merchant_applications')
+          .update({
+            merchant_email: email,
+            merchant_name: name,
+            email_sent_at: new Date().toISOString(),
+            status: 'sent',
+          })
+          .eq('id', applicationId);
+
+        if (error) throw error;
+      }
+
+      // Trigger email sending via Supabase Edge Function
+      const { error: sendError } = await supabase.functions.invoke('send-merchant-email', {
+        body: {
+          applicationId,
+          merchantEmail: email,
+          merchantName: name,
+          applicationData,
+        },
+      });
+
+      if (sendError) throw sendError;
+
+      toast.success('Application sent to merchant successfully!');
+      onOpenChange(false);
+    } catch (error: any) {
+      console.error('Error sending application to merchant:', error);
+      toast.error(`Failed to send: ${error.message}`);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -148,85 +84,39 @@ export const SendToMerchantDialog: React.FC<SendToMerchantDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Send to Merchant</DialogTitle>
           <DialogDescription>
-            Send a secure link to the merchant to complete this application.
+            This will send an email to the merchant with instructions to complete the application.
           </DialogDescription>
         </DialogHeader>
-        
-        {!linkSent ? (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="merchantName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Merchant Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="John Doe" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="merchantEmail"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Merchant Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="merchant@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={handleClose}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Sending..." : "Send Link"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        ) : (
-          <div className="space-y-4">
-            <div className="border rounded-lg p-4 bg-gray-50">
-              <h4 className="font-medium mb-1">One-time Password</h4>
-              <p className="text-xl font-mono tracking-wider text-center py-2">{otp}</p>
-              <p className="text-sm text-gray-500">
-                This password has been sent to the merchant's email along with the application link.
-              </p>
-            </div>
-            
-            <div className="flex flex-col space-y-2">
-              <p className="text-sm">
-                The link and OTP will expire in 48 hours. The merchant can use their email and this OTP to access and complete the application.
-              </p>
-              
-              <Button 
-                variant="outline" 
-                className="w-full" 
-                onClick={handleResendOTP}
-                disabled={isSubmitting}
-              >
-                <RefreshCcw className="mr-2 h-4 w-4" />
-                Resend Email
-              </Button>
-            </div>
-            
-            <DialogFooter>
-              <Button onClick={handleClose}>Done</Button>
-            </DialogFooter>
+        <div className="space-y-4 py-2">
+          <div className="space-y-2">
+            <Label htmlFor="name">Merchant Name</Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter merchant name"
+            />
           </div>
-        )}
+          <div className="space-y-2">
+            <Label htmlFor="email">Merchant Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter merchant's email"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={() => onOpenChange(false)} variant="outline">
+            Cancel
+          </Button>
+          <Button onClick={handleSend} disabled={isSending}>
+            {isSending ? 'Sending...' : 'Send Application'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 };
-
-export default SendToMerchantDialog;

@@ -168,6 +168,11 @@ export const ApplicationsList: React.FC = () => {
     return Promise.resolve();
   };
 
+  const handleCloseApplicationFlow = () => {
+    setAppFlowOpen(false);
+    fetchApplications(); // Refresh applications list when closing
+  };
+
   return (
     <div className="space-y-4">
       <ApplicationFilters onFilterChange={handleFilterChange} />
@@ -191,11 +196,8 @@ export const ApplicationsList: React.FC = () => {
           <div className="fixed inset-0 z-50 bg-background">
             <div className="container mx-auto py-8 px-4">
               <ApplicationFlow 
-                merchantApplication={selectedApplication} 
-                onClose={() => {
-                  setAppFlowOpen(false);
-                  fetchApplications(); // Refresh applications list when closing
-                }} 
+                merchantApplication={selectedApplication}
+                onClose={handleCloseApplicationFlow}
               />
             </div>
           </div>

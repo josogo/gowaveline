@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Send } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Send, X } from 'lucide-react';
 
 // Import forms
 import { BusinessDetailsForm } from './forms/BusinessDetailsForm';
@@ -23,14 +23,16 @@ import { useFormData } from './hooks/useFormData';
 import { SendToMerchantDialog } from './SendToMerchantDialog';
 import { ApplicationProgressBar } from './ApplicationProgressBar';
 
-type ApplicationFlowProps = {
+export type ApplicationFlowProps = {
   merchantApplication?: any;
   readOnly?: boolean;
+  onClose?: () => void;
 };
 
 const ApplicationFlow: React.FC<ApplicationFlowProps> = ({ 
   merchantApplication, 
-  readOnly = false 
+  readOnly = false,
+  onClose
 }) => {
   const tabs = useApplicationTabs();
   const { formData, updateFormData } = useFormData();
@@ -80,6 +82,14 @@ const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
 
   return (
     <div className="space-y-6">
+      {onClose && (
+        <div className="flex justify-end">
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+      )}
+      
       <ApplicationProgressBar progress={applicationProgress} />
       
       <Tabs value={activeTab} onValueChange={handleTabChange}>
