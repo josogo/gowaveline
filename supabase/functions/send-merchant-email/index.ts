@@ -16,7 +16,7 @@ interface SendMerchantEmailRequest {
   merchantName: string;
   merchantEmail: string;
   applicationData: any;
-  otp: string;
+  otp?: string;
   applicationId?: string;
   expiresAt?: string;
   resend?: boolean;
@@ -32,7 +32,38 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Received request to send merchant email");
     
     const requestData: SendMerchantEmailRequest = await req.json();
-    const { merchantName, merchantEmail, otp, applicationId, resend: resendFlag } = requestData;
+    const { 
+      merchantName, 
+      merchantEmail, 
+      applicationId, 
+      resend: resendFlag,
+      applicationData 
+    } = requestData;
+    
+    // If OTP wasn't provided in the request, try to fetch it from the database
+    let otp = requestData.otp;
+    
+    if (!otp && applicationId) {
+      try {
+        const { data, error } = await fetch(
+          `${Deno.env.get("SUPABASE_URL")}/rest/v1/merchant_applications?id=eq.${applicationId}&select=otp`,
+          {
+            headers: {
+              "apikey": Deno.env.get("SUPABASE_ANON_KEY") || "",
+              "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY") || ""}`,
+            },
+          }
+        ).then(res => res.json());
+
+        if (error) throw error;
+        if (data && data.length > 0) {
+          otp = data[0].otp;
+        }
+      } catch (err) {
+        console.error("Error fetching OTP:", err);
+        // Continue with the email sending even if we couldn't fetch the OTP
+      }
+    }
     
     // Base frontend URL - this should be your deployed frontend URL in production
     const baseUrl = new URL(req.headers.get("origin") || "http://localhost:3000");
@@ -74,7 +105,7 @@ const handler = async (req: Request): Promise<Response> => {
                 <a href="${secureLink}" class="button">Access Application</a>
               </p>
               <p>To access your application, you'll need to enter your email and this one-time password:</p>
-              <div class="otp-box">${otp}</div>
+              <div class="otp-box">${otp || 'Contact Admin for OTP'}</div>
               <p>This link and password will expire in 48 hours.</p>
               <p>If you did not request this application, please disregard this email.</p>
             </div>

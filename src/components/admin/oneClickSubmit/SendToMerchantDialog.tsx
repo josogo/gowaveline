@@ -55,7 +55,7 @@ export const SendToMerchantDialog: React.FC<SendToMerchantDialogProps> = ({
           .update({
             merchant_email: email,
             merchant_name: name,
-            email_sent_at: new Date().toISOString(),
+            // Removed email_sent_at as it doesn't exist in the schema
             status: 'sent',
           })
           .eq('id', applicationId.toString()); // Convert applicationId to string
