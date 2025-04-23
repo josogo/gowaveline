@@ -2,11 +2,12 @@
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, CheckCircle, FileText, MoreVertical } from 'lucide-react';
+import { Clock, CheckCircle, FileText, MoreVertical, Key } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ApplicationListItem } from './hooks/useApplications';
+import { toast } from 'sonner';
 
 interface ApplicationCardProps {
   application: ApplicationListItem;
@@ -21,6 +22,8 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
   onDecline, 
   onRemove 
 }) => {
+  const [showOTP, setShowOTP] = useState(false);
+
   // Get business name either directly or from application_data
   const getBusinessName = () => {
     if (application.businessName) {
@@ -57,6 +60,13 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
     }
   };
 
+  const handleCopyOTP = () => {
+    if (application.rawData?.otp) {
+      navigator.clipboard.writeText(application.rawData.otp);
+      toast.success('OTP copied to clipboard');
+    }
+  };
+
   const handleActionClick = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
@@ -87,6 +97,42 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
               className="bg-blue-600 h-1.5 rounded-full" 
               style={{ width: `${application.progress}%` }}
             />
+          </div>
+        </div>
+
+        {/* OTP Section */}
+        <div className="flex items-center justify-between mt-2">
+          <div className="text-xs text-gray-500 flex items-center">
+            <Key className="h-3 w-3 mr-1" />
+            {showOTP ? (
+              <span className="font-mono bg-gray-100 px-1 rounded">
+                {application.rawData?.otp || 'N/A'}
+              </span>
+            ) : (
+              <span>OTP: ******</span>
+            )}
+          </div>
+          <div className="flex space-x-1">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowOTP(!showOTP);
+              }}
+            >
+              {showOTP ? 'Hide' : 'Show'} OTP
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCopyOTP();
+              }}
+            >
+              Copy OTP
+            </Button>
           </div>
         </div>
 
