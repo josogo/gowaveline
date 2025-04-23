@@ -63,7 +63,12 @@ export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({
               </div>
               <Tabs
                 value={flow.activeTab}
-                onValueChange={flow.setActiveTab}
+                onValueChange={(value) => {
+                  // Save data before changing tabs
+                  flow.saveApplicationData().then(() => {
+                    flow.setActiveTab(value);
+                  });
+                }}
                 className="w-full"
               >
                 <TabsList className="grid grid-cols-7 w-full mb-6">

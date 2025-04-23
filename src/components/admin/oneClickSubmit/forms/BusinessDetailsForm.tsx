@@ -1,4 +1,5 @@
-import React from "react";
+
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -22,7 +23,7 @@ const businessSchema = z.object({
 type BusinessFormValues = z.infer<typeof businessSchema>;
 
 export const BusinessDetailsForm = () => {
-  const { formData, updateFormData } = useApplicationFlow(null);
+  const { formData, updateFormData, saveApplicationData } = useApplicationFlow(null);
   
   // Initialize with existing data or defaults
   const businessData = formData.business || {};
@@ -36,9 +37,20 @@ export const BusinessDetailsForm = () => {
     },
   });
 
+  // Sync form with formData when it changes externally
+  useEffect(() => {
+    if (formData.business) {
+      form.reset({
+        businessName: formData.business.businessName || "",
+        email: formData.business.email || "",
+      });
+    }
+  }, [formData.business, form]);
+
   // Save form data when fields change
-  const handleFieldChange = (data: BusinessFormValues) => {
-    updateFormData(data);
+  const handleFieldChange = async (data: BusinessFormValues) => {
+    updateFormData({ business: data });
+    await saveApplicationData();
   };
 
   return (
@@ -46,6 +58,7 @@ export const BusinessDetailsForm = () => {
       <form 
         className="space-y-4"
         onChange={form.handleSubmit(handleFieldChange)}
+        onBlur={form.handleSubmit(handleFieldChange)}
       >
         <FormField
           control={form.control}

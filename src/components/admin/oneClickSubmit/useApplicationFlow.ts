@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -39,15 +39,17 @@ export function useApplicationFlow(merchantApplication: any) {
   const updateFormData = useCallback((tabData: any) => {
     setFormData(prevData => ({
       ...prevData,
-      [activeTab]: tabData
+      ...tabData
     }));
-  }, [activeTab]);
+  }, []);
 
   // Save the current form data to the database
   const saveApplicationData = useCallback(async () => {
-    if (!merchantAppId) return;
+    if (!merchantAppId) return false;
     
     try {
+      console.log("Saving application data:", formData);
+      
       const applicationData = {
         ...formData,
         progress: applicationProgress,
@@ -73,6 +75,13 @@ export function useApplicationFlow(merchantApplication: any) {
       return false;
     }
   }, [merchantAppId, formData, applicationProgress, activeTab]);
+
+  // Save data when navigating between tabs
+  useEffect(() => {
+    if (merchantAppId) {
+      saveApplicationData();
+    }
+  }, [activeTab, merchantAppId, saveApplicationData]);
 
   const handleNext = useCallback(async () => {
     // Save current tab data before moving to next tab
@@ -268,9 +277,9 @@ export function useApplicationFlow(merchantApplication: any) {
     handleSaveDraft,
     handleInitialNext,
     handleSendToMerchant,
-    handleMerchantSubmit,
-    handleDeclineRemove,
-    processDeclineRemove,
+    handleMerchantSubmit: handleMerchantSubmit || (() => {}),
+    handleDeclineRemove: handleDeclineRemove || (() => {}),
+    processDeclineRemove: processDeclineRemove || (() => {}),
     getAllFormData,
     saveApplicationData,
   };
