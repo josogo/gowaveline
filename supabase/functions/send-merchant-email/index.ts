@@ -128,7 +128,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Send email with proper error handling
     try {
       const emailResponse = await resend.emails.send({
-        from: "WaveLine <notifications@waveline.ai>",
+        from: "onboarding@resend.dev", // Use Resend's default domain that doesn't require verification
         to: [merchantEmail],
         subject: resendFlag ? "New Link: Complete Your WaveLine Application" : "Complete Your WaveLine Application",
         html: emailHtml,
