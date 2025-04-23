@@ -1,26 +1,30 @@
 
-import React from "react";
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import React from 'react';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { useFormContext } from 'react-hook-form';
 
-type Props = {
-  control: any;
+interface BusinessNameFieldProps {
+  defaultValue?: string;
+}
+
+export const BusinessNameField = ({ defaultValue }: BusinessNameFieldProps) => {
+  const form = useFormContext();
+
+  return (
+    <FormField
+      control={form.control}
+      name="businessName"
+      defaultValue={defaultValue}
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Business Name</FormLabel>
+          <FormControl>
+            <Input {...field} placeholder="Enter business name" />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
 };
-
-const BusinessNameField: React.FC<Props> = ({ control }) => (
-  <FormField
-    control={control}
-    name="businessName"
-    render={({ field }) => (
-      <FormItem>
-        <FormLabel>Business Name</FormLabel>
-        <FormControl>
-          <Input placeholder="ACME Corp" {...field} />
-        </FormControl>
-        <FormMessage />
-      </FormItem>
-    )}
-  />
-);
-
-export default BusinessNameField;

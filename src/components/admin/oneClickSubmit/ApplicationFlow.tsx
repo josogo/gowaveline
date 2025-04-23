@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 
@@ -38,22 +37,18 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
   const { formData, updateFormData } = useFormData();
   const { applicationProgress, setApplicationProgress, activeTab, setActiveTab } = 
     useApplicationProgress(merchantApplication);
-  
-  const [showSendDialog, setShowSendDialog] = useState(false);
-  const { saveApplicationData, handleSendToMerchant } = 
-    useApplicationActions(
-      merchantApplication?.id,
-      formData,
-      applicationProgress,
-      activeTab,
-      setShowSendDialog
-    );
 
   // Initialize form data from merchant application if available
   useEffect(() => {
     if (merchantApplication?.application_data) {
-      updateFormData(merchantApplication.application_data);
-      console.log("Initializing form data from merchant application:", merchantApplication.application_data);
+      // Merge the initial form data with any existing application data
+      const initialData = {
+        businessName: merchantApplication.merchant_name,
+        businessEmail: merchantApplication.merchant_email,
+        ...merchantApplication.application_data
+      };
+      updateFormData(initialData);
+      console.log("Initializing form data from merchant application:", initialData);
     }
   }, [merchantApplication, updateFormData]);
 
