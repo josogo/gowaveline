@@ -14,6 +14,7 @@ interface ApplicationCardProps {
     status: 'incomplete' | 'complete' | 'submitted' | 'declined' | 'removed';
     lastEdited: string;
     progress: number;
+    rawData?: any;
   };
   onClick: () => void;
   onDecline?: (app: any) => void;
@@ -26,6 +27,27 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
   onDecline, 
   onRemove 
 }) => {
+  // Get business name either directly or from application_data
+  const getBusinessName = () => {
+    if (application.businessName) {
+      return application.businessName;
+    }
+    
+    // Try to get from raw data
+    if (application.rawData) {
+      if (application.rawData.merchant_name) {
+        return application.rawData.merchant_name;
+      }
+      
+      // Try to get from application data
+      if (application.rawData.application_data?.business?.businessName) {
+        return application.rawData.application_data.business.businessName;
+      }
+    }
+    
+    return "Unnamed Business";
+  };
+
   const getStatusBadge = () => {
     switch (application.status) {
       case 'complete':
@@ -51,7 +73,7 @@ export const ApplicationCard: React.FC<ApplicationCardProps> = ({
       onClick={onClick}
     >
       <div className="flex justify-between items-start mb-2">
-        <h3 className="font-medium text-lg">{application.businessName}</h3>
+        <h3 className="font-medium text-lg">{getBusinessName()}</h3>
         {getStatusBadge()}
       </div>
       

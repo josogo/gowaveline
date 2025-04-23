@@ -8,14 +8,14 @@ export function useApplicationFlow(merchantApplication: any) {
     merchantApplication ? "main" : "init"
   );
   const [initialData, setInitialData] = useState<any>(
-    merchantApplication ? merchantApplication.application_data : null
+    merchantApplication?.application_data || null
   );
-  const [activeTab, setActiveTab] = useState(merchantApplication?.currentTab || 'business');
+  const [activeTab, setActiveTab] = useState(merchantApplication?.application_data?.currentTab || 'business');
   const [applicationProgress, setApplicationProgress] = useState(
-    merchantApplication?.progress || 0
+    merchantApplication?.application_data?.progress || 0
   );
   const [showBankRouting, setShowBankRouting] = useState(false);
-  const [formData, setFormData] = useState(merchantApplication?.application_data || {});
+  const [formData, setFormData] = useState<any>(merchantApplication?.application_data || {});
   const [showSendDialog, setShowSendDialog] = useState(false);
   const [merchantAppId, setMerchantAppId] = useState(merchantApplication?.id);
   const [declineRemoveDialog, setDeclineRemoveDialog] = useState<{
@@ -34,6 +34,16 @@ export function useApplicationFlow(merchantApplication: any) {
     { id: 'processing', label: 'Processing' },
     { id: 'documents', label: 'Documents' },
   ];
+
+  // Load application data when merchantApplication changes
+  useEffect(() => {
+    if (merchantApplication) {
+      setMerchantAppId(merchantApplication.id);
+      setFormData(merchantApplication.application_data || {});
+      setActiveTab(merchantApplication.application_data?.currentTab || 'business');
+      setApplicationProgress(merchantApplication.application_data?.progress || 0);
+    }
+  }, [merchantApplication]);
 
   // Update form data with the current tab's data
   const updateFormData = useCallback((tabData: any) => {
@@ -69,6 +79,7 @@ export function useApplicationFlow(merchantApplication: any) {
         return false;
       }
       
+      console.log("Application data saved successfully");
       return true;
     } catch (error) {
       console.error("Error in saveApplicationData:", error);
@@ -78,7 +89,7 @@ export function useApplicationFlow(merchantApplication: any) {
 
   // Save data when navigating between tabs
   useEffect(() => {
-    if (merchantAppId) {
+    if (merchantAppId && formData) {
       saveApplicationData();
     }
   }, [activeTab, merchantAppId, saveApplicationData]);

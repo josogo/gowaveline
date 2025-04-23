@@ -1,88 +1,72 @@
 
-/**
- * Utility functions for Applications logic.
- */
+import { ApplicationListItem } from "../hooks/useApplications";
 
 /**
- * Calculate percent completion for application form fields.
- * @param applicationData - The application data to analyze
- * @returns Percentage of completion (0-100)
+ * Calculate the progress of an application based on completed tabs
  */
 export function calculateProgress(applicationData: any): number {
   if (!applicationData) return 0;
   
-  // Parse the application data if it's a string
-  const appData = typeof applicationData === "string"
-    ? JSON.parse(applicationData)
-    : applicationData;
-    
-  // Count filled fields (approximately 20 fields total across all tabs)
-  const totalFields = 20;
-  const filledFields = appData ? Object.keys(appData).length : 0;
-  
-  // Return percentage with max of 100%
-  return Math.min(100, Math.round((filledFields / totalFields) * 100));
-}
-
-/**
- * Provide mock application items for offline/failed loading.
- * @returns Array of mock application data
- */
-export function generateMockApplications() {
-  return [
-    {
-      id: "1",
-      businessName: "Acme CBD Wellness",
-      status: "complete" as const,
-      lastEdited: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-      progress: 100,
-    },
-    {
-      id: "2",
-      businessName: "Natural Supplements Co.",
-      status: "incomplete" as const,
-      lastEdited: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-      progress: 65,
-    },
-    {
-      id: "3",
-      businessName: "FitLife Subscription",
-      status: "incomplete" as const,
-      lastEdited: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      progress: 30,
-    },
-  ];
-}
-
-/**
- * Format the application data for display
- * @param app - Raw application data
- * @returns Formatted application data
- */
-export function formatApplicationData(app: any) {
-  // Extract business name from application data
-  let businessName = "Unknown Business";
-  if (app.application_data) {
-    const appData = typeof app.application_data === "string"
-      ? JSON.parse(app.application_data)
-      : app.application_data;
-    businessName = appData?.businessName || app.merchant_name || "Unknown Business";
-  } else if (app.merchant_name) {
-    businessName = app.merchant_name;
+  // If progress is already calculated, return it
+  if (applicationData.progress) {
+    return applicationData.progress;
   }
   
-  // Map the status to one of the allowed values
-  let status: "complete" | "incomplete" | "submitted" = "incomplete";
-  if (app.completed) {
-    status = "complete";
+  // Count tabs with data
+  const tabs = ['business', 'ownership', 'operations', 'marketing', 'financial', 'processing', 'documents'];
+  const completedTabs = tabs.filter(tab => !!applicationData[tab]);
+  
+  // Calculate percentage
+  return Math.round((completedTabs.length / tabs.length) * 100);
+}
+
+/**
+ * Generate mock applications for development/demo purposes
+ */
+export function generateMockApplications(): ApplicationListItem[] {
+  // Mock data generated here
+  return [
+    {
+      id: '1',
+      businessName: 'Example Business',
+      status: 'incomplete',
+      lastEdited: new Date().toISOString(),
+      progress: 42,
+    },
+    {
+      id: '2',
+      businessName: 'Test Company LLC',
+      status: 'complete',
+      lastEdited: new Date(Date.now() - 86400000).toISOString(),
+      progress: 100,
+    },
+  ] as ApplicationListItem[];
+}
+
+/**
+ * Format application data from database to the format used in the UI
+ */
+export function formatApplicationData(app: any): ApplicationListItem {
+  let businessName = app.merchant_name;
+  let progress = 0;
+  
+  // Extract business name from application data if available
+  if (app.application_data) {
+    // Try to use the business name from the application data
+    if (app.application_data.business?.businessName) {
+      businessName = app.application_data.business.businessName;
+    }
+    
+    // Try to use stored progress or calculate it
+    progress = app.application_data.progress || calculateProgress(app.application_data);
   }
   
   return {
     id: app.id,
-    businessName,
-    status,
-    lastEdited: app.updated_at,
-    progress: calculateProgress(app.application_data),
-    rawData: app,
+    businessName: businessName || 'Unnamed Business',
+    status: app.status || (app.completed ? 'complete' : 'incomplete'),
+    lastEdited: app.updated_at || app.created_at,
+    progress: progress,
+    rawData: app, // Store the original data for reference
   };
 }

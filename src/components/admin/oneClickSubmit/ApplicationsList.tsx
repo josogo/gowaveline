@@ -30,9 +30,38 @@ export const ApplicationsList: React.FC = () => {
     fetchApplications,
   } = useApplications();
 
-  const handleOpenApplication = (app: any) => {
-    setSelectedApplication(app);
-    setDialogOpen(true);
+  const handleOpenApplication = async (app: any) => {
+    try {
+      // Fetch the latest application data from the database
+      if (app.id) {
+        const { data, error } = await supabase
+          .from('merchant_applications')
+          .select('*')
+          .eq('id', app.id)
+          .single();
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data) {
+          setSelectedApplication(data);
+          setDialogOpen(true);
+          return;
+        }
+      }
+      
+      // If we're here, either there was no ID or we didn't find data
+      setSelectedApplication(app.rawData || app);
+      setDialogOpen(true);
+    } catch (error) {
+      console.error("Error fetching application details:", error);
+      toast.error("Failed to load application details");
+      
+      // Fall back to the passed app data
+      setSelectedApplication(app.rawData || app);
+      setDialogOpen(true);
+    }
   };
 
   const handleDeclineApplication = (app: any) => {
@@ -49,6 +78,13 @@ export const ApplicationsList: React.FC = () => {
     if (!selectedApplication) return;
     
     try {
+      const appId = selectedApplication.id || selectedApplication.rawData?.id;
+      
+      if (!appId) {
+        toast.error("Invalid application data");
+        return;
+      }
+      
       const { error: updateError } = await supabase
         .from("merchant_applications")
         .update({
@@ -57,12 +93,12 @@ export const ApplicationsList: React.FC = () => {
           actioned_by: "admin",
           actioned_at: new Date().toISOString(),
         })
-        .eq("id", selectedApplication.id || selectedApplication.rawData?.id);
+        .eq("id", appId);
 
       const { error: logError } = await supabase
         .from("applications_action_log")
         .insert({
-          application_id: selectedApplication.id || selectedApplication.rawData?.id,
+          application_id: appId,
           action: declineRemoveDialog.action || '',
           reason,
           actioned_by: "admin",
@@ -104,7 +140,7 @@ export const ApplicationsList: React.FC = () => {
           <ApplicationDialog
             open={dialogOpen}
             onOpenChange={setDialogOpen}
-            application={selectedApplication?.rawData || selectedApplication}
+            application={selectedApplication}
           />
         )}
         {declineRemoveDialog.open && (
