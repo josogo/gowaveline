@@ -2,7 +2,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+// Initialize Resend with API key from environment variables
+const resendApiKey = Deno.env.get("RESEND_API_KEY");
+const resend = new Resend(resendApiKey);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -30,7 +32,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Received request to send merchant email");
     
     const requestData: SendMerchantEmailRequest = await req.json();
-    const { merchantName, merchantEmail, otp, applicationId, resend } = requestData;
+    const { merchantName, merchantEmail, otp, applicationId, resend: resendFlag } = requestData;
     
     // Base frontend URL - this should be your deployed frontend URL in production
     const baseUrl = new URL(req.headers.get("origin") || "http://localhost:3000");
@@ -67,7 +69,7 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
             <div class="content">
               <p>Hello ${merchantName},</p>
-              <p>${resend ? "A new link has been generated to" : "Please click the button below to"} complete your WaveLine payment processing application.</p>
+              <p>${resendFlag ? "A new link has been generated to" : "Please click the button below to"} complete your WaveLine payment processing application.</p>
               <p style="text-align: center; margin: 30px 0;">
                 <a href="${secureLink}" class="button">Access Application</a>
               </p>
@@ -86,19 +88,31 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email
     console.log(`Sending email to ${merchantEmail}`);
-    const emailResponse = await resend.emails.send({
-      from: "WaveLine <notifications@waveline.ai>",
-      to: [merchantEmail],
-      subject: resend ? "New Link: Complete Your WaveLine Application" : "Complete Your WaveLine Application",
-      html: emailHtml,
-    });
     
-    console.log("Email sent successfully:", emailResponse);
+    // Check if we have a valid Resend API key
+    if (!resendApiKey) {
+      throw new Error("RESEND_API_KEY is not configured");
+    }
 
-    return new Response(JSON.stringify({ success: true, message: "Email sent successfully" }), {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
+    // Send email with proper error handling
+    try {
+      const emailResponse = await resend.emails.send({
+        from: "WaveLine <notifications@waveline.ai>",
+        to: [merchantEmail],
+        subject: resendFlag ? "New Link: Complete Your WaveLine Application" : "Complete Your WaveLine Application",
+        html: emailHtml,
+      });
+      
+      console.log("Email sent successfully:", emailResponse);
+
+      return new Response(JSON.stringify({ success: true, message: "Email sent successfully" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    } catch (emailError: any) {
+      console.error("Resend API error:", emailError);
+      throw new Error(`Failed to send email via Resend API: ${emailError.message}`);
+    }
   } catch (error: any) {
     console.error("Error sending merchant email:", error);
     
