@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { BusinessNameField } from './fields/BusinessNameField';
 import { EmailField } from './fields/EmailField';
-import { PhoneField } from '@/components/admin/oneClickSubmit/forms/fields/PhoneField'; // Updated import path
-import { AddressField } from './fields/AddressField';
-import { WebsiteField } from './fields/WebsiteField';
+import { PhoneField } from '@/components/admin/oneClickSubmit/forms/fields/PhoneField';
+import AddressField from './fields/AddressField';
+import WebsiteField from './fields/WebsiteField';
 
 // Since there's no IndustrySelect or BusinessDescriptionField yet, let's create simplified versions
 // and import them correctly
