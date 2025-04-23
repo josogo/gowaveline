@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,6 +15,7 @@ import { ArrowRight, ArrowLeft, CheckCircle, Save, SendHorizontal } from 'lucide
 import { toast } from 'sonner';
 import { MerchantInitialForm } from './forms/MerchantInitialForm';
 import { SendToMerchantDialog } from './SendToMerchantDialog';
+import { supabase } from "@/integrations/supabase/client"; // Add this import
 
 export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({ merchantApplication }) => {
   const [step, setStep] = useState<"init" | "main">(
@@ -29,7 +31,7 @@ export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({ merch
   const [showBankRouting, setShowBankRouting] = useState(false);
   const [formData, setFormData] = useState({});
   const [showSendDialog, setShowSendDialog] = useState(false);
-  const [merchantAppId] = useState(merchantApplication?.id);
+  const [merchantAppId, setMerchantAppId] = useState(merchantApplication?.id);
 
   const tabs = [
     { id: 'business', label: 'Business' },
@@ -63,9 +65,35 @@ export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({ merch
     toast.success("Application draft saved successfully");
   };
 
-  const handleInitialNext = (values: any) => {
+  // (1) Remove EIN from initial flow, already handled in MerchantInitialForm
+
+  // (2) On initial step, immediately create the app after Next.
+  const handleInitialNext = async (values: any) => {
     setInitialData(values);
     setFormData({ ...formData, ...values });
+    // Immediately create a new application card in Supabase
+    const { data, error } = await supabase
+      .from('merchant_applications')
+      .insert([
+        {
+          merchant_name: values.businessName,
+          merchant_email: values.email,
+          application_data: values,
+          completed: false,
+          otp: (Math.floor(100000 + Math.random() * 900000)).toString(), // dummy OTP for now
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 1 week from now
+        }
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      toast.error("Failed to create application. Please try again.");
+      return;
+    }
+    setMerchantAppId(data.id); // set the application ID 
+    // Optionally, broadcast event to update application list if your app has global state/hooks
+    toast.success("New application created!");
     setStep("main");
   };
 
@@ -97,6 +125,7 @@ export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({ merch
     <div className="space-y-6">
       <Card>
         <CardContent className="pt-6">
+          {/* Only ONE progress bar shown */}
           <div className="mb-6">
             <h2 className="text-xl font-semibold mb-2">Merchant Application</h2>
             <div className="w-full bg-gray-200 rounded-full h-2.5">
@@ -204,20 +233,7 @@ export const ApplicationFlow: React.FC<{ merchantApplication?: any }> = ({ merch
             </>
           ) : (
             <>
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold mb-2">Merchant Application</h2>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div 
-                    className="bg-blue-600 h-2.5 rounded-full" 
-                    style={{ width: `${applicationProgress}%` }}
-                  />
-                </div>
-                <div className="flex justify-between mt-1 text-xs text-gray-500">
-                  <span>Application Progress</span>
-                  <span>{Math.round(applicationProgress)}%</span>
-                </div>
-              </div>
-              
+              {/* Only ONE progress bar */}
               {step === "init" ? (
                 <MerchantInitialForm onNext={handleInitialNext} />
               ) : (

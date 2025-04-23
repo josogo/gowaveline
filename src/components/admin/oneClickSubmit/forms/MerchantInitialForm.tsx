@@ -8,12 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 
-// Validation schema
+// Validation schema with ONLY the required fields for the initial screen
 const schema = z.object({
   businessName: z.string().min(2, "Business name is required"),
-  ein: z.string()
-    .regex(/^[0-9\-]{9,10}$/, "EIN must be 9 digits, optionally with '-'")
-    .min(9, "EIN is required"),
   businessType: z.string().min(1, "Business type is required"),
   email: z.string().email("Enter a valid email"),
   monthlyVolume: z.string().min(1, "Monthly volume is required"),
@@ -25,7 +22,6 @@ export const MerchantInitialForm: React.FC<{ onNext: (data: MerchantInitialFormV
     resolver: zodResolver(schema),
     defaultValues: {
       businessName: "",
-      ein: "",
       businessType: "",
       email: "",
       monthlyVolume: "",
@@ -50,20 +46,6 @@ export const MerchantInitialForm: React.FC<{ onNext: (data: MerchantInitialFormV
               <FormLabel>Business Name</FormLabel>
               <FormControl>
                 <Input placeholder="ACME Corp" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {/* EIN */}
-        <FormField
-          control={form.control}
-          name="ein"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>EIN</FormLabel>
-              <FormControl>
-                <Input placeholder="12-3456789" maxLength={10} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
