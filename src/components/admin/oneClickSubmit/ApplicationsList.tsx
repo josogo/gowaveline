@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
@@ -40,14 +39,29 @@ export const ApplicationsList: React.FC = () => {
       }
       
       // Transform the data to match our application card format
-      const formattedData = data.map(app => ({
-        id: app.id,
-        businessName: app.application_data?.businessName || app.merchant_name || 'Unknown Business',
-        status: app.completed ? 'complete' : 'incomplete',
-        lastEdited: app.updated_at,
-        progress: calculateProgress(app.application_data),
-        rawData: app
-      }));
+      const formattedData = data.map(app => {
+        // Safely access businessName from application_data, which might be a JSON object or string
+        let businessName = 'Unknown Business';
+        if (app.application_data) {
+          // If it's a string, parse it to an object
+          const appData = typeof app.application_data === 'string' 
+            ? JSON.parse(app.application_data) 
+            : app.application_data;
+          
+          businessName = appData?.businessName || app.merchant_name || 'Unknown Business';
+        } else if (app.merchant_name) {
+          businessName = app.merchant_name;
+        }
+        
+        return {
+          id: app.id,
+          businessName: businessName,
+          status: app.completed ? 'complete' : 'incomplete',
+          lastEdited: app.updated_at,
+          progress: calculateProgress(app.application_data),
+          rawData: app
+        };
+      });
       
       setApplications(formattedData);
       setFilteredApplications(formattedData);
