@@ -41,6 +41,13 @@ export const SendToMerchantDialog: React.FC<SendToMerchantDialogProps> = ({
 
     setIsSending(true);
     try {
+      console.log("Sending to merchant:", {
+        applicationId,
+        email,
+        name,
+        applicationData
+      });
+      
       // Update the application with merchant details
       if (applicationId) {
         const { error } = await supabase

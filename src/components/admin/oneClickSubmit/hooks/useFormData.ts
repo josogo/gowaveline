@@ -5,10 +5,15 @@ export function useFormData() {
   const [formData, setFormData] = useState<any>({});
 
   const updateFormData = useCallback((newData: any) => {
-    setFormData(prevData => ({
-      ...prevData,
-      ...newData
-    }));
+    console.log("Updating form data with:", newData);
+    setFormData(prevData => {
+      const updatedData = {
+        ...prevData,
+        ...newData
+      };
+      console.log("Updated form data:", updatedData);
+      return updatedData;
+    });
   }, []);
 
   return { formData, updateFormData };

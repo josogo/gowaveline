@@ -56,8 +56,10 @@ export const BusinessDetailsForm: React.FC = () => {
 
   // Load existing business data when available
   useEffect(() => {
+    console.log("BusinessDetailsForm - Current formData:", formData);
     if (formData?.business) {
       const businessData = formData.business;
+      console.log("Loading business data into form:", businessData);
       form.reset({
         businessName: businessData.businessName || "",
         businessType: businessData.businessType || "",
@@ -75,6 +77,7 @@ export const BusinessDetailsForm: React.FC = () => {
 
   // Save form data when values change
   const handleFormChange = (values: BusinessFormValues) => {
+    console.log("Business form changed:", values);
     updateFormData({ business: values });
   };
 

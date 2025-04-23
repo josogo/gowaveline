@@ -81,6 +81,7 @@ export const ApplicationsList: React.FC = () => {
         }
         
         if (data) {
+          console.log("Opening application with data:", data);
           setSelectedApplication(data);
           setAppFlowOpen(true);
           return;

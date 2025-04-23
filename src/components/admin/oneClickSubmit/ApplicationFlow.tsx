@@ -53,6 +53,7 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
   useEffect(() => {
     if (merchantApplication?.application_data) {
       updateFormData(merchantApplication.application_data);
+      console.log("Initializing form data from merchant application:", merchantApplication.application_data);
     }
   }, [merchantApplication, updateFormData]);
 
@@ -61,6 +62,7 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
   
   // Handle tab change
   const handleTabChange = (tabId: string) => {
+    console.log("Saving application data before tab change from", activeTab, "to", tabId);
     saveApplicationData();
     setActiveTab(tabId);
     
@@ -163,6 +165,7 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
         open={showSendDialog}
         onOpenChange={setShowSendDialog}
         applicationId={merchantApplication?.id}
+        applicationData={formData}
         merchantEmail={merchantApplication?.merchant_email}
         merchantName={merchantApplication?.merchant_name}
       />
