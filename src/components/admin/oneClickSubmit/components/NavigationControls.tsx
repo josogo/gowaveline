@@ -1,5 +1,5 @@
 
-import { ChevronLeft, ChevronRight, Send } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Send, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface NavigationControlsProps {
@@ -7,6 +7,7 @@ interface NavigationControlsProps {
   totalTabs: number;
   onNavigate: (direction: 'next' | 'prev') => void;
   onSendToMerchant: () => void;
+  onBankRouting?: () => void;
   readOnly?: boolean;
 }
 
@@ -15,6 +16,7 @@ export const NavigationControls = ({
   totalTabs,
   onNavigate,
   onSendToMerchant,
+  onBankRouting,
   readOnly
 }: NavigationControlsProps) => {
   return (
@@ -29,6 +31,12 @@ export const NavigationControls = ({
       </Button>
       
       <div className="flex gap-2">
+        {onBankRouting && (
+          <Button onClick={onBankRouting} variant="outline">
+            <Building2 className="mr-2 h-4 w-4" />
+            Bank Routing
+          </Button>
+        )}
         {currentTabIndex === totalTabs - 1 ? (
           <Button onClick={onSendToMerchant} disabled={readOnly}>
             <Send className="mr-2 h-4 w-4" />
@@ -44,3 +52,4 @@ export const NavigationControls = ({
     </div>
   );
 };
+

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 
@@ -39,11 +38,10 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
   const { applicationProgress, setApplicationProgress, activeTab, setActiveTab } = 
     useApplicationProgress(merchantApplication);
   const [showSendDialog, setShowSendDialog] = useState(false);
+  const [showBankRouting, setShowBankRouting] = useState(false);
 
-  // Initialize form data from merchant application if available
   useEffect(() => {
     if (merchantApplication?.application_data) {
-      // Merge the initial form data with any existing application data
       const initialData = {
         businessName: merchantApplication.merchant_name,
         businessEmail: merchantApplication.merchant_email,
@@ -54,7 +52,6 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
     }
   }, [merchantApplication, updateFormData]);
 
-  // Get application actions (save, send to merchant)
   const { saveApplicationData, handleSendToMerchant } = useApplicationActions(
     merchantApplication?.id,
     formData,
@@ -63,23 +60,19 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
     setShowSendDialog
   );
 
-  // Find current tab index
   const currentTabIndex = tabs.findIndex(tab => tab.id === activeTab);
   
-  // Handle tab change
   const handleTabChange = (tabId: string) => {
     console.log("Saving application data before tab change from", activeTab, "to", tabId);
     saveApplicationData();
     setActiveTab(tabId);
     
-    // Update progress when changing tabs
     const newTabIndex = tabs.findIndex(tab => tab.id === tabId);
     const progressPerStep = 100 / tabs.length;
     const newProgress = Math.ceil((newTabIndex + 1) * progressPerStep);
     setApplicationProgress(newProgress);
   };
 
-  // Navigate to next or previous tab
   const navigateTab = (direction: 'next' | 'prev') => {
     if (direction === 'next' && currentTabIndex < tabs.length - 1) {
       handleTabChange(tabs[currentTabIndex + 1].id);
@@ -87,6 +80,15 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
       handleTabChange(tabs[currentTabIndex - 1].id);
     }
   };
+
+  const handleBankRouting = () => {
+    saveApplicationData();
+    setShowBankRouting(true);
+  };
+
+  if (showBankRouting) {
+    return <BankRoutingSystem onBack={() => setShowBankRouting(false)} />;
+  }
 
   return (
     <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg border animate-fade-in transition-all">
@@ -132,6 +134,7 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
           totalTabs={tabs.length}
           onNavigate={navigateTab}
           onSendToMerchant={handleSendToMerchant}
+          onBankRouting={handleBankRouting}
           readOnly={readOnly}
         />
       </div>
