@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, FormProvider, useForm } from 'react-hook-form';
 import { BusinessNameField } from './fields/BusinessNameField';
 import { EmailField } from './fields/EmailField';
 import { PhoneField } from '@/components/admin/oneClickSubmit/forms/fields/PhoneField';
@@ -73,17 +74,33 @@ const BusinessDescriptionField = () => {
 };
 
 export const BusinessDetailsForm = () => {
-  const form = useFormContext();
-
+  // Check if we're in a form context
+  const formContext = useFormContext();
+  
+  // If there's no form context, create a local form instance
+  const localForm = useForm();
+  
+  // Use either the context form or local form
+  const form = formContext || localForm;
+  
+  // Safe way to get values if they exist
+  const getValueSafely = (fieldName: string) => {
+    try {
+      return form.getValues(fieldName) || '';
+    } catch (e) {
+      return '';
+    }
+  };
+  
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <BusinessNameField
-          defaultValue={form.getValues('businessName')}
+          defaultValue={getValueSafely('businessName')}
         />
         
         <EmailField
-          defaultValue={form.getValues('businessEmail')}
+          defaultValue={getValueSafely('businessEmail')}
         />
         
         <PhoneField />
