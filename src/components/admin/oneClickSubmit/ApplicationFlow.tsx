@@ -11,9 +11,10 @@ import { FinancialInfoForm } from './forms/FinancialInfoForm';
 import { ProcessingInfoForm } from './forms/ProcessingInfoForm';
 import { DocumentsForm } from './forms/DocumentsForm';
 import { BankRoutingSystem } from './BankRoutingSystem';
-import { ArrowRight, ArrowLeft, CheckCircle, Save } from 'lucide-react';
+import { ArrowRight, ArrowLeft, CheckCircle, Save, SendHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 import { MerchantInitialForm } from './forms/MerchantInitialForm';
+import { SendToMerchantDialog } from './SendToMerchantDialog';
 
 export const ApplicationFlow: React.FC = () => {
   const [step, setStep] = useState<"init" | "main">("init");
@@ -22,6 +23,7 @@ export const ApplicationFlow: React.FC = () => {
   const [applicationProgress, setApplicationProgress] = useState(0);
   const [showBankRouting, setShowBankRouting] = useState(false);
   const [formData, setFormData] = useState({});
+  const [showSendDialog, setShowSendDialog] = useState(false);
 
   const tabs = [
     { id: 'business', label: 'Business' },
@@ -57,7 +59,21 @@ export const ApplicationFlow: React.FC = () => {
 
   const handleInitialNext = (values: any) => {
     setInitialData(values);
+    setFormData({ ...formData, ...values });
     setStep("main");
+  };
+
+  const handleSendToMerchant = () => {
+    setShowSendDialog(true);
+  };
+
+  const getAllFormData = () => {
+    return {
+      ...initialData,
+      ...formData,
+      progress: applicationProgress,
+      currentTab: activeTab,
+    };
   };
 
   if (showBankRouting) {
@@ -139,6 +155,15 @@ export const ApplicationFlow: React.FC = () => {
                 </Button>
                 
                 <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleSendToMerchant}
+                    className="bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200"
+                  >
+                    <SendHorizontal className="mr-2 h-4 w-4" />
+                    Send to Merchant
+                  </Button>
+                
                   <Button variant="outline" onClick={handleSaveDraft}>
                     <Save className="mr-2 h-4 w-4" />
                     Save Draft
@@ -163,6 +188,12 @@ export const ApplicationFlow: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      <SendToMerchantDialog 
+        open={showSendDialog} 
+        onOpenChange={setShowSendDialog} 
+        applicationData={getAllFormData()}
+      />
     </div>
   );
 };

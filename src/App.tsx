@@ -33,6 +33,7 @@ import SettingsPage from './pages/admin/Settings';
 import IndustryDocuments from './pages/admin/IndustryDocuments';
 import DocumentsPage from './pages/admin/DocumentsPage';
 import OneClickSubmit from './pages/admin/OneClickSubmit';
+import MerchantApplication from './pages/MerchantApplication';
 
 const AppRoutes = () => {
   return (
@@ -65,6 +66,8 @@ const AppRoutes = () => {
       <Route path="/admin/industry-documents" element={<IndustryDocuments />} />
       <Route path="/admin/documents" element={<DocumentsPage />} />
       <Route path="/admin/one-click-submit" element={<OneClickSubmit />} />
+      <Route path="/merchant-application" element={<MerchantApplication />} />
+      <Route path="/merchant-application/:applicationId" element={<MerchantApplication />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
