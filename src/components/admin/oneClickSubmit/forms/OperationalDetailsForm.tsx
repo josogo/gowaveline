@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FormLabel } from '@/components/ui/form';
+import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
@@ -11,7 +11,7 @@ export const OperationalDetailsForm: React.FC = () => {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <FormLabel>Product/Service Category</FormLabel>
+          <Label>Product/Service Category</Label>
           <Select>
             <SelectTrigger>
               <SelectValue placeholder="Select category" />
@@ -31,7 +31,7 @@ export const OperationalDetailsForm: React.FC = () => {
         </div>
         
         <div>
-          <FormLabel>MCC Code</FormLabel>
+          <Label>MCC Code</Label>
           <Input placeholder="Enter 4-digit MCC code" />
           <p className="text-xs text-muted-foreground mt-1">
             If unsure, our AI will suggest appropriate MCC codes
@@ -39,7 +39,7 @@ export const OperationalDetailsForm: React.FC = () => {
         </div>
         
         <div>
-          <FormLabel>NAICS Code</FormLabel>
+          <Label>NAICS Code</Label>
           <Input placeholder="Enter 6-digit NAICS code" />
           <p className="text-xs text-muted-foreground mt-1">
             Will be auto-detected based on your business description
@@ -47,7 +47,7 @@ export const OperationalDetailsForm: React.FC = () => {
         </div>
         
         <div>
-          <FormLabel>Business Description</FormLabel>
+          <Label>Business Description</Label>
           <Textarea placeholder="Describe your products or services in detail" />
         </div>
       </div>
@@ -56,7 +56,7 @@ export const OperationalDetailsForm: React.FC = () => {
         <h3 className="text-lg font-medium">Fulfillment Details</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <FormLabel>Fulfillment Model</FormLabel>
+            <Label>Fulfillment Model</Label>
             <Select>
               <SelectTrigger>
                 <SelectValue placeholder="Select fulfillment model" />
@@ -73,7 +73,7 @@ export const OperationalDetailsForm: React.FC = () => {
           </div>
           
           <div>
-            <FormLabel>Average Fulfillment Time</FormLabel>
+            <Label>Average Fulfillment Time</Label>
             <Select>
               <SelectTrigger>
                 <SelectValue placeholder="Select timeframe" />
@@ -90,7 +90,7 @@ export const OperationalDetailsForm: React.FC = () => {
           </div>
           
           <div>
-            <FormLabel>Shipping Method</FormLabel>
+            <Label>Shipping Method</Label>
             <Select>
               <SelectTrigger>
                 <SelectValue placeholder="Select shipping method" />
@@ -107,7 +107,7 @@ export const OperationalDetailsForm: React.FC = () => {
           </div>
           
           <div>
-            <FormLabel>Return Policy Timeframe</FormLabel>
+            <Label>Return Policy Timeframe</Label>
             <Select>
               <SelectTrigger>
                 <SelectValue placeholder="Select timeframe" />
@@ -130,22 +130,22 @@ export const OperationalDetailsForm: React.FC = () => {
         <h3 className="text-lg font-medium">Processing Details</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <FormLabel>Average Ticket Size ($)</FormLabel>
+            <Label>Average Ticket Size ($)</Label>
             <Input type="number" placeholder="0.00" />
           </div>
           
           <div>
-            <FormLabel>Monthly Processing Volume ($)</FormLabel>
+            <Label>Monthly Processing Volume ($)</Label>
             <Input type="number" placeholder="0.00" />
           </div>
           
           <div>
-            <FormLabel>Chargeback Percentage (%)</FormLabel>
+            <Label>Chargeback Percentage (%)</Label>
             <Input type="number" placeholder="0.00" />
           </div>
           
           <div>
-            <FormLabel>Refund Percentage (%)</FormLabel>
+            <Label>Refund Percentage (%)</Label>
             <Input type="number" placeholder="0.00" />
           </div>
         </div>
@@ -155,14 +155,14 @@ export const OperationalDetailsForm: React.FC = () => {
         <h3 className="text-lg font-medium">Recurring Billing</h3>
         <div className="flex items-center space-x-2 mb-4">
           <Switch id="recurring-billing" />
-          <FormLabel htmlFor="recurring-billing" className="cursor-pointer">
+          <Label htmlFor="recurring-billing" className="cursor-pointer">
             This business uses subscription/recurring billing
-          </FormLabel>
+          </Label>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <FormLabel>Billing Frequency</FormLabel>
+            <Label>Billing Frequency</Label>
             <Select>
               <SelectTrigger>
                 <SelectValue placeholder="Select frequency" />
@@ -180,16 +180,16 @@ export const OperationalDetailsForm: React.FC = () => {
           </div>
           
           <div>
-            <FormLabel>Recurring Billing Software</FormLabel>
+            <Label>Recurring Billing Software</Label>
             <Input placeholder="e.g. Stripe, Chargebee, ReCharge" />
           </div>
           
           <div>
             <div className="flex items-center space-x-2 mb-2">
               <Switch id="free-trial" />
-              <FormLabel htmlFor="free-trial" className="cursor-pointer">
+              <Label htmlFor="free-trial" className="cursor-pointer">
                 Free trial offered
-              </FormLabel>
+              </Label>
             </div>
             <p className="text-xs text-muted-foreground">
               If you offer a free trial before charging customers
@@ -197,7 +197,7 @@ export const OperationalDetailsForm: React.FC = () => {
           </div>
           
           <div>
-            <FormLabel>Free Trial Length (Days)</FormLabel>
+            <Label>Free Trial Length (Days)</Label>
             <Input type="number" placeholder="0" />
           </div>
         </div>

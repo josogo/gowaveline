@@ -1,23 +1,23 @@
 
 import React from 'react';
-import { FormLabel } from '@/components/ui/form';
+import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Link2, Upload, ExternalLink, Check } from 'lucide-react';
+import { Link2, Upload } from 'lucide-react';
 
 export const FinancialInfoForm: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <FormLabel>Bank Name</FormLabel>
+          <Label>Bank Name</Label>
           <Input placeholder="e.g. Chase Bank" />
         </div>
         
         <div>
-          <FormLabel>Account Type</FormLabel>
+          <Label>Account Type</Label>
           <Select>
             <SelectTrigger>
               <SelectValue placeholder="Select account type" />
@@ -32,12 +32,12 @@ export const FinancialInfoForm: React.FC = () => {
         </div>
         
         <div>
-          <FormLabel>Routing Number</FormLabel>
+          <Label>Routing Number</Label>
           <Input placeholder="9 digits" />
         </div>
         
         <div>
-          <FormLabel>Account Number</FormLabel>
+          <Label>Account Number</Label>
           <Input placeholder="Account number" />
         </div>
       </div>

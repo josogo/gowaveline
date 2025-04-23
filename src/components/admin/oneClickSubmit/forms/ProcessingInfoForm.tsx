@@ -1,19 +1,19 @@
 
 import React from 'react';
-import { FormLabel } from '@/components/ui/form';
+import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Upload, Link2, AlertCircle, ExternalLink } from 'lucide-react';
+import { Upload, Link2, AlertCircle } from 'lucide-react';
 
 export const ProcessingInfoForm: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <FormLabel>Current Payment Processor</FormLabel>
+          <Label>Current Payment Processor</Label>
           <Select>
             <SelectTrigger>
               <SelectValue placeholder="Select processor" />
@@ -33,12 +33,12 @@ export const ProcessingInfoForm: React.FC = () => {
         </div>
         
         <div>
-          <FormLabel>Years With Current Processor</FormLabel>
+          <Label>Years With Current Processor</Label>
           <Input type="number" placeholder="0" />
         </div>
         
         <div>
-          <FormLabel>Monthly Processing Volume</FormLabel>
+          <Label>Monthly Processing Volume</Label>
           <Input type="number" placeholder="0.00" />
           <p className="text-xs text-muted-foreground mt-1">
             Average monthly credit card volume
@@ -46,12 +46,12 @@ export const ProcessingInfoForm: React.FC = () => {
         </div>
         
         <div>
-          <FormLabel>Average Transaction Size</FormLabel>
+          <Label>Average Transaction Size</Label>
           <Input type="number" placeholder="0.00" />
         </div>
         
         <div>
-          <FormLabel>Current Processing Rate</FormLabel>
+          <Label>Current Processing Rate</Label>
           <div className="flex space-x-2">
             <Input type="number" placeholder="0.00" className="w-1/2" />
             <div className="w-1/2 flex items-center bg-gray-100 px-3 rounded-md text-sm">
@@ -61,7 +61,7 @@ export const ProcessingInfoForm: React.FC = () => {
         </div>
         
         <div>
-          <FormLabel>Monthly Transaction Count</FormLabel>
+          <Label>Monthly Transaction Count</Label>
           <Input type="number" placeholder="0" />
         </div>
       </div>
@@ -71,23 +71,23 @@ export const ProcessingInfoForm: React.FC = () => {
         
         <div className="flex items-center space-x-2 mb-4">
           <Switch id="previous-termination" />
-          <FormLabel htmlFor="previous-termination" className="cursor-pointer">
+          <Label htmlFor="previous-termination" className="cursor-pointer">
             Previously terminated by a processor
-          </FormLabel>
+          </Label>
         </div>
         
         <div className="flex items-center space-x-2 mb-4">
           <Switch id="reserves-held" />
-          <FormLabel htmlFor="reserves-held" className="cursor-pointer">
+          <Label htmlFor="reserves-held" className="cursor-pointer">
             Currently have reserves held by a processor
-          </FormLabel>
+          </Label>
         </div>
         
         <div className="flex items-center space-x-2 mb-4">
           <Switch id="excessive-chargebacks" />
-          <FormLabel htmlFor="excessive-chargebacks" className="cursor-pointer">
+          <Label htmlFor="excessive-chargebacks" className="cursor-pointer">
             Had excessive chargebacks in past 6 months
-          </FormLabel>
+          </Label>
         </div>
       </div>
       

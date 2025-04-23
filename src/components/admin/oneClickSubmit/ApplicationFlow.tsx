@@ -13,6 +13,7 @@ import { DocumentsForm } from './forms/DocumentsForm';
 import { BankRoutingSystem } from './BankRoutingSystem';
 import { ArrowRight, ArrowLeft, CheckCircle, Save } from 'lucide-react';
 import { toast } from 'sonner';
+import { Form } from '@/components/ui/form';
 
 export const ApplicationFlow: React.FC = () => {
   const [activeTab, setActiveTab] = useState('business');

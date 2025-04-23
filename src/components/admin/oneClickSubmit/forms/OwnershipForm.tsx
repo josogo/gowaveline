@@ -1,11 +1,13 @@
 
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
-import { FormLabel } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserPlus, Trash2, Upload } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 
 export const OwnershipForm: React.FC = () => {
   const [owners, setOwners] = useState([
@@ -60,27 +62,27 @@ export const OwnershipForm: React.FC = () => {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
-                <FormLabel>Full Name</FormLabel>
+                <Label>Full Name</Label>
                 <Input placeholder="Full legal name" />
               </div>
               
               <div>
-                <FormLabel>Title/Position</FormLabel>
+                <Label>Title/Position</Label>
                 <Input placeholder="e.g. CEO, President" />
               </div>
               
               <div>
-                <FormLabel>Ownership Percentage</FormLabel>
+                <Label>Ownership Percentage</Label>
                 <Input type="number" placeholder="25" />
               </div>
               
               <div>
-                <FormLabel>Date of Birth</FormLabel>
+                <Label>Date of Birth</Label>
                 <Input type="date" />
               </div>
               
               <div>
-                <FormLabel>SSN/Tax ID</FormLabel>
+                <Label>SSN/Tax ID</Label>
                 <Input placeholder="XXX-XX-XXXX" />
               </div>
             </div>
@@ -89,22 +91,22 @@ export const OwnershipForm: React.FC = () => {
               <h3 className="text-md font-medium">Residential Address</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <FormLabel>Street Address</FormLabel>
+                  <Label>Street Address</Label>
                   <Input placeholder="123 Main St" />
                 </div>
                 
                 <div>
-                  <FormLabel>Suite/Unit</FormLabel>
+                  <Label>Suite/Unit</Label>
                   <Input placeholder="Apt 4B" />
                 </div>
                 
                 <div>
-                  <FormLabel>City</FormLabel>
+                  <Label>City</Label>
                   <Input placeholder="City" />
                 </div>
                 
                 <div>
-                  <FormLabel>State</FormLabel>
+                  <Label>State</Label>
                   <Select>
                     <SelectTrigger>
                       <SelectValue placeholder="Select state" />
@@ -120,7 +122,7 @@ export const OwnershipForm: React.FC = () => {
                 </div>
                 
                 <div>
-                  <FormLabel>ZIP Code</FormLabel>
+                  <Label>ZIP Code</Label>
                   <Input placeholder="12345" />
                 </div>
               </div>

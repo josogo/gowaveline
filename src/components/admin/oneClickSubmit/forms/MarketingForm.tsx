@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FormLabel } from '@/components/ui/form';
+import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
@@ -24,65 +24,65 @@ export const MarketingForm: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div className="flex items-center space-x-2">
             <Switch id="facebook-ads" />
-            <FormLabel htmlFor="facebook-ads" className="cursor-pointer">
+            <Label htmlFor="facebook-ads" className="cursor-pointer">
               Facebook/Instagram Ads
-            </FormLabel>
+            </Label>
           </div>
           
           <div className="flex items-center space-x-2">
             <Switch id="google-ads" />
-            <FormLabel htmlFor="google-ads" className="cursor-pointer">
+            <Label htmlFor="google-ads" className="cursor-pointer">
               Google Ads
-            </FormLabel>
+            </Label>
           </div>
           
           <div className="flex items-center space-x-2">
             <Switch id="tiktok-ads" />
-            <FormLabel htmlFor="tiktok-ads" className="cursor-pointer">
+            <Label htmlFor="tiktok-ads" className="cursor-pointer">
               TikTok Ads
-            </FormLabel>
+            </Label>
           </div>
           
           <div className="flex items-center space-x-2">
             <Switch id="affiliate" />
-            <FormLabel htmlFor="affiliate" className="cursor-pointer">
+            <Label htmlFor="affiliate" className="cursor-pointer">
               Affiliate Marketing
-            </FormLabel>
+            </Label>
           </div>
           
           <div className="flex items-center space-x-2">
             <Switch id="influencer" />
-            <FormLabel htmlFor="influencer" className="cursor-pointer">
+            <Label htmlFor="influencer" className="cursor-pointer">
               Influencer Marketing
-            </FormLabel>
+            </Label>
           </div>
           
           <div className="flex items-center space-x-2">
             <Switch id="seo" />
-            <FormLabel htmlFor="seo" className="cursor-pointer">
+            <Label htmlFor="seo" className="cursor-pointer">
               SEO / Organic
-            </FormLabel>
+            </Label>
           </div>
           
           <div className="flex items-center space-x-2">
             <Switch id="email" />
-            <FormLabel htmlFor="email" className="cursor-pointer">
+            <Label htmlFor="email" className="cursor-pointer">
               Email Marketing
-            </FormLabel>
+            </Label>
           </div>
           
           <div className="flex items-center space-x-2">
             <Switch id="sms" />
-            <FormLabel htmlFor="sms" className="cursor-pointer">
+            <Label htmlFor="sms" className="cursor-pointer">
               SMS Marketing
-            </FormLabel>
+            </Label>
           </div>
           
           <div className="flex items-center space-x-2">
             <Switch id="direct-mail" />
-            <FormLabel htmlFor="direct-mail" className="cursor-pointer">
+            <Label htmlFor="direct-mail" className="cursor-pointer">
               Direct Mail
-            </FormLabel>
+            </Label>
           </div>
         </div>
       </div>
@@ -181,7 +181,7 @@ export const MarketingForm: React.FC = () => {
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Claims Assessment</h3>
         <div>
-          <FormLabel>Do your marketing materials make any claims about results, outcomes, or benefits?</FormLabel>
+          <Label>Do your marketing materials make any claims about results, outcomes, or benefits?</Label>
           <Textarea 
             placeholder="Describe any claims made in your marketing materials"
             className="mt-2"
@@ -190,7 +190,7 @@ export const MarketingForm: React.FC = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <FormLabel>Average Customer Acquisition Cost (CAC)</FormLabel>
+            <Label>Average Customer Acquisition Cost (CAC)</Label>
             <Input type="number" placeholder="0.00" />
             <p className="text-xs text-muted-foreground mt-1">
               Average cost to acquire one customer
@@ -198,7 +198,7 @@ export const MarketingForm: React.FC = () => {
           </div>
           
           <div>
-            <FormLabel>Customer Lifetime Value (LTV)</FormLabel>
+            <Label>Customer Lifetime Value (LTV)</Label>
             <Input type="number" placeholder="0.00" />
             <p className="text-xs text-muted-foreground mt-1">
               Average value of a customer over their lifetime
