@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,7 +13,6 @@ import { DocumentsForm } from './forms/DocumentsForm';
 import { BankRoutingSystem } from './BankRoutingSystem';
 import { ArrowRight, ArrowLeft, CheckCircle, Save } from 'lucide-react';
 import { toast } from 'sonner';
-import { Form } from '@/components/ui/form';
 import { MerchantInitialForm } from './forms/MerchantInitialForm';
 
 export const ApplicationFlow: React.FC = () => {
@@ -81,82 +81,85 @@ export const ApplicationFlow: React.FC = () => {
               <span>{Math.round(applicationProgress)}%</span>
             </div>
           </div>
+          
           {step === "init" ? (
             <MerchantInitialForm onNext={handleInitialNext} />
           ) : (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid grid-cols-7 w-full mb-6">
-                {tabs.map(tab => (
-                  <TabsTrigger 
-                    key={tab.id} 
-                    value={tab.id}
-                    className="text-xs sm:text-sm"
-                  >
-                    {tab.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+            <>
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid grid-cols-7 w-full mb-6">
+                  {tabs.map(tab => (
+                    <TabsTrigger 
+                      key={tab.id} 
+                      value={tab.id}
+                      className="text-xs sm:text-sm"
+                    >
+                      {tab.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                
+                <TabsContent value="business">
+                  <BusinessDetailsForm />
+                </TabsContent>
+                
+                <TabsContent value="ownership">
+                  <OwnershipForm />
+                </TabsContent>
+                
+                <TabsContent value="operations">
+                  <OperationalDetailsForm />
+                </TabsContent>
+                
+                <TabsContent value="marketing">
+                  <MarketingForm />
+                </TabsContent>
+                
+                <TabsContent value="financial">
+                  <FinancialInfoForm />
+                </TabsContent>
+                
+                <TabsContent value="processing">
+                  <ProcessingInfoForm />
+                </TabsContent>
+                
+                <TabsContent value="documents">
+                  <DocumentsForm />
+                </TabsContent>
+              </Tabs>
               
-              <TabsContent value="business">
-                <BusinessDetailsForm />
-              </TabsContent>
-              
-              <TabsContent value="ownership">
-                <OwnershipForm />
-              </TabsContent>
-              
-              <TabsContent value="operations">
-                <OperationalDetailsForm />
-              </TabsContent>
-              
-              <TabsContent value="marketing">
-                <MarketingForm />
-              </TabsContent>
-              
-              <TabsContent value="financial">
-                <FinancialInfoForm />
-              </TabsContent>
-              
-              <TabsContent value="processing">
-                <ProcessingInfoForm />
-              </TabsContent>
-              
-              <TabsContent value="documents">
-                <DocumentsForm />
-              </TabsContent>
-            </Tabs>
-            
-            <div className="flex justify-between mt-6 pt-6 border-t">
-              <Button 
-                variant="outline" 
-                onClick={handlePrevious}
-                disabled={activeTab === 'business'}
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Previous
-              </Button>
-              
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={handleSaveDraft}>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Draft
+              <div className="flex justify-between mt-6 pt-6 border-t">
+                <Button 
+                  variant="outline" 
+                  onClick={handlePrevious}
+                  disabled={activeTab === 'business'}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Previous
                 </Button>
                 
-                <Button onClick={handleNext}>
-                  {activeTab === 'documents' ? (
-                    <>
-                      <CheckCircle className="mr-2 h-4 w-4" />
-                      Complete
-                    </>
-                  ) : (
-                    <>
-                      Next
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </>
-                  )}
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={handleSaveDraft}>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Draft
+                  </Button>
+                  
+                  <Button onClick={handleNext}>
+                    {activeTab === 'documents' ? (
+                      <>
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Complete
+                      </>
+                    ) : (
+                      <>
+                        Next
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
-            </div>
+            </>
           )}
         </CardContent>
       </Card>
