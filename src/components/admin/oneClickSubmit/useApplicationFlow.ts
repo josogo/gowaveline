@@ -176,7 +176,7 @@ export function useApplicationFlow(merchantApplication: any) {
   }, [saveApplicationData, setShowSendDialog]);
 
   const handleMerchantSubmit = useCallback(async () => {
-    if (!merchantAppId) return;
+    if (!merchantAppId) return Promise.resolve();
     try {
       // First save any pending changes
       await saveApplicationData();
@@ -188,9 +188,11 @@ export function useApplicationFlow(merchantApplication: any) {
       } else {
         toast.error("Failed to submit application. Please try again.");
       }
+      return Promise.resolve();
     } catch (error) {
       console.error("Error in handleMerchantSubmit:", error);
       toast.error("An unexpected error occurred. Please try again.");
+      return Promise.resolve();
     }
   }, [merchantAppId, saveApplicationData]);
 
@@ -200,9 +202,15 @@ export function useApplicationFlow(merchantApplication: any) {
     setShowActionMenu(false);
   }, [merchantApplication, setCardActionApp, setDeclineRemoveDialog, setShowActionMenu]);
 
-  const processDeclineRemove = useCallback(async (reason: string) => {
+  // Fix for the TypeScript error - ensuring processDeclineRemove always returns a Promise<void>
+  const processDeclineRemove = useCallback(async (reason: string): Promise<void> => {
     const app = cardActionApp || merchantApplication;
     try {
+      if (!app || !app.id || !declineRemoveDialog.action) {
+        toast.error("Missing application information");
+        return Promise.resolve();
+      }
+
       const { error: updateError } = await supabase
         .from("merchant_applications")
         .update({
@@ -237,6 +245,7 @@ export function useApplicationFlow(merchantApplication: any) {
     } catch (e: any) {
       toast.error(e.message || "Failed, please try again.");
     }
+    return Promise.resolve();
   }, [cardActionApp, merchantApplication, declineRemoveDialog, setDeclineRemoveDialog]);
 
   const getAllFormData = useCallback(() => {
@@ -277,9 +286,9 @@ export function useApplicationFlow(merchantApplication: any) {
     handleSaveDraft,
     handleInitialNext,
     handleSendToMerchant,
-    handleMerchantSubmit: handleMerchantSubmit || (() => {}),
-    handleDeclineRemove: handleDeclineRemove || (() => {}),
-    processDeclineRemove: processDeclineRemove || (() => {}),
+    handleMerchantSubmit,
+    handleDeclineRemove,
+    processDeclineRemove,
     getAllFormData,
     saveApplicationData,
   };
