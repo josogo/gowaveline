@@ -109,7 +109,6 @@ export function useAnalyticsData() {
         .sort((a, b) => a.date.localeCompare(b.date));
 
       // Calculate progress step dropoffs (simplified estimation)
-      // This assumes the application_data has a progress field
       const stepDropoffs = [
         { step: "Business", dropoff: 0 },
         { step: "Ownership", dropoff: 0 },
@@ -123,7 +122,12 @@ export function useAnalyticsData() {
       let stepCounts = [0, 0, 0, 0, 0, 0, 0];
       
       applicationsData.forEach(app => {
-        if (app.application_data && typeof app.application_data.progress === 'number') {
+        // Fix: Check if application_data exists and is an object, then check if it has progress property
+        if (app.application_data && 
+            typeof app.application_data === 'object' && 
+            'progress' in app.application_data && 
+            typeof app.application_data.progress === 'number') {
+          
           // Determine which step the application reached based on progress percentage
           const progress = app.application_data.progress;
           if (progress >= 14) stepCounts[0]++; // Business
