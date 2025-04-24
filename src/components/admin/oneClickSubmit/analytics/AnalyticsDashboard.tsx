@@ -1,104 +1,20 @@
 
-import React, { useState, useEffect } from "react";
-import { useAnalyticsData, TimeRange } from "../hooks/useAnalyticsData";
-import { Card, CardContent } from "@/components/ui/card";
+import React, { useState } from "react";
+import { useAnalyticsData } from "../hooks/useAnalyticsData";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KpiMetricsCards } from "./KpiMetricsCards";
 import { StatusBreakdown } from "./StatusBreakdown";
 import { DeclineAnalytics } from "./DeclineAnalytics";
 import { FunnelAnalytics } from "./FunnelAnalytics";
 import { TrendChart } from "./TrendChart";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Download, ShieldAlert, UserCheck } from "lucide-react";
-import { DateRangeFilter } from "./DateRangeFilter";
+import { RefreshCw, Download } from "lucide-react";
 import { WeeklySummary } from "./WeeklySummary";
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { checkUserIsAdmin } from '@/components/admin/documents/api/userApi';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
-
-// Define a type for user roles
-type UserRole = 'sales_rep' | 'risk_analyst' | 'executive' | 'admin' | null;
 
 export function AnalyticsDashboard() {
-  const { 
-    analyticsData, 
-    loading, 
-    error, 
-    timeRange, 
-    setTimeRange, 
-    refreshData 
-  } = useAnalyticsData();
-
+  const { analyticsData, loading, error, refreshData } = useAnalyticsData();
   const [exportingData, setExportingData] = useState(false);
-  const [userRole, setUserRole] = useState<UserRole>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [selectedView, setSelectedView] = useState<UserRole>('admin');
-  
-  console.log("AnalyticsDashboard rendering - isAdmin:", isAdmin, "userRole:", userRole, "selectedView:", selectedView);
-
-  // Fetch user role on component mount
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      try {
-        console.log("Fetching user role and admin status...");
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          console.log("No user found");
-          setIsLoading(false);
-          return;
-        }
-        
-        console.log("User found:", user.id);
-        
-        // Check if user is admin using the utility function
-        const isAdminUser = await checkUserIsAdmin(user.id);
-        console.log("Admin check result:", isAdminUser);
-        
-        if (isAdminUser) {
-          console.log("User is admin! Setting admin role and view");
-          setIsAdmin(true);
-          setUserRole('admin');
-          setSelectedView('admin');
-          setIsLoading(false);
-          return;
-        } else {
-          console.log("User is not an admin, checking for other roles");
-        }
-        
-        // Check for other roles if not admin
-        try {
-          const { data: roleData, error: roleError } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', user.id)
-            .single();
-          
-          console.log("Other role check result:", roleData);
-          
-          if (roleData?.role) {
-            console.log(`Setting user role to ${roleData.role}`);
-            setUserRole(roleData.role as UserRole);
-            setSelectedView(roleData.role as UserRole);
-          }
-        } catch (roleErr) {
-          console.error("Error fetching user roles:", roleErr);
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUserRole();
-  }, []);
 
   const handleExportData = () => {
     setExportingData(true);
@@ -110,118 +26,35 @@ export function AnalyticsDashboard() {
     // In a real application, you would implement CSV/PDF export logic here
   };
 
-  const handleViewChange = (role: UserRole) => {
-    console.log(`Switching view to ${role}`);
-    setSelectedView(role);
-    toast.success(`Switched to ${role} view`);
-  };
-
-  console.log("Before render - isAdmin:", isAdmin, "userRole:", userRole, "isLoading:", isLoading);
-
-  // Show loading state while checking user role
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-80">
-        <div className="text-lg text-muted-foreground">Loading user permissions...</div>
-      </div>
-    );
-  }
-
-  // For debugging - uncomment to force admin view
-  // setIsAdmin(true);
-  // setUserRole('admin');
-  // setSelectedView('admin');
-
-  console.log("Checking access conditions - !userRole && !isAdmin:", !userRole && !isAdmin);
-
-  // Show limited access message if the user doesn't have a role and is not an admin
-  if (!userRole && !isAdmin) {
-    return (
-      <div className="w-full p-6">
-        <Card className="rounded-2xl shadow-md">
-          <CardContent className="flex flex-col items-center justify-center h-80 p-6">
-            <ShieldAlert className="h-12 w-12 text-amber-500 mb-4" />
-            <h2 className="text-xl font-medium mb-2">Limited Access</h2>
-            <p className="text-center text-muted-foreground max-w-md">
-              You don't have the required permissions to view the analytics dashboard. 
-              Please contact your administrator for assistance.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Get the effective role for viewing content (either actual role or admin-selected view)
-  const effectiveRole = isAdmin ? selectedView : userRole;
-
-  console.log("Rendering dashboard with effectiveRole:", effectiveRole);
-
   return (
     <div className="w-full">
-      <div className="bg-white/70 shadow-sm backdrop-blur-md px-6 h-14 sticky top-0 z-50 flex items-center justify-between">
+      {/* Header with gradient background to match site theme */}
+      <div className="bg-gradient-to-r from-teal-500/20 to-orange-500/20 shadow-sm backdrop-blur-md px-6 h-14 sticky top-0 z-50 flex items-center justify-between">
         <h1 className="text-xl font-semibold flex items-center gap-2">
           <span>📊</span> Merchant Analytics
-          {effectiveRole === 'executive' && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full ml-2">Executive View</span>}
-          {effectiveRole === 'risk_analyst' && <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full ml-2">Risk View</span>}
-          {effectiveRole === 'sales_rep' && <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full ml-2">Sales View</span>}
-          {effectiveRole === 'admin' && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full ml-2">Admin View</span>}
         </h1>
         <div className="flex items-center gap-3">
-          {isAdmin && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-1">
-                  <UserCheck size={14} />
-                  <span>View As: {selectedView || 'Admin'}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleViewChange('admin')}>
-                  Admin View
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleViewChange('executive')}>
-                  Executive View
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleViewChange('risk_analyst')}>
-                  Risk Analyst View
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleViewChange('sales_rep')}>
-                  Sales Rep View
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-          
-          {(effectiveRole !== 'executive' && effectiveRole !== 'admin') && (
-            <DateRangeFilter 
-              timeRange={timeRange} 
-              setTimeRange={setTimeRange} 
-            />
-          )}
           <Button 
             variant="outline" 
             size="sm" 
             onClick={refreshData}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 border-teal-200 hover:border-teal-300 hover:bg-teal-50"
           >
             <RefreshCw size={14} />
             <span className="hidden sm:inline">Refresh</span>
           </Button>
-          {(effectiveRole === 'executive' || effectiveRole === 'risk_analyst' || effectiveRole === 'admin') && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleExportData}
-              disabled={exportingData || loading || !analyticsData}
-              className="flex items-center gap-1"
-            >
-              <Download size={14} />
-              <span className="hidden sm:inline">
-                {exportingData ? "Exporting..." : "Export"}
-              </span>
-            </Button>
-          )}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleExportData}
+            disabled={exportingData || loading || !analyticsData}
+            className="flex items-center gap-1 border-orange-200 hover:border-orange-300 hover:bg-orange-50"
+          >
+            <Download size={14} />
+            <span className="hidden sm:inline">
+              {exportingData ? "Exporting..." : "Export"}
+            </span>
+          </Button>
         </div>
       </div>
 
@@ -236,49 +69,53 @@ export function AnalyticsDashboard() {
           </div>
         ) : analyticsData ? (
           <div className="space-y-6">
-            {/* Weekly Summary shown to all roles */}
+            {/* Weekly Summary */}
             <WeeklySummary />
             
-            {/* KPI Metrics shown to all roles */}
+            {/* KPI Metrics */}
             <KpiMetricsCards data={analyticsData} />
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Application Volume Trend - shown to all roles */}
-              <Card className="rounded-2xl shadow-md">
+              {/* Application Volume Trend */}
+              <Card className="rounded-2xl shadow-md border-teal-100 overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-teal-50 to-teal-100/50">
+                  <CardTitle className="text-teal-800 text-lg">Application Volume Trend</CardTitle>
+                </CardHeader>
                 <CardContent className="pt-6">
-                  <h2 className="text-lg font-medium mb-4">Application Volume Trend</h2>
                   <TrendChart data={analyticsData} />
                 </CardContent>
               </Card>
               
-              {/* Status Breakdown - shown to all roles */}
-              <Card className="rounded-2xl shadow-md">
+              {/* Status Breakdown */}
+              <Card className="rounded-2xl shadow-md border-orange-100 overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-100/50">
+                  <CardTitle className="text-orange-800 text-lg">Status Breakdown</CardTitle>
+                </CardHeader>
                 <CardContent className="pt-6">
-                  <h2 className="text-lg font-medium mb-4">Status Breakdown</h2>
                   <StatusBreakdown data={analyticsData} />
                 </CardContent>
               </Card>
             </div>
             
-            {/* Decline Reasons Analysis - not shown to sales reps */}
-            {(effectiveRole === 'risk_analyst' || effectiveRole === 'executive' || effectiveRole === 'admin') && (
-              <Card className="rounded-2xl shadow-md">
-                <CardContent className="pt-6">
-                  <h2 className="text-lg font-medium mb-4">Decline Reasons Analysis</h2>
-                  <DeclineAnalytics data={analyticsData} />
-                </CardContent>
-              </Card>
-            )}
+            {/* Decline Reasons Analysis */}
+            <Card className="rounded-2xl shadow-md border-red-100 overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-red-50 to-red-100/50">
+                <CardTitle className="text-red-800 text-lg">Decline Reasons Analysis</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <DeclineAnalytics data={analyticsData} />
+              </CardContent>
+            </Card>
             
-            {/* Application Funnel Analysis - not shown to executives */}
-            {effectiveRole !== 'executive' && (
-              <Card className="rounded-2xl shadow-md">
-                <CardContent className="pt-6">
-                  <h2 className="text-lg font-medium mb-4">Application Funnel Analysis</h2>
-                  <FunnelAnalytics data={analyticsData} />
-                </CardContent>
-              </Card>
-            )}
+            {/* Application Funnel Analysis */}
+            <Card className="rounded-2xl shadow-md border-blue-100 overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100/50">
+                <CardTitle className="text-blue-800 text-lg">Application Funnel Analysis</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <FunnelAnalytics data={analyticsData} />
+              </CardContent>
+            </Card>
           </div>
         ) : (
           <div className="flex items-center justify-center h-80">
@@ -287,57 +124,20 @@ export function AnalyticsDashboard() {
         )}
       </div>
 
-      {/* Welcome banner for executives */}
-      {effectiveRole === 'executive' && analyticsData && (
+      {/* Simplified welcome banner */}
+      {analyticsData && (
         <div className="p-6 pt-0">
-          <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200 rounded-2xl shadow-md">
-            <CardContent className="p-6">
-              <h3 className="text-lg font-medium text-blue-800 mb-2">Welcome back, Executive 👋</h3>
-              <p className="text-blue-700">
-                Here's your executive summary. You're viewing key metrics across all sales representatives.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Welcome banner for admin */}
-      {effectiveRole === 'admin' && analyticsData && (
-        <div className="p-6 pt-0">
-          <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200 rounded-2xl shadow-md">
-            <CardContent className="p-6">
-              <h3 className="text-lg font-medium text-purple-800 mb-2">Welcome back, Administrator 👋</h3>
-              <p className="text-purple-700">
-                You have full access to all analytics data and features. You can view and export all reports.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Custom message for sales reps */}
-      {effectiveRole === 'sales_rep' && analyticsData && (
-        <div className="p-6 pt-0">
-          <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200 rounded-2xl shadow-md">
-            <CardContent className="p-6">
-              <h3 className="text-lg font-medium text-green-800 mb-2">Your Applications Dashboard 🚀</h3>
-              <p className="text-green-700">
-                You're viewing data for applications you've submitted. Keep up the great work!
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Custom message for risk analysts */}
-      {effectiveRole === 'risk_analyst' && analyticsData && (
-        <div className="p-6 pt-0">
-          <Card className="bg-gradient-to-r from-amber-50 to-amber-100 border-amber-200 rounded-2xl shadow-md">
-            <CardContent className="p-6">
-              <h3 className="text-lg font-medium text-amber-800 mb-2">Risk Analysis Dashboard 🔍</h3>
-              <p className="text-amber-700">
-                You have access to detailed risk metrics and decline reasons to help improve approval rates.
-              </p>
+          <Card className="bg-gradient-to-r from-teal-50 to-orange-50 border-teal-200 rounded-2xl shadow-md overflow-hidden">
+            <CardContent className="p-6 flex items-center">
+              <div className="h-12 w-12 rounded-full bg-teal-100 flex items-center justify-center mr-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="text-teal-500"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-teal-800 mb-2">Analytics Dashboard</h3>
+                <p className="text-teal-700">
+                  Tracking all merchant applications in one place. Use the insights to optimize your approval rates.
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>

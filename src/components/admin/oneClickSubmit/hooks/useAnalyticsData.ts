@@ -23,42 +23,8 @@ export function useAnalyticsData() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [timeRange, setTimeRange] = useState<TimeRange>('30d');
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
 
-  // Fetch user role and ID
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) return;
-        
-        setUserId(user.id);
-        
-        // Fetch user role
-        const { data: roleData, error: roleError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .single();
-        
-        if (roleError && roleError.code !== 'PGRST116') {
-          console.error('Error fetching user role:', roleError);
-        }
-        
-        if (roleData) {
-          setUserRole(roleData.role);
-        }
-      } catch (error) {
-        console.error('Error fetching user info:', error);
-      }
-    };
-
-    fetchUserInfo();
-  }, []);
-
-  // Function to fetch analytics data with role-based filtering
+  // Function to fetch analytics data
   const fetchAnalyticsData = async () => {
     setLoading(true);
     setError(null);
@@ -79,31 +45,14 @@ export function useAnalyticsData() {
           timeFilter = null;
       }
 
-      // Base query parts
-      const baseSelect = '*';
-      let baseFrom = 'applications';
-      let baseFilter = timeFilter ? timeFilter : '';
-      
-      // Add role-based filters
-      if (userRole === 'sales_rep' && userId) {
-        if (baseFilter) {
-          baseFilter += ' AND ';
-        }
-        baseFilter += `assigned_rep = '${userId}'`;
-      }
-      
       // For demo purposes, let's create some mock analytics data
       // In a real application, you would query your Supabase database
       
-      // Simulate fetching data with different results based on role and timeRange
-      // This demonstrates the concept without requiring actual database queries
-      
       // Mock data generation function
       const generateMockData = (): AnalyticsData => {
-        // Adjust total applications based on role
-        const totalApps = userRole === 'sales_rep' ? 48 : 237;
-        const completedApps = userRole === 'sales_rep' ? 32 : 156;
-        const declinedApps = userRole === 'sales_rep' ? 10 : 47;
+        const totalApps = 237;
+        const completedApps = 156;
+        const declinedApps = 47;
         const incompleteApps = totalApps - completedApps - declinedApps;
         
         return {
@@ -117,10 +66,10 @@ export function useAnalyticsData() {
             { status: 'declined', count: declinedApps }
           ],
           declineReasons: [
-            { reason: 'Insufficient Documentation', count: userRole === 'sales_rep' ? 4 : 18 },
-            { reason: 'Credit Issues', count: userRole === 'sales_rep' ? 3 : 12 },
-            { reason: 'Business Type Not Supported', count: userRole === 'sales_rep' ? 2 : 9 },
-            { reason: 'Fraud Indicators', count: userRole === 'sales_rep' ? 1 : 8 }
+            { reason: 'Insufficient Documentation', count: 18 },
+            { reason: 'Credit Issues', count: 12 },
+            { reason: 'Business Type Not Supported', count: 9 },
+            { reason: 'Fraud Indicators', count: 8 }
           ],
           stepDropoffs: [
             { step: 'Application Started', dropoff: 0 },
@@ -130,10 +79,10 @@ export function useAnalyticsData() {
             { step: 'Review & Submit', dropoff: 12 }
           ],
           applicationTrend: [
-            { date: '2025-04-01', count: userRole === 'sales_rep' ? 3 : 15 },
-            { date: '2025-04-08', count: userRole === 'sales_rep' ? 5 : 22 },
-            { date: '2025-04-15', count: userRole === 'sales_rep' ? 4 : 19 },
-            { date: '2025-04-22', count: userRole === 'sales_rep' ? 7 : 32 }
+            { date: '2025-04-01', count: 15 },
+            { date: '2025-04-08', count: 22 },
+            { date: '2025-04-15', count: 19 },
+            { date: '2025-04-22', count: 32 }
           ]
         };
       };
@@ -153,10 +102,8 @@ export function useAnalyticsData() {
 
   // Fetch data when component mounts or when timeRange changes
   useEffect(() => {
-    if (userRole !== undefined) {
-      fetchAnalyticsData();
-    }
-  }, [timeRange, userRole, userId]);
+    fetchAnalyticsData();
+  }, [timeRange]);
 
   // Function to manually refresh data
   const refreshData = () => {
