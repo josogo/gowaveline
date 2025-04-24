@@ -12,12 +12,17 @@ export const ApplicationProgress: React.FC<ApplicationProgressProps> = ({
   progress,
   lastEdited
 }) => {
+  // Validate the lastEdited date before formatting
+  const validLastEdited = lastEdited && !isNaN(new Date(lastEdited).getTime()) 
+    ? new Date(lastEdited) 
+    : null;
+
   return (
     <div className="space-y-2">
-      {lastEdited && (
+      {validLastEdited && (
         <div className="flex items-center text-xs text-gray-500">
           <FileText className="h-3 w-3 mr-1" />
-          Last edited {formatDistanceToNow(new Date(lastEdited))} ago
+          Last edited {formatDistanceToNow(validLastEdited)} ago
         </div>
       )}
       

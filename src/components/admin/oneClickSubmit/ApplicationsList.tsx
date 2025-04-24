@@ -44,7 +44,7 @@ export const ApplicationsList: React.FC = () => {
             .from('merchant_applications')
             .select('*')
             .eq('id', openAppId)
-            .single();
+            .maybeSingle(); // Changed from single() to maybeSingle() to prevent errors
           
           if (error) {
             throw error;
@@ -53,6 +53,8 @@ export const ApplicationsList: React.FC = () => {
           if (data) {
             setSelectedApplication(data);
             setAppFlowOpen(true);
+          } else {
+            toast.error("Application not found");
           }
         } catch (error) {
           console.error("Error fetching application:", error);
@@ -75,7 +77,7 @@ export const ApplicationsList: React.FC = () => {
           .from('merchant_applications')
           .select('*')
           .eq('id', app.id)
-          .single();
+          .maybeSingle(); // Changed from single() to maybeSingle() to prevent errors
         
         if (error) {
           throw error;
@@ -111,7 +113,7 @@ export const ApplicationsList: React.FC = () => {
   };
 
   const processDeclineRemove = async (reason: string) => {
-    if (!selectedApplication) return;
+    if (!selectedApplication) return Promise.resolve();
     
     try {
       const appId = selectedApplication.id || selectedApplication.rawData?.id;

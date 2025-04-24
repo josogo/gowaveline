@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { FormProvider } from 'react-hook-form';
+import { toast } from 'sonner'; // Add missing toast import
 
 // Import hooks
 import { useApplicationForm } from './hooks/useApplicationForm';
@@ -181,6 +182,7 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
   }
 
   // Use merchant application's updated_at as lastEdited, if available
+  // Ensure updated_at is a valid date string before passing it
   const lastEdited = merchantApplication?.updated_at || new Date().toISOString();
   const applicationNumber = merchantApplication?.application_number || '';
 

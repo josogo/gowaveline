@@ -21,8 +21,18 @@ export const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({
   applicationNumber,
   lastSavedAt
 }) => {
-  const formattedDate = lastEdited ? format(new Date(lastEdited), 'MMM d, yyyy h:mm a') : '';
-  const formattedSavedAt = lastSavedAt ? format(lastSavedAt, 'h:mm:ss a') : '';
+  // Validate dates before formatting
+  const validLastEdited = lastEdited && !isNaN(new Date(lastEdited).getTime()) 
+    ? new Date(lastEdited) 
+    : null;
+    
+  const formattedDate = validLastEdited 
+    ? format(validLastEdited, 'MMM d, yyyy h:mm a') 
+    : 'Not available';
+    
+  const formattedSavedAt = lastSavedAt && !isNaN(lastSavedAt.getTime()) 
+    ? format(lastSavedAt, 'h:mm:ss a') 
+    : '';
   
   return (
     <div className="relative mb-6">
