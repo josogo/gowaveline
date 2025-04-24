@@ -16,6 +16,7 @@ import { ApplicationContent } from './components/ApplicationContent';
 import { NavigationControls } from './components/NavigationControls';
 import BankRoutingSystem from './bankRouting/BankRoutingSystem';
 import { Skeleton } from '@/components/ui/skeleton';
+import DemoDataAlert from '@/components/dashboard/DemoDataAlert';
 
 export type ApplicationFlowProps = {
   merchantApplication?: any;
@@ -61,6 +62,19 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
     setActiveTab,
     setApplicationProgress
   );
+
+  // Add form field change subscription to save data when fields change
+  useEffect(() => {
+    const subscription = form.watch((value, { name, type }) => {
+      // Only trigger save on actual field changes, not on form initialization
+      if (type === 'change') {
+        console.log(`Field changed: ${name}`, value);
+        updateFormData(value);
+      }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [form, updateFormData]);
 
   // Save data when form is dirty
   useEffect(() => {
