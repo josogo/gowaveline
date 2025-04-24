@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -111,8 +110,6 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
     const progressPerStep = 100 / tabs.length;
     const newProgress = Math.ceil((newTabIndex + 1) * progressPerStep);
     setApplicationProgress(newProgress);
-    
-    toast.success("Progress saved successfully");
   };
 
   const navigateTab = (direction: 'next' | 'prev') => {
