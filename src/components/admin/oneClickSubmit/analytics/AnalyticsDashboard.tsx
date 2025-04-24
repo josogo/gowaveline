@@ -7,10 +7,9 @@ import { StatusBreakdown } from "./StatusBreakdown";
 import { DeclineAnalytics } from "./DeclineAnalytics";
 import { FunnelAnalytics } from "./FunnelAnalytics";
 import { TrendChart } from "./TrendChart";
-import { AlertsPanel } from "./AlertsPanel";
-import { DateRangeFilter } from "./DateRangeFilter";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Download } from "lucide-react";
+import { DateRangeFilter } from "./DateRangeFilter";
 
 export function AnalyticsDashboard() {
   const { 
@@ -77,7 +76,6 @@ export function AnalyticsDashboard() {
           </div>
         ) : analyticsData ? (
           <div className="space-y-6">
-            <AlertsPanel data={analyticsData} />
             <KpiMetricsCards data={analyticsData} />
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
