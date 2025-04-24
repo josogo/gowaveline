@@ -5,7 +5,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 interface ApplicationProgressProps {
   progress: number;
-  lastEdited: string;
+  lastEdited?: string;
 }
 
 export const ApplicationProgress: React.FC<ApplicationProgressProps> = ({
@@ -14,10 +14,12 @@ export const ApplicationProgress: React.FC<ApplicationProgressProps> = ({
 }) => {
   return (
     <div className="space-y-2">
-      <div className="flex items-center text-xs text-gray-500">
-        <FileText className="h-3 w-3 mr-1" />
-        Last edited {formatDistanceToNow(new Date(lastEdited))} ago
-      </div>
+      {lastEdited && (
+        <div className="flex items-center text-xs text-gray-500">
+          <FileText className="h-3 w-3 mr-1" />
+          Last edited {formatDistanceToNow(new Date(lastEdited))} ago
+        </div>
+      )}
       
       <div className="space-y-1">
         <div className="flex justify-between text-xs font-medium">

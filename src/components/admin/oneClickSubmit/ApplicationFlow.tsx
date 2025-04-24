@@ -131,10 +131,18 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
     );
   }
 
+  // Use merchant application's updated_at as lastEdited, if available
+  const lastEdited = merchantApplication?.updated_at || new Date().toISOString();
+
   return (
     <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg border animate-fade-in transition-all">
       <div className="h-[90vh] overflow-y-auto p-4 md:p-8">
-        <ApplicationHeader onClose={onClose} progress={applicationProgress} isSaving={isSaving} />
+        <ApplicationHeader 
+          onClose={onClose} 
+          progress={applicationProgress} 
+          isSaving={isSaving}
+          lastEdited={lastEdited}
+        />
         
         <FormProvider {...form}>
           <ApplicationContent 

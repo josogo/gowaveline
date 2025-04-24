@@ -7,9 +7,10 @@ interface ApplicationHeaderProps {
   onClose?: () => void;
   progress: number;
   isSaving?: boolean;
+  lastEdited?: string;
 }
 
-export const ApplicationHeader = ({ onClose, progress, isSaving }: ApplicationHeaderProps) => {
+export const ApplicationHeader = ({ onClose, progress, isSaving, lastEdited }: ApplicationHeaderProps) => {
   return (
     <div className="mb-6">
       <div className="flex justify-between items-center mb-4">
@@ -37,7 +38,7 @@ export const ApplicationHeader = ({ onClose, progress, isSaving }: ApplicationHe
         </div>
       </div>
       
-      <ApplicationProgress progress={progress} />
+      <ApplicationProgress progress={progress} lastEdited={lastEdited} />
     </div>
   );
 };
