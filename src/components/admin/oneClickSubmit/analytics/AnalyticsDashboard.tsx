@@ -39,16 +39,22 @@ export function AnalyticsDashboard() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [selectedView, setSelectedView] = useState<UserRole>(null);
 
+  console.log("Component rendered - isAdmin:", isAdmin, "userRole:", userRole, "selectedView:", selectedView);
+
   // Fetch user role on component mount
   useEffect(() => {
     const fetchUserRole = async () => {
       try {
+        console.log("Fetching user role...");
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!user) {
+          console.log("No user found");
           setIsLoading(false);
           return;
         }
+        
+        console.log("User found:", user.id);
         
         // First check if user is an admin
         const { data: adminData, error: adminError } = await supabase.rpc(
@@ -56,7 +62,10 @@ export function AnalyticsDashboard() {
           { user_id: user.id, role: 'admin' }
         );
         
+        console.log("Admin check result:", adminData, "Error:", adminError);
+        
         if (adminData) {
+          console.log("User is admin!");
           setIsAdmin(true);
           setUserRole('admin');
           setSelectedView('admin');
@@ -70,6 +79,8 @@ export function AnalyticsDashboard() {
           .select('role')
           .eq('user_id', user.id)
           .single();
+        
+        console.log("Other role check:", data, "Error:", error);
         
         if (error && error.code !== 'PGRST116') {
           console.error('Error fetching user role:', error);
@@ -103,6 +114,8 @@ export function AnalyticsDashboard() {
     toast.success(`Switched to ${role} view`);
   };
 
+  console.log("Before render - isAdmin:", isAdmin, "userRole:", userRole, "isLoading:", isLoading);
+
   // Show loading state while checking user role
   if (isLoading) {
     return (
@@ -111,6 +124,12 @@ export function AnalyticsDashboard() {
       </div>
     );
   }
+
+  // For debugging only - force admin view
+  // Uncomment this line to force admin view for testing
+  // const isAdmin = true;
+
+  console.log("Checking access conditions - !userRole && !isAdmin:", !userRole && !isAdmin);
 
   // Show limited access message if the user doesn't have a role and is not an admin
   if (!userRole && !isAdmin) {
@@ -133,6 +152,8 @@ export function AnalyticsDashboard() {
   // Get the effective role for viewing content (either actual role or admin-selected view)
   const effectiveRole = isAdmin ? selectedView : userRole;
 
+  console.log("Rendering dashboard with effectiveRole:", effectiveRole);
+
   return (
     <div className="w-full">
       <div className="bg-white/70 shadow-sm backdrop-blur-md px-6 h-14 sticky top-0 z-50 flex items-center justify-between">
@@ -149,7 +170,7 @@ export function AnalyticsDashboard() {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="flex items-center gap-1">
                   <UserCheck size={14} />
-                  <span>View As: {effectiveRole || 'Admin'}</span>
+                  <span>View As: {selectedView || 'Admin'}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
