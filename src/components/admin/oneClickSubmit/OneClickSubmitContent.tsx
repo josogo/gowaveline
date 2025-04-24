@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 const ApplicationsList = lazy(() => import('./ApplicationsList'));
-const ApplicationFlow = lazy(() => import('./ApplicationFlow'));
+const ApplicationsAnalytics = lazy(() => import('./analytics/ApplicationsAnalytics'));
 const BankManagement = lazy(() => 
   Promise.all([
     import('./bankRouting/BankRoutingSystem'),
@@ -82,8 +82,8 @@ const OneClickSubmitContent: React.FC = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="applications">Applications</TabsTrigger>
-          <TabsTrigger value="banks">Bank Management</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="banks">Bank Management</TabsTrigger>
         </TabsList>
         
         <Suspense fallback={<div className="w-full p-12 text-center">Loading content...</div>}>
@@ -91,12 +91,12 @@ const OneClickSubmitContent: React.FC = () => {
             <ApplicationsList />
           </TabsContent>
 
-          <TabsContent value="banks" className="space-y-4">
-            <ComingSoonFeature title="Bank management tools" />
+          <TabsContent value="analytics" className="space-y-4">
+            <ApplicationsAnalytics />
           </TabsContent>
 
-          <TabsContent value="analytics" className="space-y-4">
-            <ComingSoonFeature title="Analytics dashboard" />
+          <TabsContent value="banks" className="space-y-4">
+            <ComingSoonFeature title="Bank management tools" />
           </TabsContent>
         </Suspense>
       </Tabs>
