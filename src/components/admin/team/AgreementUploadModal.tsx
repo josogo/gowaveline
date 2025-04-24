@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,7 @@ import { toast } from 'sonner';
 import FileUpload from '@/components/file-upload';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import type { TeamMember } from './TeamMemberForm';
 
@@ -61,20 +62,33 @@ const AgreementUploadModal: React.FC<AgreementUploadModalProps> = ({
         formData.append('expirationDate', format(expirationDate, 'yyyy-MM-dd'));
       }
       
+      // Get the current anonymous token from Supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token;
+      
+      if (!authToken) {
+        throw new Error('No authentication token available');
+      }
+      
+      // Include the token in the Authorization header
       const response = await fetch('https://rqwrvkkfixrogxogunsk.supabase.co/functions/v1/upload-document', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        },
         body: formData,
       });
       
       if (!response.ok) {
-        throw new Error('Failed to upload document');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to upload document');
       }
       
       toast.success(`Agreement uploaded successfully for ${teamMember.name}`);
       onClose();
     } catch (error) {
       console.error("Error uploading agreement:", error);
-      toast.error("Failed to upload agreement");
+      toast.error("Failed to upload agreement: " + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setIsUploading(false);
     }
@@ -170,7 +184,12 @@ const AgreementUploadModal: React.FC<AgreementUploadModalProps> = ({
               Cancel
             </Button>
             <Button type="submit" disabled={isUploading || !file}>
-              {isUploading ? "Uploading..." : "Upload Agreement"}
+              {isUploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Uploading...
+                </>
+              ) : "Upload Agreement"}
             </Button>
           </div>
         </form>
