@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -29,6 +29,30 @@ const AgreementUploadModal: React.FC<AgreementUploadModalProps> = ({
   const [effectiveDate, setEffectiveDate] = useState<Date | null>(new Date());
   const [expirationDate, setExpirationDate] = useState<Date | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [authToken, setAuthToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Check for authorization token when the component mounts
+    const checkAuthSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setAuthToken(session?.access_token || null);
+      } catch (error) {
+        console.error("Error retrieving auth session:", error);
+      }
+    };
+    
+    checkAuthSession();
+    
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthToken(session?.access_token || null);
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const handleFileChange = (acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
@@ -41,6 +65,12 @@ const AgreementUploadModal: React.FC<AgreementUploadModalProps> = ({
     
     if (!file || !agreementType) {
       toast.error("Please select a file and agreement type");
+      return;
+    }
+    
+    // Check if we have auth token
+    if (!authToken) {
+      toast.error("You must be logged in to upload documents. Please log in and try again.");
       return;
     }
     
@@ -60,14 +90,6 @@ const AgreementUploadModal: React.FC<AgreementUploadModalProps> = ({
       
       if (expirationDate) {
         formData.append('expirationDate', format(expirationDate, 'yyyy-MM-dd'));
-      }
-      
-      // Get the current anonymous token from Supabase
-      const { data: { session } } = await supabase.auth.getSession();
-      const authToken = session?.access_token;
-      
-      if (!authToken) {
-        throw new Error('No authentication token available');
       }
       
       // Include the token in the Authorization header
@@ -179,11 +201,18 @@ const AgreementUploadModal: React.FC<AgreementUploadModalProps> = ({
             />
           </div>
           
+          {!authToken && (
+            <div className="bg-amber-50 border border-amber-200 p-3 rounded-md text-amber-700 text-sm">
+              You need to be logged in to upload agreements. If you are logged in and still see this message, 
+              please refresh the page or try logging in again.
+            </div>
+          )}
+          
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isUploading || !file}>
+            <Button type="submit" disabled={isUploading || !file || !authToken}>
               {isUploading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
