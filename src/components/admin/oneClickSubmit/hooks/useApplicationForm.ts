@@ -2,10 +2,21 @@
 import { useForm } from 'react-hook-form';
 import { useEffect } from 'react';
 import { useFormData } from './useFormData';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
+// Create a base schema for the application form
+const baseFormSchema = z.object({
+  // Basic schema that all tabs will extend
+  currentTab: z.string().optional(),
+  // Add common fields here
+});
 
 export const useApplicationForm = (merchantApplication?: any) => {
   const form = useForm({
-    defaultValues: merchantApplication?.application_data || {}
+    defaultValues: merchantApplication?.application_data || {},
+    // We'll use context to handle validation at the tab level
+    resolver: zodResolver(baseFormSchema)
   });
   
   const { formData, updateFormData, isDirty, resetDirtyState } = useFormData(
@@ -27,6 +38,7 @@ export const useApplicationForm = (merchantApplication?: any) => {
             const initialData = {
               businessName: merchantApplication.merchant_name,
               businessEmail: merchantApplication.merchant_email,
+              applicationNumber: merchantApplication.application_number || '',
               currentTab: savedState.activeTab || 'business',
               ...savedState.formData
             };
@@ -46,6 +58,7 @@ export const useApplicationForm = (merchantApplication?: any) => {
         const initialData = {
           businessName: merchantApplication.merchant_name,
           businessEmail: merchantApplication.merchant_email,
+          applicationNumber: merchantApplication.application_number || '',
           currentTab: merchantApplication.application_data.currentTab || 'business',
           ...merchantApplication.application_data
         };
@@ -56,6 +69,15 @@ export const useApplicationForm = (merchantApplication?: any) => {
       }
     }
   }, [merchantApplication, updateFormData, form]);
+
+  // Update formData when form values change
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      updateFormData(value);
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [form, updateFormData]);
 
   return {
     form,

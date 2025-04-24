@@ -1,45 +1,91 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, FileCheck, FileMinus, Upload } from 'lucide-react';
+import { CheckCircle, FileCheck, FileMinus, Upload, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useFormContext } from 'react-hook-form';
+import { useParams } from 'react-router-dom';
+import { useDocumentUpload } from '../hooks/useDocumentUpload';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export const DocumentsForm: React.FC = () => {
-  // Mock document status for demo purposes
-  const [documents, setDocuments] = useState([
-    { id: 1, name: 'Articles of Incorporation', required: true, uploaded: true },
-    { id: 2, name: 'Business License', required: true, uploaded: false },
-    { id: 3, name: 'Voided Check', required: true, uploaded: true },
-    { id: 4, name: 'Processing Statements (3 months)', required: true, uploaded: false },
-    { id: 5, name: 'Bank Statements (3 months)', required: true, uploaded: false },
-    { id: 6, name: 'Certificate of Good Standing', required: false, uploaded: false },
-    { id: 7, name: 'EIN Letter', required: true, uploaded: true },
-    { id: 8, name: 'Website Terms & Conditions', required: true, uploaded: true },
-    { id: 9, name: 'Privacy Policy', required: true, uploaded: true },
-    { id: 10, name: 'Product Images', required: false, uploaded: false },
-    { id: 11, name: 'Marketing Materials', required: false, uploaded: false },
-    { id: 12, name: 'Previous Merchant Applications', required: false, uploaded: false },
-  ]);
+  const { watch } = useFormContext();
+  const { applicationId } = useParams<{ applicationId: string }>();
+  const { uploading, documents, uploadDocument, loadDocuments } = useDocumentUpload(applicationId || '');
   
-  const uploadDocument = (id: number) => {
-    setDocuments(documents.map(doc => 
-      doc.id === id ? { ...doc, uploaded: true } : doc
-    ));
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [documentType, setDocumentType] = useState('bank_statement');
+  
+  // Make sure to refresh documents when the form opens
+  useEffect(() => {
+    loadDocuments();
+  }, [loadDocuments]);
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
   };
   
-  const removeDocument = (id: number) => {
-    setDocuments(documents.map(doc => 
-      doc.id === id ? { ...doc, uploaded: false } : doc
-    ));
+  const handleDocumentTypeChange = (value: string) => {
+    setDocumentType(value);
   };
   
-  const requiredDocuments = documents.filter(doc => doc.required);
-  const optionalDocuments = documents.filter(doc => !doc.required);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!selectedFile) {
+      return;
+    }
+    
+    await uploadDocument({
+      file: selectedFile,
+      applicationId: applicationId || '',
+      documentType,
+      onSuccess: () => {
+        setSelectedFile(null);
+      }
+    });
+  };
   
-  const uploadedRequiredCount = requiredDocuments.filter(doc => doc.uploaded).length;
-  const requiredProgress = (uploadedRequiredCount / requiredDocuments.length) * 100;
+  // Group documents by type
+  const documentGroups = React.useMemo(() => {
+    const groups: Record<string, any[]> = {};
+    
+    (documents || []).forEach((doc) => {
+      const groupKey = doc.document_type || 'other';
+      if (!groups[groupKey]) {
+        groups[groupKey] = [];
+      }
+      groups[groupKey].push(doc);
+    });
+    
+    return groups;
+  }, [documents]);
   
+  const documentTypeOptions = [
+    { value: 'bank_statement', label: 'Bank Statement' },
+    { value: 'processing_statement', label: 'Processing Statement' },
+    { value: 'business_license', label: 'Business License' },
+    { value: 'voided_check', label: 'Voided Check' },
+    { value: 'ein_letter', label: 'EIN Letter' },
+    { value: 'articles_of_incorporation', label: 'Articles of Incorporation' },
+    { value: 'website_terms', label: 'Website Terms & Conditions' },
+    { value: 'privacy_policy', label: 'Privacy Policy' },
+    { value: 'identity_document', label: 'Identity Document' },
+    { value: 'other', label: 'Other' }
+  ];
+  
+  // Get required documents progress
+  const requiredDocTypes = ['bank_statement', 'business_license', 'voided_check', 'privacy_policy'];
+  const requiredCompleted = requiredDocTypes.filter(type => documentGroups[type]?.length > 0).length;
+  const requiredProgress = requiredDocTypes.length > 0 
+    ? (requiredCompleted / requiredDocTypes.length) * 100 
+    : 0;
+    
   return (
     <div className="space-y-6">
       <Card className="bg-gradient-to-r from-blue-50 to-transparent border-blue-200">
@@ -57,7 +103,7 @@ export const DocumentsForm: React.FC = () => {
               <div className="mt-4">
                 <div className="flex justify-between mb-1 text-sm">
                   <span className="text-blue-800">Required Documents</span>
-                  <span className="text-blue-800">{uploadedRequiredCount} of {requiredDocuments.length} Complete</span>
+                  <span className="text-blue-800">{requiredCompleted} of {requiredDocTypes.length} Complete</span>
                 </div>
                 <div className="w-full bg-blue-200 rounded-full h-2">
                   <div 
@@ -71,113 +117,119 @@ export const DocumentsForm: React.FC = () => {
         </CardContent>
       </Card>
       
-      <div className="space-y-6">
-        <div>
-          <h3 className="text-lg font-medium mb-4">Required Documents</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {requiredDocuments.map((doc) => (
-              <Card key={doc.id} className={doc.uploaded ? "border-green-200" : "border-gray-200"}>
-                <CardContent className="p-4 flex justify-between items-center">
-                  <div className="flex items-center">
-                    {doc.uploaded ? (
-                      <div className="rounded-full bg-green-100 p-2 mr-3">
-                        <CheckCircle className="h-5 w-5 text-green-600" />
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Upload Document</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="documentType">Document Type</Label>
+                <Select 
+                  value={documentType} 
+                  onValueChange={handleDocumentTypeChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select document type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {documentTypeOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="documentFile">File</Label>
+                <div className="mt-1">
+                  <input
+                    type="file"
+                    id="documentFile"
+                    className="hidden"
+                    onChange={handleFileChange}
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                  />
+                  <label htmlFor="documentFile">
+                    <div className="flex items-center justify-center w-full h-10 border-2 border-dashed rounded-md border-gray-300 hover:border-gray-400 cursor-pointer">
+                      <div className="flex items-center">
+                        <Upload className="h-4 w-4 text-gray-500 mr-2" />
+                        <span className="text-sm text-gray-500">
+                          {selectedFile ? selectedFile.name : 'Choose file...'}
+                        </span>
                       </div>
-                    ) : (
-                      <div className="rounded-full bg-gray-100 p-2 mr-3">
-                        <Upload className="h-5 w-5 text-gray-600" />
-                      </div>
-                    )}
-                    <div>
-                      <p className="font-medium">{doc.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {doc.uploaded ? "Uploaded successfully" : "Required for submission"}
-                      </p>
                     </div>
-                  </div>
-                  
-                  {doc.uploaded ? (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => removeDocument(doc.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <FileMinus className="h-4 w-4 mr-1" />
-                      Remove
-                    </Button>
-                  ) : (
-                    <Button 
-                      size="sm" 
-                      onClick={() => uploadDocument(doc.id)}
-                      className="bg-blue-600"
-                    >
-                      <Upload className="h-4 w-4 mr-1" />
-                      Upload
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end">
+              <Button 
+                type="submit" 
+                disabled={!selectedFile || uploading}
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Document
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </form>
+      
+      {/* Display uploaded documents by group */}
+      {Object.entries(documentGroups).length > 0 ? (
+        <div className="space-y-6">
+          {Object.entries(documentGroups).map(([type, docs]) => (
+            <div key={type} className="space-y-4">
+              <h3 className="text-lg font-medium capitalize">{type.replace('_', ' ')} Documents</h3>
+              <div className="grid grid-cols-1 gap-4">
+                {docs.map((doc) => (
+                  <Card key={doc.id} className="border-green-200">
+                    <CardContent className="p-4 flex justify-between items-center">
+                      <div className="flex items-center">
+                        <div className="rounded-full bg-green-100 p-2 mr-3">
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{doc.file_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(doc.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <a
+                        href={`${supabase.storage.from('merchant-documents').getPublicUrl(doc.file_path).data.publicUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        View
+                      </a>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
-        
-        <div>
-          <h3 className="text-lg font-medium mb-4">Optional Documents</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            These documents are not required but can improve your application
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {optionalDocuments.map((doc) => (
-              <Card key={doc.id} className={doc.uploaded ? "border-green-200" : "border-gray-200"}>
-                <CardContent className="p-4 flex justify-between items-center">
-                  <div className="flex items-center">
-                    {doc.uploaded ? (
-                      <div className="rounded-full bg-green-100 p-2 mr-3">
-                        <CheckCircle className="h-5 w-5 text-green-600" />
-                      </div>
-                    ) : (
-                      <div className="rounded-full bg-gray-100 p-2 mr-3">
-                        <Upload className="h-5 w-5 text-gray-600" />
-                      </div>
-                    )}
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{doc.name}</p>
-                        <Badge variant="outline" className="text-xs">Optional</Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {doc.uploaded ? "Uploaded successfully" : "May improve approval chances"}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {doc.uploaded ? (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => removeDocument(doc.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <FileMinus className="h-4 w-4 mr-1" />
-                      Remove
-                    </Button>
-                  ) : (
-                    <Button 
-                      variant="outline"
-                      size="sm" 
-                      onClick={() => uploadDocument(doc.id)}
-                    >
-                      <Upload className="h-4 w-4 mr-1" />
-                      Upload
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </div>
+      ) : (
+        <Alert>
+          <AlertDescription>
+            No documents have been uploaded yet. Upload your first document using the form above.
+          </AlertDescription>
+        </Alert>
+      )}
     </div>
   );
 };

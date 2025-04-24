@@ -101,6 +101,19 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
     };
   }, [form, updateFormData, saveApplicationData, activeTab, merchantApplication?.id]);
 
+  // Force save when tab changes to ensure data persists
+  useEffect(() => {
+    if (activeTab && merchantApplication?.id) {
+      const currentValues = form.getValues();
+      if (!currentValues.currentTab) {
+        currentValues.currentTab = activeTab;
+        form.setValue('currentTab', activeTab);
+      }
+      updateFormData(currentValues);
+      saveApplicationData();
+    }
+  }, [activeTab, merchantApplication?.id]);
+
   const handleBankRouting = () => {
     const currentFormValues = form.getValues();
     if (!currentFormValues.currentTab) {
@@ -133,6 +146,7 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
 
   // Use merchant application's updated_at as lastEdited, if available
   const lastEdited = merchantApplication?.updated_at || new Date().toISOString();
+  const applicationNumber = merchantApplication?.application_number || '';
 
   return (
     <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg border animate-fade-in transition-all">
@@ -142,6 +156,7 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
           progress={applicationProgress} 
           isSaving={isSaving}
           lastEdited={lastEdited}
+          applicationNumber={applicationNumber}
         />
         
         <FormProvider {...form}>

@@ -12,6 +12,18 @@ export async function createMerchantApplication(appData: {
   expiresAt: string;
   applicationId: string;
 }) {
+  // Get the next application number
+  const { data: nextNumData, error: countError } = await supabase
+    .from("merchant_applications")
+    .select("application_number")
+    .order("application_number", { ascending: false })
+    .limit(1);
+    
+  const nextApplicationNumber = nextNumData?.length > 0 ? 
+    (parseInt(nextNumData[0].application_number || '0') + 1) : 1;
+
+  const formattedNumber = nextApplicationNumber.toString().padStart(6, '0');
+
   const { error } = await supabase.from("merchant_applications").insert({
     id: appData.applicationId,
     application_data: appData.applicationData,
@@ -19,8 +31,10 @@ export async function createMerchantApplication(appData: {
     merchant_email: appData.merchantEmail,
     otp: appData.otp,
     expires_at: appData.expiresAt,
+    application_number: formattedNumber
   });
-  return { error };
+  
+  return { error, applicationNumber: formattedNumber };
 }
 
 /**
@@ -61,4 +75,38 @@ export async function completeMerchantApplication(id: string) {
     .from("merchant_applications")
     .update({ completed: true, updated_at: new Date().toISOString() })
     .eq("id", id);
+}
+
+/**
+ * Upload a document for a merchant application
+ */
+export async function uploadMerchantDocument(data: {
+  applicationId: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  filePath: string;
+  documentType: string;
+  uploadedBy?: string;
+}) {
+  return supabase.from("merchant_documents").insert({
+    merchant_id: data.applicationId,
+    file_name: data.fileName,
+    file_type: data.fileType,
+    file_size: data.fileSize,
+    file_path: data.filePath,
+    document_type: data.documentType,
+    uploaded_by: data.uploadedBy || 'merchant',
+  });
+}
+
+/**
+ * Get documents for a merchant application
+ */
+export async function getMerchantDocuments(applicationId: string) {
+  return supabase
+    .from("merchant_documents")
+    .select("*")
+    .eq("merchant_id", applicationId)
+    .order("created_at", { ascending: false });
 }

@@ -8,15 +8,29 @@ interface ApplicationHeaderProps {
   progress: number;
   isSaving?: boolean;
   lastEdited?: string;
+  applicationNumber?: string;
 }
 
-export const ApplicationHeader = ({ onClose, progress, isSaving, lastEdited }: ApplicationHeaderProps) => {
+export const ApplicationHeader = ({ 
+  onClose, 
+  progress, 
+  isSaving, 
+  lastEdited,
+  applicationNumber 
+}: ApplicationHeaderProps) => {
   return (
     <div className="mb-6">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold tracking-tight text-blue-700">
-          Merchant Application
-        </h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-blue-700">
+            Merchant Application
+          </h1>
+          {applicationNumber && (
+            <span className="bg-blue-100 text-blue-800 font-medium text-sm px-3 py-1 rounded-full">
+              #{applicationNumber}
+            </span>
+          )}
+        </div>
         
         <div className="flex items-center gap-2">
           {isSaving && (

@@ -6,11 +6,11 @@ import { ClaimsAssessment } from './marketing/ClaimsAssessment';
 import { useFormContext } from 'react-hook-form';
 import { marketingFormSchema } from './marketing/marketingValidation';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 export const MarketingForm: React.FC = () => {
-  const { formState: { errors } } = useFormContext({
-    resolver: zodResolver(marketingFormSchema)
-  });
+  const { formState: { errors } } = useFormContext();
 
   const hasErrors = Object.keys(errors).length > 0;
 
