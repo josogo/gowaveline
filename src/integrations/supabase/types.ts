@@ -48,6 +48,54 @@ export type Database = {
         }
         Relationships: []
       }
+      applications: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          decline_reason: string | null
+          fraud_flag: boolean | null
+          id: string
+          merchant_id: string | null
+          merchant_name: string | null
+          processing_time_minutes: number | null
+          region: string | null
+          risk_score: number | null
+          source: string | null
+          status: string | null
+          submitted_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          decline_reason?: string | null
+          fraud_flag?: boolean | null
+          id?: string
+          merchant_id?: string | null
+          merchant_name?: string | null
+          processing_time_minutes?: number | null
+          region?: string | null
+          risk_score?: number | null
+          source?: string | null
+          status?: string | null
+          submitted_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          decline_reason?: string | null
+          fraud_flag?: boolean | null
+          id?: string
+          merchant_id?: string | null
+          merchant_name?: string | null
+          processing_time_minutes?: number | null
+          region?: string | null
+          risk_score?: number | null
+          source?: string | null
+          status?: string | null
+          submitted_at?: string | null
+        }
+        Relationships: []
+      }
       applications_action_log: {
         Row: {
           action: string
@@ -585,7 +633,17 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      weekly_summary: {
+        Row: {
+          approval_rate: number | null
+          approved: number | null
+          avg_processing_time: number | null
+          declined: number | null
+          top_decline_reason: string | null
+          total_apps: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {

@@ -10,6 +10,7 @@ import { TrendChart } from "./TrendChart";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Download } from "lucide-react";
 import { DateRangeFilter } from "./DateRangeFilter";
+import { WeeklySummary } from "./WeeklySummary";
 
 export function AnalyticsDashboard() {
   const { 
@@ -76,6 +77,7 @@ export function AnalyticsDashboard() {
           </div>
         ) : analyticsData ? (
           <div className="space-y-6">
+            <WeeklySummary />
             <KpiMetricsCards data={analyticsData} />
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
