@@ -7,6 +7,10 @@ import { ApplicationsGrid } from './ApplicationsGrid';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useLocation, useSearchParams } from 'react-router-dom';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 // Lazy load the dialog components to reduce initial bundle size
 const ApplicationDialog = lazy(() => import('./ApplicationDialog')
@@ -30,6 +34,7 @@ export const ApplicationsList: React.FC = () => {
 
   const {
     loading,
+    error,
     filteredApplications,
     applications,
     handleFilterChange,
@@ -40,19 +45,25 @@ export const ApplicationsList: React.FC = () => {
     if (openAppId) {
       const fetchAndOpenApplication = async () => {
         try {
+          console.log("Fetching application with ID:", openAppId);
           const { data, error } = await supabase
             .from('merchant_applications')
             .select('*')
             .eq('id', openAppId)
-            .single();
+            .maybeSingle();
           
           if (error) {
+            console.error("Error fetching application:", error);
             throw error;
           }
           
           if (data) {
+            console.log("Successfully fetched application:", data.id);
             setSelectedApplication(data);
             setAppFlowOpen(true);
+          } else {
+            console.error("Application not found with ID:", openAppId);
+            toast.error("Application not found");
           }
         } catch (error) {
           console.error("Error fetching application:", error);
@@ -62,6 +73,7 @@ export const ApplicationsList: React.FC = () => {
       
       fetchAndOpenApplication();
       
+      // Clean up URL parameter after attempting to fetch
       const url = new URL(window.location.href);
       url.searchParams.delete('openApp');
       window.history.replaceState({}, '', url);
@@ -71,13 +83,15 @@ export const ApplicationsList: React.FC = () => {
   const handleOpenApplication = async (app: any) => {
     try {
       if (app.id) {
+        console.log("Fetching detailed application data for:", app.id);
         const { data, error } = await supabase
           .from('merchant_applications')
           .select('*')
           .eq('id', app.id)
-          .single();
+          .maybeSingle();
         
         if (error) {
+          console.error("Supabase error fetching application details:", error);
           throw error;
         }
         
@@ -86,15 +100,19 @@ export const ApplicationsList: React.FC = () => {
           setSelectedApplication(data);
           setAppFlowOpen(true);
           return;
+        } else {
+          console.warn("No data returned for application ID:", app.id);
         }
       }
       
+      console.log("Using provided application data:", app);
       setSelectedApplication(app.rawData || app);
       setDialogOpen(true);
     } catch (error) {
       console.error("Error fetching application details:", error);
       toast.error("Failed to load application details");
       
+      // Fallback to using whatever data we have
       setSelectedApplication(app.rawData || app);
       setDialogOpen(true);
     }
@@ -171,6 +189,7 @@ export const ApplicationsList: React.FC = () => {
       fetchApplications();
       
     } catch (e: any) {
+      console.error("Error processing action:", e);
       toast.error(e.message || "Failed, please try again.");
     }
     return Promise.resolve();
@@ -180,6 +199,42 @@ export const ApplicationsList: React.FC = () => {
     setAppFlowOpen(false);
     fetchApplications();
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between mb-4">
+          <Skeleton className="h-10 w-72" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Skeleton key={i} className="h-48 rounded-lg" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive" className="mb-6">
+        <AlertTitle>Error loading applications</AlertTitle>
+        <AlertDescription className="flex flex-col gap-2">
+          <p>{error}</p>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => fetchApplications()}
+            className="self-start flex items-center gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Retry
+          </Button>
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <div className="space-y-4">

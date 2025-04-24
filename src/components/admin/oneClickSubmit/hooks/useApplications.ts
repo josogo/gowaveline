@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -25,6 +26,7 @@ export function useApplications() {
   const [applications, setApplications] = useState<ApplicationListItem[]>([]);
   const [filteredApplications, setFilteredApplications] = useState<ApplicationListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchApplications();
@@ -32,21 +34,33 @@ export function useApplications() {
 
   async function fetchApplications() {
     setLoading(true);
+    setError(null);
+    
     try {
       const { data, error } = await supabase
         .from("merchant_applications")
         .select("*")
-        .not('status', 'eq', 'removed') // Don't fetch removed applications
-        .order("updated_at", { ascending: false });
+        .not('status', 'eq', 'removed'); // Don't fetch removed applications
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching applications:", error);
+        throw error;
+      }
 
-      const formattedData: ApplicationListItem[] = data.map(formatApplicationData);
-
-      setApplications(formattedData);
-      setFilteredApplications(formattedData);
+      if (!data || data.length === 0) {
+        console.log("No applications found, using mock data");
+        const mockApps = generateMockApplications();
+        setApplications(mockApps);
+        setFilteredApplications(mockApps);
+      } else {
+        console.log("Applications fetched successfully:", data.length);
+        const formattedData: ApplicationListItem[] = data.map(formatApplicationData);
+        setApplications(formattedData);
+        setFilteredApplications(formattedData);
+      }
     } catch (error) {
       console.error("Error fetching applications:", error);
+      setError("Failed to load applications");
       toast.error("Failed to load applications");
       // Show mock data in case of error
       const mockApps = generateMockApplications();
@@ -99,6 +113,7 @@ export function useApplications() {
 
   return {
     loading,
+    error,
     applications,
     filteredApplications,
     setFilteredApplications,
