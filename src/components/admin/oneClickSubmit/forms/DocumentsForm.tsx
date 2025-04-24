@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +9,7 @@ import { useDocumentUpload } from '../hooks/useDocumentUpload';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { supabase } from '@/integrations/supabase/client';
 
 export const DocumentsForm: React.FC = () => {
   const { watch } = useFormContext();
@@ -19,7 +19,6 @@ export const DocumentsForm: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [documentType, setDocumentType] = useState('bank_statement');
   
-  // Make sure to refresh documents when the form opens
   useEffect(() => {
     loadDocuments();
   }, [loadDocuments]);
@@ -51,7 +50,6 @@ export const DocumentsForm: React.FC = () => {
     });
   };
   
-  // Group documents by type
   const documentGroups = React.useMemo(() => {
     const groups: Record<string, any[]> = {};
     
@@ -79,7 +77,6 @@ export const DocumentsForm: React.FC = () => {
     { value: 'other', label: 'Other' }
   ];
   
-  // Get required documents progress
   const requiredDocTypes = ['bank_statement', 'business_license', 'voided_check', 'privacy_policy'];
   const requiredCompleted = requiredDocTypes.filter(type => documentGroups[type]?.length > 0).length;
   const requiredProgress = requiredDocTypes.length > 0 
@@ -186,7 +183,6 @@ export const DocumentsForm: React.FC = () => {
         </Card>
       </form>
       
-      {/* Display uploaded documents by group */}
       {Object.entries(documentGroups).length > 0 ? (
         <div className="space-y-6">
           {Object.entries(documentGroups).map(([type, docs]) => (

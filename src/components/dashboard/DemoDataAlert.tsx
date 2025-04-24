@@ -5,7 +5,7 @@ import { AlertTriangle } from 'lucide-react';
 
 const DemoDataAlert: React.FC = () => {
   return (
-    <Alert variant="warning" className="mb-6">
+    <Alert variant="default" className="mb-6 border-amber-200 bg-amber-50 text-amber-800">
       <AlertTriangle className="h-4 w-4" />
       <AlertTitle>Demonstration Data</AlertTitle>
       <AlertDescription>

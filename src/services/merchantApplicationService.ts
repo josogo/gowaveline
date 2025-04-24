@@ -19,8 +19,11 @@ export async function createMerchantApplication(appData: {
     .order("application_number", { ascending: false })
     .limit(1);
     
-  const nextApplicationNumber = nextNumData?.length > 0 ? 
-    (parseInt(nextNumData[0].application_number || '0') + 1) : 1;
+  // Safely handle the application number, even if it doesn't exist in the table yet
+  let nextApplicationNumber = 1;
+  if (nextNumData && nextNumData.length > 0 && nextNumData[0]?.application_number) {
+    nextApplicationNumber = parseInt(nextNumData[0].application_number) + 1;
+  }
 
   const formattedNumber = nextApplicationNumber.toString().padStart(6, '0');
 
