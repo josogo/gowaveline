@@ -27,7 +27,7 @@ export function WeeklySummary() {
       const { data, error } = await supabase
         .from('weekly_summary')
         .select('*')
-        .maybeSingle(); // Changed from single() to maybeSingle() to prevent errors
+        .single();
       
       if (error) throw error;
       
