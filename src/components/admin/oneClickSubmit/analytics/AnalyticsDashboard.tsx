@@ -8,11 +8,17 @@ import { DeclineAnalytics } from "./DeclineAnalytics";
 import { FunnelAnalytics } from "./FunnelAnalytics";
 import { TrendChart } from "./TrendChart";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Download, ShieldAlert } from "lucide-react";
+import { RefreshCw, Download, ShieldAlert, UserCheck } from "lucide-react";
 import { DateRangeFilter } from "./DateRangeFilter";
 import { WeeklySummary } from "./WeeklySummary";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 
 // Define a type for user roles
 type UserRole = 'sales_rep' | 'risk_analyst' | 'executive' | 'admin' | null;
@@ -30,6 +36,8 @@ export function AnalyticsDashboard() {
   const [exportingData, setExportingData] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [selectedView, setSelectedView] = useState<UserRole>(null);
 
   // Fetch user role on component mount
   useEffect(() => {
@@ -49,7 +57,9 @@ export function AnalyticsDashboard() {
         );
         
         if (adminData) {
+          setIsAdmin(true);
           setUserRole('admin');
+          setSelectedView('admin');
           setIsLoading(false);
           return;
         }
@@ -65,7 +75,9 @@ export function AnalyticsDashboard() {
           console.error('Error fetching user role:', error);
         }
         
-        setUserRole(data?.role as UserRole || null);
+        const role = data?.role as UserRole || null;
+        setUserRole(role);
+        setSelectedView(role);
       } catch (error) {
         console.error('Error fetching user data:', error);
       } finally {
@@ -86,6 +98,11 @@ export function AnalyticsDashboard() {
     // In a real application, you would implement CSV/PDF export logic here
   };
 
+  const handleViewChange = (role: UserRole) => {
+    setSelectedView(role);
+    toast.success(`Switched to ${role} view`);
+  };
+
   // Show loading state while checking user role
   if (isLoading) {
     return (
@@ -95,9 +112,8 @@ export function AnalyticsDashboard() {
     );
   }
 
-  // Show limited access message if the user doesn't have a role
-  // Updated to exclude admin from this check
-  if (!userRole) {
+  // Show limited access message if the user doesn't have a role and is not an admin
+  if (!userRole && !isAdmin) {
     return (
       <div className="w-full p-6">
         <Card className="rounded-2xl shadow-md">
@@ -114,18 +130,46 @@ export function AnalyticsDashboard() {
     );
   }
 
+  // Get the effective role for viewing content (either actual role or admin-selected view)
+  const effectiveRole = isAdmin ? selectedView : userRole;
+
   return (
     <div className="w-full">
       <div className="bg-white/70 shadow-sm backdrop-blur-md px-6 h-14 sticky top-0 z-50 flex items-center justify-between">
         <h1 className="text-xl font-semibold flex items-center gap-2">
           <span>📊</span> Merchant Analytics
-          {userRole === 'executive' && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full ml-2">Executive View</span>}
-          {userRole === 'risk_analyst' && <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full ml-2">Risk View</span>}
-          {userRole === 'sales_rep' && <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full ml-2">Sales View</span>}
-          {userRole === 'admin' && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full ml-2">Admin View</span>}
+          {effectiveRole === 'executive' && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full ml-2">Executive View</span>}
+          {effectiveRole === 'risk_analyst' && <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full ml-2">Risk View</span>}
+          {effectiveRole === 'sales_rep' && <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full ml-2">Sales View</span>}
+          {effectiveRole === 'admin' && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full ml-2">Admin View</span>}
         </h1>
         <div className="flex items-center gap-3">
-          {(userRole !== 'executive' && userRole !== 'admin') && (
+          {isAdmin && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center gap-1">
+                  <UserCheck size={14} />
+                  <span>View As: {effectiveRole || 'Admin'}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleViewChange('admin')}>
+                  Admin View
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleViewChange('executive')}>
+                  Executive View
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleViewChange('risk_analyst')}>
+                  Risk Analyst View
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleViewChange('sales_rep')}>
+                  Sales Rep View
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          
+          {(effectiveRole !== 'executive' && effectiveRole !== 'admin') && (
             <DateRangeFilter 
               timeRange={timeRange} 
               setTimeRange={setTimeRange} 
@@ -140,7 +184,7 @@ export function AnalyticsDashboard() {
             <RefreshCw size={14} />
             <span className="hidden sm:inline">Refresh</span>
           </Button>
-          {(userRole === 'executive' || userRole === 'risk_analyst' || userRole === 'admin') && (
+          {(effectiveRole === 'executive' || effectiveRole === 'risk_analyst' || effectiveRole === 'admin') && (
             <Button 
               variant="outline" 
               size="sm" 
@@ -193,7 +237,7 @@ export function AnalyticsDashboard() {
             </div>
             
             {/* Decline Reasons Analysis - not shown to sales reps */}
-            {(userRole === 'risk_analyst' || userRole === 'executive' || userRole === 'admin') && (
+            {(effectiveRole === 'risk_analyst' || effectiveRole === 'executive' || effectiveRole === 'admin') && (
               <Card className="rounded-2xl shadow-md">
                 <CardContent className="pt-6">
                   <h2 className="text-lg font-medium mb-4">Decline Reasons Analysis</h2>
@@ -203,7 +247,7 @@ export function AnalyticsDashboard() {
             )}
             
             {/* Application Funnel Analysis - not shown to executives */}
-            {userRole !== 'executive' && (
+            {effectiveRole !== 'executive' && (
               <Card className="rounded-2xl shadow-md">
                 <CardContent className="pt-6">
                   <h2 className="text-lg font-medium mb-4">Application Funnel Analysis</h2>
@@ -220,7 +264,7 @@ export function AnalyticsDashboard() {
       </div>
 
       {/* Welcome banner for executives */}
-      {userRole === 'executive' && analyticsData && (
+      {effectiveRole === 'executive' && analyticsData && (
         <div className="p-6 pt-0">
           <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200 rounded-2xl shadow-md">
             <CardContent className="p-6">
@@ -234,7 +278,7 @@ export function AnalyticsDashboard() {
       )}
 
       {/* Welcome banner for admin */}
-      {userRole === 'admin' && analyticsData && (
+      {effectiveRole === 'admin' && analyticsData && (
         <div className="p-6 pt-0">
           <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200 rounded-2xl shadow-md">
             <CardContent className="p-6">
@@ -248,13 +292,27 @@ export function AnalyticsDashboard() {
       )}
 
       {/* Custom message for sales reps */}
-      {userRole === 'sales_rep' && analyticsData && (
+      {effectiveRole === 'sales_rep' && analyticsData && (
         <div className="p-6 pt-0">
           <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200 rounded-2xl shadow-md">
             <CardContent className="p-6">
               <h3 className="text-lg font-medium text-green-800 mb-2">Your Applications Dashboard 🚀</h3>
               <p className="text-green-700">
                 You're viewing data for applications you've submitted. Keep up the great work!
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Custom message for risk analysts */}
+      {effectiveRole === 'risk_analyst' && analyticsData && (
+        <div className="p-6 pt-0">
+          <Card className="bg-gradient-to-r from-amber-50 to-amber-100 border-amber-200 rounded-2xl shadow-md">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-medium text-amber-800 mb-2">Risk Analysis Dashboard 🔍</h3>
+              <p className="text-amber-700">
+                You have access to detailed risk metrics and decline reasons to help improve approval rates.
               </p>
             </CardContent>
           </Card>
