@@ -1,85 +1,45 @@
 
 import React from 'react';
-import { useFormContext } from 'react-hook-form';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Link2, Upload } from 'lucide-react';
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 
 export const FinancialInfoForm: React.FC = () => {
-  const form = useFormContext();
-  
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <FormField
-          control={form.control}
-          name="bankName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Bank Name</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="e.g. Chase Bank" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div>
+          <Label>Bank Name</Label>
+          <Input placeholder="e.g. Chase Bank" />
+        </div>
         
-        <FormField
-          control={form.control}
-          name="accountType"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Account Type</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value || ""}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select account type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="checking">Business Checking</SelectItem>
-                  <SelectItem value="savings">Business Savings</SelectItem>
-                  <SelectItem value="personal-checking">Personal Checking</SelectItem>
-                  <SelectItem value="personal-savings">Personal Savings</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div>
+          <Label>Account Type</Label>
+          <Select>
+            <SelectTrigger>
+              <SelectValue placeholder="Select account type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="checking">Business Checking</SelectItem>
+              <SelectItem value="savings">Business Savings</SelectItem>
+              <SelectItem value="personal-checking">Personal Checking</SelectItem>
+              <SelectItem value="personal-savings">Personal Savings</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         
-        <FormField
-          control={form.control}
-          name="routingNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Routing Number</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="9 digits" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div>
+          <Label>Routing Number</Label>
+          <Input placeholder="9 digits" />
+        </div>
         
-        <FormField
-          control={form.control}
-          name="accountNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Account Number</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="Account number" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div>
+          <Label>Account Number</Label>
+          <Input placeholder="Account number" />
+        </div>
       </div>
       
       <div className="space-y-4">
@@ -181,72 +141,36 @@ export const FinancialInfoForm: React.FC = () => {
         <h3 className="text-lg font-medium">Financial Summary</h3>
         <Card className="p-4">
           <div className="grid grid-cols-2 gap-y-4">
-            <FormField
-              control={form.control}
-              name="annualRevenue"
-              render={({ field }) => (
-                <FormItem>
-                  <p className="text-sm text-muted-foreground">Annual Revenue</p>
-                  <FormControl>
-                    <Input {...field} type="number" placeholder="0.00" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div>
+              <p className="text-sm text-muted-foreground">Annual Revenue</p>
+              <Input type="number" placeholder="0.00" />
+            </div>
             
-            <FormField
-              control={form.control}
-              name="yearsProfitable"
-              render={({ field }) => (
-                <FormItem>
-                  <p className="text-sm text-muted-foreground">Years Profitable</p>
-                  <FormControl>
-                    <Input {...field} type="number" placeholder="0" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div>
+              <p className="text-sm text-muted-foreground">Years Profitable</p>
+              <Input type="number" placeholder="0" />
+            </div>
             
-            <FormField
-              control={form.control}
-              name="creditScoreRange"
-              render={({ field }) => (
-                <FormItem>
-                  <p className="text-sm text-muted-foreground">Credit Score Range</p>
-                  <Select onValueChange={field.onChange} value={field.value || ""}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select range" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="excellent">Excellent (750+)</SelectItem>
-                      <SelectItem value="good">Good (700-749)</SelectItem>
-                      <SelectItem value="fair">Fair (650-699)</SelectItem>
-                      <SelectItem value="poor">Poor (600-649)</SelectItem>
-                      <SelectItem value="very-poor">Very Poor (below 600)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div>
+              <p className="text-sm text-muted-foreground">Credit Score Range</p>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="excellent">Excellent (750+)</SelectItem>
+                  <SelectItem value="good">Good (700-749)</SelectItem>
+                  <SelectItem value="fair">Fair (650-699)</SelectItem>
+                  <SelectItem value="poor">Poor (600-649)</SelectItem>
+                  <SelectItem value="very-poor">Very Poor (below 600)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             
-            <FormField
-              control={form.control}
-              name="monthlyOperatingExpenses"
-              render={({ field }) => (
-                <FormItem>
-                  <p className="text-sm text-muted-foreground">Monthly Operating Expenses</p>
-                  <FormControl>
-                    <Input {...field} type="number" placeholder="0.00" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div>
+              <p className="text-sm text-muted-foreground">Monthly Operating Expenses</p>
+              <Input type="number" placeholder="0.00" />
+            </div>
           </div>
         </Card>
       </div>

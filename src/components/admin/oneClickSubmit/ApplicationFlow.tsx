@@ -38,7 +38,6 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
   const [showSendDialog, setShowSendDialog] = useState(false);
   const [showBankRouting, setShowBankRouting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
 
   // Initialize currentTab in form when activeTab changes
   useEffect(() => {
@@ -91,7 +90,6 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
         setIsSaving(true);
         saveApplicationData().then(() => {
           setIsSaving(false);
-          setLastSavedAt(new Date());
           resetDirtyState();
         });
         
@@ -126,19 +124,9 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
         form.setValue('currentTab', activeTab);
       }
       updateFormData(currentValues);
-      
-      // Save after a short delay to ensure all form values are updated
-      const saveTimeout = setTimeout(() => {
-        setIsSaving(true);
-        saveApplicationData().then(() => {
-          setIsSaving(false);
-          setLastSavedAt(new Date());
-        });
-      }, 300);
-      
-      return () => clearTimeout(saveTimeout);
+      saveApplicationData();
     }
-  }, [activeTab, merchantApplication?.id, form, updateFormData, saveApplicationData]);
+  }, [activeTab, merchantApplication?.id]);
 
   const handleBankRouting = () => {
     const currentFormValues = form.getValues();
@@ -146,19 +134,9 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
       currentFormValues.currentTab = activeTab;
     }
     updateFormData(currentFormValues);
-    
-    setIsSaving(true);
     saveApplicationData().then(() => {
-      setIsSaving(false);
-      setLastSavedAt(new Date());
       setShowBankRouting(true);
     });
-  };
-
-  const handleFieldChange = (name: string, value: any) => {
-    form.setValue(name, value);
-    const currentValues = form.getValues();
-    updateFormData(currentValues);
   };
 
   if (showBankRouting) {
@@ -193,14 +171,12 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
           isSaving={isSaving}
           lastEdited={lastEdited}
           applicationNumber={applicationNumber}
-          lastSavedAt={lastSavedAt}
         />
         
         <FormProvider {...form}>
           <ApplicationContent 
             activeTab={activeTab}
             handleTabChange={handleTabChange}
-            onFieldChange={handleFieldChange}
           />
           
           <NavigationControls

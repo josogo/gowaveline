@@ -13,13 +13,11 @@ import { ApplicationTabs } from './ApplicationTabs';
 interface ApplicationContentProps {
   activeTab: string;
   handleTabChange: (tabId: string) => void;
-  onFieldChange?: (name: string, value: any) => void;
 }
 
 export const ApplicationContent: React.FC<ApplicationContentProps> = ({
   activeTab,
   handleTabChange,
-  onFieldChange
 }) => {
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="mt-4">
