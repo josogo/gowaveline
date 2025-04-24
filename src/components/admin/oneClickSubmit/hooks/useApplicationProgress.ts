@@ -1,20 +1,46 @@
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from 'react';
 
-export function useApplicationProgress(merchantApplication: any) {
-  const [applicationProgress, setApplicationProgress] = useState(
-    merchantApplication?.application_data?.progress || 0
-  );
-  const [activeTab, setActiveTab] = useState(
-    merchantApplication?.application_data?.currentTab || 'business'
-  );
+export const useApplicationProgress = (merchantApplication?: any) => {
+  const [applicationProgress, setApplicationProgress] = useState(0);
+  const [activeTab, setActiveTab] = useState('business'); // Default to first tab
 
+  // Initialize from merchantApplication data or localStorage
   useEffect(() => {
-    if (merchantApplication) {
-      setApplicationProgress(merchantApplication.application_data?.progress || 0);
-      setActiveTab(merchantApplication.application_data?.currentTab || 'business');
+    if (merchantApplication?.id) {
+      try {
+        // First check localStorage for saved progress
+        const savedStateStr = localStorage.getItem(`application_${merchantApplication.id}`);
+        
+        if (savedStateStr) {
+          const savedState = JSON.parse(savedStateStr);
+          console.log("Found saved application state:", savedState);
+          
+          // Set progress from saved state
+          if (savedState.progress) {
+            setApplicationProgress(savedState.progress);
+          }
+          
+          // Set active tab from saved state
+          if (savedState.activeTab) {
+            setActiveTab(savedState.activeTab);
+          }
+        } 
+        // If no localStorage data, check if there's progress in the merchantApplication
+        else if (merchantApplication.progress) {
+          setApplicationProgress(merchantApplication.progress);
+        }
+        
+      } catch (err) {
+        console.error("Error loading saved application state:", err);
+      }
     }
   }, [merchantApplication]);
 
-  return { applicationProgress, setApplicationProgress, activeTab, setActiveTab };
-}
+  return {
+    applicationProgress,
+    setApplicationProgress,
+    activeTab,
+    setActiveTab
+  };
+};

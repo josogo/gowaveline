@@ -39,11 +39,15 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
 }) => {
   const tabs = useApplicationTabs();
   const form = useForm({
-    defaultValues: {}
+    defaultValues: merchantApplication?.application_data || {}
   });
-  const { formData, updateFormData, isDirty, resetDirtyState } = useFormData();
+  const { formData, updateFormData, isDirty, resetDirtyState } = useFormData(
+    merchantApplication?.application_data || {}
+  );
+  
   const { applicationProgress, setApplicationProgress, activeTab, setActiveTab } = 
     useApplicationProgress(merchantApplication);
+  
   const [showSendDialog, setShowSendDialog] = useState(false);
   const [showBankRouting, setShowBankRouting] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -56,9 +60,10 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
         businessEmail: merchantApplication.merchant_email,
         ...merchantApplication.application_data
       };
+      
+      console.log("Initializing form with data:", initialData);
       updateFormData(initialData);
       form.reset(initialData);
-      console.log("Initializing form data from merchant application:", initialData);
       setIsDataLoaded(true);
     } else {
       setIsDataLoaded(true);
@@ -79,6 +84,7 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
       const saveTimeout = setTimeout(() => {
         saveApplicationData();
         resetDirtyState();
+        console.log("Auto-saving application data due to changes");
       }, 1000);
       
       return () => clearTimeout(saveTimeout);
@@ -88,14 +94,14 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
   const currentTabIndex = tabs.findIndex(tab => tab.id === activeTab);
   
   const handleTabChange = (tabId: string) => {
-    // Save current form data before changing tabs
-    console.log("Saving application data before tab change from", activeTab, "to", tabId);
-    
-    // Get current form values and update the formData state
+    // Always save the current form values before changing tabs
     const currentFormValues = form.getValues();
+    console.log("Saving data before tab change. Current values:", currentFormValues);
+    
+    // Update the formData state with current form values
     updateFormData(currentFormValues);
     
-    // Save to backend/storage
+    // Force save to storage/backend
     saveApplicationData();
     
     // Change tab after saving
@@ -106,16 +112,16 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
     const newProgress = Math.ceil((newTabIndex + 1) * progressPerStep);
     setApplicationProgress(newProgress);
     
-    // Show toast notification
     toast.success("Progress saved successfully");
   };
 
   const navigateTab = (direction: 'next' | 'prev') => {
-    // Get current form values and update formData
+    // Always get latest form values 
     const currentFormValues = form.getValues();
-    updateFormData(currentFormValues);
+    console.log(`Navigating ${direction}, saving current form values:`, currentFormValues);
     
-    // Save to backend
+    // Update formData and ensure it's saved
+    updateFormData(currentFormValues);
     saveApplicationData();
     
     if (direction === 'next' && currentTabIndex < tabs.length - 1) {

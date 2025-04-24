@@ -8,10 +8,8 @@ export function useFormData(initialData: any = {}) {
   // Update formData when initialData changes (e.g., when loading from API)
   useEffect(() => {
     if (Object.keys(initialData).length > 0) {
-      setFormData(prev => ({
-        ...prev,
-        ...initialData
-      }));
+      console.log("Initializing form data with:", initialData);
+      setFormData(initialData);
     }
   }, [initialData]);
 

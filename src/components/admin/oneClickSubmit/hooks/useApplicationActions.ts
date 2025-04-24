@@ -17,28 +17,35 @@ export const useApplicationActions = (
     
     console.log("Saving application data:", { applicationId, formData, progress, activeTab });
     
-    // In a real app, this would be an API call to save the data
-    // For now, we'll simulate saving to localStorage
-    localStorage.setItem(`application_${applicationId}`, JSON.stringify({
-      formData,
-      progress,
-      activeTab,
-      lastUpdated: new Date().toISOString(),
-    }));
-    
-    // Simulate success
-    console.log("Application data saved successfully");
-    
-    // Note: In production, this would be an actual API call:
-    // return api.saveApplication(applicationId, formData);
+    // Save formData to localStorage for persistence between page refreshes
+    try {
+      const dataToSave = {
+        formData,
+        progress,
+        activeTab,
+        lastUpdated: new Date().toISOString(),
+      };
+      
+      localStorage.setItem(`application_${applicationId}`, JSON.stringify(dataToSave));
+      
+      // In a real app, this would also call an API endpoint to save to the database
+      // For example: return api.updateMerchantApplication(applicationId, formData);
+      
+      console.log("Application data saved successfully to localStorage");
+      return { success: true };
+    } catch (error) {
+      console.error("Error saving application data:", error);
+      toast.error("Failed to save progress");
+      return { success: false, error };
+    }
   }, [applicationId, formData, progress, activeTab]);
 
   const handleSendToMerchant = useCallback(() => {
     // First save current state
-    saveApplicationData();
+    const saveResult = saveApplicationData();
     
-    // Then show send dialog
-    if (setShowSendDialog) {
+    // Only proceed if save was successful
+    if (saveResult?.success && setShowSendDialog) {
       setShowSendDialog(true);
     }
   }, [saveApplicationData, setShowSendDialog]);
