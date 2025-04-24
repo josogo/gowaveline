@@ -6,8 +6,22 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
 import { CheckCircle2, XCircle } from 'lucide-react';
+import { useFormContext } from 'react-hook-form';
 
 export const MarketingForm: React.FC = () => {
+  const { register, watch, setValue } = useFormContext();
+  
+  // Get current values for each marketing channel
+  const marketingChannels = watch('marketingChannels') || {};
+  
+  // Handle switch toggle
+  const handleSwitchToggle = (channel: string, checked: boolean) => {
+    setValue('marketingChannels', {
+      ...marketingChannels,
+      [channel]: checked
+    }, { shouldDirty: true });
+  };
+
   return (
     <div className="space-y-6">
       <p className="text-sm text-gray-600 bg-gray-50 p-4 rounded-md">
@@ -23,63 +37,99 @@ export const MarketingForm: React.FC = () => {
         
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div className="flex items-center space-x-2">
-            <Switch id="facebook-ads" />
+            <Switch 
+              id="facebook-ads" 
+              checked={!!marketingChannels.facebookAds}
+              onCheckedChange={(checked) => handleSwitchToggle('facebookAds', checked)}
+            />
             <Label htmlFor="facebook-ads" className="cursor-pointer">
               Facebook/Instagram Ads
             </Label>
           </div>
           
           <div className="flex items-center space-x-2">
-            <Switch id="google-ads" />
+            <Switch 
+              id="google-ads" 
+              checked={!!marketingChannels.googleAds}
+              onCheckedChange={(checked) => handleSwitchToggle('googleAds', checked)}
+            />
             <Label htmlFor="google-ads" className="cursor-pointer">
               Google Ads
             </Label>
           </div>
           
           <div className="flex items-center space-x-2">
-            <Switch id="tiktok-ads" />
+            <Switch 
+              id="tiktok-ads" 
+              checked={!!marketingChannels.tiktokAds}
+              onCheckedChange={(checked) => handleSwitchToggle('tiktokAds', checked)}
+            />
             <Label htmlFor="tiktok-ads" className="cursor-pointer">
               TikTok Ads
             </Label>
           </div>
           
           <div className="flex items-center space-x-2">
-            <Switch id="affiliate" />
+            <Switch 
+              id="affiliate" 
+              checked={!!marketingChannels.affiliate}
+              onCheckedChange={(checked) => handleSwitchToggle('affiliate', checked)}
+            />
             <Label htmlFor="affiliate" className="cursor-pointer">
               Affiliate Marketing
             </Label>
           </div>
           
           <div className="flex items-center space-x-2">
-            <Switch id="influencer" />
+            <Switch 
+              id="influencer" 
+              checked={!!marketingChannels.influencer}
+              onCheckedChange={(checked) => handleSwitchToggle('influencer', checked)}
+            />
             <Label htmlFor="influencer" className="cursor-pointer">
               Influencer Marketing
             </Label>
           </div>
           
           <div className="flex items-center space-x-2">
-            <Switch id="seo" />
+            <Switch 
+              id="seo" 
+              checked={!!marketingChannels.seo}
+              onCheckedChange={(checked) => handleSwitchToggle('seo', checked)}
+            />
             <Label htmlFor="seo" className="cursor-pointer">
               SEO / Organic
             </Label>
           </div>
           
           <div className="flex items-center space-x-2">
-            <Switch id="email" />
+            <Switch 
+              id="email" 
+              checked={!!marketingChannels.email}
+              onCheckedChange={(checked) => handleSwitchToggle('email', checked)}
+            />
             <Label htmlFor="email" className="cursor-pointer">
               Email Marketing
             </Label>
           </div>
           
           <div className="flex items-center space-x-2">
-            <Switch id="sms" />
+            <Switch 
+              id="sms" 
+              checked={!!marketingChannels.sms}
+              onCheckedChange={(checked) => handleSwitchToggle('sms', checked)}
+            />
             <Label htmlFor="sms" className="cursor-pointer">
               SMS Marketing
             </Label>
           </div>
           
           <div className="flex items-center space-x-2">
-            <Switch id="direct-mail" />
+            <Switch 
+              id="direct-mail" 
+              checked={!!marketingChannels.directMail}
+              onCheckedChange={(checked) => handleSwitchToggle('directMail', checked)}
+            />
             <Label htmlFor="direct-mail" className="cursor-pointer">
               Direct Mail
             </Label>
@@ -185,13 +235,18 @@ export const MarketingForm: React.FC = () => {
           <Textarea 
             placeholder="Describe any claims made in your marketing materials"
             className="mt-2"
+            {...register('marketingClaims')}
           />
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <Label>Average Customer Acquisition Cost (CAC)</Label>
-            <Input type="number" placeholder="0.00" />
+            <Input 
+              type="number" 
+              placeholder="0.00" 
+              {...register('cac')} 
+            />
             <p className="text-xs text-muted-foreground mt-1">
               Average cost to acquire one customer
             </p>
@@ -199,7 +254,11 @@ export const MarketingForm: React.FC = () => {
           
           <div>
             <Label>Customer Lifetime Value (LTV)</Label>
-            <Input type="number" placeholder="0.00" />
+            <Input 
+              type="number" 
+              placeholder="0.00" 
+              {...register('ltv')}
+            />
             <p className="text-xs text-muted-foreground mt-1">
               Average value of a customer over their lifetime
             </p>
