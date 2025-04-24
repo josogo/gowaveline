@@ -1,10 +1,11 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { TimeRange } from "../hooks/useAnalyticsData";
 
 interface DateRangeFilterProps {
-  timeRange: "week" | "month" | "year";
-  setTimeRange: (range: "week" | "month" | "year") => void;
+  timeRange: TimeRange;
+  setTimeRange: (range: TimeRange) => void;
 }
 
 export function DateRangeFilter({ timeRange, setTimeRange }: DateRangeFilterProps) {
@@ -13,32 +14,42 @@ export function DateRangeFilter({ timeRange, setTimeRange }: DateRangeFilterProp
       <Button
         variant="ghost"
         size="sm"
-        className={`${timeRange === 'week' 
+        className={`${timeRange === '7d' 
           ? 'bg-white shadow-sm' 
           : 'hover:bg-gray-200'} px-3 py-1 h-8`}
-        onClick={() => setTimeRange('week')}
+        onClick={() => setTimeRange('7d')}
       >
         Week
       </Button>
       <Button
         variant="ghost"
         size="sm"
-        className={`${timeRange === 'month' 
+        className={`${timeRange === '30d' 
           ? 'bg-white shadow-sm' 
           : 'hover:bg-gray-200'} px-3 py-1 h-8`}
-        onClick={() => setTimeRange('month')}
+        onClick={() => setTimeRange('30d')}
       >
         Month
       </Button>
       <Button
         variant="ghost"
         size="sm"
-        className={`${timeRange === 'year' 
+        className={`${timeRange === '90d' 
           ? 'bg-white shadow-sm' 
           : 'hover:bg-gray-200'} px-3 py-1 h-8`}
-        onClick={() => setTimeRange('year')}
+        onClick={() => setTimeRange('90d')}
       >
-        Year
+        Quarter
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        className={`${timeRange === 'all' 
+          ? 'bg-white shadow-sm' 
+          : 'hover:bg-gray-200'} px-3 py-1 h-8`}
+        onClick={() => setTimeRange('all')}
+      >
+        All
       </Button>
     </div>
   );

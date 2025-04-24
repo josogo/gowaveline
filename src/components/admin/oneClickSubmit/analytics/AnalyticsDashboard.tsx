@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { useAnalyticsData } from "../hooks/useAnalyticsData";
+import { useAnalyticsData, TimeRange } from "../hooks/useAnalyticsData";
 import { Card, CardContent } from "@/components/ui/card";
 import { KpiMetricsCards } from "./KpiMetricsCards";
 import { StatusBreakdown } from "./StatusBreakdown";
