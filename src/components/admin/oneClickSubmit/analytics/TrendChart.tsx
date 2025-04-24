@@ -3,18 +3,20 @@ import React, { useState } from 'react';
 import { AnalyticsData } from '../hooks/useAnalyticsData';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend } from 'recharts';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Button } from '@/components/ui/button';
 
 export function TrendChart({ data }: { data: AnalyticsData }) {
   const [chartView, setChartView] = useState<'total' | 'daily'>('total');
+  const [viewType, setViewType] = useState<'combined' | 'split'>('combined');
 
   // Format the dates for better display
   const trendData = data.applicationTrend.map(item => ({
     date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     count: item.count,
-    // Demo data for chart filtering - in a real app, this would come from your analytics data
-    approved: Math.floor(item.count * 0.7),
-    declined: Math.floor(item.count * 0.3)
+    // Using the demo data pattern but with more realistic ratios
+    approved: Math.floor(item.count * 0.65),
+    declined: Math.floor(item.count * 0.35)
   }));
 
   if (trendData.length === 0) {
@@ -26,34 +28,30 @@ export function TrendChart({ data }: { data: AnalyticsData }) {
   }
 
   const totalVolume = trendData.reduce((sum, item) => sum + item.count, 0);
-  const avgDaily = (trendData.reduce((sum, item) => sum + item.count, 0) / trendData.length).toFixed(1);
+  const avgDaily = (totalVolume / trendData.length).toFixed(1);
   const highestDay = trendData.reduce((max, item) => Math.max(max, item.count), 0);
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-2 bg-gray-100 rounded-md p-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`${chartView === 'total' 
-              ? 'bg-white shadow-sm' 
-              : 'hover:bg-gray-200'} px-3 py-1 h-8`}
-            onClick={() => setChartView('total')}
-          >
-            Total
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`${chartView === 'daily' 
-              ? 'bg-white shadow-sm' 
-              : 'hover:bg-gray-200'} px-3 py-1 h-8`}
-            onClick={() => setChartView('daily')}
-          >
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <ToggleGroup type="single" value={chartView} onValueChange={(value) => value && setChartView(value as 'total' | 'daily')}>
+          <ToggleGroupItem value="total" aria-label="Show total applications">
+            Total Volume
+          </ToggleGroupItem>
+          <ToggleGroupItem value="daily" aria-label="Show daily breakdown">
             Daily Breakdown
+          </ToggleGroupItem>
+        </ToggleGroup>
+
+        {chartView === 'daily' && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setViewType(current => current === 'combined' ? 'split' : 'combined')}
+          >
+            {viewType === 'combined' ? 'Show Separately' : 'Combine View'}
           </Button>
-        </div>
+        )}
       </div>
 
       <div className="h-64">
@@ -78,12 +76,12 @@ export function TrendChart({ data }: { data: AnalyticsData }) {
                 <Line
                   type="monotone"
                   dataKey="count"
-                  name="Applications"
+                  name="Total Applications"
                   stroke="#3b82f6"
                   activeDot={{ r: 6 }}
                   strokeWidth={2}
                 />
-              ) : (
+              ) : viewType === 'combined' ? (
                 <>
                   <Line
                     type="monotone"
@@ -102,6 +100,15 @@ export function TrendChart({ data }: { data: AnalyticsData }) {
                     strokeWidth={2}
                   />
                 </>
+              ) : (
+                <Line
+                  type="monotone"
+                  dataKey={viewType === 'split' ? 'approved' : 'declined'}
+                  name={viewType === 'split' ? 'Approved' : 'Declined'}
+                  stroke={viewType === 'split' ? '#10b981' : '#ef4444'}
+                  activeDot={{ r: 6 }}
+                  strokeWidth={2}
+                />
               )}
             </LineChart>
           </ResponsiveContainer>
@@ -125,3 +132,4 @@ export function TrendChart({ data }: { data: AnalyticsData }) {
     </div>
   );
 }
+
