@@ -13,6 +13,7 @@ import { DateRangeFilter } from "./DateRangeFilter";
 import { WeeklySummary } from "./WeeklySummary";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { checkUserIsAdmin } from '@/components/admin/documents/api/userApi';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,15 +38,15 @@ export function AnalyticsDashboard() {
   const [userRole, setUserRole] = useState<UserRole>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [selectedView, setSelectedView] = useState<UserRole>(null);
-
-  console.log("Component rendered - isAdmin:", isAdmin, "userRole:", userRole, "selectedView:", selectedView);
+  const [selectedView, setSelectedView] = useState<UserRole>('admin');
+  
+  console.log("AnalyticsDashboard rendering - isAdmin:", isAdmin, "userRole:", userRole, "selectedView:", selectedView);
 
   // Fetch user role on component mount
   useEffect(() => {
     const fetchUserRole = async () => {
       try {
-        console.log("Fetching user role...");
+        console.log("Fetching user role and admin status...");
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!user) {
@@ -56,39 +57,39 @@ export function AnalyticsDashboard() {
         
         console.log("User found:", user.id);
         
-        // First check if user is an admin
-        const { data: adminData, error: adminError } = await supabase.rpc(
-          'has_role',
-          { user_id: user.id, role: 'admin' }
-        );
+        // Check if user is admin using the utility function
+        const isAdminUser = await checkUserIsAdmin(user.id);
+        console.log("Admin check result:", isAdminUser);
         
-        console.log("Admin check result:", adminData, "Error:", adminError);
-        
-        if (adminData) {
-          console.log("User is admin!");
+        if (isAdminUser) {
+          console.log("User is admin! Setting admin role and view");
           setIsAdmin(true);
           setUserRole('admin');
           setSelectedView('admin');
           setIsLoading(false);
           return;
+        } else {
+          console.log("User is not an admin, checking for other roles");
         }
         
-        // Check if the user has any other roles
-        const { data, error } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .single();
-        
-        console.log("Other role check:", data, "Error:", error);
-        
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error fetching user role:', error);
+        // Check for other roles if not admin
+        try {
+          const { data: roleData, error: roleError } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id)
+            .single();
+          
+          console.log("Other role check result:", roleData);
+          
+          if (roleData?.role) {
+            console.log(`Setting user role to ${roleData.role}`);
+            setUserRole(roleData.role as UserRole);
+            setSelectedView(roleData.role as UserRole);
+          }
+        } catch (roleErr) {
+          console.error("Error fetching user roles:", roleErr);
         }
-        
-        const role = data?.role as UserRole || null;
-        setUserRole(role);
-        setSelectedView(role);
       } catch (error) {
         console.error('Error fetching user data:', error);
       } finally {
@@ -110,6 +111,7 @@ export function AnalyticsDashboard() {
   };
 
   const handleViewChange = (role: UserRole) => {
+    console.log(`Switching view to ${role}`);
     setSelectedView(role);
     toast.success(`Switched to ${role} view`);
   };
@@ -125,9 +127,10 @@ export function AnalyticsDashboard() {
     );
   }
 
-  // For debugging only - force admin view
-  // Uncomment this line to force admin view for testing
-  // const isAdmin = true;
+  // For debugging - uncomment to force admin view
+  // setIsAdmin(true);
+  // setUserRole('admin');
+  // setSelectedView('admin');
 
   console.log("Checking access conditions - !userRole && !isAdmin:", !userRole && !isAdmin);
 
