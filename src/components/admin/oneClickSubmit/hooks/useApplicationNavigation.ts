@@ -6,13 +6,13 @@ import { UseFormReturn } from 'react-hook-form';
 export const useApplicationNavigation = (
   form: UseFormReturn<any>,
   updateFormData: (data: any) => void,
-  saveApplicationData: () => void,
+  saveApplicationData: () => Promise<any>,
   setActiveTab: (tab: string) => void,
   setApplicationProgress: (progress: number) => void
 ) => {
   const tabs = useApplicationTabs();
 
-  const handleTabChange = useCallback((tabId: string) => {
+  const handleTabChange = useCallback(async (tabId: string) => {
     // Always save the current form values before changing tabs
     const currentFormValues = form.getValues();
     console.log("Saving data before tab change. Current values:", currentFormValues);
@@ -23,19 +23,26 @@ export const useApplicationNavigation = (
     // Update the formData state with current form values
     updateFormData(currentFormValues);
     
-    // Force save to storage/backend
-    saveApplicationData();
-    
-    // Change tab after saving
-    setActiveTab(tabId);
-    
-    const newTabIndex = tabs.findIndex(tab => tab.id === tabId);
-    const progressPerStep = 100 / tabs.length;
-    const newProgress = Math.ceil((newTabIndex + 1) * progressPerStep);
-    setApplicationProgress(newProgress);
+    try {
+      // Force save to storage/backend and wait for it to complete
+      await saveApplicationData();
+      
+      // Only change tab after saving is successful
+      setActiveTab(tabId);
+      
+      const newTabIndex = tabs.findIndex(tab => tab.id === tabId);
+      const progressPerStep = 100 / tabs.length;
+      const newProgress = Math.ceil((newTabIndex + 1) * progressPerStep);
+      setApplicationProgress(newProgress);
+      
+      return true;
+    } catch (error) {
+      console.error("Error saving data during tab change:", error);
+      return false;
+    }
   }, [form, updateFormData, saveApplicationData, setActiveTab, setApplicationProgress, tabs]);
 
-  const navigateTab = useCallback((direction: 'next' | 'prev') => {
+  const navigateTab = useCallback(async (direction: 'next' | 'prev') => {
     const activeTab = form.getValues('currentTab') || tabs[0].id;
     const currentTabIndex = tabs.findIndex(tab => tab.id === activeTab);
     
@@ -46,16 +53,22 @@ export const useApplicationNavigation = (
     // Store the current tab in form values
     currentFormValues.currentTab = activeTab;
     
-    // Update formData and ensure it's saved
+    // Update formData
     updateFormData(currentFormValues);
-    saveApplicationData();
     
-    if (direction === 'next' && currentTabIndex < tabs.length - 1) {
-      const nextTab = tabs[currentTabIndex + 1].id;
-      handleTabChange(nextTab);
-    } else if (direction === 'prev' && currentTabIndex > 0) {
-      const prevTab = tabs[currentTabIndex - 1].id;
-      handleTabChange(prevTab);
+    try {
+      // Ensure data is saved before navigation
+      await saveApplicationData();
+      
+      if (direction === 'next' && currentTabIndex < tabs.length - 1) {
+        const nextTab = tabs[currentTabIndex + 1].id;
+        handleTabChange(nextTab);
+      } else if (direction === 'prev' && currentTabIndex > 0) {
+        const prevTab = tabs[currentTabIndex - 1].id;
+        handleTabChange(prevTab);
+      }
+    } catch (error) {
+      console.error("Error during tab navigation:", error);
     }
   }, [form, updateFormData, saveApplicationData, handleTabChange, tabs]);
 

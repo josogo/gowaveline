@@ -1,58 +1,64 @@
 
-import { X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { ApplicationProgress } from './ApplicationProgress';
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ApplicationProgress } from "./ApplicationProgress";
+import { format } from "date-fns";
 
 interface ApplicationHeaderProps {
   onClose?: () => void;
   progress: number;
-  isSaving?: boolean;
+  isSaving: boolean;
   lastEdited?: string;
   applicationNumber?: string;
+  lastSavedAt?: Date | null;
 }
 
-export const ApplicationHeader = ({ 
+export const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ 
   onClose, 
   progress, 
-  isSaving, 
+  isSaving,
   lastEdited,
-  applicationNumber 
-}: ApplicationHeaderProps) => {
+  applicationNumber,
+  lastSavedAt
+}) => {
+  const formattedDate = lastEdited ? format(new Date(lastEdited), 'MMM d, yyyy h:mm a') : '';
+  const formattedSavedAt = lastSavedAt ? format(lastSavedAt, 'h:mm:ss a') : '';
+  
   return (
-    <div className="mb-6">
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold tracking-tight text-blue-700">
-            Merchant Application
-          </h1>
+    <div className="relative mb-6">
+      {onClose && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute -right-2 -top-2"
+          onClick={onClose}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
+      
+      <div className="flex flex-wrap justify-between items-start gap-2 mb-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Merchant Application</h1>
           {applicationNumber && (
-            <span className="bg-blue-100 text-blue-800 font-medium text-sm px-3 py-1 rounded-full">
-              #{applicationNumber}
-            </span>
+            <p className="text-sm text-gray-500">Application #{applicationNumber}</p>
           )}
         </div>
         
-        <div className="flex items-center gap-2">
-          {isSaving && (
-            <span className="text-sm text-gray-500 italic animate-pulse">
-              Saving...
+        <div className="text-right">
+          <div className="text-sm text-gray-500">
+            Last edited: {formattedDate}
+          </div>
+          <div className="flex items-center gap-1">
+            <span className={`text-xs ${isSaving ? 'text-amber-600' : 'text-teal-600'}`}>
+              {isSaving ? 'Saving...' : lastSavedAt ? `Saved at ${formattedSavedAt}` : 'All changes saved'}
             </span>
-          )}
-          
-          {onClose && (
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={onClose}
-              className="hover:bg-gray-100"
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          )}
+            <span className={`h-2 w-2 rounded-full ${isSaving ? 'bg-amber-500' : 'bg-teal-500'}`}></span>
+          </div>
         </div>
       </div>
       
-      <ApplicationProgress progress={progress} lastEdited={lastEdited} />
+      <ApplicationProgress progress={progress} />
     </div>
   );
 };
