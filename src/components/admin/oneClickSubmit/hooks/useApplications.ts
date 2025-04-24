@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -37,6 +36,7 @@ export function useApplications() {
       const { data, error } = await supabase
         .from("merchant_applications")
         .select("*")
+        .not('status', 'eq', 'removed') // Don't fetch removed applications
         .order("updated_at", { ascending: false });
 
       if (error) throw error;

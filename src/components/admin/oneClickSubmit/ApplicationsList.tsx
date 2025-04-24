@@ -1,3 +1,4 @@
+
 import React, { useState, Suspense, lazy, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ApplicationFilters } from './ApplicationFilters';
@@ -119,17 +120,39 @@ export const ApplicationsList: React.FC = () => {
         toast.error("Invalid application data");
         return Promise.resolve();
       }
-      
-      const { error: updateError } = await supabase
-        .from("merchant_applications")
-        .update({
-          status: declineRemoveDialog.action,
-          action_reason: reason,
-          actioned_by: "admin",
-          actioned_at: new Date().toISOString(),
-        })
-        .eq("id", appId);
 
+      if (declineRemoveDialog.action === "removed") {
+        // Delete the application completely
+        const { error: deleteError } = await supabase
+          .from("merchant_applications")
+          .delete()
+          .eq("id", appId);
+
+        if (deleteError) {
+          throw new Error(deleteError.message);
+        }
+
+        toast.success("Application removed successfully");
+      } else {
+        // Handle decline action
+        const { error: updateError } = await supabase
+          .from("merchant_applications")
+          .update({
+            status: declineRemoveDialog.action,
+            action_reason: reason,
+            actioned_by: "admin",
+            actioned_at: new Date().toISOString(),
+          })
+          .eq("id", appId);
+
+        if (updateError) {
+          throw new Error(updateError.message);
+        }
+
+        toast.success("Application declined and logged");
+      }
+
+      // Log the action
       const { error: logError } = await supabase
         .from("applications_action_log")
         .insert({
@@ -140,15 +163,9 @@ export const ApplicationsList: React.FC = () => {
           actioned_at: new Date().toISOString(),
         });
 
-      if (updateError || logError) {
-        throw new Error(updateError?.message || logError?.message || "Failed to process request.");
+      if (logError) {
+        console.error("Error logging action:", logError);
       }
-      
-      toast.success(
-        declineRemoveDialog.action === "declined"
-          ? "Application declined and logged"
-          : "Application removed and logged"
-      );
       
       setDeclineRemoveDialog({ open: false, action: null });
       fetchApplications();
