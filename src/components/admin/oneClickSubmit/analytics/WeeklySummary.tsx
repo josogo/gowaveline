@@ -23,12 +23,16 @@ export function WeeklySummary() {
   const fetchWeeklySummary = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.sql('SELECT * FROM weekly_summary');
+      // Fixed query: Using from() and select() instead of sql()
+      const { data, error } = await supabase
+        .from('weekly_summary')
+        .select('*')
+        .single();
       
       if (error) throw error;
       
-      if (data && data.length > 0) {
-        setSummaryData(data[0]);
+      if (data) {
+        setSummaryData(data);
       }
     } catch (error) {
       console.error('Error fetching weekly summary:', error);
