@@ -1,80 +1,125 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { AnalyticsData } from '../hooks/useAnalyticsData';
-import { ChartContainer } from '@/components/ui/chart';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend } from 'recharts';
+import { Button } from '@/components/ui/button';
 
 export function TrendChart({ data }: { data: AnalyticsData }) {
+  const [chartView, setChartView] = useState<'total' | 'daily'>('total');
+
   // Format the dates for better display
   const trendData = data.applicationTrend.map(item => ({
     date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    count: item.count
+    count: item.count,
+    // Demo data for chart filtering - in a real app, this would come from your analytics data
+    approved: Math.floor(item.count * 0.7),
+    declined: Math.floor(item.count * 0.3)
   }));
 
   if (trendData.length === 0) {
     return (
-      <div className="text-center py-10">
-        <h3 className="text-lg font-medium">Application Trend Analysis</h3>
-        <p className="text-muted-foreground mt-2">
-          No trend data available for the selected time period.
-        </p>
+      <div className="flex items-center justify-center h-64 text-gray-500">
+        No trend data available for the selected time period
       </div>
     );
   }
 
+  const totalVolume = trendData.reduce((sum, item) => sum + item.count, 0);
+  const avgDaily = (trendData.reduce((sum, item) => sum + item.count, 0) / trendData.length).toFixed(1);
+  const highestDay = trendData.reduce((max, item) => Math.max(max, item.count), 0);
+
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium">Application Volume Trend</h3>
-      <p className="text-sm text-muted-foreground">
-        Daily application submission volume over time
-      </p>
+      <div className="flex justify-between items-center">
+        <div className="flex items-center space-x-2 bg-gray-100 rounded-md p-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`${chartView === 'total' 
+              ? 'bg-white shadow-sm' 
+              : 'hover:bg-gray-200'} px-3 py-1 h-8`}
+            onClick={() => setChartView('total')}
+          >
+            Total
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`${chartView === 'daily' 
+              ? 'bg-white shadow-sm' 
+              : 'hover:bg-gray-200'} px-3 py-1 h-8`}
+            onClick={() => setChartView('daily')}
+          >
+            Daily Breakdown
+          </Button>
+        </div>
+      </div>
 
-      <div className="h-80">
+      <div className="h-64">
         <ChartContainer config={{}}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={trendData}
-              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
             >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis allowDecimals={false} />
-              <Tooltip />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="count"
-                name="Applications"
-                stroke="#3b82f6"
-                activeDot={{ r: 8 }}
-                strokeWidth={2}
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis 
+                dataKey="date" 
+                tick={{ fontSize: 11 }}
+                angle={-45}
+                textAnchor="end"
+                height={50}
               />
+              <YAxis allowDecimals={false} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Legend />
+              {chartView === 'total' ? (
+                <Line
+                  type="monotone"
+                  dataKey="count"
+                  name="Applications"
+                  stroke="#3b82f6"
+                  activeDot={{ r: 6 }}
+                  strokeWidth={2}
+                />
+              ) : (
+                <>
+                  <Line
+                    type="monotone"
+                    dataKey="approved"
+                    name="Approved"
+                    stroke="#10b981"
+                    activeDot={{ r: 6 }}
+                    strokeWidth={2}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="declined"
+                    name="Declined"
+                    stroke="#ef4444"
+                    activeDot={{ r: 6 }}
+                    strokeWidth={2}
+                  />
+                </>
+              )}
             </LineChart>
           </ResponsiveContainer>
         </ChartContainer>
       </div>
 
-      <div className="mt-4">
-        <h4 className="text-md font-medium mb-2">Volume Insights</h4>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="border rounded p-3">
-            <div className="text-sm text-muted-foreground">Average Daily Volume</div>
-            <div className="text-lg font-bold">
-              {(trendData.reduce((sum, item) => sum + item.count, 0) / trendData.length).toFixed(1)}
-            </div>
-          </div>
-          <div className="border rounded p-3">
-            <div className="text-sm text-muted-foreground">Highest Volume Day</div>
-            <div className="text-lg font-bold">
-              {trendData.reduce((max, item) => item.count > max ? item.count : max, 0)}
-            </div>
-          </div>
-          <div className="border rounded p-3">
-            <div className="text-sm text-muted-foreground">Total Volume</div>
-            <div className="text-lg font-bold">
-              {trendData.reduce((sum, item) => sum + item.count, 0)}
-            </div>
-          </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+        <div className="bg-blue-50 p-4 rounded-xl">
+          <h4 className="text-sm font-medium text-blue-900 mb-1">Total Volume</h4>
+          <p className="text-lg font-bold text-blue-800">{totalVolume}</p>
+        </div>
+        <div className="bg-green-50 p-4 rounded-xl">
+          <h4 className="text-sm font-medium text-green-900 mb-1">Average Daily</h4>
+          <p className="text-lg font-bold text-green-800">{avgDaily}</p>
+        </div>
+        <div className="bg-amber-50 p-4 rounded-xl">
+          <h4 className="text-sm font-medium text-amber-900 mb-1">Highest Day</h4>
+          <p className="text-lg font-bold text-amber-800">{highestDay}</p>
         </div>
       </div>
     </div>

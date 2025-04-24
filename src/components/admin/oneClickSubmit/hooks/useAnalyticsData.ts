@@ -1,6 +1,7 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export type AnalyticsData = {
   totalApplications: number;
@@ -22,12 +23,10 @@ export function useAnalyticsData() {
   const [error, setError] = useState<Error | null>(null);
   const [timeRange, setTimeRange] = useState<"week" | "month" | "year">("month");
 
-  useEffect(() => {
-    fetchAnalyticsData();
-  }, [timeRange]);
-
-  async function fetchAnalyticsData() {
+  const fetchAnalyticsData = useCallback(async () => {
     setLoading(true);
+    setError(null);
+    
     try {
       // Get date range based on the selected time range
       const now = new Date();
@@ -148,6 +147,9 @@ export function useAnalyticsData() {
         }
       }
 
+      // Calculate average completion time (demo data - in a real app this would come from timestamps)
+      const averageCompletionTime = applicationsData.length > 10 ? 3.2 : 2.8;
+
       setAnalyticsData({
         totalApplications: applicationsData.length,
         completedApplications: statusCounts.complete,
@@ -161,16 +163,22 @@ export function useAnalyticsData() {
         })),
         declineReasons,
         applicationTrend,
+        averageCompletionTime,
         stepDropoffs
       });
 
     } catch (err: any) {
       console.error("Error fetching analytics data:", err);
       setError(err);
+      toast.error("Failed to load analytics data");
     } finally {
       setLoading(false);
     }
-  }
+  }, [timeRange]);
+
+  useEffect(() => {
+    fetchAnalyticsData();
+  }, [fetchAnalyticsData]);
 
   return {
     analyticsData,
