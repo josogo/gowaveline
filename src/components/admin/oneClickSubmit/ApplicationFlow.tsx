@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { FormProvider } from 'react-hook-form';
-import { toast } from "sonner"; // Add this import for toast notifications
 
 // Import hooks
 import { useApplicationForm } from './hooks/useApplicationForm';
@@ -18,8 +17,6 @@ import { NavigationControls } from './components/NavigationControls';
 import BankRoutingSystem from './bankRouting/BankRoutingSystem';
 import { Skeleton } from '@/components/ui/skeleton';
 import DemoDataAlert from '@/components/dashboard/DemoDataAlert';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
 
 export type ApplicationFlowProps = {
   merchantApplication?: any;
@@ -35,35 +32,13 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
   const tabs = useApplicationTabs();
   const { form, formData, updateFormData, isDirty, resetDirtyState } = useApplicationForm(merchantApplication);
   
-  const { applicationProgress, setApplicationProgress, activeTab, setActiveTab, isLoading, error } = 
+  const { applicationProgress, setApplicationProgress, activeTab, setActiveTab, isLoading } = 
     useApplicationProgress(merchantApplication);
   
   const [showSendDialog, setShowSendDialog] = useState(false);
   const [showBankRouting, setShowBankRouting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
-  // Show error if application data couldn't be loaded
-  if (error) {
-    return (
-      <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg border p-8">
-        <Alert variant="destructive" className="mb-6">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Failed to load application</AlertTitle>
-          <AlertDescription>
-            There was an error loading the application data. Please try again or contact support.
-          </AlertDescription>
-        </Alert>
-        <div className="flex justify-end mt-6">
-          <button 
-            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition-colors" 
-            onClick={onClose}
-          >
-            Go Back
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
 
   // Initialize currentTab in form when activeTab changes
   useEffect(() => {
@@ -116,10 +91,8 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
         setIsSaving(true);
         saveApplicationData().then(() => {
           setIsSaving(false);
+          setLastSavedAt(new Date());
           resetDirtyState();
-        }).catch(err => {
-          console.error("Error saving application data:", err);
-          setIsSaving(false);
         });
         
         console.log("Auto-saving application data due to changes");
@@ -133,20 +106,13 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
   useEffect(() => {
     return () => {
       console.log("Saving on unmount");
-      if (!merchantApplication?.id) {
-        console.log("No application ID available, skipping save on unmount");
-        return;
-      }
-      
       const currentValues = form.getValues();
-      if (currentValues) {
+      if (currentValues && merchantApplication?.id) {
         if (!currentValues.currentTab) {
           currentValues.currentTab = activeTab;
         }
         updateFormData(currentValues);
-        saveApplicationData().catch(err => {
-          console.error("Error saving on unmount:", err);
-        });
+        saveApplicationData();
       }
     };
   }, [form, updateFormData, saveApplicationData, activeTab, merchantApplication?.id]);
@@ -160,11 +126,19 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
         form.setValue('currentTab', activeTab);
       }
       updateFormData(currentValues);
-      saveApplicationData().catch(err => {
-        console.error("Error saving on tab change:", err);
-      });
+      
+      // Save after a short delay to ensure all form values are updated
+      const saveTimeout = setTimeout(() => {
+        setIsSaving(true);
+        saveApplicationData().then(() => {
+          setIsSaving(false);
+          setLastSavedAt(new Date());
+        });
+      }, 300);
+      
+      return () => clearTimeout(saveTimeout);
     }
-  }, [activeTab, merchantApplication?.id]);
+  }, [activeTab, merchantApplication?.id, form, updateFormData, saveApplicationData]);
 
   const handleBankRouting = () => {
     const currentFormValues = form.getValues();
@@ -172,12 +146,19 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
       currentFormValues.currentTab = activeTab;
     }
     updateFormData(currentFormValues);
+    
+    setIsSaving(true);
     saveApplicationData().then(() => {
+      setIsSaving(false);
+      setLastSavedAt(new Date());
       setShowBankRouting(true);
-    }).catch(err => {
-      console.error("Error saving before bank routing:", err);
-      toast.error("Failed to save data before bank routing");
     });
+  };
+
+  const handleFieldChange = (name: string, value: any) => {
+    form.setValue(name, value);
+    const currentValues = form.getValues();
+    updateFormData(currentValues);
   };
 
   if (showBankRouting) {
@@ -212,12 +193,14 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
           isSaving={isSaving}
           lastEdited={lastEdited}
           applicationNumber={applicationNumber}
+          lastSavedAt={lastSavedAt}
         />
         
         <FormProvider {...form}>
           <ApplicationContent 
             activeTab={activeTab}
             handleTabChange={handleTabChange}
+            onFieldChange={handleFieldChange}
           />
           
           <NavigationControls

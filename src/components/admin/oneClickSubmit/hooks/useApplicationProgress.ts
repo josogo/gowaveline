@@ -1,52 +1,64 @@
 
 import { useState, useEffect } from 'react';
-import { calculateProgress } from '../utils/applicationUtils';
+import { supabase } from "@/integrations/supabase/client";
 
-export function useApplicationProgress(merchantApplication?: any) {
+export const useApplicationProgress = (merchantApplication?: any) => {
   const [applicationProgress, setApplicationProgress] = useState(0);
-  const [activeTab, setActiveTab] = useState('business');
+  const [activeTab, setActiveTab] = useState('business'); // Default to first tab
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
+
+  // Initialize from merchantApplication data or localStorage
   useEffect(() => {
-    const initializeApplication = async () => {
+    if (merchantApplication?.id) {
       setIsLoading(true);
-      setError(null);
       
       try {
-        if (!merchantApplication) {
-          throw new Error("No application data provided");
+        // First check localStorage for saved progress (most recent state)
+        const savedStateStr = localStorage.getItem(`application_${merchantApplication.id}`);
+        
+        if (savedStateStr) {
+          const savedState = JSON.parse(savedStateStr);
+          console.log("Found saved application state:", savedState);
+          
+          // Set progress from saved state
+          if (savedState.progress) {
+            setApplicationProgress(savedState.progress);
+          }
+          
+          // Set active tab from saved state
+          if (savedState.activeTab) {
+            setActiveTab(savedState.activeTab);
+          }
+          
+          setIsLoading(false);
+        } 
+        // If no localStorage data, check if there's progress in the merchantApplication
+        else if (merchantApplication.application_data?.progress) {
+          setApplicationProgress(merchantApplication.application_data.progress);
+          
+          if (merchantApplication.application_data.currentTab) {
+            setActiveTab(merchantApplication.application_data.currentTab);
+          }
+          
+          setIsLoading(false);
+        } else {
+          // Fallback to default values
+          setApplicationProgress(0);
+          setActiveTab('business');
+          setIsLoading(false);
         }
-        
-        // Initialize active tab from application data if available
-        const appData = merchantApplication.application_data;
-        if (appData && appData.currentTab) {
-          setActiveTab(appData.currentTab);
-        }
-        
-        // Calculate progress based on application data
-        const progress = calculateProgress(appData || {});
-        setApplicationProgress(progress);
-        
-        console.log(`Application loaded: Active tab set to ${appData?.currentTab || 'business'}, progress: ${progress}%`);
-        
-      } catch (err: any) {
-        console.error("Error initializing application:", err);
-        setError(err.message || "Failed to load application data");
-      } finally {
+      } catch (err) {
+        console.error("Error loading saved application state:", err);
         setIsLoading(false);
       }
-    };
-    
-    initializeApplication();
+    }
   }, [merchantApplication]);
-  
-  return { 
-    applicationProgress, 
-    setApplicationProgress, 
-    activeTab, 
-    setActiveTab, 
-    isLoading,
-    error 
+
+  return {
+    applicationProgress,
+    setApplicationProgress,
+    activeTab,
+    setActiveTab,
+    isLoading
   };
-}
+};

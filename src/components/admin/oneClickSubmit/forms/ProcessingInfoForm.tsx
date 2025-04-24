@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useFormContext } from 'react-hook-form';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -7,88 +8,184 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Upload, Link2, AlertCircle } from 'lucide-react';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 
 export const ProcessingInfoForm: React.FC = () => {
+  const form = useFormContext();
+  
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <Label>Current Payment Processor</Label>
-          <Select>
-            <SelectTrigger>
-              <SelectValue placeholder="Select processor" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="stripe">Stripe</SelectItem>
-              <SelectItem value="paypal">PayPal</SelectItem>
-              <SelectItem value="square">Square</SelectItem>
-              <SelectItem value="authorize">Authorize.Net</SelectItem>
-              <SelectItem value="braintree">Braintree</SelectItem>
-              <SelectItem value="nmi">NMI</SelectItem>
-              <SelectItem value="first-data">First Data</SelectItem>
-              <SelectItem value="none">No Current Processor</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <FormField
+          control={form.control}
+          name="currentProcessor"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Current Payment Processor</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value || ""}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select processor" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="stripe">Stripe</SelectItem>
+                  <SelectItem value="paypal">PayPal</SelectItem>
+                  <SelectItem value="square">Square</SelectItem>
+                  <SelectItem value="authorize">Authorize.Net</SelectItem>
+                  <SelectItem value="braintree">Braintree</SelectItem>
+                  <SelectItem value="nmi">NMI</SelectItem>
+                  <SelectItem value="first-data">First Data</SelectItem>
+                  <SelectItem value="none">No Current Processor</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         
-        <div>
-          <Label>Years With Current Processor</Label>
-          <Input type="number" placeholder="0" />
-        </div>
+        <FormField
+          control={form.control}
+          name="yearsWithProcessor"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Years With Current Processor</FormLabel>
+              <FormControl>
+                <Input {...field} type="number" placeholder="0" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         
-        <div>
-          <Label>Monthly Processing Volume</Label>
-          <Input type="number" placeholder="0.00" />
-          <p className="text-xs text-muted-foreground mt-1">
-            Average monthly credit card volume
-          </p>
-        </div>
+        <FormField
+          control={form.control}
+          name="monthlyProcessingVolume"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Monthly Processing Volume</FormLabel>
+              <FormControl>
+                <Input {...field} type="number" placeholder="0.00" />
+              </FormControl>
+              <p className="text-xs text-muted-foreground mt-1">
+                Average monthly credit card volume
+              </p>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         
-        <div>
-          <Label>Average Transaction Size</Label>
-          <Input type="number" placeholder="0.00" />
-        </div>
+        <FormField
+          control={form.control}
+          name="averageTransactionSize"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Average Transaction Size</FormLabel>
+              <FormControl>
+                <Input {...field} type="number" placeholder="0.00" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         
-        <div>
-          <Label>Current Processing Rate</Label>
-          <div className="flex space-x-2">
-            <Input type="number" placeholder="0.00" className="w-1/2" />
-            <div className="w-1/2 flex items-center bg-gray-100 px-3 rounded-md text-sm">
-              %
-            </div>
-          </div>
-        </div>
+        <FormField
+          control={form.control}
+          name="currentProcessingRate"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Current Processing Rate</FormLabel>
+              <div className="flex space-x-2">
+                <FormControl>
+                  <Input {...field} type="number" placeholder="0.00" className="w-full" />
+                </FormControl>
+                <div className="w-1/3 flex items-center bg-gray-100 px-3 rounded-md text-sm">
+                  %
+                </div>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         
-        <div>
-          <Label>Monthly Transaction Count</Label>
-          <Input type="number" placeholder="0" />
-        </div>
+        <FormField
+          control={form.control}
+          name="monthlyTransactionCount"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Monthly Transaction Count</FormLabel>
+              <FormControl>
+                <Input {...field} type="number" placeholder="0" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
       
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Processing History</h3>
         
-        <div className="flex items-center space-x-2 mb-4">
-          <Switch id="previous-termination" />
-          <Label htmlFor="previous-termination" className="cursor-pointer">
-            Previously terminated by a processor
-          </Label>
-        </div>
+        <FormField
+          control={form.control}
+          name="previousTermination"
+          render={({ field }) => (
+            <FormItem className="flex items-center space-x-2 mb-4">
+              <FormControl>
+                <Switch 
+                  id="previous-termination" 
+                  checked={field.value} 
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <Label htmlFor="previous-termination" className="cursor-pointer">
+                Previously terminated by a processor
+              </Label>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         
-        <div className="flex items-center space-x-2 mb-4">
-          <Switch id="reserves-held" />
-          <Label htmlFor="reserves-held" className="cursor-pointer">
-            Currently have reserves held by a processor
-          </Label>
-        </div>
+        <FormField
+          control={form.control}
+          name="reservesHeld"
+          render={({ field }) => (
+            <FormItem className="flex items-center space-x-2 mb-4">
+              <FormControl>
+                <Switch 
+                  id="reserves-held" 
+                  checked={field.value} 
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <Label htmlFor="reserves-held" className="cursor-pointer">
+                Currently have reserves held by a processor
+              </Label>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         
-        <div className="flex items-center space-x-2 mb-4">
-          <Switch id="excessive-chargebacks" />
-          <Label htmlFor="excessive-chargebacks" className="cursor-pointer">
-            Had excessive chargebacks in past 6 months
-          </Label>
-        </div>
+        <FormField
+          control={form.control}
+          name="excessiveChargebacks"
+          render={({ field }) => (
+            <FormItem className="flex items-center space-x-2 mb-4">
+              <FormControl>
+                <Switch 
+                  id="excessive-chargebacks" 
+                  checked={field.value} 
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <Label htmlFor="excessive-chargebacks" className="cursor-pointer">
+                Had excessive chargebacks in past 6 months
+              </Label>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
       
       <Card className="border-amber-200 bg-amber-50">
