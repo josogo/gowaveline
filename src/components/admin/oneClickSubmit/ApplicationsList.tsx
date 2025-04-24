@@ -25,7 +25,9 @@ export const ApplicationsList: React.FC = () => {
     dialogOpen,
     setDialogOpen,
     appFlowOpen,
+    setAppFlowOpen,
     selectedApplication,
+    setSelectedApplication,
     handleCloseApplicationFlow,
     declineRemoveDialog,
     setDeclineRemoveDialog,
@@ -61,7 +63,7 @@ export const ApplicationsList: React.FC = () => {
       url.searchParams.delete('openApp');
       window.history.replaceState({}, '', url);
     }
-  }, [openAppId]);
+  }, [openAppId, setSelectedApplication, setAppFlowOpen]);
 
   const handleDeclineApplication = (app: any) => {
     setSelectedApplication(app);
