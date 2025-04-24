@@ -1,5 +1,5 @@
 
-import { useForm, FormProvider } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { useEffect } from 'react';
 import { useFormData } from './useFormData';
 
@@ -18,6 +18,7 @@ export const useApplicationForm = (merchantApplication?: any) => {
       const initialData = {
         businessName: merchantApplication.merchant_name,
         businessEmail: merchantApplication.merchant_email,
+        currentTab: merchantApplication.application_data.currentTab || 'business',
         ...merchantApplication.application_data
       };
       

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FormProvider } from 'react-hook-form';
 
 // Import hooks
@@ -36,6 +36,14 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
   const [showSendDialog, setShowSendDialog] = useState(false);
   const [showBankRouting, setShowBankRouting] = useState(false);
 
+  // Initialize currentTab in form when activeTab changes
+  useEffect(() => {
+    if (activeTab) {
+      form.setValue('currentTab', activeTab);
+      console.log(`Set currentTab value to ${activeTab} in form`);
+    }
+  }, [activeTab, form]);
+
   const { saveApplicationData, handleSendToMerchant } = useApplicationActions(
     merchantApplication?.id,
     formData,
@@ -53,9 +61,16 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
   );
 
   // Save data when form is dirty
-  React.useEffect(() => {
+  useEffect(() => {
     if (isDirty) {
       const saveTimeout = setTimeout(() => {
+        // Make sure currentTab is set before saving
+        const currentValues = form.getValues();
+        if (!currentValues.currentTab) {
+          currentValues.currentTab = activeTab;
+          form.setValue('currentTab', activeTab);
+        }
+        
         saveApplicationData();
         resetDirtyState();
         console.log("Auto-saving application data due to changes");
@@ -63,10 +78,13 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
       
       return () => clearTimeout(saveTimeout);
     }
-  }, [isDirty, saveApplicationData, resetDirtyState]);
+  }, [isDirty, saveApplicationData, resetDirtyState, form, activeTab]);
 
   const handleBankRouting = () => {
     const currentFormValues = form.getValues();
+    if (!currentFormValues.currentTab) {
+      currentFormValues.currentTab = activeTab;
+    }
     updateFormData(currentFormValues);
     saveApplicationData();
     setShowBankRouting(true);

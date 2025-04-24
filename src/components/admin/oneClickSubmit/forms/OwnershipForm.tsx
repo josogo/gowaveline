@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import React, { useEffect, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -10,29 +10,52 @@ import { UserPlus, Trash2, Upload } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 
 export const OwnershipForm: React.FC = () => {
-  const [owners, setOwners] = useState([
-    { id: 1, name: '', title: '', ownership: '', dob: '', ssn: '', address: '', city: '', state: '', zip: '' }
-  ]);
+  const { getValues, setValue, watch } = useFormContext();
+  
+  // Initialize owners from form context or create default
+  const [owners, setOwners] = useState(() => {
+    const savedOwners = getValues("owners") || [];
+    return savedOwners.length > 0 ? savedOwners : [
+      { id: 1, name: '', title: '', ownership: '', dob: '', ssn: '', address: '', city: '', state: '', zip: '' }
+    ];
+  });
+  
+  // Save owners to form context whenever they change
+  useEffect(() => {
+    setValue("owners", owners, { shouldDirty: true });
+    console.log("Updated owners in form context:", owners);
+  }, [owners, setValue]);
   
   const addOwner = () => {
-    setOwners(prev => [...prev, {
-      id: prev.length + 1,
-      name: '',
-      title: '',
-      ownership: '',
-      dob: '',
-      ssn: '',
-      address: '',
-      city: '',
-      state: '',
-      zip: ''
-    }]);
+    setOwners(prev => {
+      const newOwners = [...prev, {
+        id: Date.now(), // Use timestamp for unique ID
+        name: '',
+        title: '',
+        ownership: '',
+        dob: '',
+        ssn: '',
+        address: '',
+        city: '',
+        state: '',
+        zip: ''
+      }];
+      return newOwners;
+    });
   };
   
   const removeOwner = (id: number) => {
     if (owners.length > 1) {
       setOwners(prev => prev.filter(owner => owner.id !== id));
     }
+  };
+  
+  const updateOwnerField = (ownerId: number, field: string, value: string) => {
+    setOwners(prev => 
+      prev.map(owner => 
+        owner.id === ownerId ? { ...owner, [field]: value } : owner
+      )
+    );
   };
   
   return (
@@ -63,27 +86,48 @@ export const OwnershipForm: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
                 <Label>Full Name</Label>
-                <Input placeholder="Full legal name" />
+                <Input 
+                  value={owner.name} 
+                  onChange={(e) => updateOwnerField(owner.id, 'name', e.target.value)}
+                  placeholder="Full legal name" 
+                />
               </div>
               
               <div>
                 <Label>Title/Position</Label>
-                <Input placeholder="e.g. CEO, President" />
+                <Input 
+                  value={owner.title} 
+                  onChange={(e) => updateOwnerField(owner.id, 'title', e.target.value)}
+                  placeholder="e.g. CEO, President" 
+                />
               </div>
               
               <div>
                 <Label>Ownership Percentage</Label>
-                <Input type="number" placeholder="25" />
+                <Input 
+                  type="number" 
+                  value={owner.ownership} 
+                  onChange={(e) => updateOwnerField(owner.id, 'ownership', e.target.value)}
+                  placeholder="25" 
+                />
               </div>
               
               <div>
                 <Label>Date of Birth</Label>
-                <Input type="date" />
+                <Input 
+                  type="date" 
+                  value={owner.dob} 
+                  onChange={(e) => updateOwnerField(owner.id, 'dob', e.target.value)}
+                />
               </div>
               
               <div>
                 <Label>SSN/Tax ID</Label>
-                <Input placeholder="XXX-XX-XXXX" />
+                <Input 
+                  value={owner.ssn} 
+                  onChange={(e) => updateOwnerField(owner.id, 'ssn', e.target.value)}
+                  placeholder="XXX-XX-XXXX" 
+                />
               </div>
             </div>
             
@@ -92,22 +136,28 @@ export const OwnershipForm: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <Label>Street Address</Label>
-                  <Input placeholder="123 Main St" />
-                </div>
-                
-                <div>
-                  <Label>Suite/Unit</Label>
-                  <Input placeholder="Apt 4B" />
+                  <Input 
+                    value={owner.address} 
+                    onChange={(e) => updateOwnerField(owner.id, 'address', e.target.value)}
+                    placeholder="123 Main St" 
+                  />
                 </div>
                 
                 <div>
                   <Label>City</Label>
-                  <Input placeholder="City" />
+                  <Input 
+                    value={owner.city} 
+                    onChange={(e) => updateOwnerField(owner.id, 'city', e.target.value)}
+                    placeholder="City" 
+                  />
                 </div>
                 
                 <div>
                   <Label>State</Label>
-                  <Select>
+                  <Select 
+                    value={owner.state} 
+                    onValueChange={(value) => updateOwnerField(owner.id, 'state', value)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select state" />
                     </SelectTrigger>
@@ -123,7 +173,11 @@ export const OwnershipForm: React.FC = () => {
                 
                 <div>
                   <Label>ZIP Code</Label>
-                  <Input placeholder="12345" />
+                  <Input 
+                    value={owner.zip} 
+                    onChange={(e) => updateOwnerField(owner.id, 'zip', e.target.value)}
+                    placeholder="12345" 
+                  />
                 </div>
               </div>
             </div>

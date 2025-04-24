@@ -17,6 +17,9 @@ export const useApplicationNavigation = (
     const currentFormValues = form.getValues();
     console.log("Saving data before tab change. Current values:", currentFormValues);
     
+    // Set currentTab in the form values to help track position
+    currentFormValues.currentTab = tabId;
+    
     // Update the formData state with current form values
     updateFormData(currentFormValues);
     
@@ -33,20 +36,26 @@ export const useApplicationNavigation = (
   }, [form, updateFormData, saveApplicationData, setActiveTab, setApplicationProgress, tabs]);
 
   const navigateTab = useCallback((direction: 'next' | 'prev') => {
-    const currentTabIndex = tabs.findIndex(tab => tab.id === form.getValues('currentTab'));
+    const activeTab = form.getValues('currentTab') || tabs[0].id;
+    const currentTabIndex = tabs.findIndex(tab => tab.id === activeTab);
     
     // Always get latest form values 
     const currentFormValues = form.getValues();
-    console.log(`Navigating ${direction}, saving current form values:`, currentFormValues);
+    console.log(`Navigating ${direction}, current tab: ${activeTab}, index: ${currentTabIndex}, values:`, currentFormValues);
+    
+    // Store the current tab in form values
+    currentFormValues.currentTab = activeTab;
     
     // Update formData and ensure it's saved
     updateFormData(currentFormValues);
     saveApplicationData();
     
     if (direction === 'next' && currentTabIndex < tabs.length - 1) {
-      handleTabChange(tabs[currentTabIndex + 1].id);
+      const nextTab = tabs[currentTabIndex + 1].id;
+      handleTabChange(nextTab);
     } else if (direction === 'prev' && currentTabIndex > 0) {
-      handleTabChange(tabs[currentTabIndex - 1].id);
+      const prevTab = tabs[currentTabIndex - 1].id;
+      handleTabChange(prevTab);
     }
   }, [form, updateFormData, saveApplicationData, handleTabChange, tabs]);
 
