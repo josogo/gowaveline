@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { FormProvider } from 'react-hook-form';
-import { useToast } from '@/hooks/use-toast';
 
 // Import hooks
 import { useApplicationForm } from './hooks/useApplicationForm';
@@ -21,7 +20,6 @@ import { ApplicationHeader } from './components/ApplicationHeader';
 import { ApplicationContent } from './components/ApplicationContent';
 import { NavigationControls } from './components/NavigationControls';
 import BankRoutingSystem from './bankRouting/BankRoutingSystem';
-import DemoDataAlert from '@/components/dashboard/DemoDataAlert';
 
 export type ApplicationFlowProps = {
   merchantApplication?: any;
@@ -74,15 +72,18 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
   useSaveOnUnmount(form, merchantApplication?.id, activeTab, updateFormData, saveApplicationData);
   useSaveOnTabChange(activeTab, merchantApplication?.id, form, updateFormData, saveApplicationData);
 
-  const handleBankRouting = () => {
+  const handleBankRouting = async () => {
     const currentFormValues = form.getValues();
     if (!currentFormValues.currentTab) {
       currentFormValues.currentTab = activeTab;
     }
     updateFormData(currentFormValues);
-    saveApplicationData().then(() => {
+    try {
+      await saveApplicationData();
       setShowBankRouting(true);
-    });
+    } catch (error) {
+      console.error("Error preparing for bank routing:", error);
+    }
   };
 
   if (showBankRouting) {
@@ -93,7 +94,6 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
     return <LoadingState />;
   }
 
-  // Use merchant application's updated_at as lastEdited, if available
   const lastEdited = merchantApplication?.updated_at || new Date().toISOString();
   const applicationNumber = merchantApplication?.application_number || '';
 

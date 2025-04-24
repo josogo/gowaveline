@@ -10,15 +10,14 @@ export const useApplicationActions = (
   activeTab?: string,
   setShowSendDialog?: (show: boolean) => void
 ) => {
-  const saveApplicationData = useCallback(async () => {
+  const saveApplicationData = useCallback(async (): Promise<void> => {
     if (!applicationId || !formData) {
       console.log("Unable to save: missing applicationId or formData");
-      return { success: false };
+      return;
     }
     
     console.log("Saving application data:", { applicationId, formData, progress, activeTab });
     
-    // Save formData to localStorage for persistence between page refreshes
     try {
       const dataToSave = {
         formData,
@@ -29,7 +28,6 @@ export const useApplicationActions = (
       
       localStorage.setItem(`application_${applicationId}`, JSON.stringify(dataToSave));
       
-      // Also update the database record to ensure data persists server-side
       const { error } = await supabase
         .from("merchant_applications")
         .update({ 
@@ -40,28 +38,30 @@ export const useApplicationActions = (
       
       if (error) {
         console.error("Error saving to database:", error);
-        // Still return success if localStorage worked, since that's our primary save mechanism
-        return { success: true, warning: "Saved locally but not to database" };
+        toast.error("Failed to save to database");
+        // Still continue since we saved to localStorage
       }
       
-      console.log("Application data saved successfully to localStorage and database");
-      return { success: true };
+      console.log("Application data saved successfully");
     } catch (error) {
       console.error("Error saving application data:", error);
       toast.error("Failed to save progress");
-      return { success: false, error };
+      throw error; // Re-throw to be handled by caller if needed
     }
   }, [applicationId, formData, progress, activeTab]);
 
-  const handleSendToMerchant = useCallback(() => {
-    // First save current state
-    saveApplicationData().then(saveResult => {
-      // Only proceed if save was successful
-      if (saveResult?.success && setShowSendDialog) {
+  const handleSendToMerchant = useCallback(async () => {
+    try {
+      await saveApplicationData();
+      if (setShowSendDialog) {
         setShowSendDialog(true);
       }
-    });
+    } catch (error) {
+      console.error("Error saving before sending to merchant:", error);
+      toast.error("Failed to prepare data for sending");
+    }
   }, [saveApplicationData, setShowSendDialog]);
 
   return { saveApplicationData, handleSendToMerchant };
 };
+

@@ -21,10 +21,15 @@ export const useAutoSave = (
         }
         
         setIsSaving(true);
-        saveApplicationData().then(() => {
-          setIsSaving(false);
-          resetDirtyState();
-        });
+        saveApplicationData()
+          .then(() => {
+            setIsSaving(false);
+            resetDirtyState();
+          })
+          .catch((error) => {
+            console.error("Error in auto-save:", error);
+            setIsSaving(false);
+          });
         
         console.log("Auto-saving application data due to changes");
       }, 1000);

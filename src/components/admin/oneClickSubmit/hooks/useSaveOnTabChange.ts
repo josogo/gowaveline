@@ -17,7 +17,7 @@ export const useSaveOnTabChange = (
         form.setValue('currentTab', activeTab);
       }
       updateFormData(currentValues);
-      saveApplicationData();
+      saveApplicationData().catch(console.error);
     }
   }, [activeTab, merchantApplicationId, form, updateFormData, saveApplicationData]);
 };

@@ -18,7 +18,7 @@ export const useSaveOnUnmount = (
           currentValues.currentTab = activeTab;
         }
         updateFormData(currentValues);
-        saveApplicationData();
+        saveApplicationData().catch(console.error);
       }
     };
   }, [form, updateFormData, saveApplicationData, activeTab, merchantApplicationId]);
