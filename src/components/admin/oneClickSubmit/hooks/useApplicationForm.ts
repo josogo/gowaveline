@@ -12,19 +12,48 @@ export const useApplicationForm = (merchantApplication?: any) => {
     merchantApplication?.application_data || {}
   );
 
-  // Initialize form data from merchant application
+  // Initialize form data from merchant application or localStorage
   useEffect(() => {
-    if (merchantApplication?.application_data) {
-      const initialData = {
-        businessName: merchantApplication.merchant_name,
-        businessEmail: merchantApplication.merchant_email,
-        currentTab: merchantApplication.application_data.currentTab || 'business',
-        ...merchantApplication.application_data
-      };
+    if (merchantApplication?.id) {
+      // Check localStorage first for most recent data
+      const savedStateStr = localStorage.getItem(`application_${merchantApplication.id}`);
       
-      console.log("Initializing form with data:", initialData);
-      updateFormData(initialData);
-      form.reset(initialData);
+      if (savedStateStr) {
+        try {
+          const savedState = JSON.parse(savedStateStr);
+          
+          if (savedState.formData) {
+            // Use localStorage data as it's most recent
+            const initialData = {
+              businessName: merchantApplication.merchant_name,
+              businessEmail: merchantApplication.merchant_email,
+              currentTab: savedState.activeTab || 'business',
+              ...savedState.formData
+            };
+            
+            console.log("Initializing form with localStorage data:", initialData);
+            updateFormData(initialData);
+            form.reset(initialData);
+            return;
+          }
+        } catch (error) {
+          console.error("Error parsing localStorage data:", error);
+        }
+      }
+      
+      // Fallback to database data if no localStorage data is available
+      if (merchantApplication?.application_data) {
+        const initialData = {
+          businessName: merchantApplication.merchant_name,
+          businessEmail: merchantApplication.merchant_email,
+          currentTab: merchantApplication.application_data.currentTab || 'business',
+          ...merchantApplication.application_data
+        };
+        
+        console.log("Initializing form with database data:", initialData);
+        updateFormData(initialData);
+        form.reset(initialData);
+      }
     }
   }, [merchantApplication, updateFormData, form]);
 

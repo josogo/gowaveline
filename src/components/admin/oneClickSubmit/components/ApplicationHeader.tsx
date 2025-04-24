@@ -1,24 +1,43 @@
 
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ApplicationProgressBar } from '../ApplicationProgressBar';
+import { ApplicationProgress } from './ApplicationProgress';
 
 interface ApplicationHeaderProps {
   onClose?: () => void;
   progress: number;
+  isSaving?: boolean;
 }
 
-export const ApplicationHeader = ({ onClose, progress }: ApplicationHeaderProps) => {
+export const ApplicationHeader = ({ onClose, progress, isSaving }: ApplicationHeaderProps) => {
   return (
-    <div className="space-y-4 sticky top-0 bg-white z-30 pb-4 border-b">
-      {onClose && (
-        <div className="flex justify-end">
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-5 w-5" />
-          </Button>
+    <div className="mb-6">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold tracking-tight text-blue-700">
+          Merchant Application
+        </h1>
+        
+        <div className="flex items-center gap-2">
+          {isSaving && (
+            <span className="text-sm text-gray-500 italic animate-pulse">
+              Saving...
+            </span>
+          )}
+          
+          {onClose && (
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={onClose}
+              className="hover:bg-gray-100"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          )}
         </div>
-      )}
-      <ApplicationProgressBar progress={progress} />
+      </div>
+      
+      <ApplicationProgress progress={progress} />
     </div>
   );
 };

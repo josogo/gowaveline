@@ -15,6 +15,7 @@ import { ApplicationHeader } from './components/ApplicationHeader';
 import { ApplicationContent } from './components/ApplicationContent';
 import { NavigationControls } from './components/NavigationControls';
 import BankRoutingSystem from './bankRouting/BankRoutingSystem';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export type ApplicationFlowProps = {
   merchantApplication?: any;
@@ -30,11 +31,12 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
   const tabs = useApplicationTabs();
   const { form, formData, updateFormData, isDirty, resetDirtyState } = useApplicationForm(merchantApplication);
   
-  const { applicationProgress, setApplicationProgress, activeTab, setActiveTab } = 
+  const { applicationProgress, setApplicationProgress, activeTab, setActiveTab, isLoading } = 
     useApplicationProgress(merchantApplication);
   
   const [showSendDialog, setShowSendDialog] = useState(false);
   const [showBankRouting, setShowBankRouting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Initialize currentTab in form when activeTab changes
   useEffect(() => {
@@ -71,8 +73,12 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
           form.setValue('currentTab', activeTab);
         }
         
-        saveApplicationData();
-        resetDirtyState();
+        setIsSaving(true);
+        saveApplicationData().then(() => {
+          setIsSaving(false);
+          resetDirtyState();
+        });
+        
         console.log("Auto-saving application data due to changes");
       }, 1000);
       
@@ -80,24 +86,55 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
     }
   }, [isDirty, saveApplicationData, resetDirtyState, form, activeTab]);
 
+  // Add a save on component unmount to ensure we save when navigating away
+  useEffect(() => {
+    return () => {
+      console.log("Saving on unmount");
+      const currentValues = form.getValues();
+      if (currentValues && merchantApplication?.id) {
+        if (!currentValues.currentTab) {
+          currentValues.currentTab = activeTab;
+        }
+        updateFormData(currentValues);
+        saveApplicationData();
+      }
+    };
+  }, [form, updateFormData, saveApplicationData, activeTab, merchantApplication?.id]);
+
   const handleBankRouting = () => {
     const currentFormValues = form.getValues();
     if (!currentFormValues.currentTab) {
       currentFormValues.currentTab = activeTab;
     }
     updateFormData(currentFormValues);
-    saveApplicationData();
-    setShowBankRouting(true);
+    saveApplicationData().then(() => {
+      setShowBankRouting(true);
+    });
   };
 
   if (showBankRouting) {
     return <BankRoutingSystem onBack={() => setShowBankRouting(false)} />;
   }
 
+  if (isLoading) {
+    return (
+      <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg border animate-fade-in transition-all p-4 md:p-8">
+        <Skeleton className="h-8 w-48 mb-4" />
+        <div className="space-y-4">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-5/6" />
+          <Skeleton className="h-48 w-full rounded-md" />
+          <Skeleton className="h-48 w-full rounded-md" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg border animate-fade-in transition-all">
       <div className="h-[90vh] overflow-y-auto p-4 md:p-8">
-        <ApplicationHeader onClose={onClose} progress={applicationProgress} />
+        <ApplicationHeader onClose={onClose} progress={applicationProgress} isSaving={isSaving} />
         
         <FormProvider {...form}>
           <ApplicationContent 
