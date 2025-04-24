@@ -15,7 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 // Define a type for user roles
-type UserRole = 'sales_rep' | 'risk_analyst' | 'executive' | null;
+type UserRole = 'sales_rep' | 'risk_analyst' | 'executive' | 'admin' | null;
 
 export function AnalyticsDashboard() {
   const { 
@@ -42,7 +42,19 @@ export function AnalyticsDashboard() {
           return;
         }
         
-        // Check if the user has any roles
+        // First check if user is an admin
+        const { data: adminData, error: adminError } = await supabase.rpc(
+          'has_role',
+          { user_id: user.id, role: 'admin' }
+        );
+        
+        if (adminData) {
+          setUserRole('admin');
+          setIsLoading(false);
+          return;
+        }
+        
+        // Check if the user has any other roles
         const { data, error } = await supabase
           .from('user_roles')
           .select('role')
@@ -84,6 +96,7 @@ export function AnalyticsDashboard() {
   }
 
   // Show limited access message if the user doesn't have a role
+  // Updated to exclude admin from this check
   if (!userRole) {
     return (
       <div className="w-full p-6">
@@ -109,9 +122,10 @@ export function AnalyticsDashboard() {
           {userRole === 'executive' && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full ml-2">Executive View</span>}
           {userRole === 'risk_analyst' && <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full ml-2">Risk View</span>}
           {userRole === 'sales_rep' && <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full ml-2">Sales View</span>}
+          {userRole === 'admin' && <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full ml-2">Admin View</span>}
         </h1>
         <div className="flex items-center gap-3">
-          {userRole !== 'executive' && (
+          {(userRole !== 'executive' && userRole !== 'admin') && (
             <DateRangeFilter 
               timeRange={timeRange} 
               setTimeRange={setTimeRange} 
@@ -126,7 +140,7 @@ export function AnalyticsDashboard() {
             <RefreshCw size={14} />
             <span className="hidden sm:inline">Refresh</span>
           </Button>
-          {(userRole === 'executive' || userRole === 'risk_analyst') && (
+          {(userRole === 'executive' || userRole === 'risk_analyst' || userRole === 'admin') && (
             <Button 
               variant="outline" 
               size="sm" 
@@ -179,7 +193,7 @@ export function AnalyticsDashboard() {
             </div>
             
             {/* Decline Reasons Analysis - not shown to sales reps */}
-            {(userRole === 'risk_analyst' || userRole === 'executive') && (
+            {(userRole === 'risk_analyst' || userRole === 'executive' || userRole === 'admin') && (
               <Card className="rounded-2xl shadow-md">
                 <CardContent className="pt-6">
                   <h2 className="text-lg font-medium mb-4">Decline Reasons Analysis</h2>
@@ -213,6 +227,20 @@ export function AnalyticsDashboard() {
               <h3 className="text-lg font-medium text-blue-800 mb-2">Welcome back, Executive 👋</h3>
               <p className="text-blue-700">
                 Here's your executive summary. You're viewing key metrics across all sales representatives.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Welcome banner for admin */}
+      {userRole === 'admin' && analyticsData && (
+        <div className="p-6 pt-0">
+          <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200 rounded-2xl shadow-md">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-medium text-purple-800 mb-2">Welcome back, Administrator 👋</h3>
+              <p className="text-purple-700">
+                You have full access to all analytics data and features. You can view and export all reports.
               </p>
             </CardContent>
           </Card>
