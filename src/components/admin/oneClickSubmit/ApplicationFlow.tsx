@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { FormProvider } from 'react-hook-form';
+import { toast } from "sonner"; // Add this import for toast notifications
 
 // Import hooks
 import { useApplicationForm } from './hooks/useApplicationForm';
