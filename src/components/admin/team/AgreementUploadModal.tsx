@@ -1,17 +1,15 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import FileUpload from '@/components/file-upload';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 import type { TeamMember } from './TeamMemberForm';
+import { useAuthToken } from './hooks/useAuthToken';
+import { DateSelectionFields } from './components/DateSelectionFields';
+import { AgreementTypeSelect } from './components/AgreementTypeSelect';
+import { UploadSection } from './components/UploadSection';
 
 interface AgreementUploadModalProps {
   isOpen: boolean;
@@ -29,30 +27,7 @@ const AgreementUploadModal: React.FC<AgreementUploadModalProps> = ({
   const [effectiveDate, setEffectiveDate] = useState<Date | null>(new Date());
   const [expirationDate, setExpirationDate] = useState<Date | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [authToken, setAuthToken] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Check for authorization token when the component mounts
-    const checkAuthSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setAuthToken(session?.access_token || null);
-      } catch (error) {
-        console.error("Error retrieving auth session:", error);
-      }
-    };
-    
-    checkAuthSession();
-    
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setAuthToken(session?.access_token || null);
-    });
-    
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+  const authToken = useAuthToken();
 
   const handleFileChange = (acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
@@ -68,7 +43,6 @@ const AgreementUploadModal: React.FC<AgreementUploadModalProps> = ({
       return;
     }
     
-    // Check if we have auth token
     if (!authToken) {
       toast.error("You must be logged in to upload documents. Please log in and try again.");
       return;
@@ -92,7 +66,6 @@ const AgreementUploadModal: React.FC<AgreementUploadModalProps> = ({
         formData.append('expirationDate', format(expirationDate, 'yyyy-MM-dd'));
       }
       
-      // Include the token in the Authorization header
       const response = await fetch('https://rqwrvkkfixrogxogunsk.supabase.co/functions/v1/upload-document', {
         method: 'POST',
         headers: {
@@ -124,82 +97,16 @@ const AgreementUploadModal: React.FC<AgreementUploadModalProps> = ({
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="agreementType">Agreement Type</Label>
-            <Select 
-              value={agreementType} 
-              onValueChange={setAgreementType}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select agreement type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Agent Agreement">Agent Agreement</SelectItem>
-                <SelectItem value="Non-Disclosure Agreement">Non-Disclosure Agreement</SelectItem>
-                <SelectItem value="Non-Compete Agreement">Non-Compete Agreement</SelectItem>
-                <SelectItem value="Commission Agreement">Commission Agreement</SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <AgreementTypeSelect value={agreementType} onChange={setAgreementType} />
           
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Effective Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left font-normal"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {effectiveDate ? format(effectiveDate, "PPP") : "Select date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={effectiveDate}
-                    onSelect={setEffectiveDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Expiration Date (optional)</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left font-normal"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {expirationDate ? format(expirationDate, "PPP") : "Select date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={expirationDate}
-                    onSelect={setExpirationDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
+          <DateSelectionFields
+            effectiveDate={effectiveDate}
+            expirationDate={expirationDate}
+            onEffectiveDateChange={setEffectiveDate}
+            onExpirationDateChange={setExpirationDate}
+          />
           
-          <div className="space-y-2">
-            <Label>Upload Document</Label>
-            <FileUpload
-              accept=".pdf,.doc,.docx"
-              maxFiles={1}
-              maxSize={5 * 1024 * 1024} // 5MB
-              onFilesChange={handleFileChange}
-            />
-          </div>
+          <UploadSection onFileChange={handleFileChange} />
           
           {!authToken && (
             <div className="bg-amber-50 border border-amber-200 p-3 rounded-md text-amber-700 text-sm">
