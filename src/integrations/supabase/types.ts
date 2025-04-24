@@ -428,6 +428,7 @@ export type Database = {
           actioned_at: string | null
           actioned_by: string | null
           application_data: Json
+          application_number: string | null
           completed: boolean
           created_at: string
           expires_at: string
@@ -443,6 +444,7 @@ export type Database = {
           actioned_at?: string | null
           actioned_by?: string | null
           application_data: Json
+          application_number?: string | null
           completed?: boolean
           created_at?: string
           expires_at: string
@@ -458,6 +460,7 @@ export type Database = {
           actioned_at?: string | null
           actioned_by?: string | null
           application_data?: Json
+          application_number?: string | null
           completed?: boolean
           created_at?: string
           expires_at?: string
