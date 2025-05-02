@@ -8,7 +8,7 @@ import { FileCheck, RefreshCw, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DocumentCategories } from './DocumentCategories';
 import { DocumentTabs } from './DocumentTabs';
-import { DocumentViewModal } from '../DocumentViewModal';
+import { DocumentViewModal } from '../documentViewer';
 
 interface DocumentUploadSectionProps {
   applicationId: string;

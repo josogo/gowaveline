@@ -8,11 +8,13 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Download, Loader2, FileText, AlertTriangle, RefreshCw, XCircle, File, Image } from 'lucide-react';
+import { Download, Loader2, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
-import { Progress } from '@/components/ui/progress';
+import { DocumentPreview } from './components/DocumentPreview';
+import { ErrorState } from './components/ErrorState';
+import { LoadingState } from './components/LoadingState';
+import { DocumentFooter } from './components/DocumentFooter';
 
 interface DocumentViewModalProps {
   open: boolean;
@@ -166,43 +168,8 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
     }
   };
   
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), 'MMMM d, yyyy');
-    } catch (e) {
-      return 'N/A';
-    }
-  };
-  
-  const getDocumentIcon = () => {
-    if (!documentFile?.fileType) return <FileText className="h-16 w-16 text-gray-300" />;
-    
-    if (documentFile.fileType.includes('pdf')) {
-      return <FileText className="h-16 w-16 text-red-400" />;
-    } else if (documentFile.fileType.includes('image')) {
-      return <Image className="h-16 w-16 text-blue-400" />;
-    } else {
-      return <File className="h-16 w-16 text-gray-400" />;
-    }
-  };
-  
-  const getFileTypeDisplay = () => {
-    if (!documentFile?.fileType) return 'Unknown';
-    
-    if (documentFile.fileType.includes('pdf')) {
-      return 'PDF Document';
-    } else if (documentFile.fileType.includes('image')) {
-      return 'Image';
-    } else if (documentFile.fileType.includes('word')) {
-      return 'Word Document';
-    } else {
-      return documentFile.fileType.split('/').pop() || 'Document';
-    }
-  };
-  
-  const isPreviewable = () => {
-    if (!documentFile?.fileType) return false;
-    return documentFile.fileType.includes('pdf') || documentFile.fileType.includes('image');
+  const handlePreviewError = () => {
+    setError('Failed to load document preview');
   };
 
   return (
@@ -225,91 +192,31 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
           </DialogTitle>
         </DialogHeader>
         
-        {loading ? (
-          <div className="flex-grow flex flex-col items-center justify-center">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-            <div className="text-center">
-              <p className="mb-4">Loading document...</p>
-              {downloadProgress > 0 && (
-                <div className="w-48 mx-auto">
-                  <Progress value={downloadProgress} className="h-1.5" />
-                </div>
-              )}
-            </div>
-          </div>
-        ) : error ? (
-          <div className="flex-grow flex flex-col items-center justify-center text-red-500">
-            <AlertTriangle className="h-12 w-12 mb-4" />
-            <p className="text-center mb-4">{error}</p>
-            <Button 
-              variant="outline" 
-              onClick={handleRetry}
-              disabled={retryCount >= maxRetries}
-              className="flex items-center"
-            >
-              <RefreshCw className="mr-2 h-4 w-4" /> 
-              Retry Loading Document
-            </Button>
-          </div>
-        ) : (
-          <>
-            <div className="flex-grow overflow-hidden min-h-0 bg-gray-50 border rounded-md">
-              {documentUrl && isPreviewable() ? (
-                documentFile?.fileType?.includes('image') ? (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-100 p-4">
-                    <img 
-                      src={documentUrl} 
-                      alt={documentFile.name}
-                      className="max-w-full max-h-full object-contain"
-                      onError={() => setError('Failed to load image')} 
-                    />
-                  </div>
-                ) : (
-                  <iframe
-                    src={documentUrl}
-                    className="w-full h-full border-0"
-                    title={documentFile?.name || 'Document'}
-                    sandbox="allow-scripts allow-same-origin allow-forms"
-                    onError={() => setError('Failed to load document preview')}
-                  />
-                )
-              ) : (
-                <div className="flex flex-col h-full items-center justify-center text-gray-500">
-                  {getDocumentIcon()}
-                  <p className="mt-4">Document preview not available</p>
-                  {documentUrl && (
-                    <Button 
-                      variant="outline" 
-                      className="mt-4" 
-                      onClick={handleDownload}
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download to View
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
-            
-            <div className="py-3 space-y-1 border-t mt-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">File type:</span>
-                <span className="font-medium">{getFileTypeDisplay()}</span>
-              </div>
-              {documentFile && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Upload date:</span>
-                  <span className="font-medium">{formatDate(documentFile.uploadDate)}</span>
-                </div>
-              )}
-              {isDownloading && downloadProgress > 0 && (
-                <div className="w-full pt-2">
-                  <Progress value={downloadProgress} className="h-1.5" />
-                </div>
-              )}
-            </div>
-          </>
-        )}
+        <div className="flex-grow overflow-hidden min-h-0 bg-gray-50 border rounded-md">
+          {loading ? (
+            <LoadingState downloadProgress={downloadProgress} />
+          ) : error ? (
+            <ErrorState 
+              error={error}
+              retryCount={retryCount}
+              maxRetries={maxRetries}
+              onRetry={handleRetry}
+            />
+          ) : (
+            <DocumentPreview
+              documentUrl={documentUrl}
+              documentFile={documentFile}
+              onError={handlePreviewError}
+              onDownload={handleDownload}
+            />
+          )}
+        </div>
+        
+        <DocumentFooter 
+          documentFile={documentFile}
+          isDownloading={isDownloading}
+          downloadProgress={downloadProgress}
+        />
         
         <DialogFooter className="border-t pt-3">
           <Button 
