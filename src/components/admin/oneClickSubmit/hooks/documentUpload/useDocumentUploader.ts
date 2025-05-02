@@ -7,7 +7,7 @@ import { UploadDocumentOptions } from './types';
 
 export const useDocumentUploader = (
   setUploading: (uploading: boolean) => void,
-  setUploadProgress: (progress: number) => void,
+  setUploadProgress: (progress: number | ((prevProgress: number) => number)) => void, // Updated type definition to accept function updates
   setUploadError: (error: Error | null) => void,
   loadDocuments: () => Promise<void>
 ) => {
@@ -73,11 +73,7 @@ export const useDocumentUploader = (
       
       // Use a more reliable progress tracking approach
       const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => {
-          // Fix: Convert the callback result to a number explicitly
-          const newProgress = Math.min(prev + 5, 85);
-          return newProgress;
-        });
+        setUploadProgress((prev: number) => Math.min(prev + 5, 85));
       }, 300);
       
       console.log('Uploading file to path:', filePath);
