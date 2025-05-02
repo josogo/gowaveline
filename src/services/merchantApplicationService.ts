@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -80,39 +81,8 @@ export async function completeMerchantApplication(id: string) {
 }
 
 /**
- * Upload a document for a merchant application
+ * Interface defining document upload parameters
  */
-export async function uploadMerchantDocument(data: {
-  applicationId: string;
-  fileName: string;
-  fileType: string;
-  fileSize: number;
-  filePath: string;
-  documentType: string;
-  uploadedBy?: string;
-}) {
-  return supabase.from("merchant_documents").insert({
-    merchant_id: data.applicationId,
-    file_name: data.fileName,
-    file_type: data.fileType,
-    file_size: data.fileSize,
-    file_path: data.filePath,
-    document_type: data.documentType,
-    uploaded_by: data.uploadedBy || 'merchant',
-  });
-}
-
-/**
- * Get documents for a merchant application
- */
-export async function getMerchantDocuments(applicationId: string) {
-  return supabase
-    .from("merchant_documents")
-    .select("*")
-    .eq("merchant_id", applicationId)
-    .order("created_at", { ascending: false });
-}
-
 export interface MerchantDocumentParams {
   applicationId: string;
   fileName: string;
@@ -120,24 +90,28 @@ export interface MerchantDocumentParams {
   fileSize: number;
   filePath: string;
   documentType: string;
+  uploadedBy?: string;
 }
 
+/**
+ * Upload a document for a merchant application
+ * Enhanced version with better error handling
+ */
 export const uploadMerchantDocument = async (params: MerchantDocumentParams) => {
   console.log('Saving document metadata to database:', params);
   
   try {
     const { data, error } = await supabase
       .from('merchant_documents')
-      .insert([
-        {
-          merchant_application_id: params.applicationId,
-          file_name: params.fileName,
-          file_type: params.fileType,
-          file_size: params.fileSize,
-          file_path: params.filePath,
-          document_type: params.documentType
-        }
-      ]);
+      .insert({
+        merchant_id: params.applicationId,
+        file_name: params.fileName,
+        file_type: params.fileType,
+        file_size: params.fileSize,
+        file_path: params.filePath,
+        document_type: params.documentType,
+        uploaded_by: params.uploadedBy || 'merchant',
+      });
     
     if (error) {
       console.error('Error saving document metadata:', error);
@@ -151,6 +125,10 @@ export const uploadMerchantDocument = async (params: MerchantDocumentParams) => 
   }
 };
 
+/**
+ * Get documents for a merchant application
+ * Enhanced version with better error handling
+ */
 export const getMerchantDocuments = async (applicationId: string) => {
   console.log('Getting documents for application:', applicationId);
   
@@ -158,7 +136,7 @@ export const getMerchantDocuments = async (applicationId: string) => {
     const { data, error } = await supabase
       .from('merchant_documents')
       .select('*')
-      .eq('merchant_application_id', applicationId)
+      .eq('merchant_id', applicationId)
       .order('created_at', { ascending: false });
     
     if (error) {
