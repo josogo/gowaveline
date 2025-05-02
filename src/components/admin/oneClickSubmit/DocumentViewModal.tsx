@@ -28,7 +28,7 @@ interface DocumentViewModalProps {
 export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
   open,
   onOpenChange,
-  document,
+  document: documentFile,
 }) => {
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,26 +37,26 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
   const maxRetries = 3;
 
   useEffect(() => {
-    if (document && open) {
+    if (documentFile && open) {
       fetchDocumentUrl();
     } else {
       setDocumentUrl(null);
       setError(null);
       setRetryCount(0);
     }
-  }, [document, open]);
+  }, [documentFile, open]);
 
   const fetchDocumentUrl = async () => {
-    if (!document) return;
+    if (!documentFile) return;
     
     setLoading(true);
     setError(null);
     
     try {
-      console.log('Fetching document URL for:', document.filePath);
+      console.log('Fetching document URL for:', documentFile.filePath);
       const { data, error } = await supabase.storage
         .from('merchant-documents')
-        .createSignedUrl(document.filePath, 3600); // 1 hour expiry
+        .createSignedUrl(documentFile.filePath, 3600); // 1 hour expiry
       
       if (error) {
         console.error('Error fetching document URL:', error);
@@ -85,15 +85,15 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
   };
   
   const handleDownload = async () => {
-    if (!document || !documentUrl) return;
+    if (!documentFile || !documentUrl) return;
     
     try {
-      console.log('Downloading document:', document.name);
+      console.log('Downloading document:', documentFile.name);
       
       // Create a link element and trigger download
       const link = document.createElement('a');
       link.href = documentUrl;
-      link.download = document.name;
+      link.download = documentFile.name;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -117,7 +117,7 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[800px] sm:h-[80vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>{document?.name || 'Document'}</DialogTitle>
+          <DialogTitle>{documentFile?.name || 'Document'}</DialogTitle>
         </DialogHeader>
         
         {loading ? (
@@ -146,7 +146,7 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
                 <iframe
                   src={documentUrl}
                   className="w-full h-full border-0"
-                  title={document?.name || 'Document'}
+                  title={documentFile?.name || 'Document'}
                 />
               ) : (
                 <div className="flex h-full items-center justify-center text-gray-500">
@@ -157,8 +157,8 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
             </div>
             
             <div className="py-2 text-sm text-gray-500">
-              {document && (
-                <p>Upload date: {formatDate(document.uploadDate)}</p>
+              {documentFile && (
+                <p>Upload date: {formatDate(documentFile.uploadDate)}</p>
               )}
             </div>
           </>
