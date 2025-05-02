@@ -5,6 +5,7 @@ import { File, Trash2, FileText, Image, Eye, Download, AlertCircle } from 'lucid
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { supabase } from '@/integrations/supabase/client';
 
 interface FileListProps {
   files: Array<{
@@ -92,6 +93,10 @@ export const FileList: React.FC<FileListProps> = ({
     }
     return 'application/octet-stream';
   };
+
+  const getFileDownloadUrl = (filePath: string) => {
+    return supabase.storage.from('merchant-documents').getPublicUrl(filePath).data.publicUrl;
+  };
   
   return (
     <div className={cn("space-y-3", className)}>
@@ -99,6 +104,7 @@ export const FileList: React.FC<FileListProps> = ({
       <div className="grid gap-3">
         {files.map(file => {
           const viewable = file.filePath && onView;
+          const downloadUrl = file.filePath ? getFileDownloadUrl(file.filePath) : '';
           
           if (!file.name) {
             return (
@@ -162,6 +168,19 @@ export const FileList: React.FC<FileListProps> = ({
                     <Eye className="h-4 w-4" />
                     <span className="sr-only">View</span>
                   </Button>
+                )}
+
+                {file.filePath && (
+                  <a 
+                    href={downloadUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center justify-center text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-md h-8 w-8"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span className="sr-only">Download</span>
+                  </a>
                 )}
                 
                 <Button 

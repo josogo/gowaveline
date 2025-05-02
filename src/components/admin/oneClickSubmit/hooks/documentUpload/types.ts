@@ -15,4 +15,6 @@ export interface DocumentFile {
   file_size: number;
   document_type: string;
   created_at: string;
+  merchant_id: string;
+  uploaded_by?: string;
 }

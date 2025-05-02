@@ -1,11 +1,12 @@
 
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import { useDocumentUpload } from '../hooks';
 import { UploadForm } from './UploadForm';
 import { FileList } from '../FileList';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CategoryTabProps {
   category: string;
@@ -28,7 +29,8 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
   isLoading
 }) => {
   const { 
-    documents
+    documents,
+    loadDocuments
   } = useDocumentUpload(applicationId);
 
   // Group documents by category
@@ -43,9 +45,12 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
     if (documents && documents.length > 0) {
       documents.forEach(doc => {
         const docCategory = doc.document_type || 'other';
+        
+        // Make sure the category exists in our result object
         if (!result[docCategory]) {
           result[docCategory] = [];
         }
+        
         result[docCategory].push(doc);
       });
       console.log("Documents grouped by category:", Object.keys(result).map(k => `${k}: ${result[k]?.length || 0}`));
@@ -57,8 +62,49 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
   }, [documents]);
 
   const handleDeleteDocument = async (documentId: string) => {
-    // For future implementation
-    toast.info('Delete functionality will be implemented soon');
+    try {
+      // Find the document to get the file path
+      const docToDelete = documents.find(doc => doc.id === documentId);
+      
+      if (!docToDelete) {
+        toast.error("Document not found");
+        return;
+      }
+      
+      // First delete from storage
+      if (docToDelete.file_path) {
+        const { error: storageError } = await supabase.storage
+          .from('merchant-documents')
+          .remove([docToDelete.file_path]);
+          
+        if (storageError) {
+          console.error("Error deleting from storage:", storageError);
+          toast.error("Error removing file from storage");
+          return;
+        }
+      }
+      
+      // Then delete the database entry
+      const { error: dbError } = await supabase
+        .from('merchant_documents')
+        .delete()
+        .eq('id', documentId);
+        
+      if (dbError) {
+        console.error("Error deleting document record:", dbError);
+        toast.error("Error removing document record");
+        return;
+      }
+      
+      toast.success("Document deleted successfully");
+      
+      // Refresh the document list
+      loadDocuments();
+      
+    } catch (err) {
+      console.error("Error in delete operation:", err);
+      toast.error("Failed to delete document");
+    }
   };
 
   return (
@@ -70,20 +116,20 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
       
       {/* File list with improved styling */}
       <FileList 
-        files={documentsByCategory[category]?.map(doc => ({
+        files={(documentsByCategory[category] || []).map(doc => ({
           id: doc.id,
           name: doc.file_name,
           uploadDate: doc.created_at,
           size: doc.file_size,
           filePath: doc.file_path,
           fileType: doc.file_type
-        })) || []}
+        }))}
         onDelete={handleDeleteDocument}
         onView={onViewDocument}
         loading={isLoading}
       />
 
-      {!isLoading && documentsByCategory[category]?.length === 0 && (
+      {!isLoading && (!documentsByCategory[category] || documentsByCategory[category]?.length === 0) && (
         <Alert variant="default" className="bg-blue-50 border-blue-200">
           <Info className="h-4 w-4" />
           <AlertDescription>

@@ -64,7 +64,7 @@ export const useDocumentUploader = (
       // Use a unique ID if no applicationId is provided
       const effectiveAppId = applicationId || `temp-${new Date().getTime()}`;
       
-      // Upload file to storage with simulated progress
+      // Upload file to storage
       const timestamp = new Date().getTime();
       const fileExt = file.name.split('.').pop();
       const filePath = `${effectiveAppId}/${documentType || 'other'}_${timestamp}.${fileExt}`;
