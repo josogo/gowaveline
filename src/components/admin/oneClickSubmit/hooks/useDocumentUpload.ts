@@ -113,10 +113,12 @@ export const useDocumentUpload = (applicationId: string) => {
       toast.error(`Upload failed: ${error.message}`);
       if (onError) onError(error);
     } finally {
+      // Ensure the uploading state is reset after a short delay
+      // This gives the user time to see the success/error toast
       setTimeout(() => {
         setUploading(false);
         setUploadProgress(0);
-      }, 500);
+      }, 1000);
     }
   };
   
@@ -136,6 +138,8 @@ export const useDocumentUpload = (applicationId: string) => {
       setDocuments(data || []);
     } catch (error) {
       console.error('Error loading documents:', error);
+      // Don't show toast here to avoid spamming the user with errors
+      // if the documents fail to load multiple times
     }
   }, [applicationId]);
   
@@ -152,4 +156,3 @@ export const useDocumentUpload = (applicationId: string) => {
     loadDocuments
   };
 };
-

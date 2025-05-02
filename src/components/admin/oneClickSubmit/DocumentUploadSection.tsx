@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -61,6 +60,13 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
         const fileInput = document.getElementById('documentFile') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
         console.log('Upload completed, file input reset');
+      },
+      onError: (error) => {
+        console.error('Upload error:', error);
+        // Ensure we reset the UI even on error
+        setSelectedFile(null);
+        const fileInput = document.getElementById('documentFile') as HTMLInputElement;
+        if (fileInput) fileInput.value = '';
       }
     });
   };
