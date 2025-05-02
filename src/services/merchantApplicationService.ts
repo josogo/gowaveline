@@ -81,7 +81,7 @@ export async function completeMerchantApplication(id: string) {
 }
 
 /**
- * Interface defining document upload parameters
+ * Interface for document upload parameters
  */
 export interface MerchantDocumentParams {
   applicationId: string;
@@ -95,7 +95,6 @@ export interface MerchantDocumentParams {
 
 /**
  * Upload a document for a merchant application
- * Enhanced version with better error handling
  */
 export const uploadMerchantDocument = async (params: MerchantDocumentParams) => {
   console.log('Saving document metadata to database:', params);
@@ -103,15 +102,17 @@ export const uploadMerchantDocument = async (params: MerchantDocumentParams) => 
   try {
     const { data, error } = await supabase
       .from('merchant_documents')
-      .insert({
-        merchant_id: params.applicationId,
-        file_name: params.fileName,
-        file_type: params.fileType,
-        file_size: params.fileSize,
-        file_path: params.filePath,
-        document_type: params.documentType,
-        uploaded_by: params.uploadedBy || 'merchant',
-      });
+      .insert([
+        {
+          merchant_id: params.applicationId,
+          file_name: params.fileName,
+          file_type: params.fileType,
+          file_size: params.fileSize,
+          file_path: params.filePath,
+          document_type: params.documentType,
+          uploaded_by: params.uploadedBy || 'merchant'
+        }
+      ]);
     
     if (error) {
       console.error('Error saving document metadata:', error);
@@ -127,7 +128,6 @@ export const uploadMerchantDocument = async (params: MerchantDocumentParams) => 
 
 /**
  * Get documents for a merchant application
- * Enhanced version with better error handling
  */
 export const getMerchantDocuments = async (applicationId: string) => {
   console.log('Getting documents for application:', applicationId);
