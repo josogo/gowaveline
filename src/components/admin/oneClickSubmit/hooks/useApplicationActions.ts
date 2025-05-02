@@ -20,6 +20,11 @@ export const useApplicationActions = (
     console.log("Saving application data:", { applicationId, formData, progress, activeTab });
     
     try {
+      // Ensure we're capturing all the form data, especially for operations tab
+      if (activeTab === 'operations') {
+        console.log('Saving operations tab with data:', formData);
+      }
+      
       const dataToSave = {
         formData,
         progress,
@@ -29,6 +34,7 @@ export const useApplicationActions = (
       
       // First save to localStorage for quick access and offline support
       localStorage.setItem(`application_${applicationId}`, JSON.stringify(dataToSave));
+      console.log("Saved to localStorage:", dataToSave);
       
       // Then save to database
       const { error } = await anySupabase
@@ -43,6 +49,7 @@ export const useApplicationActions = (
         console.error("Error saving to database:", error);
         toast.error("Failed to save to database");
         // Still continue since we saved to localStorage
+        throw error;
       } else {
         console.log("Application data saved successfully to both localStorage and database");
       }

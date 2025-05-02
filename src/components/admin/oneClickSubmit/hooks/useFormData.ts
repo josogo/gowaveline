@@ -29,9 +29,12 @@ export function useFormData(initialData: any = {}) {
       
       // Check if data actually changed to avoid unnecessary dirty states
       const currentDataStr = JSON.stringify(updatedData);
-      if (lastSavedData !== currentDataStr) {
+      const previousDataStr = lastSavedData;
+      
+      // Deep comparison to detect actual changes
+      if (previousDataStr !== currentDataStr) {
+        console.log("Form data changed, marking as dirty");
         setIsDirty(true);
-        console.log("Form data marked as dirty");
       }
       
       return updatedData;
@@ -40,8 +43,9 @@ export function useFormData(initialData: any = {}) {
 
   const resetDirtyState = useCallback(() => {
     setIsDirty(false);
-    setLastSavedData(JSON.stringify(formData));
-    console.log("Form dirty state reset, data saved");
+    const currentDataStr = JSON.stringify(formData);
+    setLastSavedData(currentDataStr);
+    console.log("Form dirty state reset, data saved:", currentDataStr);
   }, [formData]);
 
   return { formData, updateFormData, isDirty, resetDirtyState };

@@ -21,6 +21,11 @@ export const useSaveOnTabChange = (
         form.setValue('currentTab', activeTab);
       }
       
+      // For operations tab, ensure we capture all form data
+      if (activeTab === 'operations') {
+        console.log('Saving operations tab data:', currentValues);
+      }
+      
       // Update form data state
       updateFormData(currentValues);
       

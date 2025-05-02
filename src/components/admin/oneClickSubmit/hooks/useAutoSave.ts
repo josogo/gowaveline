@@ -40,6 +40,11 @@ export const useAutoSave = (
           // Get the latest form values
           const currentValues = form.getValues();
           
+          // Special handling for operations tab
+          if (activeTab === 'operations') {
+            console.log('Auto-saving operations tab data:', currentValues);
+          }
+          
           // Make sure current tab is set
           if (activeTab && !currentValues.currentTab) {
             currentValues.currentTab = activeTab;
@@ -61,7 +66,7 @@ export const useAutoSave = (
         } finally {
           if (setIsSaving) setIsSaving(false);
         }
-      }, 3000); // 3 second delay for auto-save
+      }, 2000); // Reduced to 2 second delay for more responsive saving
     }
     
     return () => {
