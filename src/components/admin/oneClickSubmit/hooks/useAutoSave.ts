@@ -25,12 +25,14 @@ export const useAutoSave = (
   // Set up auto-save when form is dirty
   useEffect(() => {
     if (isDirty) {
+      console.log('Form is dirty, setting up autosave timer...');
+      
       // Clear any existing timer
       if (autoSaveTimerRef.current) {
         clearTimeout(autoSaveTimerRef.current);
       }
       
-      // Set a new timer for auto-save (3 seconds after last change)
+      // Set a new timer for auto-save (2 seconds after last change)
       autoSaveTimerRef.current = setTimeout(async () => {
         console.log('Auto-saving form data...');
         
@@ -42,11 +44,19 @@ export const useAutoSave = (
           
           // Special handling for operations tab
           if (activeTab === 'operations') {
-            console.log('Auto-saving operations tab data:', currentValues);
+            const operationsData = form.getValues('operations');
+            console.log('Auto-saving operations tab data:', operationsData);
+            
+            // Ensure the operations data isn't empty
+            if (!operationsData) {
+              console.log('No operations data found, initializing empty object');
+              form.setValue('operations', {});
+            }
           }
           
           // Make sure current tab is set
-          if (activeTab && !currentValues.currentTab) {
+          if (activeTab && (!currentValues.currentTab || currentValues.currentTab !== activeTab)) {
+            console.log(`Setting current tab to ${activeTab}`);
             currentValues.currentTab = activeTab;
             form.setValue('currentTab', activeTab);
           }
@@ -66,7 +76,7 @@ export const useAutoSave = (
         } finally {
           if (setIsSaving) setIsSaving(false);
         }
-      }, 2000); // Reduced to 2 second delay for more responsive saving
+      }, 1500); // Reduced to 1.5 second delay for more responsive saving
     }
     
     return () => {

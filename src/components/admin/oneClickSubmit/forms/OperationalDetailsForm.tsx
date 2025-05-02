@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useFormContext } from 'react-hook-form';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -7,12 +8,33 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 
 export const OperationalDetailsForm: React.FC = () => {
+  const { register, setValue, watch } = useFormContext();
+  
+  // Initialize switches with watched values
+  const usesRecurringBilling = watch('operations.usesRecurringBilling') || false;
+  const offersFreeTrials = watch('operations.offersFreeTrials') || false;
+  
+  // Handle select changes (since register doesn't work directly with Select component)
+  const handleSelectChange = (field: string, value: string) => {
+    console.log(`Setting operations.${field} to:`, value);
+    setValue(`operations.${field}`, value, { shouldDirty: true });
+  };
+  
+  // Handle switch changes
+  const handleSwitchChange = (field: string, checked: boolean) => {
+    console.log(`Setting operations.${field} to:`, checked);
+    setValue(`operations.${field}`, checked, { shouldDirty: true });
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <Label>Product/Service Category</Label>
-          <Select>
+          <Select 
+            defaultValue={watch('operations.productCategory')}
+            onValueChange={(value) => handleSelectChange('productCategory', value)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
@@ -31,24 +53,36 @@ export const OperationalDetailsForm: React.FC = () => {
         </div>
         
         <div>
-          <Label>MCC Code</Label>
-          <Input placeholder="Enter 4-digit MCC code" />
+          <Label htmlFor="operations.mccCode">MCC Code</Label>
+          <Input 
+            id="operations.mccCode"
+            placeholder="Enter 4-digit MCC code" 
+            {...register('operations.mccCode')}
+          />
           <p className="text-xs text-muted-foreground mt-1">
             If unsure, our AI will suggest appropriate MCC codes
           </p>
         </div>
         
         <div>
-          <Label>NAICS Code</Label>
-          <Input placeholder="Enter 6-digit NAICS code" />
+          <Label htmlFor="operations.naicsCode">NAICS Code</Label>
+          <Input 
+            id="operations.naicsCode"
+            placeholder="Enter 6-digit NAICS code" 
+            {...register('operations.naicsCode')}
+          />
           <p className="text-xs text-muted-foreground mt-1">
             Will be auto-detected based on your business description
           </p>
         </div>
         
         <div>
-          <Label>Business Description</Label>
-          <Textarea placeholder="Describe your products or services in detail" />
+          <Label htmlFor="operations.businessDescription">Business Description</Label>
+          <Textarea 
+            id="operations.businessDescription"
+            placeholder="Describe your products or services in detail" 
+            {...register('operations.businessDescription')}
+          />
         </div>
       </div>
       
@@ -57,7 +91,10 @@ export const OperationalDetailsForm: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <Label>Fulfillment Model</Label>
-            <Select>
+            <Select 
+              defaultValue={watch('operations.fulfillmentModel')}
+              onValueChange={(value) => handleSelectChange('fulfillmentModel', value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select fulfillment model" />
               </SelectTrigger>
@@ -74,7 +111,10 @@ export const OperationalDetailsForm: React.FC = () => {
           
           <div>
             <Label>Average Fulfillment Time</Label>
-            <Select>
+            <Select 
+              defaultValue={watch('operations.fulfillmentTime')}
+              onValueChange={(value) => handleSelectChange('fulfillmentTime', value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select timeframe" />
               </SelectTrigger>
@@ -91,7 +131,10 @@ export const OperationalDetailsForm: React.FC = () => {
           
           <div>
             <Label>Shipping Method</Label>
-            <Select>
+            <Select 
+              defaultValue={watch('operations.shippingMethod')}
+              onValueChange={(value) => handleSelectChange('shippingMethod', value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select shipping method" />
               </SelectTrigger>
@@ -108,7 +151,10 @@ export const OperationalDetailsForm: React.FC = () => {
           
           <div>
             <Label>Return Policy Timeframe</Label>
-            <Select>
+            <Select 
+              defaultValue={watch('operations.returnPolicy')}
+              onValueChange={(value) => handleSelectChange('returnPolicy', value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select timeframe" />
               </SelectTrigger>
@@ -130,23 +176,43 @@ export const OperationalDetailsForm: React.FC = () => {
         <h3 className="text-lg font-medium">Processing Details</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <Label>Average Ticket Size ($)</Label>
-            <Input type="number" placeholder="0.00" />
+            <Label htmlFor="operations.avgTicket">Average Ticket Size ($)</Label>
+            <Input 
+              id="operations.avgTicket"
+              type="number" 
+              placeholder="0.00" 
+              {...register('operations.avgTicket')}
+            />
           </div>
           
           <div>
-            <Label>Monthly Processing Volume ($)</Label>
-            <Input type="number" placeholder="0.00" />
+            <Label htmlFor="operations.monthlyVolume">Monthly Processing Volume ($)</Label>
+            <Input 
+              id="operations.monthlyVolume"
+              type="number" 
+              placeholder="0.00" 
+              {...register('operations.monthlyVolume')}
+            />
           </div>
           
           <div>
-            <Label>Chargeback Percentage (%)</Label>
-            <Input type="number" placeholder="0.00" />
+            <Label htmlFor="operations.chargebackPercent">Chargeback Percentage (%)</Label>
+            <Input 
+              id="operations.chargebackPercent"
+              type="number" 
+              placeholder="0.00" 
+              {...register('operations.chargebackPercent')}
+            />
           </div>
           
           <div>
-            <Label>Refund Percentage (%)</Label>
-            <Input type="number" placeholder="0.00" />
+            <Label htmlFor="operations.refundPercent">Refund Percentage (%)</Label>
+            <Input 
+              id="operations.refundPercent"
+              type="number" 
+              placeholder="0.00" 
+              {...register('operations.refundPercent')}
+            />
           </div>
         </div>
       </div>
@@ -154,53 +220,77 @@ export const OperationalDetailsForm: React.FC = () => {
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Recurring Billing</h3>
         <div className="flex items-center space-x-2 mb-4">
-          <Switch id="recurring-billing" />
+          <Switch 
+            id="recurring-billing" 
+            checked={usesRecurringBilling}
+            onCheckedChange={(checked) => handleSwitchChange('usesRecurringBilling', checked)}
+          />
           <Label htmlFor="recurring-billing" className="cursor-pointer">
             This business uses subscription/recurring billing
           </Label>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <Label>Billing Frequency</Label>
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Select frequency" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="biweekly">Bi-weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="quarterly">Quarterly</SelectItem>
-                <SelectItem value="semiannual">Semi-annually</SelectItem>
-                <SelectItem value="annual">Annually</SelectItem>
-                <SelectItem value="custom">Custom</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div>
-            <Label>Recurring Billing Software</Label>
-            <Input placeholder="e.g. Stripe, Chargebee, ReCharge" />
-          </div>
-          
-          <div>
-            <div className="flex items-center space-x-2 mb-2">
-              <Switch id="free-trial" />
-              <Label htmlFor="free-trial" className="cursor-pointer">
-                Free trial offered
-              </Label>
+        {usesRecurringBilling && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <Label>Billing Frequency</Label>
+              <Select 
+                defaultValue={watch('operations.billingFrequency')}
+                onValueChange={(value) => handleSelectChange('billingFrequency', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select frequency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="biweekly">Bi-weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="quarterly">Quarterly</SelectItem>
+                  <SelectItem value="semiannual">Semi-annually</SelectItem>
+                  <SelectItem value="annual">Annually</SelectItem>
+                  <SelectItem value="custom">Custom</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <p className="text-xs text-muted-foreground">
-              If you offer a free trial before charging customers
-            </p>
+            
+            <div>
+              <Label htmlFor="operations.billingSoftware">Recurring Billing Software</Label>
+              <Input 
+                id="operations.billingSoftware"
+                placeholder="e.g. Stripe, Chargebee, ReCharge" 
+                {...register('operations.billingSoftware')}
+              />
+            </div>
+            
+            <div>
+              <div className="flex items-center space-x-2 mb-2">
+                <Switch 
+                  id="free-trial"
+                  checked={offersFreeTrials}
+                  onCheckedChange={(checked) => handleSwitchChange('offersFreeTrials', checked)}
+                />
+                <Label htmlFor="free-trial" className="cursor-pointer">
+                  Free trial offered
+                </Label>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                If you offer a free trial before charging customers
+              </p>
+            </div>
+            
+            {offersFreeTrials && (
+              <div>
+                <Label htmlFor="operations.trialLength">Free Trial Length (Days)</Label>
+                <Input 
+                  id="operations.trialLength"
+                  type="number" 
+                  placeholder="0" 
+                  {...register('operations.trialLength')}
+                />
+              </div>
+            )}
           </div>
-          
-          <div>
-            <Label>Free Trial Length (Days)</Label>
-            <Input type="number" placeholder="0" />
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

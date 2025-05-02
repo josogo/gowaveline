@@ -15,15 +15,23 @@ export const useSaveOnTabChange = (
       console.log(`Tab changed to ${activeTab}, saving form data...`);
       
       const currentValues = form.getValues();
+      console.log('Current form values on tab change:', currentValues);
+      
       // Make sure current tab is set in the form data
-      if (!currentValues.currentTab) {
+      if (!currentValues.currentTab || currentValues.currentTab !== activeTab) {
+        console.log(`Setting currentTab to ${activeTab}`);
         currentValues.currentTab = activeTab;
         form.setValue('currentTab', activeTab);
       }
       
-      // For operations tab, ensure we capture all form data
+      // For operations tab, ensure we have an operations object
       if (activeTab === 'operations') {
-        console.log('Saving operations tab data:', currentValues);
+        if (!currentValues.operations) {
+          console.log('Initializing empty operations object');
+          currentValues.operations = {};
+          form.setValue('operations', {});
+        }
+        console.log('Operations tab data on change:', currentValues.operations);
       }
       
       // Update form data state
