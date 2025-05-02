@@ -1,8 +1,8 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { uploadMerchantDocument } from '@/services/merchantApplicationService';
+import { getMerchantDocuments, uploadMerchantDocument } from '@/services/merchantApplicationService';
 
 interface UploadDocumentOptions {
   file: File;
@@ -14,6 +14,7 @@ interface UploadDocumentOptions {
 
 export const useDocumentUpload = (applicationId: string) => {
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [documents, setDocuments] = useState<any[]>([]);
   
   const uploadDocument = async ({
@@ -28,6 +29,7 @@ export const useDocumentUpload = (applicationId: string) => {
     }
     
     setUploading(true);
+    setUploadProgress(10);
     
     try {
       // Check if storage bucket exists, create if not
@@ -36,14 +38,25 @@ export const useDocumentUpload = (applicationId: string) => {
       
       if (!documentsBucketExists) {
         await supabase.storage.createBucket('merchant-documents', {
-          public: false,
+          public: true, // Make bucket public for easy access
         });
+        setUploadProgress(20);
       }
       
-      // Upload file to storage
+      // Upload file to storage with simulated progress
       const timestamp = new Date().getTime();
       const fileExt = file.name.split('.').pop();
-      const filePath = `${applicationId}/${timestamp}_${file.name}`;
+      const filePath = `${applicationId}/${documentType}_${timestamp}.${fileExt}`;
+      
+      setUploadProgress(30);
+      
+      // Simulate incremental upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          const newProgress = prev + 10;
+          return newProgress < 90 ? newProgress : prev;
+        });
+      }, 500);
       
       const { data: fileData, error: uploadError } = await supabase.storage
         .from('merchant-documents')
@@ -52,11 +65,15 @@ export const useDocumentUpload = (applicationId: string) => {
           upsert: false
         });
       
+      clearInterval(progressInterval);
+      setUploadProgress(90);
+      
       if (uploadError) {
         throw uploadError;
       }
       
       console.log('File uploaded successfully:', fileData);
+      setUploadProgress(95);
       
       // Create document record in database
       const { error } = await uploadMerchantDocument({
@@ -72,6 +89,7 @@ export const useDocumentUpload = (applicationId: string) => {
         throw new Error(error.message);
       }
       
+      setUploadProgress(100);
       toast.success('Document uploaded successfully');
       
       // Refresh document list
@@ -85,7 +103,10 @@ export const useDocumentUpload = (applicationId: string) => {
       toast.error(`Upload failed: ${error.message}`);
       if (onError) onError(error);
     } finally {
-      setUploading(false);
+      setTimeout(() => {
+        setUploading(false);
+        setUploadProgress(0);
+      }, 500);
     }
   };
   
@@ -93,11 +114,7 @@ export const useDocumentUpload = (applicationId: string) => {
     if (!applicationId) return;
     
     try {
-      const { data, error } = await supabase
-        .from('merchant_documents')
-        .select('*')
-        .eq('merchant_id', applicationId)
-        .order('created_at', { ascending: false });
+      const { data, error } = await getMerchantDocuments(applicationId);
       
       if (error) throw error;
       
@@ -108,12 +125,13 @@ export const useDocumentUpload = (applicationId: string) => {
   };
   
   // Load documents on initial mount
-  useState(() => {
+  useEffect(() => {
     loadDocuments();
-  });
+  }, [applicationId]);
   
   return {
     uploading,
+    uploadProgress,
     documents,
     uploadDocument,
     loadDocuments
