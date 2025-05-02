@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useDocumentUpload } from '../hooks/useDocumentUpload';
+import { useDocumentUpload } from '../hooks';
 import { Button } from '@/components/ui/button';
 import { FileCheck, RefreshCw, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';

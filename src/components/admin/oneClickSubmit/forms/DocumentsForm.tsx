@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, FileCheck, Upload, Loader2 } from 'lucide-react';
 import { useParams } from 'react-router-dom';
-import { useDocumentUpload } from '../hooks/useDocumentUpload';
+import { useDocumentUpload } from '../hooks';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';

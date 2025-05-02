@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { useDocumentUpload } from '../hooks/useDocumentUpload';
+import { useDocumentUpload } from '../hooks';
 import { UploadForm } from './UploadForm';
 import { FileList } from '../FileList';
 import { Alert, AlertDescription } from '@/components/ui/alert';

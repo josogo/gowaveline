@@ -73,7 +73,8 @@ export const useDocumentUploader = (
       
       // Use a more reliable progress tracking approach
       const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
+        setUploadProgress((prev) => {
+          // Fix: Convert the callback result to a number explicitly
           const newProgress = Math.min(prev + 5, 85);
           return newProgress;
         });

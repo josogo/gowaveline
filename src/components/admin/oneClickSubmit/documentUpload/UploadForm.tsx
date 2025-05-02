@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useDocumentUpload } from '../hooks/useDocumentUpload';
+import { useDocumentUpload } from '../hooks';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FileCheck, FileX, Upload, Loader2, AlertCircle, X } from 'lucide-react';
