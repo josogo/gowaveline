@@ -2,6 +2,7 @@
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
+import { anySupabase } from "@/utils/supabaseHelpers";
 
 export const useApplicationActions = (
   applicationId?: string,
@@ -26,9 +27,11 @@ export const useApplicationActions = (
         lastUpdated: new Date().toISOString(),
       };
       
+      // First save to localStorage for quick access and offline support
       localStorage.setItem(`application_${applicationId}`, JSON.stringify(dataToSave));
       
-      const { error } = await supabase
+      // Then save to database
+      const { error } = await anySupabase
         .from("merchant_applications")
         .update({ 
           application_data: formData,
@@ -40,9 +43,9 @@ export const useApplicationActions = (
         console.error("Error saving to database:", error);
         toast.error("Failed to save to database");
         // Still continue since we saved to localStorage
+      } else {
+        console.log("Application data saved successfully to both localStorage and database");
       }
-      
-      console.log("Application data saved successfully");
     } catch (error) {
       console.error("Error saving application data:", error);
       toast.error("Failed to save progress");
@@ -64,4 +67,3 @@ export const useApplicationActions = (
 
   return { saveApplicationData, handleSendToMerchant };
 };
-

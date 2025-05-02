@@ -1,6 +1,7 @@
 
 import { useEffect } from 'react';
 import { UseFormReturn } from 'react-hook-form';
+import { toast } from 'sonner';
 
 export const useSaveOnTabChange = (
   activeTab: string,
@@ -11,14 +12,27 @@ export const useSaveOnTabChange = (
 ) => {
   useEffect(() => {
     if (activeTab && merchantApplicationId) {
+      console.log(`Tab changed to ${activeTab}, saving form data...`);
+      
       const currentValues = form.getValues();
+      // Make sure current tab is set in the form data
       if (!currentValues.currentTab) {
         currentValues.currentTab = activeTab;
         form.setValue('currentTab', activeTab);
       }
+      
+      // Update form data state
       updateFormData(currentValues);
-      saveApplicationData().catch(console.error);
+      
+      // Save data to localStorage and database
+      saveApplicationData()
+        .then(() => {
+          console.log(`Form data saved on tab change to ${activeTab}`);
+        })
+        .catch(error => {
+          console.error('Error saving data on tab change:', error);
+          toast.error('Failed to save your changes when switching tabs');
+        });
     }
   }, [activeTab, merchantApplicationId, form, updateFormData, saveApplicationData]);
 };
-
