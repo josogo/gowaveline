@@ -1,32 +1,19 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { getMerchantDocuments, uploadMerchantDocument } from '@/services/merchantApplicationService';
+import { uploadMerchantDocument } from '@/services/merchantApplicationService';
+import { UploadDocumentOptions } from './types';
 
-interface UploadDocumentOptions {
-  file: File;
-  applicationId?: string;
-  documentType?: string;
-  onSuccess?: () => void;
-  onError?: (error: Error) => void;
-}
-
-export const useDocumentUpload = (applicationId: string) => {
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [documents, setDocuments] = useState<any[]>([]);
-  const [uploadError, setUploadError] = useState<Error | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const resetUploadState = useCallback(() => {
-    setUploading(false);
-    setUploadProgress(0);
-    setUploadError(null);
-  }, []);
-  
-  const uploadDocument = async ({
+export const useDocumentUploader = (
+  setUploading: (uploading: boolean) => void,
+  setUploadProgress: (progress: number) => void,
+  setUploadError: (error: Error | null) => void,
+  loadDocuments: () => Promise<void>
+) => {
+  const uploadDocument = useCallback(async ({
     file,
+    applicationId = '',
     documentType = 'other',
     onSuccess,
     onError
@@ -142,7 +129,9 @@ export const useDocumentUpload = (applicationId: string) => {
       
       // Reset state after successful upload with slight delay
       setTimeout(() => {
-        resetUploadState();
+        setUploading(false);
+        setUploadProgress(0);
+        setUploadError(null);
       }, 1000);
       
     } catch (error: any) {
@@ -162,49 +151,9 @@ export const useDocumentUpload = (applicationId: string) => {
         setUploadProgress(0);
       }, 500);
     }
-  };
-  
-  const loadDocuments = useCallback(async () => {
-    if (!applicationId) {
-      console.warn('Cannot load documents without applicationId');
-      return;
-    }
-    
-    try {
-      setIsLoading(true);
-      console.log('Loading documents for application:', applicationId);
-      const { data, error } = await getMerchantDocuments(applicationId);
-      
-      if (error) {
-        console.error('Error loading documents:', error);
-        throw error;
-      }
-      
-      console.log(`Documents loaded: ${data?.length || 0} documents found`);
-      setDocuments(data || []);
-    } catch (error) {
-      console.error('Error in loadDocuments:', error);
-      // Don't show toast here to avoid spamming the user
-    } finally {
-      setIsLoading(false);
-    }
-  }, [applicationId]);
-  
-  // Load documents on initial mount
-  useEffect(() => {
-    if (applicationId) {
-      loadDocuments().catch(err => console.error('Initial document load failed:', err));
-    }
-  }, [applicationId, loadDocuments]);
-  
+  }, [setUploading, setUploadProgress, setUploadError, loadDocuments]);
+
   return {
-    uploading,
-    uploadProgress,
-    uploadError,
-    documents,
-    isLoading,
-    uploadDocument,
-    loadDocuments,
-    resetUploadState
+    uploadDocument
   };
 };
