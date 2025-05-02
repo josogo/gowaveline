@@ -16,6 +16,8 @@ export const UploadForm: React.FC<UploadFormProps> = ({
   applicationId, 
   documentType 
 }) => {
+  console.log(`UploadForm rendering for applicationId: ${applicationId}, documentType: ${documentType}`);
+  
   const { 
     uploading, 
     uploadProgress, 
@@ -65,7 +67,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({
       return;
     }
     
-    console.log(`Starting upload for file ${selectedFile.name} in category ${documentType}`);
+    console.log(`Starting upload for file ${selectedFile.name} in category ${documentType}, applicationId: ${applicationId}`);
     
     try {
       await uploadDocument({

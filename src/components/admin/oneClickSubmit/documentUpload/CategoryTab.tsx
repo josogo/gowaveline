@@ -28,6 +28,8 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
   onViewDocument,
   isLoading
 }) => {
+  console.log(`CategoryTab rendering for ${category} with applicationId: ${applicationId}`);
+  
   const { 
     documents,
     loadDocuments
