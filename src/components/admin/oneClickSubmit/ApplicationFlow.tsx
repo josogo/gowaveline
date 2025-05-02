@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { FormProvider } from 'react-hook-form';
+import { useScrollToTop } from '@/hooks/use-scroll-to-top';
 
 // Import hooks
 import { useApplicationForm } from './hooks/useApplicationForm';
@@ -32,6 +33,8 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
   readOnly = false,
   onClose
 }) => {
+  useScrollToTop(); // Ensure page scrolls to top when component mounts
+  
   const tabs = useApplicationTabs();
   const { form, formData, updateFormData, isDirty, resetDirtyState } = useApplicationForm(merchantApplication);
   
@@ -41,6 +44,7 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
   const [showSendDialog, setShowSendDialog] = useState(false);
   const [showBankRouting, setShowBankRouting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
 
   // Initialize currentTab in form when activeTab changes
   useEffect(() => {
@@ -65,6 +69,27 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
     setActiveTab,
     setApplicationProgress
   );
+
+  // Handle component close with proper saving
+  const handleClose = async () => {
+    if (onClose) {
+      setIsClosing(true);
+      
+      try {
+        // Save data before closing
+        const currentValues = form.getValues();
+        updateFormData(currentValues);
+        await saveApplicationData();
+        
+        // Call the onClose callback
+        onClose();
+      } catch (error) {
+        console.error("Error saving data before closing:", error);
+      } finally {
+        setIsClosing(false);
+      }
+    }
+  };
 
   // Use extracted hooks for side effects
   useFormSubscription(form, updateFormData);
@@ -101,9 +126,9 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
     <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg border animate-fade-in transition-all">
       <div className="h-[90vh] overflow-y-auto p-4 md:p-8">
         <ApplicationHeader 
-          onClose={onClose} 
+          onClose={handleClose} 
           progress={applicationProgress} 
-          isSaving={isSaving}
+          isSaving={isSaving || isClosing}
           lastEdited={lastEdited}
           applicationNumber={applicationNumber}
         />
@@ -120,7 +145,7 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
             onNavigate={navigateTab}
             onSendToMerchant={handleSendToMerchant}
             onBankRouting={handleBankRouting}
-            readOnly={readOnly}
+            readOnly={readOnly || isClosing}
           />
         </FormProvider>
       </div>
@@ -138,4 +163,3 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
 };
 
 export default ApplicationFlow;
-
