@@ -17,6 +17,7 @@ export const useDocumentUpload = (applicationId: string) => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [documents, setDocuments] = useState<any[]>([]);
   const [uploadError, setUploadError] = useState<Error | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   
   const resetUploadState = useCallback(() => {
     setUploading(false);
@@ -125,7 +126,7 @@ export const useDocumentUpload = (applicationId: string) => {
       setUploadError(error);
       if (onError) onError(error);
     } finally {
-      // Always ensure we reset the state after a reasonable delay
+      // Ensure we reset the state after a reasonable delay
       // regardless of success or failure
       setTimeout(() => {
         resetUploadState();
@@ -137,6 +138,7 @@ export const useDocumentUpload = (applicationId: string) => {
     if (!applicationId) return;
     
     try {
+      setIsLoading(true);
       console.log('Loading documents for application:', applicationId);
       const { data, error } = await getMerchantDocuments(applicationId);
       
@@ -150,6 +152,8 @@ export const useDocumentUpload = (applicationId: string) => {
     } catch (error) {
       console.error('Error loading documents:', error);
       // Don't show toast here to avoid spamming the user with errors
+    } finally {
+      setIsLoading(false);
     }
   }, [applicationId]);
   
@@ -165,6 +169,7 @@ export const useDocumentUpload = (applicationId: string) => {
     uploadProgress,
     uploadError,
     documents,
+    isLoading,
     uploadDocument,
     loadDocuments,
     resetUploadState

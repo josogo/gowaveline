@@ -23,6 +23,7 @@ interface DocumentViewModalProps {
     filePath: string;
     fileType: string;
     uploadDate: string;
+    size?: number;
   } | null;
 }
 

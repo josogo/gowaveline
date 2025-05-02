@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDocumentUpload } from './hooks/useDocumentUpload';
 import { FileList } from './FileList';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, FileCheck, Upload, Loader2, FileX } from 'lucide-react';
+import { AlertCircle, FileCheck, Upload, Loader2, FileX, RefreshCw } from 'lucide-react';
 import { DocumentViewModal } from './DocumentViewModal';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
@@ -21,6 +21,7 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
     uploadProgress, 
     uploadError,
     documents, 
+    isLoading,
     uploadDocument, 
     loadDocuments,
     resetUploadState
@@ -98,7 +99,11 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
       },
       onError: (error) => {
         console.error('Upload error:', error);
-        // We already reset the state in the hook's finally block
+        // Reset file input on error as well
+        setSelectedFile(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
       }
     });
   };
@@ -110,6 +115,11 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+  
+  const handleRefreshDocuments = () => {
+    loadDocuments();
+    toast.info('Refreshing document list...');
   };
   
   // Group documents by category
@@ -153,19 +163,42 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
     setViewingDocument(doc);
   };
   
+  const handleDeleteDocument = async (documentId: string) => {
+    // For future implementation
+    toast.info('Delete functionality will be implemented soon');
+  };
+  
   // Determine if upload is in error state
   const isUploadError = uploadError !== null;
   
   return (
     <Card className="shadow-md">
       <CardHeader className="bg-gradient-to-r from-blue-50 to-white">
-        <CardTitle className="text-blue-700 flex items-center gap-2">
-          <FileCheck className="h-5 w-5" />
-          Upload Documents
-        </CardTitle>
-        <CardDescription>
-          Upload supporting documents for underwriting review
-        </CardDescription>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle className="text-blue-700 flex items-center gap-2">
+              <FileCheck className="h-5 w-5" />
+              Upload Documents
+            </CardTitle>
+            <CardDescription>
+              Upload supporting documents for underwriting review
+            </CardDescription>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRefreshDocuments}
+            disabled={isLoading}
+            className="flex items-center gap-1.5"
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            Refresh
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="pt-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -187,6 +220,7 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
               <div className="space-y-6">
                 <div 
                   className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all hover:border-primary/50 ${
+                    uploading ? 'bg-blue-50/50 opacity-75' : 
                     selectedFile ? 'bg-blue-50' : 'bg-white'
                   }`}
                 >
@@ -199,7 +233,7 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
                     accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                     disabled={uploading}
                   />
-                  <label htmlFor="documentFile" className="block cursor-pointer">
+                  <label htmlFor="documentFile" className={`block ${uploading ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
                     <div className="flex flex-col items-center justify-center">
                       {selectedFile ? (
                         <>
@@ -246,11 +280,6 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
                     <Progress 
                       value={uploadProgress} 
                       className="h-2"
-                      indicatorClassName={
-                        uploadProgress < 30 ? "bg-amber-500" : 
-                        uploadProgress < 70 ? "bg-blue-500" : 
-                        "bg-green-500"
-                      }
                     />
                   </div>
                 )}
@@ -300,7 +329,7 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
                     filePath: doc.file_path,
                     fileType: doc.file_type
                   })) || []}
-                  onDelete={() => {}} // Will implement delete functionality later
+                  onDelete={handleDeleteDocument}
                   onView={handleViewDocument}
                 />
               </div>
@@ -308,7 +337,7 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
           ))}
         </Tabs>
 
-        {/* Document view modal - fixed issue with incorrect prop name */}
+        {/* Document view modal */}
         <DocumentViewModal 
           open={!!viewingDocument}
           onOpenChange={(open) => {

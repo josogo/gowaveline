@@ -1,9 +1,10 @@
 
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { File, Trash2, FileText, Image, Eye, Download } from 'lucide-react';
+import { File, Trash2, FileText, Image, Eye, Download, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface FileListProps {
   files: Array<{
@@ -24,9 +25,33 @@ interface FileListProps {
     fileType: string;
   }) => void;
   className?: string;
+  loading?: boolean;
 }
 
-export const FileList: React.FC<FileListProps> = ({ files, onDelete, onView, className }) => {
+export const FileList: React.FC<FileListProps> = ({ 
+  files, 
+  onDelete, 
+  onView, 
+  className,
+  loading = false 
+}) => {
+  if (loading) {
+    return (
+      <div className={cn("space-y-3", className)}>
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div key={index} className="flex items-center p-3 border rounded-lg">
+            <Skeleton className="h-8 w-8 rounded mr-3" />
+            <div className="flex-1">
+              <Skeleton className="h-4 w-3/4 mb-2" />
+              <Skeleton className="h-3 w-1/3" />
+            </div>
+            <Skeleton className="h-8 w-8 rounded-full ml-2" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   if (files.length === 0) {
     return (
       <div className="text-center py-10 text-muted-foreground border border-dashed rounded-lg bg-gray-50">
@@ -50,6 +75,7 @@ export const FileList: React.FC<FileListProps> = ({ files, onDelete, onView, cla
   };
   
   const formatFileSize = (bytes: number) => {
+    if (!bytes) return 'Unknown size';
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
@@ -74,6 +100,17 @@ export const FileList: React.FC<FileListProps> = ({ files, onDelete, onView, cla
         {files.map(file => {
           const viewable = file.filePath && onView;
           
+          if (!file.name) {
+            return (
+              <div key={file.id} className="p-3 border rounded-lg bg-red-50">
+                <div className="flex items-center text-red-600">
+                  <AlertCircle className="h-4 w-4 mr-2" />
+                  <span>Invalid file data</span>
+                </div>
+              </div>
+            );
+          }
+          
           return (
             <div 
               key={file.id} 
@@ -82,10 +119,10 @@ export const FileList: React.FC<FileListProps> = ({ files, onDelete, onView, cla
                 viewable && "cursor-pointer"
               )}
               onClick={() => {
-                if (viewable) {
+                if (viewable && file.filePath) {
                   onView({
                     ...file,
-                    filePath: file.filePath!,
+                    filePath: file.filePath,
                     fileType: getFileType(file.name, file.fileType)
                   });
                 }
@@ -106,18 +143,20 @@ export const FileList: React.FC<FileListProps> = ({ files, onDelete, onView, cla
               </div>
               
               <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-                {viewable && (
+                {viewable && file.filePath && (
                   <Button 
                     variant="ghost" 
                     size="sm"
                     className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onView({
-                        ...file,
-                        filePath: file.filePath!,
-                        fileType: getFileType(file.name, file.fileType)
-                      });
+                      if (file.filePath) {
+                        onView({
+                          ...file,
+                          filePath: file.filePath,
+                          fileType: getFileType(file.name, file.fileType)
+                        });
+                      }
                     }}
                   >
                     <Eye className="h-4 w-4" />
