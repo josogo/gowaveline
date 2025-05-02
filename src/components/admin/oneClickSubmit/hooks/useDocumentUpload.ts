@@ -6,8 +6,8 @@ import { getMerchantDocuments, uploadMerchantDocument } from '@/services/merchan
 
 interface UploadDocumentOptions {
   file: File;
-  applicationId: string;
-  documentType: string;
+  applicationId?: string;
+  documentType?: string;
   onSuccess?: () => void;
   onError?: (error: Error) => void;
 }
@@ -19,15 +19,17 @@ export const useDocumentUpload = (applicationId: string) => {
   
   const uploadDocument = async ({
     file,
-    documentType,
+    documentType = 'other',
     onSuccess,
     onError
   }: UploadDocumentOptions) => {
-    if (!file || !applicationId) {
-      toast.error('Missing required information for upload');
+    // Allow uploads even with minimal information
+    if (!file) {
+      toast.error('Please select a file to upload');
       return;
     }
     
+    console.log(`Starting upload with applicationId: ${applicationId}, documentType: ${documentType || 'other'}`);
     setUploading(true);
     setUploadProgress(10);
     
@@ -45,10 +47,13 @@ export const useDocumentUpload = (applicationId: string) => {
       
       setUploadProgress(20);
       
+      // Use a unique ID if no applicationId is provided
+      const effectiveAppId = applicationId || `temp-${new Date().getTime()}`;
+      
       // Upload file to storage with simulated progress
       const timestamp = new Date().getTime();
       const fileExt = file.name.split('.').pop();
-      const filePath = `${applicationId}/${documentType}_${timestamp}.${fileExt}`;
+      const filePath = `${effectiveAppId}/${documentType || 'other'}_${timestamp}.${fileExt}`;
       
       setUploadProgress(30);
       
@@ -79,14 +84,14 @@ export const useDocumentUpload = (applicationId: string) => {
       console.log('File uploaded successfully:', fileData);
       setUploadProgress(95);
       
-      // Create document record in database
+      // Create document record in database - make documentType optional
       const { error } = await uploadMerchantDocument({
-        applicationId,
+        applicationId: effectiveAppId,
         fileName: file.name,
         fileType: file.type,
         fileSize: file.size,
         filePath,
-        documentType
+        documentType: documentType || 'other'
       });
       
       if (error) {
@@ -147,3 +152,4 @@ export const useDocumentUpload = (applicationId: string) => {
     loadDocuments
   };
 };
+

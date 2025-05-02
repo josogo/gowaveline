@@ -13,7 +13,7 @@ interface DocumentUploadSectionProps {
 }
 
 export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ applicationId }) => {
-  const { uploading, documents, uploadDocument, loadDocuments } = useDocumentUpload(applicationId);
+  const { uploading, uploadProgress, documents, uploadDocument, loadDocuments } = useDocumentUpload(applicationId);
   const [activeTab, setActiveTab] = useState('bank');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   
@@ -22,6 +22,8 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
     if (applicationId) {
       console.log("DocumentUploadSection mounted, loading documents for:", applicationId);
       loadDocuments();
+    } else {
+      console.warn("DocumentUploadSection mounted without applicationId");
     }
   }, [applicationId, loadDocuments]);
   
@@ -130,6 +132,16 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
                   </label>
                 </div>
                 
+                {/* Progress bar for upload */}
+                {uploading && (
+                  <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+                    <div 
+                      className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+                      style={{ width: `${uploadProgress}%` }}
+                    ></div>
+                  </div>
+                )}
+                
                 <div className="flex justify-end">
                   <Button
                     onClick={handleUpload}
@@ -167,3 +179,4 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
     </Card>
   );
 };
+

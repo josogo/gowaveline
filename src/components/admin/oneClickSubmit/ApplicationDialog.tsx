@@ -24,6 +24,8 @@ export const ApplicationDialog: React.FC<ApplicationDialogProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState('documents');
   
+  console.log('ApplicationDialog rendering with application:', application);
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl w-full h-[90vh] max-h-[90vh] flex flex-col">
@@ -38,8 +40,17 @@ export const ApplicationDialog: React.FC<ApplicationDialogProps> = ({
             </TabsList>
             
             <TabsContent value="documents" className="h-full pb-16">
-              {application?.id && (
-                <DocumentUploadSection applicationId={application.id} />
+              {application?.id ? (
+                <>
+                  <DocumentUploadSection applicationId={application.id} />
+                  <div className="text-xs text-muted-foreground mt-2">
+                    Application ID: {application.id}
+                  </div>
+                </>
+              ) : (
+                <div className="p-4 text-center text-amber-600 bg-amber-50 rounded-md">
+                  <p>No application ID available. Documents will be stored temporarily.</p>
+                </div>
               )}
             </TabsContent>
           </Tabs>
@@ -62,3 +73,4 @@ export const ApplicationDialog: React.FC<ApplicationDialogProps> = ({
     </Dialog>
   );
 };
+
