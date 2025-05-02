@@ -6,7 +6,7 @@ export async function fetchDocuments(): Promise<DocumentItem[]> {
   const { data, error } = await supabase
     .from('documents')
     .select('*')
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false }) as any;
 
   if (error) {
     console.error('Error fetching documents:', error);
@@ -21,7 +21,7 @@ export async function fetchDocumentById(id: string): Promise<DocumentItem> {
     .from('documents')
     .select('*')
     .eq('id', id)
-    .single();
+    .single() as any;
 
   if (error) {
     console.error(`Error fetching document with ID ${id}:`, error);
@@ -63,7 +63,7 @@ export async function createDocument(document: {
     const { data: isAdmin, error: roleError } = await supabase.rpc('has_role', {
       user_id: user.id,
       role: 'admin'
-    });
+    }) as any;
     
     if (roleError) {
       console.error('Error checking admin role:', roleError);
@@ -87,7 +87,7 @@ export async function createDocument(document: {
       const { data, error } = await supabase
         .from('documents')
         .insert(documentToInsert)
-        .select();
+        .select() as any;
 
       if (!error) {
         console.log('Document created successfully:', data);
@@ -143,9 +143,9 @@ export async function createDocument(document: {
 export async function updateDocument(id: string, updates: Partial<DocumentItem>): Promise<DocumentItem> {
   const { data, error } = await supabase
     .from('documents')
-    .update(updates)
+    .update(updates as any)
     .eq('id', id)
-    .select();
+    .select() as any;
 
   if (error) {
     console.error(`Error updating document with ID ${id}:`, error);
@@ -160,14 +160,15 @@ export async function deleteDocument(id: string): Promise<boolean> {
     .from('documents')
     .select('file_path')
     .eq('id', id)
-    .single();
+    .single() as any;
     
   if (fetchError) {
     console.error(`Error fetching document with ID ${id}:`, fetchError);
     throw fetchError;
   }
   
-  if (document?.file_path) {
+  // Check if document exists and has a file_path
+  if (document && document.file_path) {
     const { error: storageError } = await supabase.storage
       .from('documents')
       .remove([document.file_path]);
@@ -181,7 +182,7 @@ export async function deleteDocument(id: string): Promise<boolean> {
   const { error } = await supabase
     .from('documents')
     .delete()
-    .eq('id', id);
+    .eq('id', id) as any;
 
   if (error) {
     console.error(`Error deleting document with ID ${id}:`, error);

@@ -12,6 +12,7 @@ import { getStoredGmailTokens } from '@/services/gmail/storageService';
 import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '@/services/calendar/calendarService';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { CalendarEvent } from '@/types/supabase-custom';
 
 interface CalendarEventDialogProps {
   isOpen: boolean;
@@ -140,15 +141,17 @@ const CalendarEventDialog: React.FC<CalendarEventDialogProps> = ({
         );
         
         // Update in database
+        const calendarEventUpdate: Partial<CalendarEvent> = {
+          title,
+          description,
+          start_time: startDateTime,
+          end_time: endDateTime,
+          attendees: attendeesList
+        };
+        
         await supabase
           .from('calendar_events')
-          .update({
-            title,
-            description,
-            start_time: startDateTime,
-            end_time: endDateTime,
-            attendees: attendeesList
-          })
+          .update(calendarEventUpdate as any)
           .eq('google_event_id', event.google_event_id);
           
         toast.success('Event updated successfully');
@@ -158,18 +161,20 @@ const CalendarEventDialog: React.FC<CalendarEventDialogProps> = ({
         
         // Save to database
         if (result && result.id) {
+          const newCalendarEvent: Partial<CalendarEvent> = {
+            google_event_id: result.id,
+            title,
+            description,
+            start_time: startDateTime,
+            end_time: endDateTime,
+            attendees: attendeesList,
+            meeting_link: result.hangoutLink,
+            status: 'scheduled'
+          };
+          
           await supabase
             .from('calendar_events')
-            .insert({
-              google_event_id: result.id,
-              title,
-              description,
-              start_time: startDateTime,
-              end_time: endDateTime,
-              attendees: attendeesList,
-              meeting_link: result.hangoutLink,
-              status: 'scheduled'
-            });
+            .insert(newCalendarEvent as any);
         }
         
         toast.success('Event created successfully');

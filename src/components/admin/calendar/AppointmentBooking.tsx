@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -13,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { createCalendarEvent } from '@/services/calendar/calendarService';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { CalendarEvent } from '@/types/supabase-custom';
 
 // Define available time slots (9AM to 5PM, 30 min intervals)
 const AVAILABLE_HOURS = [9, 9.5, 10, 10.5, 11, 11.5, 12, 13, 13.5, 14, 14.5, 15, 15.5, 16, 16.5];
@@ -186,7 +186,7 @@ const AppointmentBooking: React.FC<AppointmentBookingProps> = ({
       
       if (result && result.id) {
         // Save the meeting in our database
-        await supabase.from('calendar_events').insert({
+        const calendarEvent: Partial<CalendarEvent> = {
           google_event_id: result.id,
           title: `Meeting with ${name}`,
           description: notes,
@@ -195,7 +195,11 @@ const AppointmentBooking: React.FC<AppointmentBookingProps> = ({
           attendees: [{ email, name }],
           meeting_link: result.hangoutLink,
           status: 'scheduled'
-        });
+        };
+        
+        await supabase
+          .from('calendar_events')
+          .insert(calendarEvent as any);
         
         // Store details for confirmation screen
         setEventDetails({

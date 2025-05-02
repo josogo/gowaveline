@@ -9,16 +9,653 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      agent_agreements: {
+        Row: {
+          agent_id: string
+          agreement_type: string
+          created_at: string
+          effective_date: string | null
+          expiration_date: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+        }
+        Insert: {
+          agent_id: string
+          agreement_type: string
+          created_at?: string
+          effective_date?: string | null
+          expiration_date?: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id?: string
+        }
+        Update: {
+          agent_id?: string
+          agreement_type?: string
+          created_at?: string
+          effective_date?: string | null
+          expiration_date?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      applications: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          decline_reason: string | null
+          fraud_flag: boolean | null
+          id: string
+          merchant_id: string | null
+          merchant_name: string | null
+          processing_time_minutes: number | null
+          region: string | null
+          risk_score: number | null
+          source: string | null
+          status: string | null
+          submitted_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          decline_reason?: string | null
+          fraud_flag?: boolean | null
+          id?: string
+          merchant_id?: string | null
+          merchant_name?: string | null
+          processing_time_minutes?: number | null
+          region?: string | null
+          risk_score?: number | null
+          source?: string | null
+          status?: string | null
+          submitted_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          decline_reason?: string | null
+          fraud_flag?: boolean | null
+          id?: string
+          merchant_id?: string | null
+          merchant_name?: string | null
+          processing_time_minutes?: number | null
+          region?: string | null
+          risk_score?: number | null
+          source?: string | null
+          status?: string | null
+          submitted_at?: string | null
+        }
+        Relationships: []
+      }
+      applications_action_log: {
+        Row: {
+          action: string
+          actioned_at: string
+          actioned_by: string
+          application_id: string
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          action: string
+          actioned_at?: string
+          actioned_by: string
+          application_id: string
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          action?: string
+          actioned_at?: string
+          actioned_by?: string
+          application_id?: string
+          id?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
+      calendar_events: {
+        Row: {
+          attendees: Json | null
+          calendly_event_id: string | null
+          created_at: string
+          description: string | null
+          end_time: string
+          google_event_id: string | null
+          id: string
+          meeting_link: string | null
+          related_contact_id: string | null
+          related_deal_id: string | null
+          start_time: string
+          status: string
+          title: string
+        }
+        Insert: {
+          attendees?: Json | null
+          calendly_event_id?: string | null
+          created_at?: string
+          description?: string | null
+          end_time: string
+          google_event_id?: string | null
+          id?: string
+          meeting_link?: string | null
+          related_contact_id?: string | null
+          related_deal_id?: string | null
+          start_time: string
+          status?: string
+          title: string
+        }
+        Update: {
+          attendees?: Json | null
+          calendly_event_id?: string | null
+          created_at?: string
+          description?: string | null
+          end_time?: string
+          google_event_id?: string | null
+          id?: string
+          meeting_link?: string | null
+          related_contact_id?: string | null
+          related_deal_id?: string | null
+          start_time?: string
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      contact_submissions: {
+        Row: {
+          company: string | null
+          created_at: string
+          email: string
+          id: string
+          message: string | null
+          name: string | null
+          phone: string | null
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          message?: string | null
+          name?: string | null
+          phone?: string | null
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string | null
+          name?: string | null
+          phone?: string | null
+        }
+        Relationships: []
+      }
+      documents: {
+        Row: {
+          created_at: string
+          description: string | null
+          document_type: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+          is_template: boolean | null
+          metadata: Json | null
+          name: string
+          owner_id: string | null
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          document_type: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id?: string
+          is_template?: boolean | null
+          metadata?: Json | null
+          name: string
+          owner_id?: string | null
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          document_type?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          is_template?: boolean | null
+          metadata?: Json | null
+          name?: string
+          owner_id?: string | null
+          uploaded_by?: string
+        }
+        Relationships: []
+      }
+      field_edit_history: {
+        Row: {
+          changed_by: string
+          created_at: string
+          field_name: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          record_id: string
+          table_name: string
+        }
+        Insert: {
+          changed_by: string
+          created_at?: string
+          field_name: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          record_id: string
+          table_name: string
+        }
+        Update: {
+          changed_by?: string
+          created_at?: string
+          field_name?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          record_id?: string
+          table_name?: string
+        }
+        Relationships: []
+      }
+      form_data: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          "monthly_processing_volume`": number | null
+          phone_number: string | null
+          website: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+          "monthly_processing_volume`"?: number | null
+          phone_number?: string | null
+          website?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          "monthly_processing_volume`"?: number | null
+          phone_number?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
+      industries: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      industry_documents: {
+        Row: {
+          file_name: string
+          file_path: string
+          file_type: string | null
+          id: string
+          industry_id: string | null
+          uploaded_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          file_name: string
+          file_path: string
+          file_type?: string | null
+          id?: string
+          industry_id?: string | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          file_name?: string
+          file_path?: string
+          file_type?: string | null
+          id?: string
+          industry_id?: string | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "industry_documents_industry_id_fkey"
+            columns: ["industry_id"]
+            isOneToOne: false
+            referencedRelation: "industries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          business_name: string
+          created_at: string
+          email: string
+          id: number
+          phone_number: string
+          processing_volume: string
+          website: string | null
+        }
+        Insert: {
+          business_name: string
+          created_at?: string
+          email: string
+          id?: number
+          phone_number: string
+          processing_volume: string
+          website?: string | null
+        }
+        Update: {
+          business_name?: string
+          created_at?: string
+          email?: string
+          id?: number
+          phone_number?: string
+          processing_volume?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      lesson_progress: {
+        Row: {
+          completed: boolean
+          created_at: string
+          id: string
+          last_accessed: string
+          lesson_id: number
+          user_id: string | null
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          last_accessed?: string
+          lesson_id: number
+          user_id?: string | null
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          last_accessed?: string
+          lesson_id?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      merchant_applications: {
+        Row: {
+          action_reason: string | null
+          actioned_at: string | null
+          actioned_by: string | null
+          application_data: Json
+          application_number: string | null
+          completed: boolean
+          created_at: string
+          expires_at: string
+          id: string
+          merchant_email: string
+          merchant_name: string
+          otp: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          action_reason?: string | null
+          actioned_at?: string | null
+          actioned_by?: string | null
+          application_data: Json
+          application_number?: string | null
+          completed?: boolean
+          created_at?: string
+          expires_at: string
+          id?: string
+          merchant_email: string
+          merchant_name: string
+          otp: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action_reason?: string | null
+          actioned_at?: string | null
+          actioned_by?: string | null
+          application_data?: Json
+          application_number?: string | null
+          completed?: boolean
+          created_at?: string
+          expires_at?: string
+          id?: string
+          merchant_email?: string
+          merchant_name?: string
+          otp?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      merchant_documents: {
+        Row: {
+          created_at: string
+          document_type: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+          merchant_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          document_type: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id?: string
+          merchant_id: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          merchant_id?: string
+          uploaded_by?: string
+        }
+        Relationships: []
+      }
+      quiz_results: {
+        Row: {
+          correct_answers: number
+          created_at: string
+          id: string
+          incorrect_answers: number
+          lesson_id: number
+          percentage: number
+          score: number
+          total_questions: number
+          user_id: string | null
+        }
+        Insert: {
+          correct_answers: number
+          created_at?: string
+          id?: string
+          incorrect_answers: number
+          lesson_id: number
+          percentage: number
+          score: number
+          total_questions: number
+          user_id?: string | null
+        }
+        Update: {
+          correct_answers?: number
+          created_at?: string
+          id?: string
+          incorrect_answers?: number
+          lesson_id?: number
+          percentage?: number
+          score?: number
+          total_questions?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      training_lessons: {
+        Row: {
+          content: Json
+          created_at: string
+          description: string
+          estimated_time: number
+          id: number
+          module_id: number | null
+          order_num: number
+          title: string
+        }
+        Insert: {
+          content: Json
+          created_at?: string
+          description: string
+          estimated_time: number
+          id?: number
+          module_id?: number | null
+          order_num: number
+          title: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          description?: string
+          estimated_time?: number
+          id?: number
+          module_id?: number | null
+          order_num?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_lessons_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "training_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_modules: {
+        Row: {
+          created_at: string
+          description: string
+          icon: string | null
+          id: number
+          lessons_count: number
+          order_num: number
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          icon?: string | null
+          id?: number
+          lessons_count?: number
+          order_num: number
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          icon?: string | null
+          id?: number
+          lessons_count?: number
+          order_num?: number
+          title?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      weekly_summary: {
+        Row: {
+          approval_rate: number | null
+          approved: number | null
+          avg_processing_time: number | null
+          declined: number | null
+          top_decline_reason: string | null
+          total_apps: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: { user_id: string; role: Database["public"]["Enums"]["app_role"] }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +770,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
