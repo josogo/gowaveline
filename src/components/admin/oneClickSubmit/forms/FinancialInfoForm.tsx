@@ -1,24 +1,44 @@
 
 import React from 'react';
+import { useFormContext } from 'react-hook-form';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Link2, Upload } from 'lucide-react';
+import { Form, FormField, FormItem, FormControl } from '@/components/ui/form';
 
 export const FinancialInfoForm: React.FC = () => {
+  const { register, setValue, watch } = useFormContext();
+
+  // Handle select changes since register doesn't work directly with Radix UI Select
+  const handleSelectChange = (field: string, value: string) => {
+    setValue(field, value, { shouldDirty: true });
+  };
+
+  // Watch current values
+  const accountType = watch('financial.accountType');
+  const creditScoreRange = watch('financial.creditScoreRange');
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <Label>Bank Name</Label>
-          <Input placeholder="e.g. Chase Bank" />
+          <Label htmlFor="financial.bankName">Bank Name</Label>
+          <Input 
+            id="financial.bankName"
+            placeholder="e.g. Chase Bank" 
+            {...register('financial.bankName')}
+          />
         </div>
         
         <div>
-          <Label>Account Type</Label>
-          <Select>
+          <Label htmlFor="financial.accountType">Account Type</Label>
+          <Select 
+            value={accountType} 
+            onValueChange={(value) => handleSelectChange('financial.accountType', value)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select account type" />
             </SelectTrigger>
@@ -32,13 +52,21 @@ export const FinancialInfoForm: React.FC = () => {
         </div>
         
         <div>
-          <Label>Routing Number</Label>
-          <Input placeholder="9 digits" />
+          <Label htmlFor="financial.routingNumber">Routing Number</Label>
+          <Input 
+            id="financial.routingNumber"
+            placeholder="9 digits" 
+            {...register('financial.routingNumber')}
+          />
         </div>
         
         <div>
-          <Label>Account Number</Label>
-          <Input placeholder="Account number" />
+          <Label htmlFor="financial.accountNumber">Account Number</Label>
+          <Input 
+            id="financial.accountNumber"
+            placeholder="Account number" 
+            {...register('financial.accountNumber')}
+          />
         </div>
       </div>
       
@@ -143,17 +171,28 @@ export const FinancialInfoForm: React.FC = () => {
           <div className="grid grid-cols-2 gap-y-4">
             <div>
               <p className="text-sm text-muted-foreground">Annual Revenue</p>
-              <Input type="number" placeholder="0.00" />
+              <Input 
+                type="number" 
+                placeholder="0.00" 
+                {...register('financial.annualRevenue')}
+              />
             </div>
             
             <div>
               <p className="text-sm text-muted-foreground">Years Profitable</p>
-              <Input type="number" placeholder="0" />
+              <Input 
+                type="number" 
+                placeholder="0" 
+                {...register('financial.yearsProfitable')}
+              />
             </div>
             
             <div>
               <p className="text-sm text-muted-foreground">Credit Score Range</p>
-              <Select>
+              <Select 
+                value={creditScoreRange} 
+                onValueChange={(value) => handleSelectChange('financial.creditScoreRange', value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select range" />
                 </SelectTrigger>
@@ -169,7 +208,11 @@ export const FinancialInfoForm: React.FC = () => {
             
             <div>
               <p className="text-sm text-muted-foreground">Monthly Operating Expenses</p>
-              <Input type="number" placeholder="0.00" />
+              <Input 
+                type="number" 
+                placeholder="0.00" 
+                {...register('financial.monthlyExpenses')}
+              />
             </div>
           </div>
         </Card>

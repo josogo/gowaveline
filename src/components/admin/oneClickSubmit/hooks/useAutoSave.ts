@@ -32,7 +32,7 @@ export const useAutoSave = (
         clearTimeout(autoSaveTimerRef.current);
       }
       
-      // Set a new timer for auto-save (2 seconds after last change)
+      // Set a new timer for auto-save (1.5 seconds after last change)
       autoSaveTimerRef.current = setTimeout(async () => {
         console.log('Auto-saving form data...');
         
@@ -51,6 +51,18 @@ export const useAutoSave = (
             if (!operationsData) {
               console.log('No operations data found, initializing empty object');
               form.setValue('operations', {});
+            }
+          }
+          
+          // Special handling for financial tab
+          if (activeTab === 'financial') {
+            const financialData = form.getValues('financial');
+            console.log('Auto-saving financial tab data:', financialData);
+            
+            // Ensure the financial data isn't empty
+            if (!financialData) {
+              console.log('No financial data found, initializing empty object');
+              form.setValue('financial', {});
             }
           }
           
@@ -76,7 +88,7 @@ export const useAutoSave = (
         } finally {
           if (setIsSaving) setIsSaving(false);
         }
-      }, 1500); // Reduced to 1.5 second delay for more responsive saving
+      }, 1500); // 1.5 second delay for responsive saving
     }
     
     return () => {

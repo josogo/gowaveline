@@ -20,9 +20,13 @@ export const useApplicationActions = (
     console.log("Saving application data:", { applicationId, formData, progress, activeTab });
     
     try {
-      // Ensure we're capturing all the form data, especially for operations tab
+      // Ensure we're capturing all the form data for special tabs
       if (activeTab === 'operations') {
-        console.log('Saving operations tab with data:', formData);
+        console.log('Saving operations tab with data:', formData.operations);
+      }
+      
+      if (activeTab === 'financial') {
+        console.log('Saving financial tab with data:', formData.financial);
       }
       
       const dataToSave = {

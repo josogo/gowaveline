@@ -34,6 +34,16 @@ export const useSaveOnTabChange = (
         console.log('Operations tab data on change:', currentValues.operations);
       }
       
+      // For financial tab, ensure we have a financial object
+      if (activeTab === 'financial') {
+        if (!currentValues.financial) {
+          console.log('Initializing empty financial object');
+          currentValues.financial = {};
+          form.setValue('financial', {});
+        }
+        console.log('Financial tab data on change:', currentValues.financial);
+      }
+      
       // Update form data state
       updateFormData(currentValues);
       
