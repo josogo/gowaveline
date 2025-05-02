@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { getMerchantDocuments, uploadMerchantDocument } from '@/services/merchantApplicationService';
@@ -40,8 +40,10 @@ export const useDocumentUpload = (applicationId: string) => {
         await supabase.storage.createBucket('merchant-documents', {
           public: true, // Make bucket public for easy access
         });
-        setUploadProgress(20);
+        console.log('Created merchant-documents bucket');
       }
+      
+      setUploadProgress(20);
       
       // Upload file to storage with simulated progress
       const timestamp = new Date().getTime();
@@ -58,17 +60,19 @@ export const useDocumentUpload = (applicationId: string) => {
         });
       }, 500);
       
+      console.log('Uploading file to path:', filePath);
       const { data: fileData, error: uploadError } = await supabase.storage
         .from('merchant-documents')
         .upload(filePath, file, {
           contentType: file.type,
-          upsert: false
+          upsert: true // Change to true to avoid conflicts with existing files
         });
       
       clearInterval(progressInterval);
       setUploadProgress(90);
       
       if (uploadError) {
+        console.error('Upload error:', uploadError);
         throw uploadError;
       }
       
@@ -86,6 +90,7 @@ export const useDocumentUpload = (applicationId: string) => {
       });
       
       if (error) {
+        console.error('Database error:', error);
         throw new Error(error.message);
       }
       
@@ -110,24 +115,29 @@ export const useDocumentUpload = (applicationId: string) => {
     }
   };
   
-  const loadDocuments = async () => {
+  const loadDocuments = useCallback(async () => {
     if (!applicationId) return;
     
     try {
+      console.log('Loading documents for application:', applicationId);
       const { data, error } = await getMerchantDocuments(applicationId);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading documents:', error);
+        throw error;
+      }
       
+      console.log('Documents loaded:', data);
       setDocuments(data || []);
     } catch (error) {
       console.error('Error loading documents:', error);
     }
-  };
+  }, [applicationId]);
   
   // Load documents on initial mount
   useEffect(() => {
     loadDocuments();
-  }, [applicationId]);
+  }, [applicationId, loadDocuments]);
   
   return {
     uploading,

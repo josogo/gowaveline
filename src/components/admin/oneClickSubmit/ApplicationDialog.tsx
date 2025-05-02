@@ -38,7 +38,9 @@ export const ApplicationDialog: React.FC<ApplicationDialogProps> = ({
             </TabsList>
             
             <TabsContent value="documents" className="h-full pb-16">
-              <DocumentUploadSection applicationId={application?.id} />
+              {application?.id && (
+                <DocumentUploadSection applicationId={application.id} />
+              )}
             </TabsContent>
           </Tabs>
         </div>

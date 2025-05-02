@@ -16,7 +16,11 @@ export const useFormSubscription = (
       if (type === 'blur') return;
       
       // Log all changes to financial, operations and processing tabs for debugging
-      if (name && (name.startsWith('operations.') || name.startsWith('financial.') || name.startsWith('processing.'))) {
+      if (name && (name.startsWith('operations.') || 
+                   name.startsWith('financial.') || 
+                   name.startsWith('processing.') ||
+                   name === 'businessName' ||
+                   name === 'businessEmail')) {
         console.log(`Form field updated: ${name}`, form.getValues(name));
       }
       
