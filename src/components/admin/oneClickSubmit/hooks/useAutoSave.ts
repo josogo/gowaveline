@@ -66,6 +66,18 @@ export const useAutoSave = (
             }
           }
           
+          // Special handling for processing tab
+          if (activeTab === 'processing') {
+            const processingData = form.getValues('processing');
+            console.log('Auto-saving processing tab data:', processingData);
+            
+            // Ensure the processing data isn't empty
+            if (!processingData) {
+              console.log('No processing data found, initializing empty object');
+              form.setValue('processing', {});
+            }
+          }
+          
           // Make sure current tab is set
           if (activeTab && (!currentValues.currentTab || currentValues.currentTab !== activeTab)) {
             console.log(`Setting current tab to ${activeTab}`);

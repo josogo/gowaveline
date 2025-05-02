@@ -15,8 +15,8 @@ export const useFormSubscription = (
       // Don't update on blur events as they're noisy
       if (type === 'blur') return;
       
-      // Log all changes to financial and operations tabs for debugging
-      if (name && (name.startsWith('operations.') || name.startsWith('financial.'))) {
+      // Log all changes to financial, operations and processing tabs for debugging
+      if (name && (name.startsWith('operations.') || name.startsWith('financial.') || name.startsWith('processing.'))) {
         console.log(`Form field updated: ${name}`, form.getValues(name));
       }
       

@@ -44,6 +44,16 @@ export const useSaveOnTabChange = (
         console.log('Financial tab data on change:', currentValues.financial);
       }
       
+      // For processing tab, ensure we have a processing object
+      if (activeTab === 'processing') {
+        if (!currentValues.processing) {
+          console.log('Initializing empty processing object');
+          currentValues.processing = {};
+          form.setValue('processing', {});
+        }
+        console.log('Processing tab data on change:', currentValues.processing);
+      }
+      
       // Update form data state
       updateFormData(currentValues);
       

@@ -29,6 +29,10 @@ export const useApplicationActions = (
         console.log('Saving financial tab with data:', formData.financial);
       }
       
+      if (activeTab === 'processing') {
+        console.log('Saving processing tab with data:', formData.processing);
+      }
+      
       const dataToSave = {
         formData,
         progress,

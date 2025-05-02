@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useFormContext } from 'react-hook-form';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -9,13 +10,33 @@ import { Switch } from '@/components/ui/switch';
 import { Upload, Link2, AlertCircle } from 'lucide-react';
 
 export const ProcessingInfoForm: React.FC = () => {
+  const { register, watch, setValue } = useFormContext();
+  
+  // Watch values to properly handle select and switch components
+  const previousTermination = watch('processing.previousTermination') || false;
+  const reservesHeld = watch('processing.reservesHeld') || false;
+  const excessiveChargebacks = watch('processing.excessiveChargebacks') || false;
+  const currentProcessor = watch('processing.currentProcessor') || '';
+  
+  // Custom handlers for components that don't work directly with register
+  const handleProcessorChange = (value: string) => {
+    setValue('processing.currentProcessor', value, { shouldDirty: true });
+  };
+  
+  const handleSwitchChange = (field: string, checked: boolean) => {
+    setValue(`processing.${field}`, checked, { shouldDirty: true });
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <Label>Current Payment Processor</Label>
-          <Select>
-            <SelectTrigger>
+          <Label htmlFor="processing.currentProcessor">Current Payment Processor</Label>
+          <Select 
+            value={currentProcessor} 
+            onValueChange={handleProcessorChange}
+          >
+            <SelectTrigger id="processing.currentProcessor">
               <SelectValue placeholder="Select processor" />
             </SelectTrigger>
             <SelectContent>
@@ -33,27 +54,48 @@ export const ProcessingInfoForm: React.FC = () => {
         </div>
         
         <div>
-          <Label>Years With Current Processor</Label>
-          <Input type="number" placeholder="0" />
+          <Label htmlFor="processing.yearsWithProcessor">Years With Current Processor</Label>
+          <Input 
+            id="processing.yearsWithProcessor" 
+            type="number" 
+            placeholder="0" 
+            {...register('processing.yearsWithProcessor')}
+          />
         </div>
         
         <div>
-          <Label>Monthly Processing Volume</Label>
-          <Input type="number" placeholder="0.00" />
+          <Label htmlFor="processing.monthlyVolume">Monthly Processing Volume</Label>
+          <Input 
+            id="processing.monthlyVolume" 
+            type="number" 
+            placeholder="0.00" 
+            {...register('processing.monthlyVolume')}
+          />
           <p className="text-xs text-muted-foreground mt-1">
             Average monthly credit card volume
           </p>
         </div>
         
         <div>
-          <Label>Average Transaction Size</Label>
-          <Input type="number" placeholder="0.00" />
+          <Label htmlFor="processing.avgTransactionSize">Average Transaction Size</Label>
+          <Input 
+            id="processing.avgTransactionSize" 
+            type="number" 
+            placeholder="0.00" 
+            {...register('processing.avgTransactionSize')}
+          />
         </div>
         
         <div>
-          <Label>Current Processing Rate</Label>
+          <Label htmlFor="processing.currentRate">Current Processing Rate</Label>
           <div className="flex space-x-2">
-            <Input type="number" placeholder="0.00" className="w-1/2" />
+            <Input 
+              id="processing.currentRate" 
+              type="number" 
+              placeholder="0.00" 
+              className="w-1/2" 
+              {...register('processing.currentRate')}
+            />
             <div className="w-1/2 flex items-center bg-gray-100 px-3 rounded-md text-sm">
               %
             </div>
@@ -61,8 +103,13 @@ export const ProcessingInfoForm: React.FC = () => {
         </div>
         
         <div>
-          <Label>Monthly Transaction Count</Label>
-          <Input type="number" placeholder="0" />
+          <Label htmlFor="processing.monthlyTransactionCount">Monthly Transaction Count</Label>
+          <Input 
+            id="processing.monthlyTransactionCount" 
+            type="number" 
+            placeholder="0" 
+            {...register('processing.monthlyTransactionCount')}
+          />
         </div>
       </div>
       
@@ -70,22 +117,34 @@ export const ProcessingInfoForm: React.FC = () => {
         <h3 className="text-lg font-medium">Processing History</h3>
         
         <div className="flex items-center space-x-2 mb-4">
-          <Switch id="previous-termination" />
-          <Label htmlFor="previous-termination" className="cursor-pointer">
+          <Switch 
+            id="processing.previousTermination"
+            checked={previousTermination}
+            onCheckedChange={(checked) => handleSwitchChange('previousTermination', checked)}
+          />
+          <Label htmlFor="processing.previousTermination" className="cursor-pointer">
             Previously terminated by a processor
           </Label>
         </div>
         
         <div className="flex items-center space-x-2 mb-4">
-          <Switch id="reserves-held" />
-          <Label htmlFor="reserves-held" className="cursor-pointer">
+          <Switch 
+            id="processing.reservesHeld"
+            checked={reservesHeld}
+            onCheckedChange={(checked) => handleSwitchChange('reservesHeld', checked)}
+          />
+          <Label htmlFor="processing.reservesHeld" className="cursor-pointer">
             Currently have reserves held by a processor
           </Label>
         </div>
         
         <div className="flex items-center space-x-2 mb-4">
-          <Switch id="excessive-chargebacks" />
-          <Label htmlFor="excessive-chargebacks" className="cursor-pointer">
+          <Switch 
+            id="processing.excessiveChargebacks"
+            checked={excessiveChargebacks}
+            onCheckedChange={(checked) => handleSwitchChange('excessiveChargebacks', checked)}
+          />
+          <Label htmlFor="processing.excessiveChargebacks" className="cursor-pointer">
             Had excessive chargebacks in past 6 months
           </Label>
         </div>
