@@ -6,7 +6,7 @@ import { useDocumentUpload } from './hooks/useDocumentUpload';
 import { FileList } from './FileList';
 import { Button } from '@/components/ui/button';
 import { FileCheck, Upload, Loader2 } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { DocumentViewModal } from './DocumentViewModal';
 
 interface DocumentUploadSectionProps {
   applicationId: string;
@@ -16,6 +16,14 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
   const { uploading, uploadProgress, documents, uploadDocument, loadDocuments } = useDocumentUpload(applicationId);
   const [activeTab, setActiveTab] = useState('bank');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [viewingDocument, setViewingDocument] = useState<{
+    id: string;
+    name: string;
+    uploadDate: string;
+    size: number;
+    filePath: string;
+    fileType: string;
+  } | null>(null);
   
   useEffect(() => {
     // Force document reload when component mounts
@@ -85,6 +93,18 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
     { id: 'identity', label: 'Identity Documents' },
     { id: 'business', label: 'Business Documents' }
   ];
+
+  const handleViewDocument = (doc: {
+    id: string;
+    name: string;
+    uploadDate: string;
+    size: number;
+    filePath: string;
+    fileType: string;
+  }) => {
+    console.log('Viewing document:', doc);
+    setViewingDocument(doc);
+  };
   
   return (
     <Card>
@@ -167,16 +187,26 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
                     id: doc.id,
                     name: doc.file_name,
                     uploadDate: doc.created_at,
-                    size: doc.file_size
+                    size: doc.file_size,
+                    filePath: doc.file_path
                   })) || []}
                   onDelete={() => {}} // Will implement delete functionality later
+                  onView={handleViewDocument}
                 />
               </div>
             </TabsContent>
           ))}
         </Tabs>
+
+        {/* Document view modal */}
+        <DocumentViewModal 
+          open={!!viewingDocument}
+          onOpenChange={(open) => {
+            if (!open) setViewingDocument(null);
+          }}
+          document={viewingDocument}
+        />
       </CardContent>
     </Card>
   );
 };
-
