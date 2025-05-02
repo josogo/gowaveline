@@ -7,7 +7,7 @@ import { UploadDocumentOptions } from './types';
 
 export const useDocumentUploader = (
   setUploading: (uploading: boolean) => void,
-  setUploadProgress: (progress: number | ((prevProgress: number) => number)) => void, // Updated type definition to accept function updates
+  setUploadProgress: (progress: number | ((prevProgress: number) => number)) => void,
   setUploadError: (error: Error | null) => void,
   loadDocuments: () => Promise<void>
 ) => {

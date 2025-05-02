@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -113,3 +112,63 @@ export async function getMerchantDocuments(applicationId: string) {
     .eq("merchant_id", applicationId)
     .order("created_at", { ascending: false });
 }
+
+export interface MerchantDocumentParams {
+  applicationId: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  filePath: string;
+  documentType: string;
+}
+
+export const uploadMerchantDocument = async (params: MerchantDocumentParams) => {
+  console.log('Saving document metadata to database:', params);
+  
+  try {
+    const { data, error } = await supabase
+      .from('merchant_documents')
+      .insert([
+        {
+          merchant_application_id: params.applicationId,
+          file_name: params.fileName,
+          file_type: params.fileType,
+          file_size: params.fileSize,
+          file_path: params.filePath,
+          document_type: params.documentType
+        }
+      ]);
+    
+    if (error) {
+      console.error('Error saving document metadata:', error);
+      return { error };
+    }
+    
+    return { data, error: null };
+  } catch (err: any) {
+    console.error('Exception in uploadMerchantDocument:', err);
+    return { data: null, error: err };
+  }
+};
+
+export const getMerchantDocuments = async (applicationId: string) => {
+  console.log('Getting documents for application:', applicationId);
+  
+  try {
+    const { data, error } = await supabase
+      .from('merchant_documents')
+      .select('*')
+      .eq('merchant_application_id', applicationId)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching documents:', error);
+      return { error };
+    }
+    
+    return { data, error: null };
+  } catch (err: any) {
+    console.error('Exception in getMerchantDocuments:', err);
+    return { data: null, error: err };
+  }
+};
