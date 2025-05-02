@@ -53,13 +53,14 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
         
         result[docCategory].push(doc);
       });
-      console.log("Documents grouped by category:", Object.keys(result).map(k => `${k}: ${result[k]?.length || 0}`));
+      console.log(`Documents grouped for ${category} category:`, 
+                 result[category]?.length || 0, "documents found");
     } else {
-      console.log("No documents to group");
+      console.log(`No documents to group for ${category} category`);
     }
     
     return result;
-  }, [documents]);
+  }, [documents, category]);
 
   const handleDeleteDocument = async (documentId: string) => {
     try {
@@ -70,6 +71,8 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
         toast.error("Document not found");
         return;
       }
+      
+      console.log("Deleting document:", docToDelete);
       
       // First delete from storage
       if (docToDelete.file_path) {

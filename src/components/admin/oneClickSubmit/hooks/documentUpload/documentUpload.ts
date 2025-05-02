@@ -10,6 +10,7 @@ import { DocumentFile, UploadDocumentOptions } from './types';
  * Combines document state, upload, and fetching capabilities
  */
 export const useDocumentUpload = (applicationId: string = '') => {
+  // Initialize document state
   const {
     documents,
     uploading,
@@ -19,10 +20,10 @@ export const useDocumentUpload = (applicationId: string = '') => {
     setUploading,
     setUploadProgress,
     setUploadError,
-    resetUploadState
+    resetUploadState,
+    isLoading,
+    setIsLoading
   } = useDocumentState();
-
-  const [isLoading, setIsLoading] = useState(false);
 
   // Initialize document fetching
   const { loadDocuments } = useDocumentFetch(
@@ -42,6 +43,7 @@ export const useDocumentUpload = (applicationId: string = '') => {
   // Load documents when component initializes or applicationId changes
   useEffect(() => {
     if (applicationId) {
+      console.log(`useDocumentUpload: Initial load for applicationId ${applicationId}`);
       loadDocuments();
     }
   }, [applicationId, loadDocuments]);

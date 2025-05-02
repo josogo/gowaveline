@@ -15,6 +15,9 @@ interface DocumentUploadSectionProps {
 }
 
 export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ applicationId }) => {
+  // Log for debugging
+  console.log("DocumentUploadSection rendering for applicationId:", applicationId);
+  
   const { 
     uploading, 
     documents, 
