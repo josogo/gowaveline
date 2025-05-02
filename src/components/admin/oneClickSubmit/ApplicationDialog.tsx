@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -7,7 +6,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DocumentUploadSection } from './DocumentUploadSection';
+import { DocumentUploadSection } from './documentUpload';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Save } from 'lucide-react';
 
@@ -73,4 +72,3 @@ export const ApplicationDialog: React.FC<ApplicationDialogProps> = ({
     </Dialog>
   );
 };
-
