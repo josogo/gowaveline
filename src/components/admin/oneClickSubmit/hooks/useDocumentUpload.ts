@@ -31,27 +31,44 @@ export const useDocumentUpload = (applicationId: string) => {
     onSuccess,
     onError
   }: UploadDocumentOptions) => {
-    // Allow uploads even with minimal information
+    // Validate inputs
     if (!file) {
-      toast.error('Please select a file to upload');
+      const error = new Error('Please select a file to upload');
+      toast.error(error.message);
+      if (onError) onError(error);
       return;
     }
     
-    // Reset any previous errors
+    if (!applicationId) {
+      console.warn('No applicationId provided for document upload');
+    }
+    
+    // Reset any previous errors and set initial state
     setUploadError(null);
-    console.log(`Starting upload with applicationId: ${applicationId}, documentType: ${documentType || 'other'}`);
     setUploading(true);
     setUploadProgress(10);
     
+    console.log(`Starting upload with applicationId: ${applicationId}, documentType: ${documentType}, file: ${file.name}`);
+    
     try {
       // Check if storage bucket exists, create if not
-      const { data: buckets } = await supabase.storage.listBuckets();
+      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+      
+      if (bucketsError) {
+        throw new Error(`Failed to list buckets: ${bucketsError.message}`);
+      }
+      
       const documentsBucketExists = buckets?.some(bucket => bucket.name === 'merchant-documents');
       
       if (!documentsBucketExists) {
-        await supabase.storage.createBucket('merchant-documents', {
-          public: true, // Make bucket public for easy access
+        const { error: createBucketError } = await supabase.storage.createBucket('merchant-documents', {
+          public: true,
         });
+        
+        if (createBucketError) {
+          throw new Error(`Failed to create bucket: ${createBucketError.message}`);
+        }
+        
         console.log('Created merchant-documents bucket');
       }
       
@@ -80,23 +97,23 @@ export const useDocumentUpload = (applicationId: string) => {
         .from('merchant-documents')
         .upload(filePath, file, {
           contentType: file.type,
-          upsert: true // Change to true to avoid conflicts with existing files
+          upsert: true
         });
       
       clearInterval(progressInterval);
       
       if (uploadError) {
-        console.error('Upload error:', uploadError);
+        console.error('Storage upload error:', uploadError);
         setUploadProgress(0);
-        setUploadError(uploadError);
-        throw uploadError;
+        setUploadError(new Error(`Storage upload failed: ${uploadError.message}`));
+        throw new Error(`Upload failed: ${uploadError.message}`);
       }
       
-      console.log('File uploaded successfully:', fileData);
+      console.log('File uploaded successfully to storage:', fileData);
       setUploadProgress(90);
       
-      // Create document record in database - make documentType optional
-      const { error } = await uploadMerchantDocument({
+      // Create document record in database
+      const { error: dbError } = await uploadMerchantDocument({
         applicationId: effectiveAppId,
         fileName: file.name,
         fileType: file.type,
@@ -105,37 +122,53 @@ export const useDocumentUpload = (applicationId: string) => {
         documentType: documentType || 'other'
       });
       
-      if (error) {
-        console.error('Database error:', error);
-        setUploadError(new Error(error.message));
-        throw new Error(error.message);
+      if (dbError) {
+        console.error('Database entry error:', dbError);
+        setUploadError(new Error(`Database entry failed: ${dbError.message}`));
+        throw new Error(`Database entry failed: ${dbError.message}`);
       }
       
       setUploadProgress(100);
       toast.success('Document uploaded successfully');
       
       // Refresh document list
-      loadDocuments();
+      await loadDocuments();
       
       if (onSuccess) {
         onSuccess();
       }
-    } catch (error: any) {
-      console.error('Error uploading document:', error);
-      toast.error(`Upload failed: ${error.message}`);
-      setUploadError(error);
-      if (onError) onError(error);
-    } finally {
-      // Ensure we reset the state after a reasonable delay
-      // regardless of success or failure
+      
+      console.log('Upload completed successfully');
+      
+      // Reset state after successful upload with slight delay
       setTimeout(() => {
         resetUploadState();
-      }, 1500);
+      }, 1000);
+      
+    } catch (error: any) {
+      console.error('Error in upload process:', error);
+      clearTimeout(0); // Clear any pending timeouts
+      
+      // Format error message for display
+      const errorMessage = error.message || 'Upload failed';
+      toast.error(errorMessage);
+      
+      setUploadError(error);
+      if (onError) onError(error);
+      
+      // Reset uploading state after error
+      setTimeout(() => {
+        setUploading(false);
+        setUploadProgress(0);
+      }, 500);
     }
   };
   
   const loadDocuments = useCallback(async () => {
-    if (!applicationId) return;
+    if (!applicationId) {
+      console.warn('Cannot load documents without applicationId');
+      return;
+    }
     
     try {
       setIsLoading(true);
@@ -147,11 +180,11 @@ export const useDocumentUpload = (applicationId: string) => {
         throw error;
       }
       
-      console.log('Documents loaded:', data);
+      console.log(`Documents loaded: ${data?.length || 0} documents found`);
       setDocuments(data || []);
     } catch (error) {
-      console.error('Error loading documents:', error);
-      // Don't show toast here to avoid spamming the user with errors
+      console.error('Error in loadDocuments:', error);
+      // Don't show toast here to avoid spamming the user
     } finally {
       setIsLoading(false);
     }
@@ -160,7 +193,7 @@ export const useDocumentUpload = (applicationId: string) => {
   // Load documents on initial mount
   useEffect(() => {
     if (applicationId) {
-      loadDocuments();
+      loadDocuments().catch(err => console.error('Initial document load failed:', err));
     }
   }, [applicationId, loadDocuments]);
   

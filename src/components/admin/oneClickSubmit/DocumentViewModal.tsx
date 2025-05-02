@@ -8,7 +8,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Download, Loader2, FileText, AlertTriangle, RefreshCw, XCircle } from 'lucide-react';
+import { Download, Loader2, FileText, AlertTriangle, RefreshCw, XCircle, File, Image } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -61,7 +61,11 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
   }, [documentFile, open]);
 
   const fetchDocumentUrl = async () => {
-    if (!documentFile) return;
+    if (!documentFile?.filePath) {
+      setError('Document path is missing');
+      setLoading(false);
+      return;
+    }
     
     setLoading(true);
     setError(null);
@@ -86,8 +90,12 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
         throw error;
       }
       
+      if (!data?.signedUrl) {
+        throw new Error('No signed URL returned from storage');
+      }
+      
       console.log('Document URL fetched successfully');
-      setDocumentUrl(data?.signedUrl || null);
+      setDocumentUrl(data.signedUrl);
       setDownloadProgress(100);
       
       // Reset download progress after showing 100% briefly
@@ -98,6 +106,7 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
     } catch (error: any) {
       console.error('Error fetching document:', error);
       setError(error.message || 'Failed to load document');
+      setLoading(false);
       toast.error('Failed to load document');
     } finally {
       setLoading(false);
@@ -165,6 +174,18 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
     }
   };
   
+  const getDocumentIcon = () => {
+    if (!documentFile?.fileType) return <FileText className="h-16 w-16 text-gray-300" />;
+    
+    if (documentFile.fileType.includes('pdf')) {
+      return <FileText className="h-16 w-16 text-red-400" />;
+    } else if (documentFile.fileType.includes('image')) {
+      return <Image className="h-16 w-16 text-blue-400" />;
+    } else {
+      return <File className="h-16 w-16 text-gray-400" />;
+    }
+  };
+  
   const getFileTypeDisplay = () => {
     if (!documentFile?.fileType) return 'Unknown';
     
@@ -177,6 +198,11 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
     } else {
       return documentFile.fileType.split('/').pop() || 'Document';
     }
+  };
+  
+  const isPreviewable = () => {
+    if (!documentFile?.fileType) return false;
+    return documentFile.fileType.includes('pdf') || documentFile.fileType.includes('image');
   };
 
   return (
@@ -204,9 +230,11 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
             <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
             <div className="text-center">
               <p className="mb-4">Loading document...</p>
-              <div className="w-48 mx-auto">
-                <Progress value={downloadProgress} className="h-1.5" />
-              </div>
+              {downloadProgress > 0 && (
+                <div className="w-48 mx-auto">
+                  <Progress value={downloadProgress} className="h-1.5" />
+                </div>
+              )}
             </div>
           </div>
         ) : error ? (
@@ -226,17 +254,39 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
         ) : (
           <>
             <div className="flex-grow overflow-hidden min-h-0 bg-gray-50 border rounded-md">
-              {documentUrl ? (
-                <iframe
-                  src={documentUrl}
-                  className="w-full h-full border-0"
-                  title={documentFile?.name || 'Document'}
-                  sandbox="allow-scripts allow-same-origin allow-forms"
-                />
+              {documentUrl && isPreviewable() ? (
+                documentFile?.fileType?.includes('image') ? (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-100 p-4">
+                    <img 
+                      src={documentUrl} 
+                      alt={documentFile.name}
+                      className="max-w-full max-h-full object-contain"
+                      onError={() => setError('Failed to load image')} 
+                    />
+                  </div>
+                ) : (
+                  <iframe
+                    src={documentUrl}
+                    className="w-full h-full border-0"
+                    title={documentFile?.name || 'Document'}
+                    sandbox="allow-scripts allow-same-origin allow-forms"
+                    onError={() => setError('Failed to load document preview')}
+                  />
+                )
               ) : (
-                <div className="flex h-full items-center justify-center text-gray-500">
-                  <FileText className="h-16 w-16 opacity-20 mb-4" />
-                  <p>Document preview not available</p>
+                <div className="flex flex-col h-full items-center justify-center text-gray-500">
+                  {getDocumentIcon()}
+                  <p className="mt-4">Document preview not available</p>
+                  {documentUrl && (
+                    <Button 
+                      variant="outline" 
+                      className="mt-4" 
+                      onClick={handleDownload}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download to View
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
