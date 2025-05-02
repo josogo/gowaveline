@@ -16,6 +16,13 @@ export const useDocumentUpload = (applicationId: string) => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [documents, setDocuments] = useState<any[]>([]);
+  const [uploadError, setUploadError] = useState<Error | null>(null);
+  
+  const resetUploadState = useCallback(() => {
+    setUploading(false);
+    setUploadProgress(0);
+    setUploadError(null);
+  }, []);
   
   const uploadDocument = async ({
     file,
@@ -29,6 +36,8 @@ export const useDocumentUpload = (applicationId: string) => {
       return;
     }
     
+    // Reset any previous errors
+    setUploadError(null);
     console.log(`Starting upload with applicationId: ${applicationId}, documentType: ${documentType || 'other'}`);
     setUploading(true);
     setUploadProgress(10);
@@ -57,13 +66,13 @@ export const useDocumentUpload = (applicationId: string) => {
       
       setUploadProgress(30);
       
-      // Simulate incremental upload progress
+      // Use a more reliable progress tracking approach
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => {
-          const newProgress = prev + 10;
-          return newProgress < 90 ? newProgress : prev;
+          const newProgress = Math.min(prev + 5, 85);
+          return newProgress;
         });
-      }, 500);
+      }, 300);
       
       console.log('Uploading file to path:', filePath);
       const { data: fileData, error: uploadError } = await supabase.storage
@@ -74,15 +83,16 @@ export const useDocumentUpload = (applicationId: string) => {
         });
       
       clearInterval(progressInterval);
-      setUploadProgress(90);
       
       if (uploadError) {
         console.error('Upload error:', uploadError);
+        setUploadProgress(0);
+        setUploadError(uploadError);
         throw uploadError;
       }
       
       console.log('File uploaded successfully:', fileData);
-      setUploadProgress(95);
+      setUploadProgress(90);
       
       // Create document record in database - make documentType optional
       const { error } = await uploadMerchantDocument({
@@ -96,6 +106,7 @@ export const useDocumentUpload = (applicationId: string) => {
       
       if (error) {
         console.error('Database error:', error);
+        setUploadError(new Error(error.message));
         throw new Error(error.message);
       }
       
@@ -111,14 +122,14 @@ export const useDocumentUpload = (applicationId: string) => {
     } catch (error: any) {
       console.error('Error uploading document:', error);
       toast.error(`Upload failed: ${error.message}`);
+      setUploadError(error);
       if (onError) onError(error);
     } finally {
-      // Ensure the uploading state is reset after a short delay
-      // This gives the user time to see the success/error toast
+      // Always ensure we reset the state after a reasonable delay
+      // regardless of success or failure
       setTimeout(() => {
-        setUploading(false);
-        setUploadProgress(0);
-      }, 1000);
+        resetUploadState();
+      }, 1500);
     }
   };
   
@@ -139,20 +150,23 @@ export const useDocumentUpload = (applicationId: string) => {
     } catch (error) {
       console.error('Error loading documents:', error);
       // Don't show toast here to avoid spamming the user with errors
-      // if the documents fail to load multiple times
     }
   }, [applicationId]);
   
   // Load documents on initial mount
   useEffect(() => {
-    loadDocuments();
+    if (applicationId) {
+      loadDocuments();
+    }
   }, [applicationId, loadDocuments]);
   
   return {
     uploading,
     uploadProgress,
+    uploadError,
     documents,
     uploadDocument,
-    loadDocuments
+    loadDocuments,
+    resetUploadState
   };
 };

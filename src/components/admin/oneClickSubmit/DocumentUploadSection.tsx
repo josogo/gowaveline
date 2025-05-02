@@ -1,18 +1,31 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDocumentUpload } from './hooks/useDocumentUpload';
 import { FileList } from './FileList';
 import { Button } from '@/components/ui/button';
-import { FileCheck, Upload, Loader2 } from 'lucide-react';
+import { AlertCircle, FileCheck, Upload, Loader2, FileX } from 'lucide-react';
 import { DocumentViewModal } from './DocumentViewModal';
+import { Progress } from '@/components/ui/progress';
+import { toast } from 'sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface DocumentUploadSectionProps {
   applicationId: string;
 }
 
 export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ applicationId }) => {
-  const { uploading, uploadProgress, documents, uploadDocument, loadDocuments } = useDocumentUpload(applicationId);
+  const { 
+    uploading, 
+    uploadProgress, 
+    uploadError,
+    documents, 
+    uploadDocument, 
+    loadDocuments,
+    resetUploadState
+  } = useDocumentUpload(applicationId);
+  
   const [activeTab, setActiveTab] = useState('bank');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [viewingDocument, setViewingDocument] = useState<{
@@ -24,6 +37,8 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
     fileType: string;
   } | null>(null);
   
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   useEffect(() => {
     // Force document reload when component mounts
     if (applicationId) {
@@ -34,10 +49,29 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
     }
   }, [applicationId, loadDocuments]);
   
+  // Reset selected file when upload completes or fails
+  useEffect(() => {
+    if (!uploading && uploadProgress === 0) {
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  }, [uploading, uploadProgress]);
+  
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
-      console.log('File selected:', e.target.files[0].name);
+      const file = e.target.files[0];
+      
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('File is too large. Maximum size is 10MB.');
+        e.target.value = '';
+        return;
+      }
+      
+      setSelectedFile(file);
+      console.log('File selected:', file.name);
     } else {
       console.log('No file selected');
     }
@@ -45,7 +79,7 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
   
   const handleUpload = async () => {
     if (!selectedFile) {
-      console.log('No file selected for upload');
+      toast.error('Please select a file to upload');
       return;
     }
     
@@ -57,18 +91,25 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
       onSuccess: () => {
         setSelectedFile(null);
         // Reset file input
-        const fileInput = document.getElementById('documentFile') as HTMLInputElement;
-        if (fileInput) fileInput.value = '';
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
         console.log('Upload completed, file input reset');
       },
       onError: (error) => {
         console.error('Upload error:', error);
-        // Ensure we reset the UI even on error
-        setSelectedFile(null);
-        const fileInput = document.getElementById('documentFile') as HTMLInputElement;
-        if (fileInput) fileInput.value = '';
+        // We already reset the state in the hook's finally block
       }
     });
+  };
+  
+  const handleCancelUpload = () => {
+    // Cancel the current upload
+    resetUploadState();
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
   
   // Group documents by category
@@ -94,10 +135,10 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
   }, [documents]);
   
   const categories = [
-    { id: 'bank', label: 'Bank Statements' },
-    { id: 'processing', label: 'Processing Statements' },
-    { id: 'identity', label: 'Identity Documents' },
-    { id: 'business', label: 'Business Documents' }
+    { id: 'bank', label: 'Bank Statements', icon: <FileCheck className="h-4 w-4" /> },
+    { id: 'processing', label: 'Processing Statements', icon: <FileCheck className="h-4 w-4" /> },
+    { id: 'identity', label: 'Identity Documents', icon: <FileCheck className="h-4 w-4" /> },
+    { id: 'business', label: 'Business Documents', icon: <FileCheck className="h-4 w-4" /> }
   ];
 
   const handleViewDocument = (doc: {
@@ -112,23 +153,30 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
     setViewingDocument(doc);
   };
   
+  // Determine if upload is in error state
+  const isUploadError = uploadError !== null;
+  
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Upload Documents</CardTitle>
+    <Card className="shadow-md">
+      <CardHeader className="bg-gradient-to-r from-blue-50 to-white">
+        <CardTitle className="text-blue-700 flex items-center gap-2">
+          <FileCheck className="h-5 w-5" />
+          Upload Documents
+        </CardTitle>
         <CardDescription>
           Upload supporting documents for underwriting review
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-4 w-full mb-4">
+          <TabsList className="grid grid-cols-4 w-full mb-6 bg-gray-50">
             {categories.map(category => (
               <TabsTrigger 
                 key={category.id} 
                 value={category.id}
-                className="text-xs sm:text-sm"
+                className="text-xs sm:text-sm flex items-center gap-1.5 py-2.5"
               >
+                {category.icon}
                 {category.label}
               </TabsTrigger>
             ))}
@@ -136,43 +184,97 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
           
           {categories.map(category => (
             <TabsContent key={category.id} value={category.id}>
-              <div className="space-y-4">
-                <div className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary/50">
+              <div className="space-y-6">
+                <div 
+                  className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all hover:border-primary/50 ${
+                    selectedFile ? 'bg-blue-50' : 'bg-white'
+                  }`}
+                >
                   <input
                     type="file"
                     id="documentFile"
+                    ref={fileInputRef}
                     className="hidden"
                     onChange={handleFileChange}
                     accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    disabled={uploading}
                   />
                   <label htmlFor="documentFile" className="block cursor-pointer">
                     <div className="flex flex-col items-center justify-center">
-                      <FileCheck className="h-12 w-12 text-gray-400 mb-2" />
-                      <p className="text-lg font-semibold text-gray-800">
-                        {selectedFile ? selectedFile.name : "Click to select a file"}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Supports PDF, images and document files (max 10MB).
-                      </p>
+                      {selectedFile ? (
+                        <>
+                          <FileCheck className="h-12 w-12 text-green-500 mb-2" />
+                          <p className="text-lg font-semibold text-gray-800">
+                            {selectedFile.name}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB - Click to change file
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <FileCheck className="h-12 w-12 text-gray-400 mb-2" />
+                          <p className="text-lg font-semibold text-gray-800">
+                            Click to select a file
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Supports PDF, images and document files (max 10MB)
+                          </p>
+                        </>
+                      )}
                     </div>
                   </label>
                 </div>
                 
+                {/* Error state */}
+                {isUploadError && (
+                  <Alert variant="destructive" className="bg-red-50 text-red-800 border-red-200">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      {uploadError?.message || 'An error occurred during upload'}
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
                 {/* Progress bar for upload */}
                 {uploading && (
-                  <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
-                    <div 
-                      className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
-                      style={{ width: `${uploadProgress}%` }}
-                    ></div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm font-medium">
+                      <span>Uploading {selectedFile?.name}</span>
+                      <span>{uploadProgress}%</span>
+                    </div>
+                    <Progress 
+                      value={uploadProgress} 
+                      className="h-2"
+                      indicatorClassName={
+                        uploadProgress < 30 ? "bg-amber-500" : 
+                        uploadProgress < 70 ? "bg-blue-500" : 
+                        "bg-green-500"
+                      }
+                    />
                   </div>
                 )}
                 
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-2">
+                  {uploading && (
+                    <Button
+                      variant="outline"
+                      onClick={handleCancelUpload}
+                      className="border-red-200 text-red-600 hover:bg-red-50"
+                    >
+                      <FileX className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                  )}
+                  
                   <Button
                     onClick={handleUpload}
                     disabled={uploading || !selectedFile}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className={`${
+                      selectedFile 
+                        ? 'bg-green-600 hover:bg-green-700' 
+                        : 'bg-blue-600 hover:bg-blue-700'
+                    }`}
                   >
                     {uploading ? (
                       <>
@@ -182,19 +284,21 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
                     ) : (
                       <>
                         <Upload className="h-4 w-4 mr-2" />
-                        Upload Document
+                        {selectedFile ? 'Upload Document' : 'Select & Upload'}
                       </>
                     )}
                   </Button>
                 </div>
                 
+                {/* File list with improved styling */}
                 <FileList 
                   files={documentsByCategory[category.id]?.map(doc => ({
                     id: doc.id,
                     name: doc.file_name,
                     uploadDate: doc.created_at,
                     size: doc.file_size,
-                    filePath: doc.file_path
+                    filePath: doc.file_path,
+                    fileType: doc.file_type
                   })) || []}
                   onDelete={() => {}} // Will implement delete functionality later
                   onView={handleViewDocument}
@@ -204,7 +308,7 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
           ))}
         </Tabs>
 
-        {/* Document view modal */}
+        {/* Document view modal - fixed issue with incorrect prop name */}
         <DocumentViewModal 
           open={!!viewingDocument}
           onOpenChange={(open) => {

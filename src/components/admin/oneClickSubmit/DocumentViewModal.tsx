@@ -8,10 +8,11 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Download, Loader2, FileText, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Download, Loader2, FileText, AlertTriangle, RefreshCw, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { Progress } from '@/components/ui/progress';
 
 interface DocumentViewModalProps {
   open: boolean;
@@ -34,15 +35,27 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [isDownloading, setIsDownloading] = useState(false);
   const maxRetries = 3;
 
+  // Reset state when modal opens/closes or document changes
   useEffect(() => {
     if (documentFile && open) {
+      setError(null);
+      setRetryCount(0);
+      setLoading(true);
+      setDocumentUrl(null);
+      setDownloadProgress(0);
+      setIsDownloading(false);
       fetchDocumentUrl();
     } else {
       setDocumentUrl(null);
       setError(null);
       setRetryCount(0);
+      setLoading(false);
+      setDownloadProgress(0);
+      setIsDownloading(false);
     }
   }, [documentFile, open]);
 
@@ -54,17 +67,33 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
     
     try {
       console.log('Fetching document URL for:', documentFile.filePath);
+      
+      // Simulate progress during fetch
+      const progressInterval = setInterval(() => {
+        setDownloadProgress(prev => Math.min(prev + 10, 90));
+      }, 200);
+      
       const { data, error } = await supabase.storage
         .from('merchant-documents')
         .createSignedUrl(documentFile.filePath, 3600); // 1 hour expiry
       
+      clearInterval(progressInterval);
+      
       if (error) {
         console.error('Error fetching document URL:', error);
+        setDownloadProgress(0);
         throw error;
       }
       
       console.log('Document URL fetched successfully');
       setDocumentUrl(data?.signedUrl || null);
+      setDownloadProgress(100);
+      
+      // Reset download progress after showing 100% briefly
+      setTimeout(() => {
+        setDownloadProgress(0);
+      }, 500);
+      
     } catch (error: any) {
       console.error('Error fetching document:', error);
       setError(error.message || 'Failed to load document');
@@ -89,6 +118,18 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
     
     try {
       console.log('Downloading document:', documentFile.name);
+      setIsDownloading(true);
+      
+      // Simulate progress
+      const progressInterval = setInterval(() => {
+        setDownloadProgress(prev => {
+          const newProgress = prev + 20;
+          if (newProgress >= 100) {
+            clearInterval(progressInterval);
+          }
+          return Math.min(newProgress, 100);
+        });
+      }, 200);
       
       // Create a link element and trigger download
       const link = document.createElement('a');
@@ -99,9 +140,19 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
       document.body.removeChild(link);
       
       toast.success('Document downloaded successfully');
+      
+      // Reset progress after a brief delay
+      setTimeout(() => {
+        setDownloadProgress(0);
+        setIsDownloading(false);
+        clearInterval(progressInterval);
+      }, 800);
+      
     } catch (error: any) {
       console.error('Error downloading document:', error);
       toast.error('Failed to download document');
+      setDownloadProgress(0);
+      setIsDownloading(false);
     }
   };
   
@@ -112,18 +163,50 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
       return 'N/A';
     }
   };
+  
+  const getFileTypeDisplay = () => {
+    if (!documentFile?.fileType) return 'Unknown';
+    
+    if (documentFile.fileType.includes('pdf')) {
+      return 'PDF Document';
+    } else if (documentFile.fileType.includes('image')) {
+      return 'Image';
+    } else if (documentFile.fileType.includes('word')) {
+      return 'Word Document';
+    } else {
+      return documentFile.fileType.split('/').pop() || 'Document';
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px] sm:h-[80vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>{documentFile?.name || 'Document'}</DialogTitle>
+      <DialogContent className="sm:max-w-[800px] sm:h-[80vh] flex flex-col max-h-[90vh]">
+        <DialogHeader className="border-b pb-2">
+          <DialogTitle className="flex justify-between items-center">
+            <span className="truncate max-w-[600px]" title={documentFile?.name || ''}>
+              {documentFile?.name || 'Document'}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-2"
+              onClick={() => onOpenChange(false)}
+            >
+              <XCircle className="h-5 w-5 text-gray-400 hover:text-gray-500" />
+              <span className="sr-only">Close</span>
+            </Button>
+          </DialogTitle>
         </DialogHeader>
         
         {loading ? (
-          <div className="flex-grow flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="ml-2">Loading document...</span>
+          <div className="flex-grow flex flex-col items-center justify-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+            <div className="text-center">
+              <p className="mb-4">Loading document...</p>
+              <div className="w-48 mx-auto">
+                <Progress value={downloadProgress} className="h-1.5" />
+              </div>
+            </div>
           </div>
         ) : error ? (
           <div className="flex-grow flex flex-col items-center justify-center text-red-500">
@@ -141,12 +224,13 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
           </div>
         ) : (
           <>
-            <div className="flex-grow overflow-hidden">
+            <div className="flex-grow overflow-hidden min-h-0 bg-gray-50 border rounded-md">
               {documentUrl ? (
                 <iframe
                   src={documentUrl}
                   className="w-full h-full border-0"
                   title={documentFile?.name || 'Document'}
+                  sandbox="allow-scripts allow-same-origin allow-forms"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center text-gray-500">
@@ -156,22 +240,44 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
               )}
             </div>
             
-            <div className="py-2 text-sm text-gray-500">
+            <div className="py-3 space-y-1 border-t mt-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">File type:</span>
+                <span className="font-medium">{getFileTypeDisplay()}</span>
+              </div>
               {documentFile && (
-                <p>Upload date: {formatDate(documentFile.uploadDate)}</p>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Upload date:</span>
+                  <span className="font-medium">{formatDate(documentFile.uploadDate)}</span>
+                </div>
+              )}
+              {isDownloading && downloadProgress > 0 && (
+                <div className="w-full pt-2">
+                  <Progress value={downloadProgress} className="h-1.5" />
+                </div>
               )}
             </div>
           </>
         )}
         
-        <DialogFooter>
+        <DialogFooter className="border-t pt-3">
           <Button 
             variant="outline" 
             onClick={handleDownload}
-            disabled={loading || !documentUrl}
+            disabled={loading || !documentUrl || isDownloading}
+            className="border-blue-200 text-blue-600 hover:bg-blue-50"
           >
-            <Download className="h-4 w-4 mr-2" />
-            Download
+            {isDownloading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Downloading...
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4 mr-2" />
+                Download
+              </>
+            )}
           </Button>
           <Button onClick={() => onOpenChange(false)}>
             Close
