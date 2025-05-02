@@ -9,7 +9,7 @@ export const formatDate = (dateString: string) => {
   }
 };
 
-export const getFileTypeDisplay = (fileName: string, fileType?: string) => {
+export const getFileTypeDisplay = (fileName: string = '', fileType?: string) => {
   if (!fileType) return 'Unknown';
   
   if (fileType.includes('pdf')) {

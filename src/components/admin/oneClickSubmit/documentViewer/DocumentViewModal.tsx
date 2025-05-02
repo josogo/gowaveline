@@ -213,7 +213,11 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
         </div>
         
         <DocumentFooter 
-          documentFile={documentFile}
+          documentFile={documentFile ? {
+            fileType: documentFile.fileType,
+            uploadDate: documentFile.uploadDate,
+            name: documentFile.name
+          } : null}
           isDownloading={isDownloading}
           downloadProgress={downloadProgress}
         />

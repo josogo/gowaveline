@@ -7,6 +7,7 @@ interface DocumentFooterProps {
   documentFile: {
     fileType?: string;
     uploadDate: string;
+    name?: string; // Make name optional since it might not always be available
   } | null;
   isDownloading: boolean;
   downloadProgress: number;
