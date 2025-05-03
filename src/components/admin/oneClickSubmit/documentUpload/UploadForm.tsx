@@ -181,6 +181,9 @@ export const UploadForm: React.FC<UploadFormProps> = ({
           if (isMountedRef.current) {
             toast.error(`Upload failed: ${error.message}`);
           }
+        },
+        onProgress: (progress) => {
+          console.log(`Upload progress: ${progress}%`);
         }
       });
     } catch (error: any) {

@@ -132,6 +132,7 @@ export const useDocumentUploader = (
           if (optionsOnSuccess) optionsOnSuccess();
           if (onSuccess && mountedRef.current) await onSuccess();
           
+          toast.success('Document uploaded successfully');
           return Promise.resolve({
             success: true,
             data: tempDocData
@@ -188,6 +189,7 @@ export const useDocumentUploader = (
         if (onSuccess && mountedRef.current) await onSuccess();
         
         console.log('[useDocumentUploader] Upload completed successfully');
+        toast.success('Document uploaded successfully');
         return Promise.resolve(result);
       }
       
@@ -196,7 +198,7 @@ export const useDocumentUploader = (
       if (mountedRef.current) setUploadError(error);
       
       if (onError) onError(error);
-      
+      toast.error(`Upload failed: ${error.message}`);
       return Promise.reject(error);
     } finally {
       if (mountedRef.current) {
