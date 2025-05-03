@@ -89,8 +89,12 @@ export const useDocumentUploader = (
       if (uploadError) {
         console.error('Storage upload error:', uploadError);
         setUploadProgress(0);
+        setUploading(false);
         setUploadError(new Error(`Storage upload failed: ${uploadError.message}`));
-        throw new Error(`Upload failed: ${uploadError.message}`);
+        
+        if (onError) onError(uploadError);
+        toast.error(`Upload failed: ${uploadError.message}`);
+        return;
       }
       
       console.log('File uploaded successfully to storage:', fileData);
@@ -109,20 +113,25 @@ export const useDocumentUploader = (
       if (dbError) {
         console.error('Database entry error:', dbError);
         setUploadError(new Error(`Database entry failed: ${dbError.message}`));
-        throw new Error(`Database entry failed: ${dbError.message}`);
+        setUploading(false);
+        setUploadProgress(0);
+        
+        if (onError) onError(dbError);
+        toast.error(`Database entry failed: ${dbError.message}`);
+        return;
       }
       
       setUploadProgress(100);
+      console.log('Document upload completed successfully');
       toast.success('Document uploaded successfully');
       
       // Refresh document list
       await loadDocuments();
       
+      // Call success callback
       if (onSuccess) {
         onSuccess();
       }
-      
-      console.log('Upload completed successfully');
       
       // Reset state after successful upload with slight delay
       setTimeout(() => {
@@ -133,20 +142,17 @@ export const useDocumentUploader = (
       
     } catch (error: any) {
       console.error('Error in upload process:', error);
-      clearTimeout(0); // Clear any pending timeouts
       
       // Format error message for display
       const errorMessage = error.message || 'Upload failed';
       toast.error(errorMessage);
       
+      // Update state and call error callback
       setUploadError(error);
-      if (onError) onError(error);
+      setUploading(false);
+      setUploadProgress(0);
       
-      // Reset uploading state after error
-      setTimeout(() => {
-        setUploading(false);
-        setUploadProgress(0);
-      }, 500);
+      if (onError) onError(error);
     }
   }, [setUploading, setUploadProgress, setUploadError, loadDocuments]);
 

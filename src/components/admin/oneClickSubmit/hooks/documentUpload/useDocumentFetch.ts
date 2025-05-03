@@ -1,39 +1,50 @@
 
 import { useCallback } from 'react';
+import { toast } from 'sonner';
 import { getMerchantDocuments } from '@/services/merchantApplicationService';
 import { DocumentFile } from './types';
 
+/**
+ * Hook for fetching document data from the backend
+ */
 export const useDocumentFetch = (
   applicationId: string,
-  setDocuments: (docs: DocumentFile[]) => void,
-  setIsLoading: (loading: boolean) => void
+  setDocuments: (documents: DocumentFile[]) => void,
+  setIsLoading: (isLoading: boolean) => void
 ) => {
+  /**
+   * Load documents for a specific application
+   */
   const loadDocuments = useCallback(async () => {
     if (!applicationId) {
-      console.warn('Cannot load documents without applicationId');
+      console.warn('No applicationId provided for document fetch');
+      setDocuments([]);
       return;
     }
     
+    console.log(`Loading documents for applicationId: ${applicationId}`);
+    setIsLoading(true);
+    
     try {
-      setIsLoading(true);
-      console.log('Loading documents for application:', applicationId);
       const { data, error } = await getMerchantDocuments(applicationId);
       
       if (error) {
         console.error('Error loading documents:', error);
-        throw error;
+        toast.error(`Error loading documents: ${error.message}`);
+        setDocuments([]);
+      } else {
+        console.log(`Loaded ${data?.length || 0} documents for applicationId: ${applicationId}`);
+        setDocuments(data || []);
       }
-      
-      console.log(`Documents loaded: ${data?.length || 0} documents found`);
-      setDocuments(data || []);
-    } catch (error) {
-      console.error('Error in loadDocuments:', error);
-      // Don't show toast here to avoid spamming the user
+    } catch (err: any) {
+      console.error('Exception in loadDocuments:', err);
+      toast.error(`Failed to load documents: ${err.message}`);
+      setDocuments([]);
     } finally {
       setIsLoading(false);
     }
   }, [applicationId, setDocuments, setIsLoading]);
-
+  
   return {
     loadDocuments
   };

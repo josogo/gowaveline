@@ -61,6 +61,10 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
     setViewingDocument(doc);
   };
   
+  if (!applicationId) {
+    console.warn("DocumentUploadSection: No applicationId provided");
+  }
+  
   return (
     <Card className="shadow-md">
       <CardHeader className="bg-gradient-to-r from-blue-50 to-white">

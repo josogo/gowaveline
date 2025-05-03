@@ -23,7 +23,8 @@ export const UploadForm: React.FC<UploadFormProps> = ({
     uploadProgress, 
     uploadError,
     uploadDocument, 
-    resetUploadState
+    resetUploadState,
+    loadDocuments
   } = useDocumentUpload(applicationId);
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -81,6 +82,8 @@ export const UploadForm: React.FC<UploadFormProps> = ({
           if (fileInputRef.current) {
             fileInputRef.current.value = '';
           }
+          // Reload documents to refresh the list
+          loadDocuments();
         },
         onError: (error) => {
           console.error("Upload error callback triggered:", error);
