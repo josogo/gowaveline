@@ -1,14 +1,13 @@
 
 export interface DocumentFile {
   id: string;
-  merchant_id: string;
-  document_type: string;
-  file_name: string;
-  file_path: string;
-  file_type: string;
-  file_size: number;
-  uploaded_by: string;
-  created_at: string;
+  name: string;
+  size: number;
+  type: string;
+  data?: File | Blob;
+  url?: string;
+  uploadProgress?: number;
+  error?: string;
 }
 
 export interface DocumentViewItem {
@@ -18,6 +17,7 @@ export interface DocumentViewItem {
   size: number;
   filePath: string;
   fileType: string;
+  documentType?: string;
   url?: string;
 }
 

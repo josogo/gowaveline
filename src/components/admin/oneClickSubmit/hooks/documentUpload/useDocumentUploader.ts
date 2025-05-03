@@ -24,8 +24,8 @@ export const useDocumentUploader = (
   }) => {
     const { file, applicationId, documentType, onSuccess: optionsOnSuccess, onError, onProgress } = options;
     
-    if (!file || !applicationId) {
-      const error = new Error(`Invalid upload parameters. File: ${!!file}, ApplicationId: ${!!applicationId}`);
+    if (!file) {
+      const error = new Error(`Invalid upload parameters. File is missing.`);
       setUploadError(error);
       if (onError) onError(error);
       return Promise.reject(error);
@@ -65,7 +65,11 @@ export const useDocumentUploader = (
       // Step 2: Upload file to storage
       const timestamp = new Date().getTime();
       const fileExt = file.name.split('.').pop();
-      const filePath = `${applicationId}/${timestamp}_${file.name.replace(/\s+/g, '_')}`;
+      // For temporary mode, use a special directory
+      const isTemporary = applicationId.startsWith('temp_');
+      const filePath = isTemporary
+        ? `temporary/${applicationId}/${timestamp}_${file.name.replace(/\s+/g, '_')}`
+        : `${applicationId}/${timestamp}_${file.name.replace(/\s+/g, '_')}`;
       
       console.log(`[useDocumentUploader] Uploading file to path: ${filePath}`);
       
@@ -85,55 +89,95 @@ export const useDocumentUploader = (
       setUploadProgress(50);
       if (onProgress) onProgress(50);
       
-      // Step 3: Save metadata using the edge function instead of direct insertion
-      // This bypasses RLS policies using service role
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData?.session?.access_token;
-      
-      const metadataPayload = {
-        entityId: applicationId,
-        entityType: 'merchant',
-        docType: documentType,
-        fileName: file.name,
-        fileType: file.type || `application/${fileExt}`,
-        fileSize: file.size,
-        filePath: filePath,
-        userName: 'web_app'
-      };
-      
-      console.log('[useDocumentUploader] Saving document metadata:', metadataPayload);
-      
-      // Call the edge function to save metadata (this uses service role to bypass RLS)
-      const response = await fetch('https://rqwrvkkfixrogxogunsk.supabase.co/functions/v1/upload-document', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(metadataPayload)
-      });
-      
-      setUploadProgress(75);
-      if (onProgress) onProgress(75);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('[useDocumentUploader] Edge function error:', errorText);
-        throw new Error(`Metadata save failed: ${errorText}`);
+      // Step 3: For temporary uploads, store metadata in localStorage
+      // For regular uploads, save to the database
+      if (isTemporary) {
+        try {
+          // Create a local record of the upload
+          const tempDocId = uuidv4();
+          const tempDocData = {
+            id: tempDocId,
+            file_name: file.name,
+            file_type: file.type || `application/${fileExt}`,
+            file_size: file.size,
+            file_path: filePath,
+            document_type: documentType,
+            created_at: new Date().toISOString(),
+            uploaded_by: 'temporary_session'
+          };
+          
+          // Store in localStorage
+          const tempUploadsKey = `temp_documents_${applicationId}`;
+          const existingUploads = JSON.parse(localStorage.getItem(tempUploadsKey) || '[]');
+          existingUploads.push(tempDocData);
+          localStorage.setItem(tempUploadsKey, JSON.stringify(existingUploads));
+          
+          console.log('[useDocumentUploader] Temporary document metadata stored:', tempDocData);
+          setUploadProgress(100);
+          if (onProgress) onProgress(100);
+          
+          // Call onSuccess callbacks
+          if (optionsOnSuccess) optionsOnSuccess();
+          if (onSuccess) await onSuccess();
+          
+          return Promise.resolve({
+            success: true,
+            data: tempDocData
+          });
+        } catch (localStorageError) {
+          console.error('[useDocumentUploader] Error storing temporary document:', localStorageError);
+          throw new Error(`Local storage error: ${localStorageError.message}`);
+        }
+      } else {
+        // Regular upload - save to database using auth session
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData?.session?.access_token;
+        
+        const metadataPayload = {
+          entityId: applicationId,
+          entityType: 'merchant',
+          docType: documentType,
+          fileName: file.name,
+          fileType: file.type || `application/${fileExt}`,
+          fileSize: file.size,
+          filePath: filePath,
+          userName: 'web_app'
+        };
+        
+        console.log('[useDocumentUploader] Saving document metadata:', metadataPayload);
+        
+        // Call the edge function to save metadata (this uses service role to bypass RLS)
+        const response = await fetch('https://rqwrvkkfixrogxogunsk.supabase.co/functions/v1/upload-document', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(metadataPayload)
+        });
+        
+        setUploadProgress(75);
+        if (onProgress) onProgress(75);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('[useDocumentUploader] Edge function error:', errorText);
+          throw new Error(`Metadata save failed: ${errorText}`);
+        }
+        
+        const result = await response.json();
+        console.log('[useDocumentUploader] Document metadata saved:', result);
+        
+        setUploadProgress(100);
+        if (onProgress) onProgress(100);
+        
+        // Call onSuccess callbacks
+        if (optionsOnSuccess) optionsOnSuccess();
+        if (onSuccess) await onSuccess();
+        
+        console.log('[useDocumentUploader] Upload completed successfully');
+        return Promise.resolve(result);
       }
-      
-      const result = await response.json();
-      console.log('[useDocumentUploader] Document metadata saved:', result);
-      
-      setUploadProgress(100);
-      if (onProgress) onProgress(100);
-      
-      // Call onSuccess callbacks
-      if (optionsOnSuccess) optionsOnSuccess();
-      if (onSuccess) await onSuccess();
-      
-      console.log('[useDocumentUploader] Upload completed successfully');
-      return Promise.resolve(result);
       
     } catch (error: any) {
       console.error('[useDocumentUploader] Upload error:', error);

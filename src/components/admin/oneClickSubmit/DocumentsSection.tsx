@@ -8,17 +8,19 @@ interface DocumentsSectionProps {
 }
 
 export const DocumentsSection: React.FC<DocumentsSectionProps> = ({ applicationId }) => {
-  if (!applicationId) {
-    return (
-      <Card className="p-6">
-        <p className="text-muted-foreground text-center">
-          No application ID available. Please save the application first.
-        </p>
-      </Card>
-    );
-  }
+  // Use a temporary ID if no application ID is available
+  const documentSessionId = applicationId === 'temp' ? 
+    localStorage.getItem('temp_document_session_id') || `temp_${Date.now()}` : 
+    applicationId;
+    
+  // Store temporary session ID in localStorage if needed
+  React.useEffect(() => {
+    if (applicationId === 'temp' && !localStorage.getItem('temp_document_session_id')) {
+      localStorage.setItem('temp_document_session_id', documentSessionId);
+    }
+  }, [applicationId, documentSessionId]);
 
-  return <DocumentCollection applicationId={applicationId} />;
+  return <DocumentCollection applicationId={documentSessionId} />;
 };
 
 export default DocumentsSection;

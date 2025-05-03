@@ -9,40 +9,40 @@ interface DocumentFooterProps {
   onDelete?: () => void;
 }
 
-export const DocumentFooter: React.FC<DocumentFooterProps> = ({ 
-  documentUrl, 
+export const DocumentFooter: React.FC<DocumentFooterProps> = ({
+  documentUrl,
   documentName,
-  onDelete
+  onDelete,
 }) => {
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t bg-gray-50">
+    <div className="flex items-center justify-end gap-2 p-4 border-t bg-gray-50">
       {documentUrl && (
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           size="sm"
           asChild
-          className="text-blue-700 border-blue-200 hover:bg-blue-50"
+          className="text-blue-600 hover:text-blue-700"
         >
-          <a 
-            href={documentUrl} 
+          <a
+            href={documentUrl}
             download={documentName}
             target="_blank"
             rel="noreferrer"
           >
-            <Download className="h-4 w-4 mr-2" />
+            <Download className="h-4 w-4 mr-1.5" />
             Download
           </a>
         </Button>
       )}
       
       {onDelete && (
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           size="sm"
           onClick={onDelete}
-          className="text-red-600 border-red-200 hover:bg-red-50"
+          className="text-red-600 hover:text-red-700"
         >
-          <Trash2 className="h-4 w-4 mr-2" />
+          <Trash2 className="h-4 w-4 mr-1.5" />
           Delete
         </Button>
       )}

@@ -2,8 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { FileCheck, Folder, BarChart, FileText, Loader2, RefreshCw } from 'lucide-react';
+import { FileCheck, Folder, BarChart, FileText, Loader2, RefreshCw, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useDocumentUpload } from '../hooks';
@@ -18,6 +17,7 @@ interface DocumentCollectionProps {
 export const DocumentCollection: React.FC<DocumentCollectionProps> = ({ applicationId }) => {
   const [activeTab, setActiveTab] = useState('bank');
   const [viewingDocument, setViewingDocument] = useState<DocumentViewItem | null>(null);
+  const isTemporaryMode = applicationId.startsWith('temp_');
   
   const { 
     documents, 
@@ -60,10 +60,13 @@ export const DocumentCollection: React.FC<DocumentCollectionProps> = ({ applicat
       console.log(`[DocumentCollection] Loading documents for application: ${applicationId}`);
       loadDocuments().catch(error => {
         console.error("[DocumentCollection] Error loading documents:", error);
-        toast.error("Failed to load documents");
+        // Only show toast for non-temporary IDs since temp may not have documents yet
+        if (!isTemporaryMode) {
+          toast.error("Failed to load documents");
+        }
       });
     }
-  }, [applicationId, loadDocuments]);
+  }, [applicationId, loadDocuments, isTemporaryMode]);
   
   const refreshDocuments = () => {
     if (!applicationId) {
@@ -87,8 +90,6 @@ export const DocumentCollection: React.FC<DocumentCollectionProps> = ({ applicat
   };
   
   const handleDeleteDocument = async (doc: DocumentViewItem) => {
-    // This would be implemented to delete the document
-    // For now we'll just show a toast
     toast("Delete functionality will be implemented in a future update");
   };
   
@@ -114,22 +115,20 @@ export const DocumentCollection: React.FC<DocumentCollectionProps> = ({ applicat
 
   const filteredDocuments = getDocumentsForCurrentTab();
   
-  if (!applicationId) {
-    return (
-      <Alert className="bg-amber-50 border-amber-200 text-amber-800">
-        <AlertDescription>
-          Application ID is required to upload and view documents.
-          Please save the application first.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-  
   return (
     <div className="space-y-4">
       <Card className="bg-white shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
-          <CardTitle className="text-xl font-semibold">Document Collection</CardTitle>
+          <div>
+            <CardTitle className="text-xl font-semibold">Document Collection</CardTitle>
+            {isTemporaryMode && (
+              <div className="mt-1 text-xs flex items-center text-amber-600 gap-1">
+                <Info className="h-3 w-3" />
+                <span>Documents are being stored temporarily.</span>
+              </div>
+            )}
+          </div>
+          
           <Button 
             variant="outline" 
             size="sm" 
