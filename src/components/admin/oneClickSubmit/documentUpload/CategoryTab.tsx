@@ -58,7 +58,7 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
           ) : documents && documents.length > 0 ? (
             <DocumentList 
               documents={categoryDocuments[documentTypes[0]?.value] || []} 
-              onViewDocument={onViewDocument} 
+              onViewDocument={onViewDocument}
             />
           ) : (
             <Alert className="bg-blue-50 text-blue-700 border-blue-200">
@@ -88,7 +88,7 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
               </div>
             ) : documents && documents.length > 0 ? (
               <DocumentList 
-                documents={categoryDocuments[docType.value] || []} 
+                documents={categoryDocuments[docType.value] || []}
                 onViewDocument={onViewDocument}
               />
             ) : (

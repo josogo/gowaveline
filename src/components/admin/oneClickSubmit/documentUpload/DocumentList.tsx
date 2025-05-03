@@ -9,35 +9,46 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 
 interface DocumentListProps {
-  applicationId: string;
-  documentType: string;
+  applicationId?: string;
+  documentType?: string;
+  documents?: any[];
   onViewDocument: (doc: any) => void;
-  isLoading: boolean;
+  isLoading?: boolean;
 }
 
 export const DocumentList: React.FC<DocumentListProps> = ({
   applicationId,
   documentType,
+  documents: propDocuments,
   onViewDocument,
   isLoading: globalIsLoading
 }) => {
-  const { documents } = useDocumentUpload(applicationId);
+  const { documents: hookDocuments } = applicationId ? useDocumentUpload(applicationId) : { documents: undefined };
   const [filteredDocs, setFilteredDocs] = useState<any[]>([]);
   
-  // Filter documents by type
+  // Use provided documents or fetch them via the hook
+  const documents = propDocuments || hookDocuments;
+  
+  // Filter documents by type if both documents and documentType are provided
   useEffect(() => {
     if (!documents) {
       setFilteredDocs([]);
       return;
     }
     
-    const filtered = documents.filter(doc => 
-      doc.document_type === documentType
-    ).sort((a, b) => 
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-    
-    setFilteredDocs(filtered);
+    if (documentType) {
+      const filtered = documents.filter(doc => 
+        doc.document_type === documentType
+      ).sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      
+      setFilteredDocs(filtered);
+    } else {
+      setFilteredDocs([...documents].sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      ));
+    }
   }, [documents, documentType]);
   
   const handleViewDocument = (doc: any) => {
@@ -69,7 +80,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
     return (
       <Alert>
         <AlertDescription>
-          No {documentType.replace(/_/g, ' ')} documents have been uploaded yet.
+          No {documentType ? documentType.replace(/_/g, ' ') : ''} documents have been uploaded yet.
         </AlertDescription>
       </Alert>
     );
