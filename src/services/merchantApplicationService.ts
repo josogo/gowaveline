@@ -79,7 +79,7 @@ export const uploadMerchantDocument = async ({
       
       if (error) {
         console.error('Standard insert error:', error);
-        // Try REST API as final fallback
+        // Try direct API call as final fallback
         const response = await fetch('https://rqwrvkkfixrogxogunsk.supabase.co/rest/v1/merchant_documents', {
           method: 'POST',
           headers: {
@@ -160,7 +160,7 @@ export const fetchMerchantDocuments = async (applicationId: string) => {
       
       if (error) {
         console.error('Standard fetch error:', error);
-        // Try REST API as final fallback
+        // Try direct API call as final fallback
         const response = await fetch(
           `https://rqwrvkkfixrogxogunsk.supabase.co/rest/v1/merchant_documents?merchant_id=eq.${applicationId}&order=created_at.desc`,
           {

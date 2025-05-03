@@ -1,16 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { useDocumentUpload } from '../hooks';
 import { Button } from '@/components/ui/button';
-import { FileCheck, RefreshCw, Loader2, Info, Upload } from 'lucide-react';
+import { FileCheck, RefreshCw, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DocumentCategories } from './DocumentCategories';
 import { DocumentTabs } from './DocumentTabs';
 import { DocumentViewModal } from '../documentViewer';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 
 interface DocumentUploadSectionProps {

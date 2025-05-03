@@ -1,30 +1,19 @@
 
 import React, { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { X, ArrowLeft, ArrowRight, Download, FileText } from 'lucide-react';
-import { DocumentPreview } from './components/DocumentPreview';
+import { AlertCircle, Download, File, X } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { LoadingState } from './components/LoadingState';
 import { ErrorState } from './components/ErrorState';
+import { DocumentPreview } from './components/DocumentPreview';
 import { DocumentFooter } from './components/DocumentFooter';
+import { DocumentViewItem } from '../hooks/documentUpload/types';
 
 interface DocumentViewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  document: {
-    id: string;
-    name: string;
-    uploadDate: string;
-    size: number;
-    filePath: string;
-    fileType: string;
-    url?: string;
-  } | null;
+  document: DocumentViewItem | null;
 }
 
 export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
@@ -32,69 +21,113 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
   onOpenChange,
   document
 }) => {
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // Reset loading and error when document changes
+
+  // Reset state when document changes
   React.useEffect(() => {
-    if (document) {
-      setIsLoading(true);
+    if (open && document) {
+      setLoading(true);
       setError(null);
     }
-  }, [document]);
-  
+  }, [open, document]);
+
+  // Handle document load error
+  const handleLoadError = () => {
+    setLoading(false);
+    setError('Failed to load document. The file may be corrupted or inaccessible.');
+  };
+
+  // Handle document load success
   const handleLoadSuccess = () => {
-    setIsLoading(false);
-    setError(null);
+    setLoading(false);
   };
-  
-  const handleLoadError = (errorMessage: string) => {
-    setIsLoading(false);
-    setError(errorMessage);
-  };
-  
-  if (!document) {
-    return null;
-  }
-  
-  const handleDownload = () => {
-    if (document.url) {
-      window.open(document.url, '_blank');
+
+  // Generate URL for the file
+  const getDocumentUrl = () => {
+    if (!document?.filePath) return '';
+    
+    try {
+      const { data } = supabase.storage
+        .from('merchant-documents')
+        .getPublicUrl(document.filePath);
+      
+      return data.publicUrl;
+    } catch (err) {
+      console.error('Error generating URL:', err);
+      setError('Error generating document URL');
+      return '';
     }
   };
+
+  if (!document) return null;
+
+  const documentUrl = getDocumentUrl();
   
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl w-full max-h-[90vh] flex flex-col p-0 overflow-hidden gap-0 border-0">
-        <DialogHeader className="px-6 py-4 border-b">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${open ? 'block' : 'hidden'}`}>
+      <div className="fixed inset-0 bg-black/50" onClick={() => onOpenChange(false)} />
+      
+      <Card className="w-full max-w-5xl h-[90vh] max-h-[90vh] z-50 flex flex-col bg-white">
+        <CardHeader className="border-b flex-shrink-0">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl flex items-center gap-2">
-              <FileText className="h-5 w-5 text-blue-600" />
-              {document.name}
-            </DialogTitle>
-            <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="h-8 w-8">
-              <X className="h-4 w-4" />
-            </Button>
+            <CardTitle className="text-lg font-medium flex items-center gap-2">
+              <File className="h-5 w-5 text-blue-600" />
+              <span className="truncate max-w-[400px]">{document.name}</span>
+            </CardTitle>
+            
+            <div className="flex items-center gap-2">
+              {documentUrl && (
+                <a 
+                  href={documentUrl} 
+                  download={document.name}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-medium bg-blue-50 text-blue-700 hover:bg-blue-100"
+                >
+                  <Download className="h-4 w-4 mr-1.5" />
+                  Download
+                </a>
+              )}
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => onOpenChange(false)}
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+              </Button>
+            </div>
           </div>
-        </DialogHeader>
-        
-        <div className="flex-grow relative overflow-hidden bg-gray-100 min-h-[50vh]">
-          {isLoading && <LoadingState />}
           
-          {error && <ErrorState error={error} />}
-          
-          <DocumentPreview 
-            document={document} 
-            onLoadSuccess={handleLoadSuccess}
-            onLoadError={handleLoadError}
-          />
-        </div>
+          <div className="text-sm text-muted-foreground flex items-center gap-4 mt-1">
+            <span>
+              {new Date(document.uploadDate).toLocaleDateString()} at {new Date(document.uploadDate).toLocaleTimeString()}
+            </span>
+            <span>•</span>
+            <span>{(document.size / 1024 / 1024).toFixed(2)} MB</span>
+          </div>
+        </CardHeader>
         
-        <DocumentFooter 
-          document={document}
-          onDownload={handleDownload}
-        />
-      </DialogContent>
-    </Dialog>
+        <CardContent className="flex-grow overflow-hidden relative p-0">
+          {loading && <LoadingState />}
+          
+          {error ? (
+            <ErrorState error={error} />
+          ) : (
+            <DocumentPreview
+              url={documentUrl}
+              fileName={document.name}
+              fileType={document.fileType}
+              onLoad={handleLoadSuccess}
+              onError={handleLoadError}
+            />
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
+
+export default DocumentViewModal;

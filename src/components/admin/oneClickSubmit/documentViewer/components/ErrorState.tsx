@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface ErrorStateProps {
@@ -9,14 +9,12 @@ interface ErrorStateProps {
 
 export const ErrorState: React.FC<ErrorStateProps> = ({ error }) => {
   return (
-    <div className="w-full h-full flex items-center justify-center p-4">
-      <Alert className="bg-red-50 border-red-200 max-w-xl">
-        <div className="flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-red-600" />
-          <AlertDescription className="text-red-700">
-            {error || 'Error loading document'}
-          </AlertDescription>
-        </div>
+    <div className="h-full w-full flex items-center justify-center p-8">
+      <Alert variant="destructive" className="max-w-md">
+        <AlertCircle className="h-5 w-5 mr-2" />
+        <AlertDescription className="text-sm">
+          {error || 'Failed to load the document. Please try again later.'}
+        </AlertDescription>
       </Alert>
     </div>
   );
