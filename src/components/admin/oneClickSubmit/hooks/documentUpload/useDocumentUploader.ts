@@ -1,5 +1,5 @@
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { uploadMerchantDocument } from '@/services/merchantApplicationService';
@@ -18,8 +18,10 @@ export const useDocumentUploader = (
   // Set up mount status tracking
   useEffect(() => {
     isMountedRef.current = true;
+    console.log('[useDocumentUploader] Component mounted');
     return () => {
       isMountedRef.current = false;
+      console.log('[useDocumentUploader] Component unmounted');
     };
   }, []);
 
@@ -40,7 +42,7 @@ export const useDocumentUploader = (
     if (!file) {
       const error = new Error('Please select a file to upload');
       toast.error(error.message);
-      if (onError) onError(error);
+      if (onError && isMountedRef.current) onError(error);
       return;
     }
     
@@ -48,7 +50,7 @@ export const useDocumentUploader = (
       const error = new Error('Application ID is required for document upload');
       console.error('[useDocumentUploader]', error.message);
       toast.error(error.message);
-      if (onError) onError(error);
+      if (onError && isMountedRef.current) onError(error);
       return;
     }
     
@@ -78,6 +80,7 @@ export const useDocumentUploader = (
         });
         
         if (createBucketError) {
+          console.error('[useDocumentUploader] Error creating bucket:', createBucketError);
           throw new Error(`Failed to create bucket: ${createBucketError.message}`);
         }
         
@@ -133,14 +136,16 @@ export const useDocumentUploader = (
       
       // Refresh document list
       try {
-        await loadDocuments();
-      } catch (loadError) {
+        if (isMountedRef.current) {
+          await loadDocuments();
+        }
+      } catch (loadError: any) {
         console.error('[useDocumentUploader] Error refreshing document list:', loadError);
         // Don't fail the overall upload operation if this fails
       }
       
       // Call success callback
-      if (onSuccess) {
+      if (onSuccess && isMountedRef.current) {
         onSuccess();
       }
       
@@ -168,7 +173,7 @@ export const useDocumentUploader = (
         setUploadProgress(0);
       }
       
-      if (onError) onError(error);
+      if (onError && isMountedRef.current) onError(error);
       
       uploadingRef.current = false;
     }
@@ -178,6 +183,3 @@ export const useDocumentUploader = (
     uploadDocument
   };
 };
-
-// Add missing import
-import { useEffect } from 'react';

@@ -88,18 +88,23 @@ export const UploadForm: React.FC<UploadFormProps> = ({
             fileInputRef.current.value = '';
           }
           // Reload documents to refresh the list
-          loadDocuments();
+          loadDocuments().catch(error => {
+            console.error("Error reloading documents after upload:", error);
+          });
+          toast.success(`Document ${selectedFile.name} uploaded successfully`);
         },
         onError: (error) => {
           console.error("Upload error callback triggered:", error);
+          toast.error(`Upload failed: ${error.message || "Unknown error"}`);
           // Reset file input on error
           if (fileInputRef.current) {
             fileInputRef.current.value = '';
           }
         }
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error during upload submission:", err);
+      toast.error(`Upload error: ${err?.message || "Unknown error"}`);
       // Ensure we reset even if there's an exception
       setSelectedFile(null);
       if (fileInputRef.current) {

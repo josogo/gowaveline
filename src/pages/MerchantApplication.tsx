@@ -13,6 +13,7 @@ const MerchantApplication = () => {
   const email = searchParams.get('email');
 
   const handleSuccessfulLogin = (appData: any) => {
+    console.log("Login successful, application data:", appData);
     setIsAuthenticated(true);
     setMerchantApp(appData || null);
   };
@@ -21,6 +22,7 @@ const MerchantApplication = () => {
     // Show success toast before redirecting
     toast.success("Application progress saved successfully");
     // Redirect to homepage or previous page
+    console.log("Closing merchant application");
     window.history.back();
   };
 

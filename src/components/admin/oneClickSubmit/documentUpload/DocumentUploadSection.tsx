@@ -42,7 +42,9 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
   useEffect(() => {
     if (validApplicationId) {
       console.log("[DocumentUploadSection] Loading documents for:", validApplicationId);
-      loadDocuments();
+      loadDocuments().catch(error => {
+        console.error("[DocumentUploadSection] Error loading documents:", error);
+      });
     } else {
       console.warn("[DocumentUploadSection] No applicationId provided");
     }
@@ -55,7 +57,9 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
     }
     
     console.log("[DocumentUploadSection] Manual document refresh requested for ID:", validApplicationId);
-    loadDocuments();
+    loadDocuments().catch(error => {
+      console.error("[DocumentUploadSection] Error refreshing documents:", error);
+    });
     toast.info('Refreshing document list...');
   };
   
