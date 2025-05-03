@@ -1,6 +1,4 @@
 
+export { default as DocumentViewModal } from './DocumentViewModal';
+export { default as DocumentPreview } from './components/DocumentPreview';
 export * from './DocumentViewModal';
-export * from './components/DocumentPreview';
-export * from './components/ErrorState';
-export * from './components/LoadingState';
-export * from './components/DocumentFooter';

@@ -10,18 +10,22 @@ const corsHeaders = {
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders })
   }
-  
+
   try {
+    console.log("Starting fetch documents process in edge function");
+    
+    // Create Supabase client with service role (bypasses RLS)
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
-    
+
     // Get auth info
     const authHeader = req.headers.get('authorization') || '';
     if (!authHeader) {
+      console.error("Missing authorization header");
       return new Response(
         JSON.stringify({ error: 'Missing authorization header' }),
         { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
@@ -39,37 +43,44 @@ serve(async (req) => {
         { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
-    
-    // Parse URL to get applicationId
+
+    console.log(`Authenticated user ID: ${user.id}`);
+
+    // Get application ID from query parameters
     const url = new URL(req.url);
     const applicationId = url.searchParams.get('applicationId');
     
     if (!applicationId) {
+      console.error("Missing applicationId parameter");
       return new Response(
-        JSON.stringify({ error: 'Application ID is required' }),
+        JSON.stringify({ error: 'Missing applicationId parameter' }),
         { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
-    
-    // Fetch documents using service role (bypassing RLS)
-    const { data: documents, error: queryError } = await supabaseClient
+
+    console.log(`Fetching documents for application: ${applicationId}`);
+
+    // Fetch documents from the database
+    const { data: documents, error: dbError } = await supabaseClient
       .from('merchant_documents')
       .select('*')
       .eq('merchant_id', applicationId)
       .order('created_at', { ascending: false });
-    
-    if (queryError) {
-      console.error('Query error:', queryError);
+      
+    if (dbError) {
+      console.error('Database error:', dbError);
       return new Response(
-        JSON.stringify({ error: 'Error fetching documents', details: queryError }),
+        JSON.stringify({ error: 'Error fetching documents', details: dbError }),
         { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
+
+    console.log(`Found ${documents?.length || 0} documents`);
     
     return new Response(
       JSON.stringify({ 
         success: true, 
-        documents: documents || [] 
+        documents: documents || []
       }),
       { headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
@@ -80,4 +91,4 @@ serve(async (req) => {
       { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   }
-})
+});

@@ -1,97 +1,79 @@
 
 import React from 'react';
 import { TabsContent } from '@/components/ui/tabs';
-import { FileList } from '../FileList';
-import { useDocumentUpload } from '../hooks';
 import { UploadForm } from './UploadForm';
+import { FileList } from '../FileList';
 import { DocumentViewItem } from '../hooks/documentUpload/types';
+import { useDocumentUpload } from '../hooks';
 
 interface DocumentTabsProps {
   activeTab: string;
   applicationId: string;
-  onViewDocument: (doc: DocumentViewItem) => void;
-  isLoading?: boolean;
+  onViewDocument: (document: DocumentViewItem) => void;
+  isLoading: boolean;
 }
 
-export const DocumentTabs: React.FC<DocumentTabsProps> = ({
+export const DocumentTabs: React.FC<DocumentTabsProps> = ({ 
   activeTab,
   applicationId,
   onViewDocument,
-  isLoading = false
+  isLoading
 }) => {
   const { documents } = useDocumentUpload(applicationId);
   
-  const getFilteredDocuments = (docType: string): DocumentViewItem[] => {
-    if (!documents) return [];
+  // Filter documents based on active tab
+  const getDocumentsForTab = () => {
+    if (!documents || !documents.length) return [];
     
-    const filteredDocs = documents
-      .filter(doc => {
-        switch (docType) {
-          case 'bank':
-            return ['bank_statement', 'voided_check'].includes(doc.document_type);
-          case 'business':
-            return ['business_license', 'ein_letter', 'articles_of_incorporation'].includes(doc.document_type);
-          case 'processing':
-            return ['processing_statement', 'transaction_history'].includes(doc.document_type);
-          case 'other':
-            return !['bank_statement', 'voided_check', 'business_license', 'ein_letter', 
-                    'articles_of_incorporation', 'processing_statement', 'transaction_history']
-                    .includes(doc.document_type);
-          default:
-            return false;
-        }
-      })
-      .map(doc => ({
-        id: doc.id,
-        name: doc.file_name,
-        uploadDate: doc.created_at,
-        size: doc.file_size,
-        filePath: doc.file_path,
-        fileType: doc.file_type
-      }));
-    
-    return filteredDocs;
+    return documents.filter(doc => {
+      switch (activeTab) {
+        case 'bank':
+          return ['bank_statement', 'voided_check'].includes(doc.document_type);
+        case 'business':
+          return ['business_license', 'ein_letter', 'articles_of_incorporation'].includes(doc.document_type);
+        case 'processing':
+          return ['processing_statement'].includes(doc.document_type);
+        case 'other':
+          return !['bank_statement', 'voided_check', 'business_license', 'ein_letter',
+                 'articles_of_incorporation', 'processing_statement'].includes(doc.document_type);
+        default:
+          return false;
+      }
+    }).map(doc => ({
+      id: doc.id,
+      name: doc.file_name,
+      uploadDate: doc.created_at,
+      size: doc.file_size,
+      filePath: doc.file_path,
+      fileType: doc.file_type
+    }));
   };
   
-  const handleDelete = async (id: string) => {
-    // This will be handled by the useDocumentUpload hook from the parent
-    console.log('Delete document:', id);
-    // Future implementation could include document deletion functionality
-  };
-  
-  // Document type mappings for upload forms
-  const getDocTypeForTab = (tabName: string): string => {
-    switch (tabName) {
-      case 'bank':
-        return 'bank_statement'; 
-      case 'business':
-        return 'business_license';
-      case 'processing':
-        return 'processing_statement';
-      default:
-        return 'other';
+  // Get appropriate document type based on tab
+  const getDefaultDocumentType = () => {
+    switch (activeTab) {
+      case 'bank': return 'bank_statement';
+      case 'business': return 'business_license';
+      case 'processing': return 'processing_statement';
+      default: return 'other';
     }
   };
   
   return (
     <>
-      {['bank', 'business', 'processing', 'other'].map(tabName => (
-        <TabsContent key={tabName} value={tabName} className="space-y-6 mt-2">
-          <div className="grid gap-6">
-            <UploadForm 
-              applicationId={applicationId}
-              documentType={getDocTypeForTab(tabName)}
-            />
-            
-            <FileList 
-              files={getFilteredDocuments(tabName)}
-              onDelete={handleDelete}
-              onView={onViewDocument}
-              loading={isLoading}
-            />
-          </div>
-        </TabsContent>
-      ))}
+      <TabsContent value={activeTab} className="space-y-6">
+        <UploadForm
+          applicationId={applicationId}
+          documentType={getDefaultDocumentType()}
+        />
+        
+        <FileList
+          files={getDocumentsForTab()}
+          onDelete={() => {}} // We'll implement this later
+          onView={onViewDocument}
+          loading={isLoading}
+        />
+      </TabsContent>
     </>
   );
 };
