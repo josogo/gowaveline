@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
@@ -14,10 +14,10 @@ export const useDocumentUploader = (
   onSuccess?: () => Promise<void>
 ) => {
   // Track mounted state to prevent state updates after unmount
-  const mountedRef = React.useRef(true);
+  const mountedRef = useRef(true);
   
   // Set up cleanup function
-  React.useEffect(() => {
+  useEffect(() => {
     return () => {
       mountedRef.current = false;
     };
