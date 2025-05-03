@@ -1,116 +1,116 @@
 
 import React, { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { File, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { DocumentPreview } from './components/DocumentPreview';
-import { DocumentFooter } from './components/DocumentFooter';
-import { Loader2 } from 'lucide-react';
-
-export interface DocumentViewItem {
-  id: string;
-  name: string;
-  uploadDate: string;
-  size: number;
-  filePath: string;
-  fileType: string;
-  url?: string;
-}
+import { DocumentPreview, DocumentFooter } from './components';
+import { DocumentViewItem } from '../hooks/documentUpload/types';
 
 interface DocumentViewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   document: DocumentViewItem | null;
+  onDelete?: (document: DocumentViewItem) => void;
 }
 
 export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
   open,
   onOpenChange,
   document,
+  onDelete
 }) => {
-  const [documentUrl, setDocumentUrl] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [documentUrl, setDocumentUrl] = useState<string | null>(null);
 
+  // Generate URL and reset state when document changes
   useEffect(() => {
-    const fetchDocumentUrl = async () => {
-      if (!document || !document.filePath) return;
-      
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        const { data, error } = await supabase.storage
-          .from('merchant-documents')
-          .createSignedUrl(document.filePath, 3600); // URL valid for 1 hour
-          
-        if (error) throw error;
-        
-        if (data && data.signedUrl) {
-          setDocumentUrl(data.signedUrl);
-        } else {
-          setError('Could not generate a preview URL');
-        }
-      } catch (err: any) {
-        console.error('Error fetching document URL:', err);
-        setError(err.message || 'Failed to load document');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     if (open && document) {
-      fetchDocumentUrl();
-    } else {
-      setDocumentUrl(null);
+      setLoading(true);
       setError(null);
+      setDocumentUrl(null);
+
+      if (document.filePath) {
+        try {
+          const { data } = supabase.storage
+            .from('merchant-documents')
+            .getPublicUrl(document.filePath);
+          
+          setDocumentUrl(data.publicUrl);
+        } catch (err) {
+          console.error('Error generating URL:', err);
+          setError('Error generating document URL');
+        }
+      }
     }
   }, [open, document]);
-  
-  const handleClose = () => {
-    onOpenChange(false);
+
+  // Handle document load events
+  const handleLoadError = () => {
+    setLoading(false);
+    setError('Failed to load document. The file may be corrupted or inaccessible.');
   };
-  
-  const documentName = document?.name || 'Document';
+
+  const handleLoadSuccess = () => {
+    setLoading(false);
+  };
+
+  const handleDelete = () => {
+    if (document && onDelete) {
+      onDelete(document);
+      onOpenChange(false);
+    }
+  };
+
+  if (!document) return null;
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl w-full max-h-[85vh] flex flex-col p-0">
-        <DialogHeader className="p-4 border-b">
-          <DialogTitle className="text-lg font-medium">{documentName}</DialogTitle>
+      <DialogContent className="max-w-4xl w-full max-h-[85vh] p-0 overflow-hidden flex flex-col">
+        <DialogHeader className="px-6 py-4 border-b flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2 text-lg font-medium">
+              <File className="h-5 w-5 text-blue-600" />
+              <span className="truncate max-w-[300px]">{document.name}</span>
+            </DialogTitle>
+            
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => onOpenChange(false)}
+              className="h-8 w-8 rounded-full"
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </Button>
+          </div>
+          
+          <div className="text-sm text-muted-foreground mt-1">
+            <span>
+              {new Date(document.uploadDate).toLocaleDateString()} at {new Date(document.uploadDate).toLocaleTimeString()}
+            </span>
+            <span className="mx-2">•</span>
+            <span>{(document.size / 1024 / 1024).toFixed(2)} MB</span>
+          </div>
         </DialogHeader>
         
-        <div className="flex-grow overflow-auto min-h-[400px] relative flex items-center justify-center">
-          {isLoading && (
-            <div className="flex flex-col items-center justify-center h-full">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-2" />
-              <p className="text-sm text-gray-500">Loading document...</p>
-            </div>
-          )}
-          
-          {error && (
-            <div className="text-center p-6">
-              <p className="text-red-500 mb-2">Error loading document</p>
-              <p className="text-gray-500 text-sm">{error}</p>
-            </div>
-          )}
-          
-          {!isLoading && !error && documentUrl && (
-            <DocumentPreview 
-              documentUrl={documentUrl} 
-              documentType={document?.fileType || ''}
-            />
-          )}
+        <div className="flex-grow overflow-hidden flex flex-col">
+          <DocumentPreview 
+            documentUrl={documentUrl || ''} 
+            fileType={document.fileType} 
+            fileName={document.name}
+            onLoadSuccess={handleLoadSuccess}
+            onLoadError={handleLoadError}
+            isLoading={loading}
+            error={error}
+          />
         </div>
         
-        <DocumentFooter 
-          documentUrl={documentUrl || undefined} 
-          documentName={documentName} 
-          onClose={handleClose} 
+        <DocumentFooter
+          documentUrl={documentUrl || undefined}
+          documentName={document.name}
+          onDelete={onDelete ? handleDelete : undefined}
         />
       </DialogContent>
     </Dialog>

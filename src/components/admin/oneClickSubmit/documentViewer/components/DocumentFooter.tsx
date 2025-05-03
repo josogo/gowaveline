@@ -1,26 +1,27 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, X } from 'lucide-react';
+import { Download, Trash2 } from 'lucide-react';
 
 interface DocumentFooterProps {
   documentUrl?: string;
   documentName?: string;
-  onClose: () => void;
+  onDelete?: () => void;
 }
 
 export const DocumentFooter: React.FC<DocumentFooterProps> = ({ 
   documentUrl, 
-  documentName, 
-  onClose 
+  documentName,
+  onDelete
 }) => {
   return (
-    <div className="border-t p-4 flex items-center justify-end gap-2 bg-gray-50">
+    <div className="flex items-center justify-between px-4 py-3 border-t bg-gray-50">
       {documentUrl && (
         <Button 
-          variant="secondary"
-          className="bg-blue-50 text-blue-700 hover:bg-blue-100"
+          variant="outline" 
+          size="sm"
           asChild
+          className="text-blue-700 border-blue-200 hover:bg-blue-50"
         >
           <a 
             href={documentUrl} 
@@ -28,19 +29,25 @@ export const DocumentFooter: React.FC<DocumentFooterProps> = ({
             target="_blank"
             rel="noreferrer"
           >
-            <Download className="h-4 w-4 mr-1.5" />
+            <Download className="h-4 w-4 mr-2" />
             Download
           </a>
         </Button>
       )}
       
-      <Button 
-        variant="outline" 
-        onClick={onClose}
-      >
-        <X className="h-4 w-4 mr-1.5" />
-        Close
-      </Button>
+      {onDelete && (
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={onDelete}
+          className="text-red-600 border-red-200 hover:bg-red-50"
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Delete
+        </Button>
+      )}
     </div>
   );
 };
+
+export default DocumentFooter;
