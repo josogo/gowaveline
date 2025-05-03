@@ -98,8 +98,7 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
         <div className="flex-grow overflow-hidden flex flex-col">
           <DocumentPreview 
             documentUrl={documentUrl || ''} 
-            fileType={document.fileType} 
-            fileName={document.name}
+            documentType={document.fileType} 
             onLoadSuccess={handleLoadSuccess}
             onLoadError={handleLoadError}
             isLoading={loading}
