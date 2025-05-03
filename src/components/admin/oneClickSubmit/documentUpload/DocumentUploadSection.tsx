@@ -88,7 +88,7 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
               Upload supporting documents for underwriting review
             </CardDescription>
             {!validApplicationId && (
-              <Alert variant="warning" className="mt-2 bg-amber-50 text-amber-800 border border-amber-200">
+              <Alert className="mt-2 bg-amber-50 text-amber-800 border border-amber-200">
                 <AlertDescription className="flex items-center">
                   <Info className="h-4 w-4 mr-2" />
                   No application ID detected. Documents may not save properly.
@@ -143,3 +143,4 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
     </Card>
   );
 };
+
