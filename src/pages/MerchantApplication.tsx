@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { MerchantLoginForm } from '@/components/admin/oneClickSubmit/MerchantLoginForm';
 import ApplicationFlow from '@/components/admin/oneClickSubmit/ApplicationFlow'; // Import the default export
+import { toast } from 'sonner';
 
 const MerchantApplication = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -14,6 +15,13 @@ const MerchantApplication = () => {
   const handleSuccessfulLogin = (appData: any) => {
     setIsAuthenticated(true);
     setMerchantApp(appData || null);
+  };
+
+  const handleClose = () => {
+    // Show success toast before redirecting
+    toast.success("Application progress saved successfully");
+    // Redirect to homepage or previous page
+    window.history.back();
   };
 
   return (
@@ -33,7 +41,10 @@ const MerchantApplication = () => {
         </div>
       ) : (
         // Pass application data if authenticated
-        <ApplicationFlow merchantApplication={merchantApp} />
+        <ApplicationFlow 
+          merchantApplication={merchantApp} 
+          onClose={handleClose}
+        />
       )}
     </div>
   );

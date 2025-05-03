@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -10,15 +10,19 @@ export const useSaveOnUnmount = (
   updateFormData: (data: any) => void,
   saveApplicationData: () => Promise<void>
 ) => {
+  // Create a ref to track if save is in progress
+  const saveInProgressRef = useRef(false);
+  
   useEffect(() => {
     return () => {
-      // Only attempt to save if we have a valid application ID
-      if (!merchantApplicationId) {
-        console.log("Skip saving on unmount: No application ID available");
+      // Only attempt to save if we have a valid application ID and no save is in progress
+      if (!merchantApplicationId || saveInProgressRef.current) {
+        console.log("Skip saving on unmount: No application ID available or save already in progress");
         return;
       }
 
       console.log("Saving on unmount");
+      saveInProgressRef.current = true;
       
       try {
         const currentValues = form.getValues();
@@ -44,13 +48,24 @@ export const useSaveOnUnmount = (
             console.error("Error saving to localStorage on unmount:", storageErr);
           }
           
-          // Fire and forget - don't block unmounting
-          saveApplicationData().catch(err => {
-            console.error("Background save on unmount failed:", err);
+          // Fire and forget - don't block unmounting but limit the timeout
+          const savePromise = Promise.race([
+            saveApplicationData(), 
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error("Save timed out")), 2000)
+            )
+          ]);
+          
+          savePromise.catch(err => {
+            console.error("Background save on unmount failed or timed out:", err);
+            saveInProgressRef.current = false;
+          }).finally(() => {
+            saveInProgressRef.current = false;
           });
         }
       } catch (err) {
         console.error("Exception in useSaveOnUnmount:", err);
+        saveInProgressRef.current = false;
       }
     };
   }, [form, updateFormData, saveApplicationData, activeTab, merchantApplicationId]);

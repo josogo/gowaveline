@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useRef } from 'react';
 import { useDocumentFetch } from './useDocumentFetch';
 import { useDocumentState } from './useDocumentState';
@@ -11,6 +12,8 @@ import { DocumentFile } from './types';
 export const useDocumentUpload = (applicationId: string = '') => {
   // Keep the original applicationId reference
   const applicationIdRef = useRef(applicationId);
+  // Track if the component is still mounted
+  const isMountedRef = useRef(true);
   
   // Update the ref when applicationId changes
   useEffect(() => {
@@ -41,6 +44,9 @@ export const useDocumentUpload = (applicationId: string = '') => {
 
   // Create a memoized loadDocuments function that validates the applicationId
   const loadDocuments = useCallback(async () => {
+    // Skip if component unmounted
+    if (!isMountedRef.current) return;
+    
     const currentAppId = applicationIdRef.current;
     
     if (!currentAppId) {
@@ -62,6 +68,12 @@ export const useDocumentUpload = (applicationId: string = '') => {
 
   // Memoized upload function that validates applicationId
   const uploadDocument = useCallback((options: any) => {
+    // Skip if component unmounted
+    if (!isMountedRef.current) {
+      console.log('[useDocumentUpload] Skipping upload as component is unmounted');
+      return Promise.reject(new Error('Component unmounted'));
+    }
+    
     const currentAppId = applicationIdRef.current;
     
     if (!currentAppId && !options.applicationId) {
@@ -90,7 +102,9 @@ export const useDocumentUpload = (applicationId: string = '') => {
     if (applicationId) {
       console.log(`[useDocumentUpload] Initial load for applicationId ${applicationId}`);
       loadDocuments().catch(err => {
-        console.error('[useDocumentUpload] Error in initial document load:', err);
+        if (isMountedRef.current) {
+          console.error('[useDocumentUpload] Error in initial document load:', err);
+        }
       });
     } else {
       console.warn('[useDocumentUpload] No applicationId provided for initial load');
@@ -99,6 +113,7 @@ export const useDocumentUpload = (applicationId: string = '') => {
     // Clean up function to ensure we don't have state updates after unmounting
     return () => {
       console.log('[useDocumentUpload] Cleaning up document upload resources');
+      isMountedRef.current = false;
     };
   }, [applicationId, loadDocuments]);
 
@@ -106,10 +121,11 @@ export const useDocumentUpload = (applicationId: string = '') => {
   useEffect(() => {
     return () => {
       console.log('[useDocumentUpload] Unmounting document upload hook');
-      setUploading(false);
-      setUploadProgress(0);
-      setUploadError(null);
-      setIsLoading(false);
+      isMountedRef.current = false;
+      if (setUploading) setUploading(false);
+      if (setUploadProgress) setUploadProgress(0);
+      if (setUploadError) setUploadError(null);
+      if (setIsLoading) setIsLoading(false);
     };
   }, [setUploading, setUploadProgress, setUploadError, setIsLoading]);
 
