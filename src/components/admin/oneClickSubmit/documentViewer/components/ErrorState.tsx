@@ -1,51 +1,23 @@
 
 import React from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { AlertCircle, RefreshCw } from 'lucide-react';
 
 interface ErrorStateProps {
   error: string;
-  retryCount: number;
-  maxRetries: number;
-  onRetry: () => void;
 }
 
-export const ErrorState: React.FC<ErrorStateProps> = ({
-  error,
-  retryCount,
-  maxRetries,
-  onRetry
-}) => {
+export const ErrorState: React.FC<ErrorStateProps> = ({ error }) => {
   return (
-    <div className="h-full flex items-center justify-center p-6">
-      <div className="max-w-md w-full">
-        <Alert variant="destructive" className="mb-4">
-          <AlertCircle className="h-5 w-5 mr-2" />
-          <AlertDescription>
-            {error}
+    <div className="w-full h-full flex items-center justify-center p-4">
+      <Alert className="bg-red-50 border-red-200 max-w-xl">
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="h-5 w-5 text-red-600" />
+          <AlertDescription className="text-red-700">
+            {error || 'Error loading document'}
           </AlertDescription>
-        </Alert>
-        
-        {retryCount < maxRetries ? (
-          <div className="text-center">
-            <p className="text-gray-500 mb-4">
-              Unable to load the document. Please try again.
-            </p>
-            <Button 
-              onClick={onRetry}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Retry ({retryCount}/{maxRetries})
-            </Button>
-          </div>
-        ) : (
-          <p className="text-center text-gray-500">
-            Maximum retry attempts reached. Please try again later.
-          </p>
-        )}
-      </div>
+        </div>
+      </Alert>
     </div>
   );
 };

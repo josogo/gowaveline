@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileCheck, Building2, CreditCard, FileText } from 'lucide-react';
+import { FileCheck, FileText, BarChart, Folder } from 'lucide-react';
 
 interface DocumentCategoriesProps {
   activeTab: string;
@@ -9,34 +9,34 @@ interface DocumentCategoriesProps {
 
 export const DocumentCategories: React.FC<DocumentCategoriesProps> = ({ activeTab }) => {
   return (
-    <TabsList className="grid grid-cols-4 mb-6 bg-blue-50/50 p-1 rounded-lg">
+    <TabsList className="mb-6 bg-slate-100 p-1 border rounded-md">
       <TabsTrigger 
         value="bank" 
-        className="flex flex-col gap-1 py-3 h-auto data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-700"
+        className={`flex items-center gap-1.5 ${activeTab === 'bank' ? 'bg-white text-blue-700' : 'text-gray-600'}`}
       >
-        <FileCheck className="h-5 w-5" />
-        <span className="text-xs">Banking</span>
+        <FileCheck className="h-4 w-4" />
+        Banking
       </TabsTrigger>
       <TabsTrigger 
         value="business" 
-        className="flex flex-col gap-1 py-3 h-auto data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-700"
+        className={`flex items-center gap-1.5 ${activeTab === 'business' ? 'bg-white text-blue-700' : 'text-gray-600'}`}
       >
-        <Building2 className="h-5 w-5" />
-        <span className="text-xs">Business</span>
+        <FileText className="h-4 w-4" />
+        Business
       </TabsTrigger>
       <TabsTrigger 
         value="processing" 
-        className="flex flex-col gap-1 py-3 h-auto data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-700"
+        className={`flex items-center gap-1.5 ${activeTab === 'processing' ? 'bg-white text-blue-700' : 'text-gray-600'}`}
       >
-        <CreditCard className="h-5 w-5" />
-        <span className="text-xs">Processing</span>
+        <BarChart className="h-4 w-4" />
+        Processing
       </TabsTrigger>
       <TabsTrigger 
         value="other" 
-        className="flex flex-col gap-1 py-3 h-auto data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-700"
+        className={`flex items-center gap-1.5 ${activeTab === 'other' ? 'bg-white text-blue-700' : 'text-gray-600'}`}
       >
-        <FileText className="h-5 w-5" />
-        <span className="text-xs">Other</span>
+        <Folder className="h-4 w-4" />
+        Other
       </TabsTrigger>
     </TabsList>
   );

@@ -19,3 +19,13 @@ export interface UploadDocumentOptions {
   onError?: (error: Error) => void;
   onProgress?: (progress: number) => void;
 }
+
+export interface DocumentViewItem {
+  id: string;
+  name: string;
+  uploadDate: string;
+  size: number;
+  filePath: string;
+  fileType: string;
+  url?: string;
+}

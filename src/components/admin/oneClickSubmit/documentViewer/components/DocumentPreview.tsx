@@ -1,88 +1,89 @@
 
-import React, { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { FileText, ImageIcon } from 'lucide-react';
 
 interface DocumentPreviewProps {
-  documentUrl: string | null;
-  documentFile: {
+  document: {
     id: string;
     name: string;
-    filePath: string;
     fileType: string;
-    uploadDate: string;
-    size?: number;
-  } | null;
-  onError: () => void;
-  onDownload: () => void;
+    url?: string;
+  };
+  onLoadSuccess: () => void;
+  onLoadError: (error: string) => void;
 }
 
 export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
-  documentUrl,
-  documentFile,
-  onError,
+  document,
+  onLoadSuccess,
+  onLoadError
 }) => {
-  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
   
-  if (!documentUrl || !documentFile) {
+  useEffect(() => {
+    setLoaded(false);
+  }, [document.id]);
+  
+  if (!document.url) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-red-500">Document unavailable</p>
+      <div className="w-full h-full flex items-center justify-center text-gray-500">
+        No preview available
       </div>
     );
   }
-
-  const isPdf = documentFile.fileType?.includes('pdf');
-  const isImage = documentFile.fileType?.includes('image');
-
-  // For PDF files
+  
+  // Handle different file types
+  const isPdf = document.fileType?.includes('pdf');
+  const isImage = document.fileType?.includes('image');
+  
   if (isPdf) {
     return (
-      <div className="h-full relative">
-        {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-50 z-10">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-          </div>
-        )}
+      <div className="w-full h-full">
         <iframe 
-          src={`${documentUrl}#toolbar=1`}
+          src={`${document.url}#toolbar=0&view=FitH`}
           className="w-full h-full"
-          onLoad={() => setLoading(false)}
-          onError={onError}
-          title={documentFile.name}
+          onLoad={() => {
+            setLoaded(true);
+            onLoadSuccess();
+          }}
+          onError={() => onLoadError('Failed to load PDF document')}
+          title={document.name}
         />
       </div>
     );
   }
-
-  // For image files
+  
   if (isImage) {
     return (
-      <div className="h-full flex items-center justify-center bg-gray-50 relative">
-        {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-50 z-10">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-          </div>
-        )}
+      <div className="w-full h-full flex items-center justify-center p-4">
         <img 
-          src={documentUrl} 
-          alt={documentFile.name} 
-          className="max-h-full max-w-full object-contain"
-          onLoad={() => setLoading(false)}
-          onError={onError}
+          src={document.url} 
+          alt={document.name}
+          className={`max-w-full max-h-full object-contain ${!loaded ? 'invisible' : ''}`}
+          onLoad={() => {
+            setLoaded(true);
+            onLoadSuccess();
+          }}
+          onError={() => onLoadError('Failed to load image')}
         />
       </div>
     );
   }
-
-  // For other file types
+  
+  // For other file types, show a generic preview
   return (
-    <div className="h-full flex flex-col items-center justify-center p-4">
-      <p className="text-lg font-medium mb-2">
-        Preview not available for this file type
-      </p>
-      <p className="text-gray-500 mb-4">
-        You can download this file to view its contents.
-      </p>
+    <div className="w-full h-full flex flex-col items-center justify-center">
+      <div className="bg-white p-8 rounded-lg shadow-sm flex flex-col items-center">
+        {isPdf ? (
+          <FileText className="h-24 w-24 text-red-500" />
+        ) : isImage ? (
+          <ImageIcon className="h-24 w-24 text-blue-500" /> 
+        ) : (
+          <FileText className="h-24 w-24 text-gray-500" />
+        )}
+        <p className="mt-4 text-lg font-medium text-center">{document.name}</p>
+        <p className="mt-2 text-gray-500">Preview not available for this file type</p>
+      </div>
     </div>
   );
 };

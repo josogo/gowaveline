@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { useDocumentUpload } from '../hooks';
 import { Button } from '@/components/ui/button';
-import { FileCheck, RefreshCw, Loader2, Info, Upload, File } from 'lucide-react';
+import { FileCheck, RefreshCw, Loader2, Info, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { DocumentCategories } from './DocumentCategories';
 import { DocumentTabs } from './DocumentTabs';

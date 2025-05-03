@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, FileText, Eye, File } from 'lucide-react';
+import { CheckCircle, FileText, Eye, File, ImageIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 
@@ -56,7 +56,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
       return <FileText className="h-5 w-5 text-orange-500" />;
     }
     if (fileType?.includes('image')) {
-      return <File className="h-5 w-5 text-blue-500" />;
+      return <ImageIcon className="h-5 w-5 text-blue-500" />;
     }
     return <File className="h-5 w-5 text-gray-500" />;
   };

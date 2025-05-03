@@ -1,57 +1,57 @@
 
 import React from 'react';
-import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { Download, Calendar } from 'lucide-react';
 
 interface DocumentFooterProps {
-  documentFile: {
-    fileType: string;
-    uploadDate: string;
+  document: {
     name: string;
-  } | null;
-  isDownloading: boolean;
-  downloadProgress: number;
+    uploadDate: string;
+    size: number;
+    url?: string;
+  };
+  onDownload: () => void;
 }
 
-export const DocumentFooter: React.FC<DocumentFooterProps> = ({ 
-  documentFile,
-  isDownloading,
-  downloadProgress
+export const DocumentFooter: React.FC<DocumentFooterProps> = ({
+  document,
+  onDownload
 }) => {
-  if (!documentFile) {
-    return null;
-  }
-
-  const formattedDate = new Date(documentFile.uploadDate).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  // Format file size
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  };
   
-  const getFileTypeLabel = (fileType: string) => {
-    if (!fileType) return 'Unknown Type';
-    if (fileType.includes('pdf')) return 'PDF Document';
-    if (fileType.includes('image')) return 'Image';
-    if (fileType.includes('word')) return 'Word Document';
-    if (fileType.includes('excel') || fileType.includes('sheet')) return 'Spreadsheet';
-    return fileType.split('/')[1]?.toUpperCase() || 'Document';
+  // Format date
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
   
   return (
-    <div className="border-t pt-2 text-sm text-gray-500 space-y-1">
-      <div className="flex justify-between">
-        <span>Type: {getFileTypeLabel(documentFile.fileType)}</span>
-        <span>Uploaded: {formattedDate}</span>
+    <div className="p-4 border-t bg-gray-50 flex flex-wrap items-center justify-between gap-4">
+      <div className="flex items-center text-sm text-gray-600">
+        <Calendar className="h-4 w-4 mr-1.5" />
+        <span>Uploaded: {formatDate(document.uploadDate)}</span>
+        <span className="mx-2">•</span>
+        <span>{formatSize(document.size)}</span>
       </div>
       
-      {isDownloading && downloadProgress > 0 && (
-        <div className="pt-1">
-          <Progress 
-            value={downloadProgress} 
-            className="h-1"
-            indicatorClassName="bg-blue-600"
-          />
-        </div>
-      )}
+      <Button 
+        onClick={onDownload}
+        disabled={!document.url}
+        className="bg-blue-600 hover:bg-blue-700"
+      >
+        <Download className="h-4 w-4 mr-2" />
+        Download
+      </Button>
     </div>
   );
 };

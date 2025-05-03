@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useDocumentUpload } from '../hooks';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { FileCheck, FileX, Upload, Loader2, AlertCircle, X, File } from 'lucide-react';
+import { FileCheck, FileX, Upload, Loader2, AlertCircle, X, File, Image as ImageIcon, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { Progress } from '@/components/ui/progress';
 
@@ -27,6 +27,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mountedRef = useRef<boolean>(true);
   
@@ -35,8 +36,11 @@ export const UploadForm: React.FC<UploadFormProps> = ({
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
     };
-  }, []);
+  }, [previewUrl]);
   
   // Reset selected file state when upload completes or errors
   useEffect(() => {
@@ -46,24 +50,20 @@ export const UploadForm: React.FC<UploadFormProps> = ({
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl);
+          setPreviewUrl(null);
+        }
       }
     }
-  }, [uploading, uploadProgress]);
+  }, [uploading, uploadProgress, previewUrl]);
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      
-      // Validate file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error('File is too large. Maximum size is 10MB.');
-        e.target.value = '';
-        return;
-      }
-      
-      setSelectedFile(file);
+      processFile(e.target.files[0]);
     } else {
       setSelectedFile(null);
+      setPreviewUrl(null);
     }
   };
 
@@ -81,15 +81,25 @@ export const UploadForm: React.FC<UploadFormProps> = ({
     setIsDragging(false);
     
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0];
-      
-      // Validate file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error('File is too large. Maximum size is 10MB.');
-        return;
-      }
-      
-      setSelectedFile(file);
+      processFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const processFile = (file: File) => {
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File is too large. Maximum size is 10MB.');
+      return;
+    }
+    
+    setSelectedFile(file);
+    
+    // Create preview for images
+    if (file.type.startsWith('image/')) {
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    } else {
+      setPreviewUrl(null);
     }
   };
   
@@ -122,6 +132,11 @@ export const UploadForm: React.FC<UploadFormProps> = ({
           if (fileInputRef.current) {
             fileInputRef.current.value = '';
           }
+          // Clear preview
+          if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(null);
+          }
           // Reload documents to refresh the list
           loadDocuments().catch(error => {
             console.error("Error reloading documents after upload:", error);
@@ -147,12 +162,20 @@ export const UploadForm: React.FC<UploadFormProps> = ({
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(null);
+      }
     }
   };
   
   const handleCancelUpload = () => {
     resetUploadState();
     setSelectedFile(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -166,6 +189,18 @@ export const UploadForm: React.FC<UploadFormProps> = ({
     if (size < 1024) return `${size} B`;
     if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
     return `${(size / (1024 * 1024)).toFixed(2)} MB`;
+  };
+
+  const getFileIcon = () => {
+    if (!selectedFile) return <Upload className="h-12 w-12 text-blue-400 mb-2" />;
+    
+    if (selectedFile.type.startsWith('image/')) {
+      return <ImageIcon className="h-8 w-8 text-blue-500" />;
+    } else if (selectedFile.type === 'application/pdf') {
+      return <FileText className="h-8 w-8 text-red-500" />;
+    } else {
+      return <File className="h-8 w-8 text-blue-500" />;
+    }
   };
   
   return (
@@ -204,7 +239,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({
         <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
           <div className="flex items-center">
             <div className="mr-4 bg-white p-3 rounded-full">
-              <File className="h-8 w-8 text-blue-500" />
+              {getFileIcon()}
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-blue-800 truncate">{selectedFile.name}</p>
@@ -214,13 +249,24 @@ export const UploadForm: React.FC<UploadFormProps> = ({
               type="button"
               variant="ghost" 
               size="sm" 
-              onClick={() => setSelectedFile(null)} 
+              onClick={handleCancelUpload} 
               disabled={uploading}
               className="text-gray-500 hover:text-red-500"
             >
               <X className="h-5 w-5" />
             </Button>
           </div>
+          
+          {/* Show preview for images */}
+          {previewUrl && (
+            <div className="mt-4 border border-blue-200 rounded-md overflow-hidden bg-white">
+              <img 
+                src={previewUrl} 
+                alt="Preview" 
+                className="max-h-32 max-w-full mx-auto object-contain" 
+              />
+            </div>
+          )}
         </div>
       )}
       

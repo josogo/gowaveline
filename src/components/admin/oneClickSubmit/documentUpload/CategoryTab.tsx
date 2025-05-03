@@ -5,7 +5,8 @@ import { useDocumentUpload } from '../hooks';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { UploadForm } from './UploadForm';
 import { DocumentList } from './DocumentList';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Info } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface CategoryTabProps {
   title: string;
@@ -42,7 +43,14 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
       {/* First document type - main one for this category */}
       <Card className="overflow-hidden border border-gray-200 hover:shadow-md transition-all duration-300">
         <CardHeader className="bg-slate-50 py-3">
-          <CardTitle className="text-md font-medium text-blue-800">{documentTypes[0]?.label || title}</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-md font-medium text-blue-800">{documentTypes[0]?.label || title}</CardTitle>
+            {categoryDocuments[documentTypes[0]?.value]?.length > 0 && (
+              <Badge className="bg-green-100 text-green-800 hover:bg-green-200 border-green-300">
+                Uploaded ({categoryDocuments[documentTypes[0]?.value].length})
+              </Badge>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="p-5 space-y-4">
           <UploadForm 
@@ -61,8 +69,9 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
             />
           ) : (
             <Alert className="bg-blue-50 text-blue-700 border-blue-200">
-              <AlertDescription>
-                No documents have been uploaded yet.
+              <AlertDescription className="flex items-center">
+                <Info className="h-4 w-4 mr-2" />
+                No {documentTypes[0]?.label || 'documents'} have been uploaded yet.
               </AlertDescription>
             </Alert>
           )}
@@ -73,7 +82,14 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
       {documentTypes.slice(1).map((docType) => (
         <Card key={docType.value} className="overflow-hidden border border-gray-200 hover:shadow-md transition-all duration-300">
           <CardHeader className="bg-slate-50 py-3">
-            <CardTitle className="text-md font-medium text-blue-800">{docType.label}</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-md font-medium text-blue-800">{docType.label}</CardTitle>
+              {categoryDocuments[docType.value]?.length > 0 && (
+                <Badge className="bg-green-100 text-green-800 hover:bg-green-200 border-green-300">
+                  Uploaded ({categoryDocuments[docType.value].length})
+                </Badge>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="p-5 space-y-4">
             <UploadForm 
@@ -92,8 +108,9 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
               />
             ) : (
               <Alert className="bg-blue-50 text-blue-700 border-blue-200">
-                <AlertDescription>
-                  No documents have been uploaded yet.
+                <AlertDescription className="flex items-center">
+                  <Info className="h-4 w-4 mr-2" />
+                  No {docType.label} have been uploaded yet.
                 </AlertDescription>
               </Alert>
             )}
