@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, FileUp, Loader2, File, X } from 'lucide-react';
@@ -24,6 +24,14 @@ export const UploadForm: React.FC<UploadFormProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadDocument, uploading, uploadProgress } = useDocumentUpload(applicationId);
+  const isMountedRef = useRef(true);
+  
+  // Set up cleanup function for component unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
   
   // Document type options organized by category
   const documentCategories = {
@@ -83,35 +91,47 @@ export const UploadForm: React.FC<UploadFormProps> = ({
       return;
     }
     
-    setSelectedFile(file);
+    if (isMountedRef.current) {
+      setSelectedFile(file);
+    }
   };
   
   const handleDocumentTypeChange = (value: string) => {
-    setDocumentType(value);
+    if (isMountedRef.current) {
+      setDocumentType(value);
+    }
   };
   
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragging(true);
+    if (isMountedRef.current) {
+      setIsDragging(true);
+    }
   };
   
   const handleDragLeave = () => {
-    setIsDragging(false);
+    if (isMountedRef.current) {
+      setIsDragging(false);
+    }
   };
   
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragging(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      validateAndSetFile(e.dataTransfer.files[0]);
+    if (isMountedRef.current) {
+      setIsDragging(false);
+      
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        validateAndSetFile(e.dataTransfer.files[0]);
+      }
     }
   };
   
   const handleRemoveFile = () => {
-    setSelectedFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    if (isMountedRef.current) {
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
   
@@ -138,19 +158,25 @@ export const UploadForm: React.FC<UploadFormProps> = ({
         applicationId,
         documentType,
         onSuccess: () => {
-          toast.success('Document uploaded successfully');
-          setSelectedFile(null);
-          if (fileInputRef.current) {
-            fileInputRef.current.value = '';
+          if (isMountedRef.current) {
+            toast.success('Document uploaded successfully');
+            setSelectedFile(null);
+            if (fileInputRef.current) {
+              fileInputRef.current.value = '';
+            }
+            if (onUploadSuccess) onUploadSuccess();
           }
-          if (onUploadSuccess) onUploadSuccess();
         },
         onError: (error) => {
-          toast.error(`Upload failed: ${error.message}`);
+          if (isMountedRef.current) {
+            toast.error(`Upload failed: ${error.message}`);
+          }
         }
       });
     } catch (error: any) {
-      toast.error(`Upload error: ${error.message}`);
+      if (error.message !== 'Component unmounted' && isMountedRef.current) {
+        toast.error(`Upload error: ${error.message}`);
+      }
     }
   };
 

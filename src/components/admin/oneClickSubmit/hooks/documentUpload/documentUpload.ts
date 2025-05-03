@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useDocumentFetch } from './useDocumentFetch';
 import { useDocumentState } from './useDocumentState';
@@ -103,6 +104,18 @@ export const useDocumentUpload = (applicationId: string = '') => {
         if (options.onProgress) {
           options.onProgress(progress);
         }
+      },
+      onError: (error: Error) => {
+        // Only call the original error handler if we're still mounted
+        if (options.onError && isMountedRef.current) {
+          options.onError(error);
+        }
+      },
+      onSuccess: () => {
+        // Only call the original success handler if we're still mounted
+        if (options.onSuccess && isMountedRef.current) {
+          options.onSuccess();
+        }
       }
     };
     
@@ -135,14 +148,6 @@ export const useDocumentUpload = (applicationId: string = '') => {
       isMountedRef.current = false;
     };
   }, [applicationId, loadDocuments]);
-
-  // Clean up state when unmounting to prevent memory leaks and state updates after unmount
-  useEffect(() => {
-    return () => {
-      console.log('[useDocumentUpload] Unmounting document upload hook');
-      isMountedRef.current = false;
-    };
-  }, []);
 
   return {
     // Document state

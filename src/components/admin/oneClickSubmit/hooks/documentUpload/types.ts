@@ -1,23 +1,24 @@
 
+/**
+ * Interface for document file data
+ */
 export interface DocumentFile {
   id: string;
-  name: string;
-  size: number;
-  type: string;
-  data?: File | Blob;
-  url?: string;
-  uploadProgress?: number;
-  error?: string;
-  // Add the additional fields used by the components
-  file_name?: string;
-  file_size?: number;
-  file_type?: string;
+  name?: string;
+  file_name?: string;  // API returns snake_case
+  size?: number;
+  file_size?: number;  // API returns snake_case
+  type?: string;
+  file_type?: string;  // API returns snake_case
   file_path?: string;
-  created_at?: string;
   document_type?: string;
-  documentType?: string; // Adding this property to fix the type errors
+  documentType?: string; // For compatibility with some component usage
+  created_at?: string;
 }
 
+/**
+ * Interface for document view item
+ */
 export interface DocumentViewItem {
   id: string;
   name: string;
@@ -29,6 +30,9 @@ export interface DocumentViewItem {
   url?: string;
 }
 
+/**
+ * Interface for upload document options
+ */
 export interface UploadDocumentOptions {
   file: File;
   applicationId: string;

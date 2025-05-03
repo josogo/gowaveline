@@ -13,6 +13,16 @@ export const useDocumentUploader = (
   setUploadError: React.Dispatch<React.SetStateAction<Error | null>>,
   onSuccess?: () => Promise<void>
 ) => {
+  // Track mounted state to prevent state updates after unmount
+  const mountedRef = React.useRef(true);
+  
+  // Set up cleanup function
+  React.useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   // Upload document with progress tracking and error handling
   const uploadDocument = useCallback(async (options: {
     file: File;
@@ -26,14 +36,16 @@ export const useDocumentUploader = (
     
     if (!file) {
       const error = new Error(`Invalid upload parameters. File is missing.`);
-      setUploadError(error);
+      if (mountedRef.current) setUploadError(error);
       if (onError) onError(error);
       return Promise.reject(error);
     }
     
-    setUploading(true);
-    setUploadProgress(0);
-    setUploadError(null);
+    if (mountedRef.current) {
+      setUploading(true);
+      setUploadProgress(0);
+      setUploadError(null);
+    }
     
     try {
       console.log(`[useDocumentUploader] Starting upload for ${file.name} (${file.size} bytes)`);
@@ -59,7 +71,7 @@ export const useDocumentUploader = (
         // Continue anyway as this might be a permission issue but bucket might exist
       }
       
-      setUploadProgress(10);
+      if (mountedRef.current) setUploadProgress(10);
       if (onProgress) onProgress(10);
       
       // Step 2: Upload file to storage
@@ -86,7 +98,7 @@ export const useDocumentUploader = (
       }
       
       console.log('[useDocumentUploader] File uploaded successfully:', storageData);
-      setUploadProgress(50);
+      if (mountedRef.current) setUploadProgress(50);
       if (onProgress) onProgress(50);
       
       // Step 3: For temporary uploads, store metadata in localStorage
@@ -113,12 +125,12 @@ export const useDocumentUploader = (
           localStorage.setItem(tempUploadsKey, JSON.stringify(existingUploads));
           
           console.log('[useDocumentUploader] Temporary document metadata stored:', tempDocData);
-          setUploadProgress(100);
+          if (mountedRef.current) setUploadProgress(100);
           if (onProgress) onProgress(100);
           
           // Call onSuccess callbacks
           if (optionsOnSuccess) optionsOnSuccess();
-          if (onSuccess) await onSuccess();
+          if (onSuccess && mountedRef.current) await onSuccess();
           
           return Promise.resolve({
             success: true,
@@ -156,7 +168,7 @@ export const useDocumentUploader = (
           body: JSON.stringify(metadataPayload)
         });
         
-        setUploadProgress(75);
+        if (mountedRef.current) setUploadProgress(75);
         if (onProgress) onProgress(75);
         
         if (!response.ok) {
@@ -168,12 +180,12 @@ export const useDocumentUploader = (
         const result = await response.json();
         console.log('[useDocumentUploader] Document metadata saved:', result);
         
-        setUploadProgress(100);
+        if (mountedRef.current) setUploadProgress(100);
         if (onProgress) onProgress(100);
         
         // Call onSuccess callbacks
         if (optionsOnSuccess) optionsOnSuccess();
-        if (onSuccess) await onSuccess();
+        if (onSuccess && mountedRef.current) await onSuccess();
         
         console.log('[useDocumentUploader] Upload completed successfully');
         return Promise.resolve(result);
@@ -181,17 +193,21 @@ export const useDocumentUploader = (
       
     } catch (error: any) {
       console.error('[useDocumentUploader] Upload error:', error);
-      setUploadError(error);
+      if (mountedRef.current) setUploadError(error);
       
       if (onError) onError(error);
       
       return Promise.reject(error);
     } finally {
-      setUploading(false);
-      // Reset progress after a short delay
-      setTimeout(() => {
-        setUploadProgress(0);
-      }, 1500);
+      if (mountedRef.current) {
+        setUploading(false);
+        // Reset progress after a short delay
+        setTimeout(() => {
+          if (mountedRef.current) {
+            setUploadProgress(0);
+          }
+        }, 1500);
+      }
     }
   }, [setUploading, setUploadProgress, setUploadError, onSuccess]);
   
