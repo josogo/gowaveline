@@ -1,5 +1,5 @@
 
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { uploadMerchantDocument } from '@/services/merchantApplicationService';
@@ -11,6 +11,18 @@ export const useDocumentUploader = (
   setUploadError: (error: Error | null) => void,
   loadDocuments: () => Promise<void>
 ) => {
+  // Use a ref to track and prevent multiple concurrent uploads
+  const uploadingRef = useRef(false);
+  // Use a ref to track if the component is mounted
+  const isMountedRef = useRef(true);
+
+  // Cleanup on unmount
+  useCallback(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   const uploadDocument = useCallback(async ({
     file,
     applicationId = '',
@@ -18,6 +30,12 @@ export const useDocumentUploader = (
     onSuccess,
     onError
   }: UploadDocumentOptions) => {
+    // Prevent multiple uploads and check if component is still mounted
+    if (uploadingRef.current || !isMountedRef.current) {
+      console.log('[useDocumentUploader] Upload in progress or component unmounted, ignoring request');
+      return;
+    }
+
     // Validate inputs
     if (!file) {
       const error = new Error('Please select a file to upload');
@@ -27,13 +45,20 @@ export const useDocumentUploader = (
     }
     
     if (!applicationId) {
-      console.warn('[useDocumentUploader] No applicationId provided for document upload');
+      const error = new Error('Application ID is required for document upload');
+      console.error('[useDocumentUploader]', error.message);
+      toast.error(error.message);
+      if (onError) onError(error);
+      return;
     }
     
-    // Reset any previous errors and set initial state
-    setUploadError(null);
-    setUploading(true);
-    setUploadProgress(10);
+    // Set uploading state
+    uploadingRef.current = true;
+    if (isMountedRef.current) {
+      setUploadError(null);
+      setUploading(true);
+      setUploadProgress(10);
+    }
     
     console.log(`[useDocumentUploader] Starting upload with applicationId: ${applicationId}, documentType: ${documentType}, file: ${file.name}`);
     
@@ -59,7 +84,7 @@ export const useDocumentUploader = (
         console.log('[useDocumentUploader] Created merchant-documents bucket');
       }
       
-      setUploadProgress(20);
+      if (isMountedRef.current) setUploadProgress(20);
       
       // Use a unique ID if no applicationId is provided
       const effectiveAppId = applicationId || `temp-${new Date().getTime()}`;
@@ -69,7 +94,7 @@ export const useDocumentUploader = (
       const fileExt = file.name.split('.').pop();
       const filePath = `${effectiveAppId}/${documentType || 'other'}_${timestamp}.${fileExt}`;
       
-      setUploadProgress(30);
+      if (isMountedRef.current) setUploadProgress(30);
       
       console.log('[useDocumentUploader] Uploading file to path:', filePath);
       const { data: fileData, error: uploadError } = await supabase.storage
@@ -85,7 +110,7 @@ export const useDocumentUploader = (
       }
       
       console.log('[useDocumentUploader] File uploaded successfully to storage:', fileData);
-      setUploadProgress(70);
+      if (isMountedRef.current) setUploadProgress(70);
       
       // Create document record in database
       const { error: dbError } = await uploadMerchantDocument({
@@ -102,7 +127,7 @@ export const useDocumentUploader = (
         throw new Error(`Database entry failed: ${dbError.message}`);
       }
       
-      setUploadProgress(100);
+      if (isMountedRef.current) setUploadProgress(100);
       console.log('[useDocumentUploader] Document upload completed successfully');
       toast.success('Document uploaded successfully');
       
@@ -116,9 +141,12 @@ export const useDocumentUploader = (
       
       // Reset state after successful upload with slight delay
       setTimeout(() => {
-        setUploading(false);
-        setUploadProgress(0);
-        setUploadError(null);
+        if (isMountedRef.current) {
+          setUploading(false);
+          setUploadProgress(0);
+          setUploadError(null);
+        }
+        uploadingRef.current = false;
       }, 1000);
       
     } catch (error: any) {
@@ -129,11 +157,15 @@ export const useDocumentUploader = (
       toast.error(errorMessage);
       
       // Update state and call error callback
-      setUploadError(error);
-      setUploading(false);
-      setUploadProgress(0);
+      if (isMountedRef.current) {
+        setUploadError(error);
+        setUploading(false);
+        setUploadProgress(0);
+      }
       
       if (onError) onError(error);
+      
+      uploadingRef.current = false;
     }
   }, [setUploading, setUploadProgress, setUploadError, loadDocuments]);
 

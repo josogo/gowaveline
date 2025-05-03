@@ -28,7 +28,7 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
   onViewDocument,
   isLoading
 }) => {
-  console.log(`[CategoryTab] Rendering for ${category} with applicationId: ${applicationId}`);
+  console.log(`[CategoryTab] Rendering for ${category} with applicationId: ${applicationId || 'none'}`);
   
   const { 
     documents,
@@ -39,6 +39,8 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
     if (applicationId) {
       console.log(`[CategoryTab] Loading documents for category ${category}, applicationId: ${applicationId}`);
       loadDocuments();
+    } else {
+      console.warn(`[CategoryTab] No applicationId provided for category ${category}`);
     }
   }, [category, applicationId, loadDocuments]);
 
@@ -131,31 +133,41 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
 
   return (
     <div className="space-y-6">
-      <UploadForm 
-        applicationId={applicationId}
-        documentType={category}
-      />
-      
-      {/* File list with improved styling */}
-      <FileList 
-        files={(documentsByCategory[category] || []).map(doc => ({
-          id: doc.id,
-          name: doc.file_name,
-          uploadDate: doc.created_at,
-          size: doc.file_size,
-          filePath: doc.file_path,
-          fileType: doc.file_type
-        }))}
-        onDelete={handleDeleteDocument}
-        onView={onViewDocument}
-        loading={isLoading}
-      />
+      {applicationId ? (
+        <>
+          <UploadForm 
+            applicationId={applicationId}
+            documentType={category}
+          />
+          
+          {/* File list with improved styling */}
+          <FileList 
+            files={(documentsByCategory[category] || []).map(doc => ({
+              id: doc.id,
+              name: doc.file_name,
+              uploadDate: doc.created_at,
+              size: doc.file_size,
+              filePath: doc.file_path,
+              fileType: doc.file_type
+            }))}
+            onDelete={handleDeleteDocument}
+            onView={onViewDocument}
+            loading={isLoading}
+          />
 
-      {!isLoading && (!documentsByCategory[category] || documentsByCategory[category]?.length === 0) && (
-        <Alert variant="default" className="bg-blue-50 border-blue-200">
-          <Info className="h-4 w-4" />
+          {!isLoading && (!documentsByCategory[category] || documentsByCategory[category]?.length === 0) && (
+            <Alert variant="default" className="bg-blue-50 border-blue-200">
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                No {category} documents have been uploaded yet. Upload your first document above.
+              </AlertDescription>
+            </Alert>
+          )}
+        </>
+      ) : (
+        <Alert variant="destructive">
           <AlertDescription>
-            No {category} documents have been uploaded yet. Upload your first document above.
+            No application ID found. Please ensure you're viewing a valid application.
           </AlertDescription>
         </Alert>
       )}

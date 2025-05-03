@@ -15,15 +15,18 @@ interface DocumentUploadSectionProps {
 }
 
 export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ applicationId }) => {
+  // Validate applicationId
+  const validApplicationId = applicationId?.trim() || '';
+  
   // Log for debugging
-  console.log("[DocumentUploadSection] Rendering with applicationId:", applicationId);
+  console.log("[DocumentUploadSection] Rendering with applicationId:", validApplicationId || "NONE");
   
   const { 
     uploading, 
     documents, 
     isLoading,
     loadDocuments,
-  } = useDocumentUpload(applicationId);
+  } = useDocumentUpload(validApplicationId);
   
   const [activeTab, setActiveTab] = useState('bank');
   const [viewingDocument, setViewingDocument] = useState<{
@@ -37,21 +40,21 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
   
   // Reload documents when component mounts or applicationId changes
   useEffect(() => {
-    if (applicationId) {
-      console.log("[DocumentUploadSection] Loading documents for:", applicationId);
+    if (validApplicationId) {
+      console.log("[DocumentUploadSection] Loading documents for:", validApplicationId);
       loadDocuments();
     } else {
       console.warn("[DocumentUploadSection] No applicationId provided");
     }
-  }, [applicationId, loadDocuments]);
+  }, [validApplicationId, loadDocuments]);
   
   const handleRefreshDocuments = () => {
-    if (!applicationId) {
+    if (!validApplicationId) {
       toast.error("No application ID available");
       return;
     }
     
-    console.log("[DocumentUploadSection] Manual document refresh requested for ID:", applicationId);
+    console.log("[DocumentUploadSection] Manual document refresh requested for ID:", validApplicationId);
     loadDocuments();
     toast.info('Refreshing document list...');
   };
@@ -80,7 +83,7 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
             <CardDescription>
               Upload supporting documents for underwriting review
             </CardDescription>
-            {!applicationId && (
+            {!validApplicationId && (
               <p className="text-amber-600 text-xs mt-1">
                 No application ID detected. Documents may not be saved properly.
               </p>
@@ -90,7 +93,7 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
             variant="outline" 
             size="sm" 
             onClick={handleRefreshDocuments}
-            disabled={isLoading || !applicationId}
+            disabled={isLoading || !validApplicationId}
             className="flex items-center gap-1.5"
           >
             {isLoading ? (
@@ -108,7 +111,7 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
           
           <DocumentTabs
             activeTab={activeTab}
-            applicationId={applicationId}
+            applicationId={validApplicationId}
             onViewDocument={handleViewDocument}
             isLoading={isLoading}
           />

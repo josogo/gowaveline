@@ -1,5 +1,4 @@
-
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useDocumentFetch } from './useDocumentFetch';
 import { useDocumentState } from './useDocumentState';
 import { useDocumentUploader } from './useDocumentUploader';
@@ -10,6 +9,14 @@ import { DocumentFile } from './types';
  * Combines document state, upload, and fetching capabilities
  */
 export const useDocumentUpload = (applicationId: string = '') => {
+  // Keep the original applicationId reference
+  const applicationIdRef = useRef(applicationId);
+  
+  // Update the ref when applicationId changes
+  useEffect(() => {
+    applicationIdRef.current = applicationId;
+  }, [applicationId]);
+  
   // Initialize document state
   const {
     documents,
@@ -34,14 +41,16 @@ export const useDocumentUpload = (applicationId: string = '') => {
 
   // Create a memoized loadDocuments function that validates the applicationId
   const loadDocuments = useCallback(async () => {
-    if (!applicationId) {
+    const currentAppId = applicationIdRef.current;
+    
+    if (!currentAppId) {
       console.warn('[useDocumentUpload] Cannot load documents: No applicationId provided');
       return;
     }
     
-    console.log(`[useDocumentUpload] Loading documents for applicationId: ${applicationId}`);
+    console.log(`[useDocumentUpload] Loading documents for applicationId: ${currentAppId}`);
     await fetchDocuments();
-  }, [applicationId, fetchDocuments]);
+  }, [fetchDocuments]);
 
   // Initialize document uploader
   const { uploadDocument: upload } = useDocumentUploader(
@@ -53,7 +62,9 @@ export const useDocumentUpload = (applicationId: string = '') => {
 
   // Memoized upload function that validates applicationId
   const uploadDocument = useCallback((options: any) => {
-    if (!applicationId && !options.applicationId) {
+    const currentAppId = applicationIdRef.current;
+    
+    if (!currentAppId && !options.applicationId) {
       console.error('[useDocumentUpload] Cannot upload: No applicationId provided');
       return Promise.reject(new Error('Application ID is required'));
     }
@@ -61,11 +72,18 @@ export const useDocumentUpload = (applicationId: string = '') => {
     // Make sure we're using the latest applicationId
     const effectiveOptions = {
       ...options,
-      applicationId: options.applicationId || applicationId
+      applicationId: options.applicationId || currentAppId
     };
     
+    console.log('[useDocumentUpload] Uploading document with options:', 
+      JSON.stringify({
+        ...effectiveOptions,
+        file: effectiveOptions.file ? `${effectiveOptions.file.name} (${effectiveOptions.file.size} bytes)` : 'No file'
+      })
+    );
+    
     return upload(effectiveOptions);
-  }, [upload, applicationId]);
+  }, [upload, applicationIdRef]);
 
   // Load documents when component initializes or applicationId changes
   useEffect(() => {
@@ -76,6 +94,17 @@ export const useDocumentUpload = (applicationId: string = '') => {
       console.warn('[useDocumentUpload] No applicationId provided for initial load');
     }
   }, [applicationId, loadDocuments]);
+
+  // Clean up state when unmounting to prevent memory leaks and state updates after unmount
+  useEffect(() => {
+    return () => {
+      console.log('[useDocumentUpload] Cleaning up document upload resources');
+      setUploading(false);
+      setUploadProgress(0);
+      setUploadError(null);
+      setIsLoading(false);
+    };
+  }, [setUploading, setUploadProgress, setUploadError, setIsLoading]);
 
   return {
     // Document state

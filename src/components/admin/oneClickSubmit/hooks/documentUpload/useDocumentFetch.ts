@@ -8,7 +8,7 @@ import { DocumentFile } from './types';
  * Hook for fetching document data from the backend
  */
 export const useDocumentFetch = (
-  applicationId: string,
+  applicationId: string | undefined,
   setDocuments: (documents: DocumentFile[]) => void,
   setIsLoading: (isLoading: boolean) => void
 ) => {
