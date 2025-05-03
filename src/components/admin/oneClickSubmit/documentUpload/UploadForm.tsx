@@ -29,14 +29,25 @@ export const UploadForm: React.FC<UploadFormProps> = ({
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mountedRef = useRef<boolean>(true);
+  
+  // Track component mounted state for async operations
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
   
   // Reset selected file state when upload completes or errors
   useEffect(() => {
     if (!uploading && uploadProgress === 0) {
       console.log("Upload completed or reset, clearing selected file");
-      setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+      if (mountedRef.current) {
+        setSelectedFile(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
       }
     }
   }, [uploading, uploadProgress]);
@@ -76,11 +87,16 @@ export const UploadForm: React.FC<UploadFormProps> = ({
     console.log(`Starting upload for file ${selectedFile.name} in category ${documentType}, applicationId: ${applicationId}`);
     
     try {
+      // Store file in local variable to ensure it doesn't change during async operations
+      const fileToUpload = selectedFile;
+      
       await uploadDocument({
-        file: selectedFile,
+        file: fileToUpload,
         applicationId,
         documentType,
         onSuccess: () => {
+          if (!mountedRef.current) return;
+          
           console.log("Upload success callback triggered");
           setSelectedFile(null);
           // Reset file input
@@ -91,9 +107,11 @@ export const UploadForm: React.FC<UploadFormProps> = ({
           loadDocuments().catch(error => {
             console.error("Error reloading documents after upload:", error);
           });
-          toast.success(`Document ${selectedFile.name} uploaded successfully`);
+          toast.success(`Document ${fileToUpload.name} uploaded successfully`);
         },
         onError: (error) => {
+          if (!mountedRef.current) return;
+          
           console.error("Upload error callback triggered:", error);
           toast.error(`Upload failed: ${error.message || "Unknown error"}`);
           // Reset file input on error
@@ -103,6 +121,8 @@ export const UploadForm: React.FC<UploadFormProps> = ({
         }
       });
     } catch (err: any) {
+      if (!mountedRef.current) return;
+      
       console.error("Error during upload submission:", err);
       toast.error(`Upload error: ${err?.message || "Unknown error"}`);
       // Ensure we reset even if there's an exception

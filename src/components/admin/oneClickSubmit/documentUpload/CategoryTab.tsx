@@ -1,14 +1,16 @@
 
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useDocumentUpload } from '../hooks';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { UploadForm } from './UploadForm';
 import { DocumentList } from './DocumentList';
-import { FileSearch } from 'lucide-react';
+import { Tabs } from '@/components/ui/tabs';
+import { Loader2 } from 'lucide-react';
 
 interface CategoryTabProps {
   title: string;
-  documentTypes: Array<{ value: string; label: string }>;
+  documentTypes: Array<{value: string, label: string}>;
   applicationId: string;
   onViewDocument: (doc: any) => void;
   isLoading: boolean;
@@ -21,45 +23,84 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
   onViewDocument,
   isLoading
 }) => {
-  const [activeDocType, setActiveDocType] = useState<string>(documentTypes[0]?.value || '');
+  const { documents } = useDocumentUpload(applicationId);
   
-  console.log(`[CategoryTab] ${title} rendering with applicationId: ${applicationId}, activeDocType: ${activeDocType}`);
+  // Group documents by type for this category
+  const categoryDocuments = useMemo(() => {
+    if (!documents) return {};
+    
+    const result: Record<string, any[]> = {};
+    
+    documentTypes.forEach(type => {
+      result[type.value] = documents.filter(doc => doc.document_type === type.value);
+    });
+    
+    return result;
+  }, [documents, documentTypes]);
   
   return (
-    <Card className="border-gray-200">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <FileSearch className="h-5 w-5 text-blue-600" />
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue={activeDocType} onValueChange={setActiveDocType}>
-          <TabsList className="grid grid-cols-2 md:grid-cols-3 mb-6">
-            {documentTypes.map(docType => (
-              <TabsTrigger key={docType.value} value={docType.value}>
-                {docType.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+    <div className="space-y-6">
+      {/* First document type - main one for this category */}
+      <Card className="overflow-hidden">
+        <CardHeader className="bg-slate-50 py-3">
+          <CardTitle className="text-md">{documentTypes[0]?.label || title}</CardTitle>
+        </CardHeader>
+        <CardContent className="p-5 space-y-4">
+          <UploadForm 
+            applicationId={applicationId} 
+            documentType={documentTypes[0]?.value} 
+          />
           
-          {documentTypes.map(docType => (
-            <TabsContent key={docType.value} value={docType.value} className="space-y-6">
-              <UploadForm
-                applicationId={applicationId}
-                documentType={docType.value}
-              />
-              
-              <DocumentList
-                applicationId={applicationId}
-                documentType={docType.value}
+          {isLoading ? (
+            <div className="flex justify-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : documents && documents.length > 0 ? (
+            <DocumentList 
+              documents={categoryDocuments[documentTypes[0]?.value] || []} 
+              onViewDocument={onViewDocument} 
+            />
+          ) : (
+            <Alert className="bg-blue-50 text-blue-700 border-blue-200">
+              <AlertDescription>
+                No documents have been uploaded yet.
+              </AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
+      
+      {/* Additional document types for this category */}
+      {documentTypes.slice(1).map((docType) => (
+        <Card key={docType.value} className="overflow-hidden">
+          <CardHeader className="bg-slate-50 py-3">
+            <CardTitle className="text-md">{docType.label}</CardTitle>
+          </CardHeader>
+          <CardContent className="p-5 space-y-4">
+            <UploadForm 
+              applicationId={applicationId}
+              documentType={docType.value}
+            />
+            
+            {isLoading ? (
+              <div className="flex justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : documents && documents.length > 0 ? (
+              <DocumentList 
+                documents={categoryDocuments[docType.value] || []} 
                 onViewDocument={onViewDocument}
-                isLoading={isLoading}
               />
-            </TabsContent>
-          ))}
-        </Tabs>
-      </CardContent>
-    </Card>
+            ) : (
+              <Alert className="bg-blue-50 text-blue-700 border-blue-200">
+                <AlertDescription>
+                  No documents have been uploaded yet.
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 };

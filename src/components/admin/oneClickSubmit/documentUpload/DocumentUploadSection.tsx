@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { useDocumentUpload } from '../hooks';
 import { Button } from '@/components/ui/button';
 import { FileCheck, RefreshCw, Loader2 } from 'lucide-react';
@@ -44,6 +44,7 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
       console.log("[DocumentUploadSection] Loading documents for:", validApplicationId);
       loadDocuments().catch(error => {
         console.error("[DocumentUploadSection] Error loading documents:", error);
+        toast.error("Failed to load documents");
       });
     } else {
       console.warn("[DocumentUploadSection] No applicationId provided");
@@ -57,10 +58,11 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
     }
     
     console.log("[DocumentUploadSection] Manual document refresh requested for ID:", validApplicationId);
+    toast.info('Refreshing document list...');
     loadDocuments().catch(error => {
       console.error("[DocumentUploadSection] Error refreshing documents:", error);
+      toast.error("Failed to refresh documents");
     });
-    toast.info('Refreshing document list...');
   };
   
   const handleViewDocument = (doc: {
