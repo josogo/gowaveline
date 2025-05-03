@@ -136,4 +136,3 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
     </div>
   );
 };
-
