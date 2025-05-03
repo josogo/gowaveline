@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useDocumentUpload } from '../hooks';
@@ -32,7 +31,10 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
     const result: Record<string, any[]> = {};
     
     documentTypes.forEach(type => {
-      result[type.value] = documents.filter(doc => doc.document_type === type.value);
+      result[type.value] = documents.filter(doc => 
+        (doc.document_type && doc.document_type === type.value) || 
+        (doc.documentType && doc.documentType === type.value)
+      );
     });
     
     return result;

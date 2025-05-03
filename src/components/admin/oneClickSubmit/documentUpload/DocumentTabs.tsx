@@ -26,26 +26,28 @@ export const DocumentTabs: React.FC<DocumentTabsProps> = ({
     if (!documents || !documents.length) return [];
     
     return documents.filter(doc => {
+      const docType = doc.document_type || doc.documentType;
+      
       switch (activeTab) {
         case 'bank':
-          return ['bank_statement', 'voided_check'].includes(doc.document_type);
+          return ['bank_statement', 'voided_check'].includes(docType);
         case 'business':
-          return ['business_license', 'ein_letter', 'articles_of_incorporation'].includes(doc.document_type);
+          return ['business_license', 'ein_letter', 'articles_of_incorporation'].includes(docType);
         case 'processing':
-          return ['processing_statement'].includes(doc.document_type);
+          return ['processing_statement'].includes(docType);
         case 'other':
           return !['bank_statement', 'voided_check', 'business_license', 'ein_letter',
-                 'articles_of_incorporation', 'processing_statement'].includes(doc.document_type);
+                 'articles_of_incorporation', 'processing_statement'].includes(docType);
         default:
           return false;
       }
     }).map(doc => ({
       id: doc.id,
-      name: doc.file_name,
-      uploadDate: doc.created_at,
-      size: doc.file_size,
-      filePath: doc.file_path,
-      fileType: doc.file_type
+      name: doc.file_name || doc.name,
+      uploadDate: doc.created_at || new Date().toISOString(),
+      size: doc.file_size || doc.size,
+      filePath: doc.file_path || '',
+      fileType: doc.file_type || doc.type
     }));
   };
   

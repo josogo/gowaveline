@@ -8,6 +8,13 @@ export interface DocumentFile {
   url?: string;
   uploadProgress?: number;
   error?: string;
+  // Add the additional fields used by the components
+  file_name?: string;
+  file_size?: number;
+  file_type?: string;
+  file_path?: string;
+  created_at?: string;
+  document_type?: string;
 }
 
 export interface DocumentViewItem {

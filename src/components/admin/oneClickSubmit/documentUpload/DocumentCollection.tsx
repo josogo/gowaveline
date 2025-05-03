@@ -101,15 +101,18 @@ export const DocumentCollection: React.FC<DocumentCollectionProps> = ({ applicat
     if (!currentCategory) return [];
     
     return documents
-      .filter(doc => currentCategory.docTypes.includes(doc.document_type))
+      .filter(doc => {
+        const docType = doc.document_type || doc.documentType;
+        return currentCategory.docTypes.includes(docType);
+      })
       .map(doc => ({
         id: doc.id,
-        name: doc.file_name,
-        uploadDate: doc.created_at,
-        size: doc.file_size,
-        filePath: doc.file_path,
-        fileType: doc.file_type,
-        documentType: doc.document_type
+        name: doc.file_name || doc.name,
+        uploadDate: doc.created_at || new Date().toISOString(),
+        size: doc.file_size || doc.size,
+        filePath: doc.file_path || '',
+        fileType: doc.file_type || doc.type,
+        documentType: doc.document_type || doc.documentType
       }));
   };
 
