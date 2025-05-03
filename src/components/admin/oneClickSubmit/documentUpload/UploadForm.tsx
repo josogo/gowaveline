@@ -26,6 +26,8 @@ export const UploadForm: React.FC<UploadFormProps> = ({
   const { uploadDocument, uploading, uploadProgress } = useDocumentUpload(applicationId);
   const isMountedRef = useRef(true);
   
+  console.log("UploadForm rendered with applicationId:", applicationId);
+  
   // Set up cleanup function for component unmount
   useEffect(() => {
     return () => {
@@ -63,6 +65,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({
   const allDocumentTypes = Object.values(documentCategories).flat();
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("File input change detected");
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       validateAndSetFile(file);
@@ -70,6 +73,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({
   };
   
   const validateAndSetFile = (file: File) => {
+    console.log("Validating file:", file.name);
     // Validate file size (10MB max)
     if (file.size > 10 * 1024 * 1024) {
       toast.error('File is too large. Maximum size is 10MB.');
@@ -92,6 +96,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({
     }
     
     if (isMountedRef.current) {
+      console.log("File validated and set:", file.name);
       setSelectedFile(file);
     }
   };
@@ -136,7 +141,10 @@ export const UploadForm: React.FC<UploadFormProps> = ({
   };
   
   const triggerFileInput = () => {
-    fileInputRef.current?.click();
+    console.log("Triggering file input click");
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -151,6 +159,8 @@ export const UploadForm: React.FC<UploadFormProps> = ({
       toast.error('No application ID available');
       return;
     }
+    
+    console.log("Starting upload for file:", selectedFile.name, "applicationId:", applicationId);
     
     try {
       await uploadDocument({

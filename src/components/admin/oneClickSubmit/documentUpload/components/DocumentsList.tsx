@@ -12,6 +12,12 @@ interface DocumentsListProps {
 }
 
 export const DocumentsList: React.FC<DocumentsListProps> = ({ documents, isLoading, onViewDocument }) => {
+  // Handle document click
+  const handleDocumentClick = (doc: DocumentViewItem) => {
+    console.log("Document clicked in list:", doc.name);
+    onViewDocument(doc);
+  };
+  
   if (isLoading) {
     return (
       <div className="py-8 flex items-center justify-center">
@@ -31,7 +37,7 @@ export const DocumentsList: React.FC<DocumentsListProps> = ({ documents, isLoadi
         <DocumentItem 
           key={doc.id} 
           document={doc} 
-          onClick={() => onViewDocument(doc)} 
+          onClick={() => handleDocumentClick(doc)} 
         />
       ))}
     </div>

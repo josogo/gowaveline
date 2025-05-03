@@ -10,11 +10,19 @@ interface DocumentItemProps {
 }
 
 export const DocumentItem: React.FC<DocumentItemProps> = ({ document, onClick }) => {
+  // Ensure the onClick handler is properly triggered
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("Document item clicked:", document.name);
+    onClick();
+  };
+
   return (
     <div 
       key={document.id} 
       className="flex items-center justify-between p-3 bg-white border rounded-lg hover:shadow-sm cursor-pointer transition-shadow"
-      onClick={onClick}
+      onClick={handleClick}
     >
       <div className="flex items-center space-x-3">
         <div className={`p-2.5 rounded-md ${
@@ -31,7 +39,12 @@ export const DocumentItem: React.FC<DocumentItemProps> = ({ document, onClick })
           </p>
         </div>
       </div>
-      <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        className="opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity"
+        onClick={handleClick}
+      >
         <FileCheck className="h-4 w-4" />
         <span className="sr-only">View document</span>
       </Button>
