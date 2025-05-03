@@ -18,10 +18,8 @@ export const useDocumentUploader = (
   // Set up mount status tracking
   useEffect(() => {
     isMountedRef.current = true;
-    console.log('[useDocumentUploader] Component mounted');
     return () => {
       isMountedRef.current = false;
-      console.log('[useDocumentUploader] Component unmounted');
     };
   }, []);
 
@@ -30,7 +28,8 @@ export const useDocumentUploader = (
     applicationId = '',
     documentType = 'other',
     onSuccess,
-    onError
+    onError,
+    onProgress
   }: UploadDocumentOptions) => {
     // Prevent multiple uploads and check if component is still mounted
     if (uploadingRef.current) {
@@ -60,9 +59,8 @@ export const useDocumentUploader = (
       setUploadError(null);
       setUploading(true);
       setUploadProgress(10);
+      if (onProgress) onProgress(10);
     }
-    
-    console.log(`[useDocumentUploader] Starting upload with applicationId: ${applicationId}, documentType: ${documentType}, file: ${file.name}`);
     
     try {
       // Check if storage bucket exists, create if not
@@ -83,11 +81,12 @@ export const useDocumentUploader = (
           console.error('[useDocumentUploader] Error creating bucket:', createBucketError);
           throw new Error(`Failed to create bucket: ${createBucketError.message}`);
         }
-        
-        console.log('[useDocumentUploader] Created merchant-documents bucket');
       }
       
-      if (isMountedRef.current) setUploadProgress(20);
+      if (isMountedRef.current) {
+        setUploadProgress(20);
+        if (onProgress) onProgress(20);
+      }
       
       // Use a unique ID if no applicationId is provided
       const effectiveAppId = applicationId || `temp-${new Date().getTime()}`;
@@ -97,9 +96,24 @@ export const useDocumentUploader = (
       const fileExt = file.name.split('.').pop();
       const filePath = `${effectiveAppId}/${documentType || 'other'}_${timestamp}.${fileExt}`;
       
-      if (isMountedRef.current) setUploadProgress(30);
+      if (isMountedRef.current) {
+        setUploadProgress(30);
+        if (onProgress) onProgress(30);
+      }
       
-      console.log('[useDocumentUploader] Uploading file to path:', filePath);
+      // Simulate gradual progress during upload
+      const progressInterval = setInterval(() => {
+        if (isMountedRef.current) {
+          setUploadProgress(prev => {
+            const newProgress = Math.min(prev + 5, 70);
+            if (onProgress) onProgress(newProgress);
+            return newProgress;
+          });
+        } else {
+          clearInterval(progressInterval);
+        }
+      }, 300);
+      
       const { data: fileData, error: uploadError } = await supabase.storage
         .from('merchant-documents')
         .upload(filePath, file, {
@@ -107,13 +121,17 @@ export const useDocumentUploader = (
           upsert: true
         });
       
+      clearInterval(progressInterval);
+      
       if (uploadError) {
         console.error('[useDocumentUploader] Storage upload error:', uploadError);
         throw new Error(`Storage upload failed: ${uploadError.message}`);
       }
       
-      console.log('[useDocumentUploader] File uploaded successfully to storage:', fileData);
-      if (isMountedRef.current) setUploadProgress(70);
+      if (isMountedRef.current) {
+        setUploadProgress(80);
+        if (onProgress) onProgress(80);
+      }
       
       // Create document record in database
       const { error: dbError } = await uploadMerchantDocument({
@@ -130,8 +148,11 @@ export const useDocumentUploader = (
         throw new Error(`Database entry failed: ${dbError.message}`);
       }
       
-      if (isMountedRef.current) setUploadProgress(100);
-      console.log('[useDocumentUploader] Document upload completed successfully');
+      if (isMountedRef.current) {
+        setUploadProgress(100);
+        if (onProgress) onProgress(100);
+      }
+      
       toast.success('Document uploaded successfully');
       
       // Refresh document list

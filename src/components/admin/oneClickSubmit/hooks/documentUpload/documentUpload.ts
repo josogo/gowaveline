@@ -95,7 +95,15 @@ export const useDocumentUpload = (applicationId: string = '') => {
     // Make sure we're using the latest applicationId
     const effectiveOptions = {
       ...options,
-      applicationId: options.applicationId || currentAppId
+      applicationId: options.applicationId || currentAppId,
+      onProgress: (progress: number) => {
+        if (isMountedRef.current) {
+          setUploadProgress(progress);
+        }
+        if (options.onProgress) {
+          options.onProgress(progress);
+        }
+      }
     };
     
     console.log('[useDocumentUpload] Uploading document with options:', 
@@ -106,7 +114,7 @@ export const useDocumentUpload = (applicationId: string = '') => {
     );
     
     return upload(effectiveOptions);
-  }, [upload]);
+  }, [upload, setUploadProgress]);
 
   // Load documents when component initializes or applicationId changes
   useEffect(() => {

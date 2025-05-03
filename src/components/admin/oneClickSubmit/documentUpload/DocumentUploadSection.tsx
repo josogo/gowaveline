@@ -4,13 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { useDocumentUpload } from '../hooks';
 import { Button } from '@/components/ui/button';
-import { FileCheck, RefreshCw, Loader2, Info } from 'lucide-react';
+import { FileCheck, RefreshCw, Loader2, Info, Upload, File } from 'lucide-react';
 import { toast } from 'sonner';
 import { DocumentCategories } from './DocumentCategories';
 import { DocumentTabs } from './DocumentTabs';
 import { DocumentViewModal } from '../documentViewer';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 
 interface DocumentUploadSectionProps {
   applicationId: string;
@@ -24,6 +25,7 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
     uploading, 
     documents, 
     isLoading,
+    uploadProgress,
     loadDocuments,
   } = useDocumentUpload(validApplicationId);
   
@@ -118,6 +120,21 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
             </Button>
           </div>
         </div>
+        
+        {/* Show upload progress when uploading */}
+        {uploading && uploadProgress > 0 && (
+          <div className="mt-4 space-y-1">
+            <div className="flex justify-between text-xs">
+              <span className="text-blue-700 font-medium">Uploading document...</span>
+              <span className="text-blue-700">{uploadProgress}%</span>
+            </div>
+            <Progress 
+              value={uploadProgress} 
+              className="h-1.5"
+              indicatorClassName="bg-blue-600"
+            />
+          </div>
+        )}
       </CardHeader>
       <CardContent className="pt-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -143,4 +160,3 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
     </Card>
   );
 };
-

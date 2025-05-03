@@ -191,7 +191,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({
             disabled={uploading}
           />
           <div className="flex flex-col items-center justify-center">
-            <FileCheck className="h-12 w-12 text-blue-400 mb-2" />
+            <Upload className="h-12 w-12 text-blue-400 mb-2" />
             <p className="text-lg font-medium text-gray-800">
               Drag & drop or click to upload
             </p>
@@ -257,6 +257,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({
           <Progress 
             value={uploadProgress} 
             className="h-2"
+            indicatorClassName="bg-blue-600"
           />
         </div>
       )}

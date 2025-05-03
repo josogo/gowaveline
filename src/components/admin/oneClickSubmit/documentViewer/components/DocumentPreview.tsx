@@ -1,14 +1,16 @@
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Download, FileText, Image, File } from 'lucide-react';
-import { isPreviewable } from '../utils/fileHelpers';
+import React, { useState } from 'react';
+import { Loader2 } from 'lucide-react';
 
 interface DocumentPreviewProps {
   documentUrl: string | null;
   documentFile: {
+    id: string;
     name: string;
-    fileType?: string;
+    filePath: string;
+    fileType: string;
+    uploadDate: string;
+    size?: number;
   } | null;
   onError: () => void;
   onDownload: () => void;
@@ -18,61 +20,69 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   documentUrl,
   documentFile,
   onError,
-  onDownload
 }) => {
-  if (!documentFile) return null;
+  const [loading, setLoading] = useState(true);
   
-  const getDocumentIcon = () => {
-    if (!documentFile?.fileType) return <FileText className="h-16 w-16 text-gray-300" />;
-    
-    if (documentFile.fileType.includes('pdf')) {
-      return <FileText className="h-16 w-16 text-red-400" />;
-    } else if (documentFile.fileType.includes('image')) {
-      return <Image className="h-16 w-16 text-blue-400" />;
-    } else {
-      return <File className="h-16 w-16 text-gray-400" />;
-    }
-  };
-  
-  if (documentUrl && isPreviewable(documentFile.fileType)) {
-    if (documentFile.fileType?.includes('image')) {
-      return (
-        <div className="w-full h-full flex items-center justify-center bg-gray-100 p-4">
-          <img 
-            src={documentUrl} 
-            alt={documentFile.name}
-            className="max-w-full max-h-full object-contain"
-            onError={onError}
-          />
-        </div>
-      );
-    } else {
-      return (
-        <iframe
-          src={documentUrl}
-          className="w-full h-full border-0"
-          title={documentFile?.name || 'Document'}
-          sandbox="allow-scripts allow-same-origin allow-forms"
-          onError={onError}
-        />
-      );
-    }
+  if (!documentUrl || !documentFile) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p className="text-red-500">Document unavailable</p>
+      </div>
+    );
   }
 
+  const isPdf = documentFile.fileType?.includes('pdf');
+  const isImage = documentFile.fileType?.includes('image');
+
+  // For PDF files
+  if (isPdf) {
+    return (
+      <div className="h-full relative">
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-50 z-10">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+          </div>
+        )}
+        <iframe 
+          src={`${documentUrl}#toolbar=1`}
+          className="w-full h-full"
+          onLoad={() => setLoading(false)}
+          onError={onError}
+          title={documentFile.name}
+        />
+      </div>
+    );
+  }
+
+  // For image files
+  if (isImage) {
+    return (
+      <div className="h-full flex items-center justify-center bg-gray-50 relative">
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-50 z-10">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+          </div>
+        )}
+        <img 
+          src={documentUrl} 
+          alt={documentFile.name} 
+          className="max-h-full max-w-full object-contain"
+          onLoad={() => setLoading(false)}
+          onError={onError}
+        />
+      </div>
+    );
+  }
+
+  // For other file types
   return (
-    <div className="flex flex-col h-full items-center justify-center text-gray-500">
-      {getDocumentIcon()}
-      <p className="mt-4">Document preview not available</p>
-      {documentUrl && (
-        <Button 
-          variant="outline" 
-          className="mt-4" 
-          onClick={onDownload}
-        >
-          <Download className="h-4 w-4 mr-2" />
-          Download to View
-        </Button>
-      )}
+    <div className="h-full flex flex-col items-center justify-center p-4">
+      <p className="text-lg font-medium mb-2">
+        Preview not available for this file type
+      </p>
+      <p className="text-gray-500 mb-4">
+        You can download this file to view its contents.
+      </p>
     </div>
   );
 };

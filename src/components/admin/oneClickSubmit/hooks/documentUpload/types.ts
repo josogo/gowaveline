@@ -1,20 +1,21 @@
 
-export interface UploadDocumentOptions {
-  file: File;
-  applicationId?: string;
-  documentType?: string;
-  onSuccess?: () => void;
-  onError?: (error: Error) => void;
-}
-
 export interface DocumentFile {
   id: string;
+  merchant_id?: string;
+  document_type: string;
   file_name: string;
   file_path: string;
   file_type: string;
   file_size: number;
-  document_type: string;
   created_at: string;
-  merchant_id: string;
-  uploaded_by?: string;
+  updated_at: string;
+}
+
+export interface UploadDocumentOptions {
+  file: File;
+  applicationId: string;
+  documentType: string;
+  onSuccess?: () => void;
+  onError?: (error: Error) => void;
+  onProgress?: (progress: number) => void;
 }

@@ -7,20 +7,22 @@ interface LoadingStateProps {
   downloadProgress: number;
 }
 
-export const LoadingState: React.FC<LoadingStateProps> = ({
-  downloadProgress
-}) => {
+export const LoadingState: React.FC<LoadingStateProps> = ({ downloadProgress }) => {
   return (
-    <div className="flex-grow flex flex-col items-center justify-center">
-      <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-      <div className="text-center">
-        <p className="mb-4">Loading document...</p>
-        {downloadProgress > 0 && (
-          <div className="w-48 mx-auto">
-            <Progress value={downloadProgress} className="h-1.5" />
-          </div>
-        )}
-      </div>
+    <div className="h-full flex flex-col items-center justify-center p-6">
+      <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
+      <p className="text-blue-600 font-medium text-lg mb-2">Loading document...</p>
+      
+      {downloadProgress > 0 && (
+        <div className="w-64 space-y-2">
+          <Progress 
+            value={downloadProgress} 
+            className="h-2"
+            indicatorClassName="bg-blue-500"
+          />
+          <p className="text-sm text-blue-600 text-right">{downloadProgress}%</p>
+        </div>
+      )}
     </div>
   );
 };
