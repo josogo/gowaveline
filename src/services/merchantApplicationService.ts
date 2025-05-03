@@ -19,68 +19,16 @@ export const uploadMerchantDocument = async ({
   documentType
 }: UploadDocumentParams) => {
   try {
-    // First try using standard RLS-compliant insert
-    try {
-      const { data, error } = await supabase
-        .from('merchant_documents')
-        .insert({
-          merchant_id: applicationId,
-          file_name: fileName,
-          file_type: fileType,
-          file_size: fileSize,
-          file_path: filePath,
-          document_type: documentType,
-          uploaded_by: 'web_app' // Default uploader name
-        })
-        .select();
-      
-      if (!error) {
-        console.log('Document metadata inserted successfully via standard query');
-        return { data, error: null };
-      }
-      
-      console.warn('Standard insert error (may be due to RLS):', error);
-      // Continue to fallback if standard insert fails
-    } catch (insertError) {
-      console.warn('Standard insert exception:', insertError);
-      // Proceed to fallback
-    }
+    console.log(`Starting document upload for application ${applicationId}`, { fileName, documentType });
     
-    // Fallback: Use REST API to bypass RLS (for public access functionality)
+    // First try using the edge function with auth token
     try {
-      const response = await fetch('https://rqwrvkkfixrogxogunsk.supabase.co/rest/v1/merchant_documents', {
-        method: 'POST',
-        headers: {
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxd3J2a2tmaXhyb2d4b2d1bnNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MjMxMjEsImV4cCI6MjA1OTI5OTEyMX0.nESe15lNwkqji77TNpbWGFGo-uHkKt73AZFfBR6oMRY',
-          'Content-Type': 'application/json',
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify({
-          merchant_id: applicationId,
-          file_name: fileName,
-          file_type: fileType,
-          file_size: fileSize,
-          file_path: filePath,
-          document_type: documentType,
-          uploaded_by: 'web_app'
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`REST API error: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      console.log('Document metadata inserted successfully via REST API');
-      return { data, error: null };
-    } catch (restError) {
-      console.error('REST API insert error:', restError);
-      
-      // Final fallback: Use edge function if all else fails
+      console.log(`Trying edge function upload for ${fileName}`);
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData?.session?.access_token;
       
       if (!token) {
+        console.warn('No auth token available for edge function call');
         throw new Error('Authentication required to upload documents');
       }
       
@@ -110,9 +58,60 @@ export const uploadMerchantDocument = async ({
       }
       
       const result = await response.json();
-      return { data: result, error: null };
+      console.log('Document uploaded via edge function:', result);
+      return { data: result.data, error: null };
+    } catch (edgeFunctionError) {
+      console.warn('Edge function upload failed, trying standard insert:', edgeFunctionError);
+      
+      // Try standard insert as fallback
+      const { data, error } = await supabase
+        .from('merchant_documents')
+        .insert({
+          merchant_id: applicationId,
+          file_name: fileName,
+          file_type: fileType,
+          file_size: fileSize,
+          file_path: filePath,
+          document_type: documentType,
+          uploaded_by: 'web_app'
+        })
+        .select();
+      
+      if (error) {
+        console.error('Standard insert error:', error);
+        // Try REST API as final fallback
+        const response = await fetch('https://rqwrvkkfixrogxogunsk.supabase.co/rest/v1/merchant_documents', {
+          method: 'POST',
+          headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxd3J2a2tmaXhyb2d4b2d1bnNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MjMxMjEsImV4cCI6MjA1OTI5OTEyMX0.nESe15lNwkqji77TNpbWGFGo-uHkKt73AZFfBR6oMRY',
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify({
+            merchant_id: applicationId,
+            file_name: fileName,
+            file_type: fileType,
+            file_size: fileSize,
+            file_path: filePath,
+            document_type: documentType,
+            uploaded_by: 'web_app'
+          })
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('REST API error:', errorText);
+          throw new Error(`REST API error: ${response.statusText}`);
+        }
+        
+        const responseData = await response.json();
+        console.log('Document uploaded via REST API:', responseData);
+        return { data: responseData, error: null };
+      }
+      
+      console.log('Document uploaded via standard insert:', data);
+      return { data, error: null };
     }
-    
   } catch (error: any) {
     console.error('Document upload error:', error);
     return { data: null, error };
@@ -121,74 +120,71 @@ export const uploadMerchantDocument = async ({
 
 export const fetchMerchantDocuments = async (applicationId: string) => {
   try {
-    // Try standard RLS-compliant query first
+    console.log(`Fetching documents for application ${applicationId}`);
+    
+    // Try using edge function first
     try {
+      console.log('Trying edge function for fetching documents');
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      
+      if (!token) {
+        console.warn('No auth token available for edge function call');
+        throw new Error('Authentication required to fetch documents');
+      }
+      
+      const response = await fetch(`https://rqwrvkkfixrogxogunsk.supabase.co/functions/v1/get-merchant-documents?applicationId=${applicationId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Edge function error: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      console.log('Documents fetched via edge function:', result.documents);
+      return { data: result.documents, error: null };
+    } catch (edgeFunctionError) {
+      console.warn('Edge function fetch failed, trying standard query:', edgeFunctionError);
+      
+      // Try standard RLS-compliant query as fallback
       const { data, error } = await supabase
         .from('merchant_documents')
         .select('*')
         .eq('merchant_id', applicationId)
         .order('created_at', { ascending: false });
-        
-      if (!error) {
-        return { data, error: null };
-      }
       
-      console.warn('Standard fetch error (may be due to RLS):', error);
-      // Continue to fallback if standard query fails
-    } catch (queryError) {
-      console.warn('Standard fetch exception:', queryError);
-      // Proceed to fallback
-    }
-    
-    // Fallback: Use REST API to bypass RLS (for public access functionality)
-    try {
-      const response = await fetch(
-        `https://rqwrvkkfixrogxogunsk.supabase.co/rest/v1/merchant_documents?merchant_id=eq.${applicationId}&order=created_at.desc`,
-        {
-          method: 'GET',
-          headers: {
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxd3J2a2tmaXhyb2d4b2d1bnNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MjMxMjEsImV4cCI6MjA1OTI5OTEyMX0.nESe15lNwkqji77TNpbWGFGo-uHkKt73AZFfBR6oMRY',
-            'Accept': 'application/json'
+      if (error) {
+        console.error('Standard fetch error:', error);
+        // Try REST API as final fallback
+        const response = await fetch(
+          `https://rqwrvkkfixrogxogunsk.supabase.co/rest/v1/merchant_documents?merchant_id=eq.${applicationId}&order=created_at.desc`,
+          {
+            method: 'GET',
+            headers: {
+              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxd3J2a2tmaXhyb2d4b2d1bnNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MjMxMjEsImV4cCI6MjA1OTI5OTEyMX0.nESe15lNwkqji77TNpbWGFGo-uHkKt73AZFfBR6oMRY',
+              'Accept': 'application/json'
+            }
           }
-        }
-      );
-      
-      if (!response.ok) {
-        throw new Error(`REST API error: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      return { data, error: null };
-    } catch (restError) {
-      console.error('REST API fetch error:', restError);
-      
-      // Final fallback: Try the edge function
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const token = sessionData?.session?.access_token;
-        
-        if (!token) {
-          throw new Error('Authentication required to fetch documents');
-        }
-        
-        const response = await fetch(`https://rqwrvkkfixrogxogunsk.supabase.co/functions/v1/get-merchant-documents?applicationId=${applicationId}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
+        );
         
         if (!response.ok) {
-          throw new Error(`Edge function error: ${response.statusText}`);
+          const errorText = await response.text();
+          console.error('REST API error:', errorText);
+          throw new Error(`REST API error: ${response.statusText}`);
         }
         
-        const result = await response.json();
-        return { data: result.documents, error: null };
-      } catch (edgeFunctionError) {
-        console.error('Edge function fetch error:', edgeFunctionError);
-        throw edgeFunctionError;
+        const responseData = await response.json();
+        console.log('Documents fetched via REST API:', responseData);
+        return { data: responseData, error: null };
       }
+      
+      console.log('Documents fetched via standard query:', data);
+      return { data, error: null };
     }
   } catch (error) {
     console.error('Error fetching merchant documents:', error);

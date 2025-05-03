@@ -14,6 +14,9 @@ serve(async (req) => {
   }
 
   try {
+    console.log("Starting document upload process in edge function");
+    
+    // Create Supabase client with service role (bypasses RLS)
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -22,6 +25,7 @@ serve(async (req) => {
     // Get auth info
     const authHeader = req.headers.get('authorization') || '';
     if (!authHeader) {
+      console.error("Missing authorization header");
       return new Response(
         JSON.stringify({ error: 'Missing authorization header' }),
         { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
@@ -40,20 +44,28 @@ serve(async (req) => {
       );
     }
 
+    console.log(`Authenticated user ID: ${user.id}`);
+
     // Parse request body as JSON (not form data)
     const requestBody = await req.json();
     const { entityId, entityType, docType, fileName, fileType, fileSize, filePath, userName } = requestBody;
     
     if (!entityId || !entityType || !docType || !fileName || !filePath || !fileType) {
+      console.error("Missing required fields:", JSON.stringify({
+        entityId, entityType, docType, fileName, fileType, fileSize, filePath
+      }));
       return new Response(
         JSON.stringify({ error: 'Missing required fields' }),
         { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
+    console.log(`Request data: entityType=${entityType}, docType=${docType}, filePath=${filePath}`);
+
     // Save document metadata to the appropriate table using service role (bypassing RLS)
     let dbResult;
     if (entityType === 'merchant') {
+      console.log("Inserting merchant document metadata");
       dbResult = await supabaseClient
         .from('merchant_documents')
         .insert({
@@ -66,6 +78,8 @@ serve(async (req) => {
           uploaded_by: userName || user.email || 'web_app'
         })
         .select();
+        
+      console.log("Insert result:", dbResult);
     } else {
       // For other entity types (future expansion)
       return new Response(
@@ -82,6 +96,7 @@ serve(async (req) => {
       );
     }
 
+    console.log("Document metadata saved successfully");
     return new Response(
       JSON.stringify({ 
         success: true, 

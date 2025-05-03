@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDocumentUpload } from '../hooks';
 import { Button } from '@/components/ui/button';
 import { FileCheck, RefreshCw, Loader2, Info, Upload } from 'lucide-react';
@@ -43,6 +43,7 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
   // Reload documents when component mounts or applicationId changes
   useEffect(() => {
     if (validApplicationId) {
+      console.log(`[DocumentUploadSection] Loading documents for application: ${validApplicationId}`);
       loadDocuments().catch(error => {
         console.error("[DocumentUploadSection] Error loading documents:", error);
         toast.error("Failed to load documents");
@@ -63,100 +64,76 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
     });
   };
   
-  const handleViewDocument = (doc: {
-    id: string;
-    name: string;
-    uploadDate: string;
-    size: number;
-    filePath: string;
-    fileType: string;
-    url?: string;
-  }) => {
+  const handleViewDocument = (doc: any) => {
     setViewingDocument(doc);
   };
-
-  const documentCount = documents?.length || 0;
+  
+  const handleCloseDocumentView = () => {
+    setViewingDocument(null);
+  };
+  
+  if (!validApplicationId) {
+    return (
+      <Alert className="bg-amber-50 border-amber-200 text-amber-800">
+        <AlertDescription>
+          Application ID is required to upload and view documents.
+        </AlertDescription>
+      </Alert>
+    );
+  }
   
   return (
-    <Card className="shadow-md border-blue-100">
-      <CardHeader className="bg-gradient-to-r from-blue-50 to-white">
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle className="text-blue-700 flex items-center gap-2">
-              <FileCheck className="h-5 w-5" />
-              Document Center
-            </CardTitle>
-            <CardDescription>
-              Upload supporting documents for underwriting review
-            </CardDescription>
-            {!validApplicationId && (
-              <Alert className="mt-2 bg-amber-50 text-amber-800 border border-amber-200">
-                <AlertDescription className="flex items-center">
-                  <Info className="h-4 w-4 mr-2" />
-                  No application ID detected. Documents may not save properly.
-                </AlertDescription>
-              </Alert>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {documentCount > 0 && (
-              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-100">
-                {documentCount} document{documentCount !== 1 ? 's' : ''}
-              </Badge>
-            )}
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg">Documents</CardTitle>
+              <CardDescription>
+                Upload and manage application documents
+              </CardDescription>
+            </div>
+            
             <Button 
               variant="outline" 
               size="sm" 
               onClick={handleRefreshDocuments}
-              disabled={isLoading || !validApplicationId}
-              className="flex items-center gap-1.5"
+              disabled={isLoading || uploading}
             >
               {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
               ) : (
-                <RefreshCw className="h-4 w-4" />
+                <RefreshCw className="h-4 w-4 mr-1" />
               )}
               Refresh
             </Button>
           </div>
-        </div>
+        </CardHeader>
         
-        {/* Show upload progress when uploading */}
-        {uploading && uploadProgress > 0 && (
-          <div className="mt-4 space-y-1">
-            <div className="flex justify-between text-xs">
-              <span className="text-blue-700 font-medium">Uploading document...</span>
-              <span className="text-blue-700">{uploadProgress}%</span>
-            </div>
-            <Progress 
-              value={uploadProgress} 
-              className="h-1.5"
-              indicatorClassName="bg-blue-600"
-            />
+        <CardContent>
+          <div className="mb-6">
+            <DocumentCategories activeTab={activeTab} onTabChange={setActiveTab} />
           </div>
-        )}
-      </CardHeader>
-      <CardContent className="pt-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <DocumentCategories activeTab={activeTab} />
           
-          <DocumentTabs
-            activeTab={activeTab}
-            applicationId={validApplicationId}
-            onViewDocument={handleViewDocument}
-            isLoading={isLoading}
-          />
-        </Tabs>
-
-        {/* Document view modal */}
-        <DocumentViewModal 
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <DocumentTabs 
+              activeTab={activeTab}
+              applicationId={validApplicationId}
+              onViewDocument={handleViewDocument}
+              isLoading={isLoading}
+            />
+          </Tabs>
+        </CardContent>
+      </Card>
+      
+      {viewingDocument && (
+        <DocumentViewModal
           open={!!viewingDocument}
-          onOpenChange={(open) => {
-            if (!open) setViewingDocument(null);
-          }}
+          onOpenChange={handleCloseDocumentView}
           document={viewingDocument}
         />
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 };
+

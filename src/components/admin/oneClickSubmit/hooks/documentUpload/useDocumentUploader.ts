@@ -1,206 +1,155 @@
 
-import { useCallback, useRef, useEffect } from 'react';
-import { toast } from 'sonner';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { uploadMerchantDocument } from '@/services/merchantApplicationService';
-import { UploadDocumentOptions } from './types';
+import { v4 as uuidv4 } from 'uuid';
+import { toast } from 'sonner';
 
+/**
+ * Hook for handling document uploads with progress tracking
+ */
 export const useDocumentUploader = (
-  setUploading: (uploading: boolean) => void,
-  setUploadProgress: (progress: number | ((prevProgress: number) => number)) => void,
-  setUploadError: (error: Error | null) => void,
-  loadDocuments: () => Promise<void>
+  setUploading: React.Dispatch<React.SetStateAction<boolean>>,
+  setUploadProgress: React.Dispatch<React.SetStateAction<number>>,
+  setUploadError: React.Dispatch<React.SetStateAction<Error | null>>,
+  onSuccess?: () => Promise<void>
 ) => {
-  // Use refs to track and prevent multiple concurrent uploads and component mount status
-  const uploadingRef = useRef(false);
-  const isMountedRef = useRef(true);
-
-  // Set up mount status tracking
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
-
-  const uploadDocument = useCallback(async ({
-    file,
-    applicationId = '',
-    documentType = 'other',
-    onSuccess,
-    onError,
-    onProgress
-  }: UploadDocumentOptions) => {
-    // Prevent multiple uploads and check if component is still mounted
-    if (uploadingRef.current) {
-      console.log('[useDocumentUploader] Upload already in progress, ignoring request');
-      return;
-    }
-
-    // Validate inputs
-    if (!file) {
-      const error = new Error('Please select a file to upload');
-      toast.error(error.message);
-      if (onError && isMountedRef.current) onError(error);
-      return;
+  // Upload document with progress tracking and error handling
+  const uploadDocument = useCallback(async (options: {
+    file: File;
+    applicationId: string;
+    documentType: string;
+    onSuccess?: () => void;
+    onError?: (error: Error) => void;
+    onProgress?: (progress: number) => void;
+  }) => {
+    const { file, applicationId, documentType, onSuccess: optionsOnSuccess, onError, onProgress } = options;
+    
+    if (!file || !applicationId) {
+      const error = new Error(`Invalid upload parameters. File: ${!!file}, ApplicationId: ${!!applicationId}`);
+      setUploadError(error);
+      if (onError) onError(error);
+      return Promise.reject(error);
     }
     
-    if (!applicationId) {
-      const error = new Error('Application ID is required for document upload');
-      console.error('[useDocumentUploader]', error.message);
-      toast.error(error.message);
-      if (onError && isMountedRef.current) onError(error);
-      return;
-    }
-    
-    // Set uploading state
-    uploadingRef.current = true;
-    if (isMountedRef.current) {
-      setUploadError(null);
-      setUploading(true);
-      setUploadProgress(10);
-      if (onProgress) onProgress(10);
-    }
+    setUploading(true);
+    setUploadProgress(0);
+    setUploadError(null);
     
     try {
-      // Check if storage bucket exists, create if not
-      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+      console.log(`[useDocumentUploader] Starting upload for ${file.name} (${file.size} bytes)`);
       
-      if (bucketsError) {
-        throw new Error(`Failed to list buckets: ${bucketsError.message}`);
-      }
-      
-      const documentsBucketExists = buckets?.some(bucket => bucket.name === 'merchant-documents');
-      
-      if (!documentsBucketExists) {
-        const { error: createBucketError } = await supabase.storage.createBucket('merchant-documents', {
-          public: true,
-        });
+      // Step 1: First check for the merchant-documents bucket
+      try {
+        const { data: buckets } = await supabase.storage.listBuckets();
+        const bucketExists = buckets?.some(bucket => bucket.name === 'merchant-documents');
         
-        if (createBucketError) {
-          console.error('[useDocumentUploader] Error creating bucket:', createBucketError);
-          throw new Error(`Failed to create bucket: ${createBucketError.message}`);
+        if (!bucketExists) {
+          console.log('[useDocumentUploader] Creating merchant-documents bucket');
+          try {
+            await supabase.storage.createBucket('merchant-documents', {
+              public: true,
+              fileSizeLimit: 50 * 1024 * 1024 // 50MB
+            });
+          } catch (bucketError) {
+            console.warn('[useDocumentUploader] Bucket creation error (may already exist):', bucketError);
+          }
         }
+      } catch (bucketCheckError) {
+        console.warn('[useDocumentUploader] Bucket check error:', bucketCheckError);
+        // Continue anyway as this might be a permission issue but bucket might exist
       }
       
-      if (isMountedRef.current) {
-        setUploadProgress(20);
-        if (onProgress) onProgress(20);
-      }
+      setUploadProgress(10);
+      if (onProgress) onProgress(10);
       
-      // Use a unique ID if no applicationId is provided
-      const effectiveAppId = applicationId || `temp-${new Date().getTime()}`;
-      
-      // Upload file to storage
+      // Step 2: Upload file to storage
       const timestamp = new Date().getTime();
       const fileExt = file.name.split('.').pop();
-      const filePath = `${effectiveAppId}/${documentType || 'other'}_${timestamp}.${fileExt}`;
+      const filePath = `${applicationId}/${timestamp}_${file.name.replace(/\s+/g, '_')}`;
       
-      if (isMountedRef.current) {
-        setUploadProgress(30);
-        if (onProgress) onProgress(30);
-      }
+      console.log(`[useDocumentUploader] Uploading file to path: ${filePath}`);
       
-      // Simulate gradual progress during upload
-      const progressInterval = setInterval(() => {
-        if (isMountedRef.current) {
-          setUploadProgress(prev => {
-            const newProgress = Math.min(prev + 5, 70);
-            if (onProgress) onProgress(newProgress);
-            return newProgress;
-          });
-        } else {
-          clearInterval(progressInterval);
-        }
-      }, 300);
-      
-      const { data: fileData, error: uploadError } = await supabase.storage
+      const { data: storageData, error: storageError } = await supabase.storage
         .from('merchant-documents')
         .upload(filePath, file, {
-          contentType: file.type,
+          cacheControl: '3600',
           upsert: true
         });
       
-      clearInterval(progressInterval);
-      
-      if (uploadError) {
-        console.error('[useDocumentUploader] Storage upload error:', uploadError);
-        throw new Error(`Storage upload failed: ${uploadError.message}`);
+      if (storageError) {
+        console.error('[useDocumentUploader] Storage upload error:', storageError);
+        throw new Error(`Storage error: ${storageError.message}`);
       }
       
-      if (isMountedRef.current) {
-        setUploadProgress(80);
-        if (onProgress) onProgress(80);
-      }
+      console.log('[useDocumentUploader] File uploaded successfully:', storageData);
+      setUploadProgress(50);
+      if (onProgress) onProgress(50);
       
-      // Create document record in database
-      const { error: dbError } = await uploadMerchantDocument({
-        applicationId: effectiveAppId,
+      // Step 3: Save metadata using the edge function instead of direct insertion
+      // This bypasses RLS policies using service role
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      
+      const metadataPayload = {
+        entityId: applicationId,
+        entityType: 'merchant',
+        docType: documentType,
         fileName: file.name,
-        fileType: file.type,
+        fileType: file.type || `application/${fileExt}`,
         fileSize: file.size,
-        filePath,
-        documentType: documentType || 'other'
+        filePath: filePath,
+        userName: 'web_app'
+      };
+      
+      console.log('[useDocumentUploader] Saving document metadata:', metadataPayload);
+      
+      // Call the edge function to save metadata (this uses service role to bypass RLS)
+      const response = await fetch('https://rqwrvkkfixrogxogunsk.supabase.co/functions/v1/upload-document', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(metadataPayload)
       });
       
-      if (dbError) {
-        console.error('[useDocumentUploader] Database entry error:', dbError);
-        throw new Error(`Database entry failed: ${dbError.message}`);
+      setUploadProgress(75);
+      if (onProgress) onProgress(75);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[useDocumentUploader] Edge function error:', errorText);
+        throw new Error(`Metadata save failed: ${errorText}`);
       }
       
-      if (isMountedRef.current) {
-        setUploadProgress(100);
-        if (onProgress) onProgress(100);
-      }
+      const result = await response.json();
+      console.log('[useDocumentUploader] Document metadata saved:', result);
       
-      toast.success('Document uploaded successfully');
+      setUploadProgress(100);
+      if (onProgress) onProgress(100);
       
-      // Refresh document list
-      try {
-        if (isMountedRef.current) {
-          await loadDocuments();
-        }
-      } catch (loadError: any) {
-        console.error('[useDocumentUploader] Error refreshing document list:', loadError);
-        // Don't fail the overall upload operation if this fails
-      }
+      // Call onSuccess callbacks
+      if (optionsOnSuccess) optionsOnSuccess();
+      if (onSuccess) await onSuccess();
       
-      // Call success callback
-      if (onSuccess && isMountedRef.current) {
-        onSuccess();
-      }
-      
-      // Reset state after successful upload with slight delay
-      setTimeout(() => {
-        if (isMountedRef.current) {
-          setUploading(false);
-          setUploadProgress(0);
-          setUploadError(null);
-        }
-        uploadingRef.current = false;
-      }, 1000);
+      console.log('[useDocumentUploader] Upload completed successfully');
+      return Promise.resolve(result);
       
     } catch (error: any) {
-      console.error('[useDocumentUploader] Error in upload process:', error);
+      console.error('[useDocumentUploader] Upload error:', error);
+      setUploadError(error);
       
-      // Format error message for display
-      const errorMessage = error.message || 'Upload failed';
-      toast.error(errorMessage);
+      if (onError) onError(error);
       
-      // Update state and call error callback
-      if (isMountedRef.current) {
-        setUploadError(error);
-        setUploading(false);
+      return Promise.reject(error);
+    } finally {
+      setUploading(false);
+      // Reset progress after a short delay
+      setTimeout(() => {
         setUploadProgress(0);
-      }
-      
-      if (onError && isMountedRef.current) onError(error);
-      
-      uploadingRef.current = false;
+      }, 1500);
     }
-  }, [setUploading, setUploadProgress, setUploadError, loadDocuments]);
-
-  return {
-    uploadDocument
-  };
+  }, [setUploading, setUploadProgress, setUploadError, onSuccess]);
+  
+  return { uploadDocument };
 };

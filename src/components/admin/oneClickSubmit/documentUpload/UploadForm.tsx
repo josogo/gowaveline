@@ -158,6 +158,9 @@ export const UploadForm: React.FC<UploadFormProps> = ({
           if (fileInputRef.current) {
             fileInputRef.current.value = '';
           }
+        },
+        onProgress: (progress) => {
+          // This will be handled by the hook
         }
       });
     } catch (err: any) {
