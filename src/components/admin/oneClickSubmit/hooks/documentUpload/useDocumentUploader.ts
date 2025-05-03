@@ -11,13 +11,13 @@ export const useDocumentUploader = (
   setUploadError: (error: Error | null) => void,
   loadDocuments: () => Promise<void>
 ) => {
-  // Use a ref to track and prevent multiple concurrent uploads
+  // Use refs to track and prevent multiple concurrent uploads and component mount status
   const uploadingRef = useRef(false);
-  // Use a ref to track if the component is mounted
   const isMountedRef = useRef(true);
 
-  // Cleanup on unmount
-  useCallback(() => {
+  // Set up mount status tracking
+  useEffect(() => {
+    isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
     };
@@ -31,8 +31,8 @@ export const useDocumentUploader = (
     onError
   }: UploadDocumentOptions) => {
     // Prevent multiple uploads and check if component is still mounted
-    if (uploadingRef.current || !isMountedRef.current) {
-      console.log('[useDocumentUploader] Upload in progress or component unmounted, ignoring request');
+    if (uploadingRef.current) {
+      console.log('[useDocumentUploader] Upload already in progress, ignoring request');
       return;
     }
 
@@ -132,7 +132,12 @@ export const useDocumentUploader = (
       toast.success('Document uploaded successfully');
       
       // Refresh document list
-      await loadDocuments();
+      try {
+        await loadDocuments();
+      } catch (loadError) {
+        console.error('[useDocumentUploader] Error refreshing document list:', loadError);
+        // Don't fail the overall upload operation if this fails
+      }
       
       // Call success callback
       if (onSuccess) {
@@ -173,3 +178,6 @@ export const useDocumentUploader = (
     uploadDocument
   };
 };
+
+// Add missing import
+import { useEffect } from 'react';

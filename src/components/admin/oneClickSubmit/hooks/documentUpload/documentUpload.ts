@@ -89,16 +89,23 @@ export const useDocumentUpload = (applicationId: string = '') => {
   useEffect(() => {
     if (applicationId) {
       console.log(`[useDocumentUpload] Initial load for applicationId ${applicationId}`);
-      loadDocuments();
+      loadDocuments().catch(err => {
+        console.error('[useDocumentUpload] Error in initial document load:', err);
+      });
     } else {
       console.warn('[useDocumentUpload] No applicationId provided for initial load');
     }
+    
+    // Clean up function to ensure we don't have state updates after unmounting
+    return () => {
+      console.log('[useDocumentUpload] Cleaning up document upload resources');
+    };
   }, [applicationId, loadDocuments]);
 
   // Clean up state when unmounting to prevent memory leaks and state updates after unmount
   useEffect(() => {
     return () => {
-      console.log('[useDocumentUpload] Cleaning up document upload resources');
+      console.log('[useDocumentUpload] Unmounting document upload hook');
       setUploading(false);
       setUploadProgress(0);
       setUploadError(null);

@@ -21,6 +21,7 @@ import { ApplicationHeader } from './components/ApplicationHeader';
 import { ApplicationContent } from './components/ApplicationContent';
 import { NavigationControls } from './components/NavigationControls';
 import BankRoutingSystem from './bankRouting/BankRoutingSystem';
+import { toast } from 'sonner';
 
 export type ApplicationFlowProps = {
   merchantApplication?: any;
@@ -45,6 +46,7 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
   const [showBankRouting, setShowBankRouting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [closeAttempted, setCloseAttempted] = useState(false);
 
   // Initialize currentTab in form when activeTab changes
   useEffect(() => {
@@ -74,22 +76,59 @@ export const ApplicationFlow: React.FC<ApplicationFlowProps> = ({
   const handleClose = async () => {
     if (onClose) {
       setIsClosing(true);
+      setCloseAttempted(true);
       
       try {
         // Save data before closing
         const currentValues = form.getValues();
         updateFormData(currentValues);
-        await saveApplicationData();
+        
+        // Set a timeout to ensure we don't freeze indefinitely
+        const saveTimeout = setTimeout(() => {
+          console.log("Save operation timed out, closing anyway");
+          setIsClosing(false);
+          onClose();
+        }, 3000); // 3 second timeout
+        
+        try {
+          await saveApplicationData();
+          clearTimeout(saveTimeout);
+        } catch (error) {
+          console.error("Error saving data before closing:", error);
+          toast.error("Could not save all changes before closing");
+          clearTimeout(saveTimeout);
+        }
         
         // Call the onClose callback
         onClose();
       } catch (error) {
-        console.error("Error saving data before closing:", error);
+        console.error("Exception in close handler:", error);
+        setIsClosing(false);
+        toast.error("An error occurred while closing");
       } finally {
         setIsClosing(false);
       }
     }
   };
+
+  // Force close if save takes too long
+  useEffect(() => {
+    let forceCloseTimeout: NodeJS.Timeout | null = null;
+    
+    if (isClosing && closeAttempted && onClose) {
+      forceCloseTimeout = setTimeout(() => {
+        console.log("Force closing after timeout");
+        setIsClosing(false);
+        onClose();
+      }, 5000); // 5 seconds force close
+    }
+    
+    return () => {
+      if (forceCloseTimeout) {
+        clearTimeout(forceCloseTimeout);
+      }
+    };
+  }, [isClosing, closeAttempted, onClose]);
 
   // Use extracted hooks for side effects
   useFormSubscription(form, updateFormData);

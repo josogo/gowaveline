@@ -14,7 +14,7 @@ export const useApplicationActions = (
   const saveApplicationData = useCallback(async (): Promise<void> => {
     if (!applicationId || !formData) {
       console.log("Unable to save: missing applicationId or formData");
-      return;
+      return Promise.reject(new Error("Missing applicationId or formData"));
     }
     
     console.log("Saving application data:", { applicationId, formData, progress, activeTab });
@@ -69,6 +69,11 @@ export const useApplicationActions = (
   }, [applicationId, formData, progress, activeTab]);
 
   const handleSendToMerchant = useCallback(async () => {
+    if (!applicationId) {
+      toast.error("Cannot send: No application ID available");
+      return;
+    }
+    
     try {
       await saveApplicationData();
       if (setShowSendDialog) {
@@ -78,7 +83,7 @@ export const useApplicationActions = (
       console.error("Error saving before sending to merchant:", error);
       toast.error("Failed to prepare data for sending");
     }
-  }, [saveApplicationData, setShowSendDialog]);
+  }, [applicationId, saveApplicationData, setShowSendDialog]);
 
   return { saveApplicationData, handleSendToMerchant };
 };
