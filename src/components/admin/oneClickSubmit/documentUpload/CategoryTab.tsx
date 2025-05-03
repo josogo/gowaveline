@@ -5,7 +5,6 @@ import { useDocumentUpload } from '../hooks';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { UploadForm } from './UploadForm';
 import { DocumentList } from './DocumentList';
-import { Tabs } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
 
 interface CategoryTabProps {
@@ -41,9 +40,9 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
   return (
     <div className="space-y-6">
       {/* First document type - main one for this category */}
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden border border-gray-200 hover:shadow-md transition-all duration-300">
         <CardHeader className="bg-slate-50 py-3">
-          <CardTitle className="text-md">{documentTypes[0]?.label || title}</CardTitle>
+          <CardTitle className="text-md font-medium text-blue-800">{documentTypes[0]?.label || title}</CardTitle>
         </CardHeader>
         <CardContent className="p-5 space-y-4">
           <UploadForm 
@@ -52,8 +51,8 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
           />
           
           {isLoading ? (
-            <div className="flex justify-center p-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <div className="flex justify-center p-4">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
             </div>
           ) : documents && documents.length > 0 ? (
             <DocumentList 
@@ -72,9 +71,9 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
       
       {/* Additional document types for this category */}
       {documentTypes.slice(1).map((docType) => (
-        <Card key={docType.value} className="overflow-hidden">
+        <Card key={docType.value} className="overflow-hidden border border-gray-200 hover:shadow-md transition-all duration-300">
           <CardHeader className="bg-slate-50 py-3">
-            <CardTitle className="text-md">{docType.label}</CardTitle>
+            <CardTitle className="text-md font-medium text-blue-800">{docType.label}</CardTitle>
           </CardHeader>
           <CardContent className="p-5 space-y-4">
             <UploadForm 
@@ -83,8 +82,8 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
             />
             
             {isLoading ? (
-              <div className="flex justify-center p-8">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <div className="flex justify-center p-4">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
               </div>
             ) : documents && documents.length > 0 ? (
               <DocumentList 

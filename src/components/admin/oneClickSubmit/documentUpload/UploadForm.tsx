@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useDocumentUpload } from '../hooks';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { FileCheck, FileX, Upload, Loader2, AlertCircle, X } from 'lucide-react';
+import { FileCheck, FileX, Upload, Loader2, AlertCircle, X, File } from 'lucide-react';
 import { toast } from 'sonner';
 import { Progress } from '@/components/ui/progress';
 
@@ -16,8 +16,6 @@ export const UploadForm: React.FC<UploadFormProps> = ({
   applicationId, 
   documentType 
 }) => {
-  console.log(`UploadForm rendering for applicationId: ${applicationId}, documentType: ${documentType}`);
-  
   const { 
     uploading, 
     uploadProgress, 
@@ -28,6 +26,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({
   } = useDocumentUpload(applicationId);
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mountedRef = useRef<boolean>(true);
   
@@ -42,7 +41,6 @@ export const UploadForm: React.FC<UploadFormProps> = ({
   // Reset selected file state when upload completes or errors
   useEffect(() => {
     if (!uploading && uploadProgress === 0) {
-      console.log("Upload completed or reset, clearing selected file");
       if (mountedRef.current) {
         setSelectedFile(null);
         if (fileInputRef.current) {
@@ -64,10 +62,34 @@ export const UploadForm: React.FC<UploadFormProps> = ({
       }
       
       setSelectedFile(file);
-      console.log('File selected:', file.name, file.size);
     } else {
       setSelectedFile(null);
-      console.log('File selection cleared or canceled');
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('File is too large. Maximum size is 10MB.');
+        return;
+      }
+      
+      setSelectedFile(file);
     }
   };
   
@@ -84,8 +106,6 @@ export const UploadForm: React.FC<UploadFormProps> = ({
       return;
     }
     
-    console.log(`Starting upload for file ${selectedFile.name} in category ${documentType}, applicationId: ${applicationId}`);
-    
     try {
       // Store file in local variable to ensure it doesn't change during async operations
       const fileToUpload = selectedFile;
@@ -97,7 +117,6 @@ export const UploadForm: React.FC<UploadFormProps> = ({
         onSuccess: () => {
           if (!mountedRef.current) return;
           
-          console.log("Upload success callback triggered");
           setSelectedFile(null);
           // Reset file input
           if (fileInputRef.current) {
@@ -112,7 +131,6 @@ export const UploadForm: React.FC<UploadFormProps> = ({
         onError: (error) => {
           if (!mountedRef.current) return;
           
-          console.error("Upload error callback triggered:", error);
           toast.error(`Upload failed: ${error.message || "Unknown error"}`);
           // Reset file input on error
           if (fileInputRef.current) {
@@ -123,7 +141,6 @@ export const UploadForm: React.FC<UploadFormProps> = ({
     } catch (err: any) {
       if (!mountedRef.current) return;
       
-      console.error("Error during upload submission:", err);
       toast.error(`Upload error: ${err?.message || "Unknown error"}`);
       // Ensure we reset even if there's an exception
       setSelectedFile(null);
@@ -134,7 +151,6 @@ export const UploadForm: React.FC<UploadFormProps> = ({
   };
   
   const handleCancelUpload = () => {
-    console.log("Upload canceled by user");
     resetUploadState();
     setSelectedFile(null);
     if (fileInputRef.current) {
@@ -144,53 +160,69 @@ export const UploadForm: React.FC<UploadFormProps> = ({
   
   // Determine if upload is in error state
   const isUploadError = uploadError !== null;
+
+  // Generate file size text
+  const getFileSizeText = (size: number) => {
+    if (size < 1024) return `${size} B`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+    return `${(size / (1024 * 1024)).toFixed(2)} MB`;
+  };
   
   return (
     <form onSubmit={handleUpload}>
-      <div 
-        className={`border-2 border-dashed rounded-lg p-6 text-center transition-all ${
-          uploading ? 'bg-blue-50/50 opacity-75 cursor-not-allowed' : 
-          selectedFile ? 'bg-blue-50 border-blue-300' : 'bg-white hover:border-primary/50'
-        }`}
-      >
-        <input
-          type="file"
-          id={`documentFile-${documentType}`}
-          ref={fileInputRef}
-          className="hidden"
-          onChange={handleFileChange}
-          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-          disabled={uploading}
-        />
-        <label 
-          htmlFor={`documentFile-${documentType}`} 
-          className={`block ${uploading ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+      {!selectedFile ? (
+        <div 
+          className={`border-2 border-dashed rounded-lg p-6 text-center transition-all
+            ${isDragging ? 'border-blue-400 bg-blue-50' : 'hover:border-blue-300 hover:bg-blue-50/30'}
+            ${uploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+          `}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
         >
+          <input
+            type="file"
+            id={`documentFile-${documentType}`}
+            ref={fileInputRef}
+            className="hidden"
+            onChange={handleFileChange}
+            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            disabled={uploading}
+          />
           <div className="flex flex-col items-center justify-center">
-            {selectedFile ? (
-              <>
-                <FileCheck className="h-12 w-12 text-green-500 mb-2" />
-                <p className="text-lg font-semibold text-gray-800">
-                  {selectedFile.name}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB - Click to change file
-                </p>
-              </>
-            ) : (
-              <>
-                <FileCheck className="h-12 w-12 text-gray-400 mb-2" />
-                <p className="text-lg font-semibold text-gray-800">
-                  Click to select a file
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Supports PDF, images and document files (max 10MB)
-                </p>
-              </>
-            )}
+            <FileCheck className="h-12 w-12 text-blue-400 mb-2" />
+            <p className="text-lg font-medium text-gray-800">
+              Drag & drop or click to upload
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              Supports PDF, images and document files (max 10MB)
+            </p>
           </div>
-        </label>
-      </div>
+        </div>
+      ) : (
+        <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+          <div className="flex items-center">
+            <div className="mr-4 bg-white p-3 rounded-full">
+              <File className="h-8 w-8 text-blue-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-blue-800 truncate">{selectedFile.name}</p>
+              <p className="text-sm text-blue-600">{getFileSizeText(selectedFile.size)}</p>
+            </div>
+            <Button 
+              type="button"
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setSelectedFile(null)} 
+              disabled={uploading}
+              className="text-gray-500 hover:text-red-500"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      )}
       
       {/* Error state */}
       {isUploadError && (
@@ -247,8 +279,8 @@ export const UploadForm: React.FC<UploadFormProps> = ({
           disabled={uploading || !selectedFile}
           className={`${
             selectedFile 
-              ? 'bg-green-600 hover:bg-green-700' 
-              : 'bg-blue-600 hover:bg-blue-700'
+              ? 'bg-blue-600 hover:bg-blue-700' 
+              : 'bg-gray-400'
           }`}
         >
           {uploading ? (

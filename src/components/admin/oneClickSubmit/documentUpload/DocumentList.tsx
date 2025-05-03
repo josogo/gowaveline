@@ -4,7 +4,7 @@ import { useDocumentUpload } from '../hooks';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, FileText, Loader2 } from 'lucide-react';
+import { CheckCircle, FileText, Loader2, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 
@@ -64,13 +64,22 @@ export const DocumentList: React.FC<DocumentListProps> = ({
       url: publicUrl
     });
   };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
   
   // Show loading state
   if (globalIsLoading) {
     return (
-      <div className="flex justify-center items-center py-8">
-        <Loader2 className="h-6 w-6 text-blue-500 animate-spin mr-2" />
-        <span className="text-blue-700">Loading documents...</span>
+      <div className="flex justify-center items-center py-6 text-blue-600">
+        <Loader2 className="h-6 w-6 animate-spin mr-2" />
+        <span>Loading documents...</span>
       </div>
     );
   }
@@ -100,7 +109,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
               <div>
                 <p className="font-medium">{doc.file_name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(doc.created_at).toLocaleDateString()}
+                  {formatDate(doc.created_at)}
                 </p>
               </div>
             </div>
@@ -115,7 +124,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                 className="text-blue-600 hover:text-blue-800 font-medium"
                 onClick={() => handleViewDocument(doc)}
               >
-                <FileText className="h-4 w-4 mr-1" />
+                <Eye className="h-4 w-4 mr-1" />
                 View
               </Button>
             </div>

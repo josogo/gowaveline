@@ -4,11 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { useDocumentUpload } from '../hooks';
 import { Button } from '@/components/ui/button';
-import { FileCheck, RefreshCw, Loader2 } from 'lucide-react';
+import { FileCheck, RefreshCw, Loader2, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { DocumentCategories } from './DocumentCategories';
 import { DocumentTabs } from './DocumentTabs';
 import { DocumentViewModal } from '../documentViewer';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 
 interface DocumentUploadSectionProps {
   applicationId: string;
@@ -17,9 +19,6 @@ interface DocumentUploadSectionProps {
 export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ applicationId }) => {
   // Validate applicationId
   const validApplicationId = applicationId?.trim() || '';
-  
-  // Log for debugging
-  console.log("[DocumentUploadSection] Rendering with applicationId:", validApplicationId || "NONE");
   
   const { 
     uploading, 
@@ -36,18 +35,16 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
     size: number;
     filePath: string;
     fileType: string;
+    url?: string;
   } | null>(null);
   
   // Reload documents when component mounts or applicationId changes
   useEffect(() => {
     if (validApplicationId) {
-      console.log("[DocumentUploadSection] Loading documents for:", validApplicationId);
       loadDocuments().catch(error => {
         console.error("[DocumentUploadSection] Error loading documents:", error);
         toast.error("Failed to load documents");
       });
-    } else {
-      console.warn("[DocumentUploadSection] No applicationId provided");
     }
   }, [validApplicationId, loadDocuments]);
   
@@ -57,7 +54,6 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
       return;
     }
     
-    console.log("[DocumentUploadSection] Manual document refresh requested for ID:", validApplicationId);
     toast.info('Refreshing document list...');
     loadDocuments().catch(error => {
       console.error("[DocumentUploadSection] Error refreshing documents:", error);
@@ -72,43 +68,55 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
     size: number;
     filePath: string;
     fileType: string;
+    url?: string;
   }) => {
-    console.log('[DocumentUploadSection] Opening document view:', doc);
     setViewingDocument(doc);
   };
+
+  const documentCount = documents?.length || 0;
   
   return (
-    <Card className="shadow-md">
+    <Card className="shadow-md border-blue-100">
       <CardHeader className="bg-gradient-to-r from-blue-50 to-white">
         <div className="flex justify-between items-center">
           <div>
             <CardTitle className="text-blue-700 flex items-center gap-2">
               <FileCheck className="h-5 w-5" />
-              Upload Documents
+              Document Center
             </CardTitle>
             <CardDescription>
               Upload supporting documents for underwriting review
             </CardDescription>
             {!validApplicationId && (
-              <p className="text-amber-600 text-xs mt-1">
-                No application ID detected. Documents may not be saved properly.
-              </p>
+              <Alert variant="warning" className="mt-2 bg-amber-50 text-amber-800 border border-amber-200">
+                <AlertDescription className="flex items-center">
+                  <Info className="h-4 w-4 mr-2" />
+                  No application ID detected. Documents may not save properly.
+                </AlertDescription>
+              </Alert>
             )}
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleRefreshDocuments}
-            disabled={isLoading || !validApplicationId}
-            className="flex items-center gap-1.5"
-          >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
+          <div className="flex items-center gap-2">
+            {documentCount > 0 && (
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-100">
+                {documentCount} document{documentCount !== 1 ? 's' : ''}
+              </Badge>
             )}
-            Refresh
-          </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRefreshDocuments}
+              disabled={isLoading || !validApplicationId}
+              className="flex items-center gap-1.5"
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+              Refresh
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="pt-6">
