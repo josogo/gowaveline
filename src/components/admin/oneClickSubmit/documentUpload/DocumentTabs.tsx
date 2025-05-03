@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { TabsContent } from '@/components/ui/tabs';
 import { UploadForm } from './UploadForm';
@@ -26,7 +25,7 @@ export const DocumentTabs: React.FC<DocumentTabsProps> = ({
     if (!documents || !documents.length) return [];
     
     return documents.filter(doc => {
-      const docType = doc.document_type || doc.documentType;
+      const docType = doc.document_type;
       
       switch (activeTab) {
         case 'bank':

@@ -15,6 +15,7 @@ export interface DocumentFile {
   file_path?: string;
   created_at?: string;
   document_type?: string;
+  documentType?: string; // Adding this property to fix the type errors
 }
 
 export interface DocumentViewItem {

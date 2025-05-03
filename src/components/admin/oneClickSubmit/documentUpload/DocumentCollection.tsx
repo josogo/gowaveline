@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -102,7 +101,7 @@ export const DocumentCollection: React.FC<DocumentCollectionProps> = ({ applicat
     
     return documents
       .filter(doc => {
-        const docType = doc.document_type || doc.documentType;
+        const docType = doc.document_type;
         return currentCategory.docTypes.includes(docType);
       })
       .map(doc => ({
@@ -112,7 +111,7 @@ export const DocumentCollection: React.FC<DocumentCollectionProps> = ({ applicat
         size: doc.file_size || doc.size,
         filePath: doc.file_path || '',
         fileType: doc.file_type || doc.type,
-        documentType: doc.document_type || doc.documentType
+        documentType: doc.document_type
       }));
   };
 
