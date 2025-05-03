@@ -1,11 +1,8 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { File, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, Download, File, X } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { LoadingState } from './components/LoadingState';
-import { ErrorState } from './components/ErrorState';
 import { DocumentPreview } from './components/DocumentPreview';
 import { DocumentFooter } from './components/DocumentFooter';
 import { DocumentViewItem } from '../hooks/documentUpload/types';
@@ -21,84 +18,34 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
   onOpenChange,
   document
 }) => {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   // Reset state when document changes
   React.useEffect(() => {
-    if (open && document) {
-      setLoading(true);
-      setError(null);
+    if (!open) {
+      // Reset state when modal is closed
     }
-  }, [open, document]);
-
-  // Handle document load error
-  const handleLoadError = () => {
-    setLoading(false);
-    setError('Failed to load document. The file may be corrupted or inaccessible.');
-  };
-
-  // Handle document load success
-  const handleLoadSuccess = () => {
-    setLoading(false);
-  };
-
-  // Generate URL for the file
-  const getDocumentUrl = () => {
-    if (!document?.filePath) return '';
-    
-    try {
-      const { data } = supabase.storage
-        .from('merchant-documents')
-        .getPublicUrl(document.filePath);
-      
-      return data.publicUrl;
-    } catch (err) {
-      console.error('Error generating URL:', err);
-      setError('Error generating document URL');
-      return '';
-    }
-  };
+  }, [open]);
 
   if (!document) return null;
-
-  const documentUrl = getDocumentUrl();
   
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${open ? 'block' : 'hidden'}`}>
-      <div className="fixed inset-0 bg-black/50" onClick={() => onOpenChange(false)} />
-      
-      <Card className="w-full max-w-5xl h-[90vh] max-h-[90vh] z-50 flex flex-col bg-white">
-        <CardHeader className="border-b flex-shrink-0">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
+        <DialogHeader className="border-b px-6 py-4 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-medium flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 font-medium">
               <File className="h-5 w-5 text-blue-600" />
-              <span className="truncate max-w-[400px]">{document.name}</span>
-            </CardTitle>
+              <span className="max-w-[400px] truncate">{document.name}</span>
+            </DialogTitle>
             
-            <div className="flex items-center gap-2">
-              {documentUrl && (
-                <a 
-                  href={documentUrl} 
-                  download={document.name}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-medium bg-blue-50 text-blue-700 hover:bg-blue-100"
-                >
-                  <Download className="h-4 w-4 mr-1.5" />
-                  Download
-                </a>
-              )}
-              
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => onOpenChange(false)}
-              >
-                <X className="h-4 w-4" />
-                <span className="sr-only">Close</span>
-              </Button>
-            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => onOpenChange(false)}
+              className="h-8 w-8 p-0"
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </Button>
           </div>
           
           <div className="text-sm text-muted-foreground flex items-center gap-4 mt-1">
@@ -108,25 +55,23 @@ export const DocumentViewModal: React.FC<DocumentViewModalProps> = ({
             <span>•</span>
             <span>{(document.size / 1024 / 1024).toFixed(2)} MB</span>
           </div>
-        </CardHeader>
+        </DialogHeader>
         
-        <CardContent className="flex-grow overflow-hidden relative p-0">
-          {loading && <LoadingState />}
-          
-          {error ? (
-            <ErrorState error={error} />
-          ) : (
-            <DocumentPreview
-              url={documentUrl}
-              fileName={document.name}
-              fileType={document.fileType}
-              onLoad={handleLoadSuccess}
-              onError={handleLoadError}
-            />
-          )}
-        </CardContent>
-      </Card>
-    </div>
+        <div className="flex-grow overflow-hidden relative">
+          <DocumentPreview 
+            documentUrl={document.url || ''}
+            documentName={document.name}
+            documentType={document.fileType}
+          />
+        </div>
+        
+        <DocumentFooter
+          documentUrl={document.url}
+          documentName={document.name}
+          onClose={() => onOpenChange(false)}
+        />
+      </DialogContent>
+    </Dialog>
   );
 };
 

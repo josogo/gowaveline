@@ -1,48 +1,45 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, Copy } from 'lucide-react';
-import { toast } from 'sonner';
+import { Download, X } from 'lucide-react';
 
 interface DocumentFooterProps {
-  url: string;
-  fileName: string;
+  documentUrl?: string;
+  documentName?: string;
+  onClose: () => void;
 }
 
 export const DocumentFooter: React.FC<DocumentFooterProps> = ({ 
-  url, 
-  fileName 
+  documentUrl, 
+  documentName, 
+  onClose 
 }) => {
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(url)
-      .then(() => toast.success('Link copied to clipboard'))
-      .catch(() => toast.error('Failed to copy link'));
-  };
-  
   return (
-    <div className="flex justify-end space-x-2">
-      <Button 
-        variant="outline" 
-        size="sm" 
-        onClick={handleCopyLink}
-      >
-        <Copy className="h-4 w-4 mr-1.5" />
-        Copy Link
-      </Button>
+    <div className="border-t p-4 flex items-center justify-end gap-2 bg-gray-50">
+      {documentUrl && (
+        <Button 
+          variant="secondary"
+          className="bg-blue-50 text-blue-700 hover:bg-blue-100"
+          asChild
+        >
+          <a 
+            href={documentUrl} 
+            download={documentName}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <Download className="h-4 w-4 mr-1.5" />
+            Download
+          </a>
+        </Button>
+      )}
       
       <Button 
-        size="sm" 
-        asChild
+        variant="outline" 
+        onClick={onClose}
       >
-        <a 
-          href={url} 
-          download={fileName}
-          target="_blank" 
-          rel="noreferrer"
-        >
-          <Download className="h-4 w-4 mr-1.5" />
-          Download
-        </a>
+        <X className="h-4 w-4 mr-1.5" />
+        Close
       </Button>
     </div>
   );
