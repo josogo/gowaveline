@@ -34,13 +34,14 @@ export const UploadForm: React.FC<UploadFormProps> = ({
   // Track component mounted state for async operations
   useEffect(() => {
     mountedRef.current = true;
+    console.log(`UploadForm mounted for document type: ${documentType}, applicationId: ${applicationId}`);
     return () => {
       mountedRef.current = false;
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
       }
     };
-  }, [previewUrl]);
+  }, [documentType, applicationId, previewUrl]);
   
   // Reset selected file state when upload completes or errors
   useEffect(() => {
@@ -86,6 +87,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({
   };
 
   const processFile = (file: File) => {
+    console.log("Processing file:", file.name);
     // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
       toast.error('File is too large. Maximum size is 10MB.');
@@ -105,6 +107,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({
   
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Upload button clicked");
     
     if (!selectedFile) {
       toast.error('Please select a file to upload');
@@ -115,6 +118,8 @@ export const UploadForm: React.FC<UploadFormProps> = ({
       toast.error('Application ID is required for uploading documents');
       return;
     }
+    
+    console.log(`Starting upload for ${selectedFile.name} of type ${documentType}`);
     
     try {
       // Store file in local variable to ensure it doesn't change during async operations
@@ -127,6 +132,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({
         onSuccess: () => {
           if (!mountedRef.current) return;
           
+          console.log("Upload successful, resetting form");
           setSelectedFile(null);
           // Reset file input
           if (fileInputRef.current) {
@@ -146,6 +152,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({
         onError: (error) => {
           if (!mountedRef.current) return;
           
+          console.error("Upload failed:", error);
           toast.error(`Upload failed: ${error.message || "Unknown error"}`);
           // Reset file input on error
           if (fileInputRef.current) {
@@ -154,6 +161,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({
         }
       });
     } catch (err: any) {
+      console.error("Exception during upload:", err);
       if (!mountedRef.current) return;
       
       toast.error(`Upload error: ${err?.message || "Unknown error"}`);
@@ -170,6 +178,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({
   };
   
   const handleCancelUpload = () => {
+    console.log("Upload cancelled");
     resetUploadState();
     setSelectedFile(null);
     if (previewUrl) {

@@ -19,104 +19,81 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const formData = await req.formData()
-    const file = formData.get('file') as File
-    const docType = formData.get('docType') as string
-    const entityId = formData.get('entityId') as string 
-    const entityType = formData.get('entityType') as string // 'merchant' or 'agent'
-    const userName = formData.get('userName') as string
-    const effectiveDate = formData.get('effectiveDate') as string
-    const expirationDate = formData.get('expirationDate') as string
+    // Get auth info
+    const authHeader = req.headers.get('authorization') || '';
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+    
+    // Verify authentication
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    
+    if (authError || !user) {
+      console.error('Authentication error:', authError);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized', details: authError }),
+        { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
 
-    if (!file || !docType || !entityId || !entityType) {
+    // Parse request body as JSON (not form data)
+    const requestBody = await req.json();
+    const { entityId, entityType, docType, fileName, fileType, fileSize, filePath, userName } = requestBody;
+    
+    if (!entityId || !entityType || !docType || !fileName || !filePath || !fileType) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields' }),
         { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      )
+      );
     }
 
-    // Determine the bucket based on entityType
-    const bucketId = entityType === 'merchant' ? 'merchant_documents' : 'agent_agreements'
-    
-    // Upload file to storage
-    const timestamp = new Date().getTime()
-    const fileExt = file.name.split('.').pop()
-    const filePath = `${entityId}/${docType}_${timestamp}.${fileExt}`
-    
-    const { data: storageData, error: storageError } = await supabaseClient
-      .storage
-      .from(bucketId)
-      .upload(filePath, file, {
-        contentType: file.type,
-        upsert: false
-      })
-
-    if (storageError) {
-      console.error('Storage error:', storageError)
-      return new Response(
-        JSON.stringify({ error: 'Error uploading file', details: storageError }),
-        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      )
-    }
-
-    // Get the public URL
-    const { data: { publicUrl } } = supabaseClient
-      .storage
-      .from(bucketId)
-      .getPublicUrl(filePath)
-
-    // Save document metadata to the appropriate table
-    let dbResult
+    // Save document metadata to the appropriate table using service role (bypassing RLS)
+    let dbResult;
     if (entityType === 'merchant') {
       dbResult = await supabaseClient
         .from('merchant_documents')
         .insert({
           merchant_id: entityId,
           document_type: docType,
-          file_name: file.name,
+          file_name: fileName,
           file_path: filePath,
-          file_type: file.type,
-          file_size: file.size,
-          uploaded_by: userName
+          file_type: fileType,
+          file_size: fileSize,
+          uploaded_by: userName || user.email || 'web_app'
         })
+        .select();
     } else {
-      // For agent agreements
-      dbResult = await supabaseClient
-        .from('agent_agreements')
-        .insert({
-          agent_id: entityId,
-          agreement_type: docType,
-          file_name: file.name,
-          file_path: filePath,
-          file_type: file.type,
-          file_size: file.size,
-          effective_date: effectiveDate || null,
-          expiration_date: expirationDate || null
-        })
+      // For other entity types (future expansion)
+      return new Response(
+        JSON.stringify({ error: 'Unsupported entity type' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
     }
 
     if (dbResult.error) {
-      console.error('Database error:', dbResult.error)
+      console.error('Database error:', dbResult.error);
       return new Response(
         JSON.stringify({ error: 'Error saving document metadata', details: dbResult.error }),
         { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      )
+      );
     }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        filePath: filePath,
-        publicUrl: publicUrl,
-        metadata: dbResult.data
+        data: dbResult.data
       }),
       { headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    )
+    );
   } catch (error) {
-    console.error('Unexpected error:', error)
+    console.error('Unexpected error:', error);
     return new Response(
       JSON.stringify({ error: 'Unexpected error', details: error.message }),
       { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    )
+    );
   }
-})
+});
