@@ -16,7 +16,7 @@ interface DocumentUploadSectionProps {
 
 export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ applicationId }) => {
   // Log for debugging
-  console.log("DocumentUploadSection rendering for applicationId:", applicationId);
+  console.log("[DocumentUploadSection] Rendering with applicationId:", applicationId);
   
   const { 
     uploading, 
@@ -38,13 +38,20 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
   // Reload documents when component mounts or applicationId changes
   useEffect(() => {
     if (applicationId) {
-      console.log("DocumentUploadSection: Loading documents for:", applicationId);
+      console.log("[DocumentUploadSection] Loading documents for:", applicationId);
       loadDocuments();
+    } else {
+      console.warn("[DocumentUploadSection] No applicationId provided");
     }
   }, [applicationId, loadDocuments]);
   
   const handleRefreshDocuments = () => {
-    console.log("Manual document refresh requested");
+    if (!applicationId) {
+      toast.error("No application ID available");
+      return;
+    }
+    
+    console.log("[DocumentUploadSection] Manual document refresh requested for ID:", applicationId);
     loadDocuments();
     toast.info('Refreshing document list...');
   };
@@ -57,13 +64,9 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
     filePath: string;
     fileType: string;
   }) => {
-    console.log('Opening document view:', doc);
+    console.log('[DocumentUploadSection] Opening document view:', doc);
     setViewingDocument(doc);
   };
-  
-  if (!applicationId) {
-    console.warn("DocumentUploadSection: No applicationId provided");
-  }
   
   return (
     <Card className="shadow-md">
@@ -77,12 +80,17 @@ export const DocumentUploadSection: React.FC<DocumentUploadSectionProps> = ({ ap
             <CardDescription>
               Upload supporting documents for underwriting review
             </CardDescription>
+            {!applicationId && (
+              <p className="text-amber-600 text-xs mt-1">
+                No application ID detected. Documents may not be saved properly.
+              </p>
+            )}
           </div>
           <Button 
             variant="outline" 
             size="sm" 
             onClick={handleRefreshDocuments}
-            disabled={isLoading}
+            disabled={isLoading || !applicationId}
             className="flex items-center gap-1.5"
           >
             {isLoading ? (

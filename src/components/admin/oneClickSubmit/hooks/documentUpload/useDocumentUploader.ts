@@ -27,7 +27,7 @@ export const useDocumentUploader = (
     }
     
     if (!applicationId) {
-      console.warn('No applicationId provided for document upload');
+      console.warn('[useDocumentUploader] No applicationId provided for document upload');
     }
     
     // Reset any previous errors and set initial state
@@ -35,7 +35,7 @@ export const useDocumentUploader = (
     setUploading(true);
     setUploadProgress(10);
     
-    console.log(`Starting upload with applicationId: ${applicationId}, documentType: ${documentType}, file: ${file.name}`);
+    console.log(`[useDocumentUploader] Starting upload with applicationId: ${applicationId}, documentType: ${documentType}, file: ${file.name}`);
     
     try {
       // Check if storage bucket exists, create if not
@@ -56,7 +56,7 @@ export const useDocumentUploader = (
           throw new Error(`Failed to create bucket: ${createBucketError.message}`);
         }
         
-        console.log('Created merchant-documents bucket');
+        console.log('[useDocumentUploader] Created merchant-documents bucket');
       }
       
       setUploadProgress(20);
@@ -71,12 +71,7 @@ export const useDocumentUploader = (
       
       setUploadProgress(30);
       
-      // Use a more reliable progress tracking approach
-      const progressInterval = setInterval(() => {
-        setUploadProgress((prev: number) => Math.min(prev + 5, 85));
-      }, 300);
-      
-      console.log('Uploading file to path:', filePath);
+      console.log('[useDocumentUploader] Uploading file to path:', filePath);
       const { data: fileData, error: uploadError } = await supabase.storage
         .from('merchant-documents')
         .upload(filePath, file, {
@@ -84,21 +79,13 @@ export const useDocumentUploader = (
           upsert: true
         });
       
-      clearInterval(progressInterval);
-      
       if (uploadError) {
-        console.error('Storage upload error:', uploadError);
-        setUploadProgress(0);
-        setUploading(false);
-        setUploadError(new Error(`Storage upload failed: ${uploadError.message}`));
-        
-        if (onError) onError(uploadError);
-        toast.error(`Upload failed: ${uploadError.message}`);
-        return;
+        console.error('[useDocumentUploader] Storage upload error:', uploadError);
+        throw new Error(`Storage upload failed: ${uploadError.message}`);
       }
       
-      console.log('File uploaded successfully to storage:', fileData);
-      setUploadProgress(90);
+      console.log('[useDocumentUploader] File uploaded successfully to storage:', fileData);
+      setUploadProgress(70);
       
       // Create document record in database
       const { error: dbError } = await uploadMerchantDocument({
@@ -111,18 +98,12 @@ export const useDocumentUploader = (
       });
       
       if (dbError) {
-        console.error('Database entry error:', dbError);
-        setUploadError(new Error(`Database entry failed: ${dbError.message}`));
-        setUploading(false);
-        setUploadProgress(0);
-        
-        if (onError) onError(dbError);
-        toast.error(`Database entry failed: ${dbError.message}`);
-        return;
+        console.error('[useDocumentUploader] Database entry error:', dbError);
+        throw new Error(`Database entry failed: ${dbError.message}`);
       }
       
       setUploadProgress(100);
-      console.log('Document upload completed successfully');
+      console.log('[useDocumentUploader] Document upload completed successfully');
       toast.success('Document uploaded successfully');
       
       // Refresh document list
@@ -141,7 +122,7 @@ export const useDocumentUploader = (
       }, 1000);
       
     } catch (error: any) {
-      console.error('Error in upload process:', error);
+      console.error('[useDocumentUploader] Error in upload process:', error);
       
       // Format error message for display
       const errorMessage = error.message || 'Upload failed';

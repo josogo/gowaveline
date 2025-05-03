@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useDocumentUpload } from '../hooks';
 import { UploadForm } from './UploadForm';
 import { FileList } from '../FileList';
@@ -28,12 +28,19 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
   onViewDocument,
   isLoading
 }) => {
-  console.log(`CategoryTab rendering for ${category} with applicationId: ${applicationId}`);
+  console.log(`[CategoryTab] Rendering for ${category} with applicationId: ${applicationId}`);
   
   const { 
     documents,
     loadDocuments
   } = useDocumentUpload(applicationId);
+
+  useEffect(() => {
+    if (applicationId) {
+      console.log(`[CategoryTab] Loading documents for category ${category}, applicationId: ${applicationId}`);
+      loadDocuments();
+    }
+  }, [category, applicationId, loadDocuments]);
 
   // Group documents by category
   const documentsByCategory = React.useMemo(() => {
@@ -55,17 +62,24 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
         
         result[docCategory].push(doc);
       });
-      console.log(`Documents grouped for ${category} category:`, 
+      console.log(`[CategoryTab] Documents grouped for ${category} category:`, 
                  result[category]?.length || 0, "documents found");
     } else {
-      console.log(`No documents to group for ${category} category`);
+      console.log(`[CategoryTab] No documents to group for ${category} category`);
     }
     
     return result;
   }, [documents, category]);
 
   const handleDeleteDocument = async (documentId: string) => {
+    if (!documentId) {
+      toast.error("Invalid document ID");
+      return;
+    }
+    
     try {
+      console.log("[CategoryTab] Deleting document with ID:", documentId);
+      
       // Find the document to get the file path
       const docToDelete = documents.find(doc => doc.id === documentId);
       
@@ -74,7 +88,7 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
         return;
       }
       
-      console.log("Deleting document:", docToDelete);
+      console.log("[CategoryTab] Found document to delete:", docToDelete);
       
       // First delete from storage
       if (docToDelete.file_path) {
@@ -83,10 +97,12 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
           .remove([docToDelete.file_path]);
           
         if (storageError) {
-          console.error("Error deleting from storage:", storageError);
+          console.error("[CategoryTab] Error deleting from storage:", storageError);
           toast.error("Error removing file from storage");
           return;
         }
+        
+        console.log("[CategoryTab] Successfully removed file from storage");
       }
       
       // Then delete the database entry
@@ -96,18 +112,19 @@ export const CategoryTab: React.FC<CategoryTabProps> = ({
         .eq('id', documentId);
         
       if (dbError) {
-        console.error("Error deleting document record:", dbError);
+        console.error("[CategoryTab] Error deleting document record:", dbError);
         toast.error("Error removing document record");
         return;
       }
       
+      console.log("[CategoryTab] Successfully deleted document from database");
       toast.success("Document deleted successfully");
       
       // Refresh the document list
-      loadDocuments();
+      await loadDocuments();
       
     } catch (err) {
-      console.error("Error in delete operation:", err);
+      console.error("[CategoryTab] Error in delete operation:", err);
       toast.error("Failed to delete document");
     }
   };

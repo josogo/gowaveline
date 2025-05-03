@@ -67,6 +67,11 @@ export const UploadForm: React.FC<UploadFormProps> = ({
       toast.error('Please select a file to upload');
       return;
     }
+
+    if (!applicationId) {
+      toast.error('Application ID is required for uploading documents');
+      return;
+    }
     
     console.log(`Starting upload for file ${selectedFile.name} in category ${documentType}, applicationId: ${applicationId}`);
     
@@ -88,7 +93,6 @@ export const UploadForm: React.FC<UploadFormProps> = ({
         onError: (error) => {
           console.error("Upload error callback triggered:", error);
           // Reset file input on error
-          setSelectedFile(null);
           if (fileInputRef.current) {
             fileInputRef.current.value = '';
           }
