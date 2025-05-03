@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { MerchantLoginForm } from '@/components/admin/oneClickSubmit/MerchantLoginForm';
-import ApplicationFlow from '@/components/admin/oneClickSubmit/ApplicationFlow'; // Import the default export
+import ApplicationFlow from '@/components/admin/oneClickSubmit/ApplicationFlow';
 import { toast } from 'sonner';
 
 const MerchantApplication = () => {
