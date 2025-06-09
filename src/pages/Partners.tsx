@@ -276,9 +276,8 @@ const Partners = () => {
                 Contact Our Partnership Team
               </Button>
               <Button 
-                onClick={() => window.open('/docs/Waveline-Partner-Program.pdf', '_blank')}
-                variant="outline"
-                className="border-white text-white hover:bg-orange-600 px-8 py-6 text-lg rounded-md"
+                onClick={() => navigate('/partnership-guide')}
+                className="border-2 border-white bg-transparent text-white hover:bg-white hover:text-orange-500 px-8 py-6 text-lg rounded-md"
               >
                 Download Partnership Guide
               </Button>

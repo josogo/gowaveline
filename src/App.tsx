@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from 'next-themes';
@@ -10,6 +11,7 @@ import Services from './pages/Services';
 import HighRisk from './pages/HighRisk';
 import Industries from './pages/Industries';
 import Partners from './pages/Partners';
+import PartnershipGuide from './pages/PartnershipGuide';
 import About from './pages/About';
 import Results from './pages/Results';
 import Contact from './pages/Contact';
@@ -44,6 +46,7 @@ const AppRoutes = () => {
       <Route path="/high-risk" element={<HighRisk />} />
       <Route path="/industries" element={<Industries />} />
       <Route path="/partners" element={<Partners />} />
+      <Route path="/partnership-guide" element={<PartnershipGuide />} />
       <Route path="/about" element={<About />} />
       <Route path="/results" element={<Results />} />
       <Route path="/contact" element={<Contact />} />
