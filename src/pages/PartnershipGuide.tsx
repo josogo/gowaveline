@@ -20,10 +20,10 @@ const PartnershipGuide = () => {
       });
 
       // Set up colors and fonts
-      const primaryColor = [255, 159, 90]; // Orange #FF9F5A
-      const secondaryColor = [14, 165, 233]; // Blue #0EA5E9
-      const textColor = [51, 51, 51]; // Dark gray
-      const lightGray = [245, 245, 245];
+      const primaryColor: [number, number, number] = [255, 159, 90]; // Orange #FF9F5A
+      const secondaryColor: [number, number, number] = [14, 165, 233]; // Blue #0EA5E9
+      const textColor: [number, number, number] = [51, 51, 51]; // Dark gray
+      const lightGray: [number, number, number] = [245, 245, 245];
 
       // Page 1 - Cover Page
       // Background gradient effect
@@ -31,7 +31,7 @@ const PartnershipGuide = () => {
       doc.rect(0, 0, 210, 297, 'F');
 
       // Header section with company branding
-      doc.setFillColor(...primaryColor);
+      doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.rect(0, 0, 210, 60, 'F');
 
       // Company name
@@ -49,7 +49,7 @@ const PartnershipGuide = () => {
       doc.text('Professional Payment Processing Solutions', 105, 45, { align: 'center' });
 
       // Main title
-      doc.setTextColor(...textColor);
+      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(28);
       doc.text('PARTNERSHIP', 105, 85, { align: 'center' });
@@ -58,12 +58,12 @@ const PartnershipGuide = () => {
       // Subtitle
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(16);
-      doc.setTextColor(...secondaryColor);
+      doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
       doc.text('Your Gateway to Payment Processing Success', 105, 120, { align: 'center' });
 
       // Key benefits preview
       doc.setFontSize(14);
-      doc.setTextColor(...textColor);
+      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
       doc.setFont('helvetica', 'bold');
       doc.text('What You\'ll Discover:', 20, 150);
 
@@ -79,24 +79,24 @@ const PartnershipGuide = () => {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(11);
       benefits.forEach((benefit, index) => {
-        doc.setFillColor(...primaryColor);
+        doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
         doc.circle(25, 162 + (index * 12), 2, 'F');
-        doc.setTextColor(...textColor);
+        doc.setTextColor(textColor[0], textColor[1], textColor[2]);
         doc.text(benefit, 32, 165 + (index * 12));
       });
 
       // Contact info box
-      doc.setFillColor(...lightGray);
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
       doc.roundedRect(20, 240, 170, 35, 3, 3, 'F');
       
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(12);
-      doc.setTextColor(...primaryColor);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.text('Ready to Get Started?', 105, 250, { align: 'center' });
       
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
-      doc.setTextColor(...textColor);
+      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
       doc.text('Contact: partners@waveline.com | 1-800-WAVELINE', 105, 260, { align: 'center' });
       doc.text('Visit: www.waveline.com/partners', 105, 270, { align: 'center' });
 
@@ -104,7 +104,7 @@ const PartnershipGuide = () => {
       doc.addPage();
       
       // Header
-      doc.setFillColor(...primaryColor);
+      doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.rect(0, 0, 210, 25, 'F');
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
@@ -116,7 +116,7 @@ const PartnershipGuide = () => {
       // Industry-Leading Compensation
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(14);
-      doc.setTextColor(...primaryColor);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.text('✓ INDUSTRY-LEADING COMPENSATION', 20, yPos);
       yPos += 10;
 
@@ -129,7 +129,7 @@ const PartnershipGuide = () => {
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
-      doc.setTextColor(...textColor);
+      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
       compensationPoints.forEach(point => {
         doc.text('• ' + point, 25, yPos);
         yPos += 6;
@@ -140,7 +140,7 @@ const PartnershipGuide = () => {
       // Comprehensive Support System
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(14);
-      doc.setTextColor(...primaryColor);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.text('✓ COMPREHENSIVE SUPPORT SYSTEM', 20, yPos);
       yPos += 10;
 
@@ -154,7 +154,7 @@ const PartnershipGuide = () => {
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
-      doc.setTextColor(...textColor);
+      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
       supportPoints.forEach(point => {
         doc.text('• ' + point, 25, yPos);
         yPos += 6;
@@ -165,7 +165,7 @@ const PartnershipGuide = () => {
       // Transparent Pricing Protection
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(14);
-      doc.setTextColor(...primaryColor);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.text('✓ TRANSPARENT PRICING PROTECTION', 20, yPos);
       yPos += 10;
 
@@ -178,7 +178,7 @@ const PartnershipGuide = () => {
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
-      doc.setTextColor(...textColor);
+      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
       pricingPoints.forEach(point => {
         doc.text('• ' + point, 25, yPos);
         yPos += 6;
@@ -189,7 +189,7 @@ const PartnershipGuide = () => {
       // Cutting-Edge Technology
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(14);
-      doc.setTextColor(...primaryColor);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.text('✓ CUTTING-EDGE TECHNOLOGY', 20, yPos);
       yPos += 10;
 
@@ -203,7 +203,7 @@ const PartnershipGuide = () => {
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
-      doc.setTextColor(...textColor);
+      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
       techPoints.forEach(point => {
         doc.text('• ' + point, 25, yPos);
         yPos += 6;
@@ -213,7 +213,7 @@ const PartnershipGuide = () => {
       doc.addPage();
       
       // Header
-      doc.setFillColor(...primaryColor);
+      doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.rect(0, 0, 210, 25, 'F');
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
@@ -223,17 +223,17 @@ const PartnershipGuide = () => {
       yPos = 40;
 
       // Agent Program
-      doc.setFillColor(...lightGray);
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
       doc.roundedRect(20, yPos - 5, 170, 55, 2, 2, 'F');
       
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(14);
-      doc.setTextColor(...primaryColor);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.text('AGENT PROGRAM', 25, yPos + 5);
       
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
-      doc.setTextColor(...textColor);
+      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
       doc.text('Perfect for sales professionals', 25, yPos + 15);
 
       const agentPoints = [
@@ -251,17 +251,17 @@ const PartnershipGuide = () => {
       yPos += 65;
 
       // ISO Program
-      doc.setFillColor(...lightGray);
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
       doc.roundedRect(20, yPos - 5, 170, 55, 2, 2, 'F');
       
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(14);
-      doc.setTextColor(...primaryColor);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.text('ISO PROGRAM', 25, yPos + 5);
       
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
-      doc.setTextColor(...textColor);
+      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
       doc.text('For established sales organizations', 25, yPos + 15);
 
       const isoPoints = [
@@ -279,17 +279,17 @@ const PartnershipGuide = () => {
       yPos += 65;
 
       // ISV Program
-      doc.setFillColor(...lightGray);
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
       doc.roundedRect(20, yPos - 5, 170, 55, 2, 2, 'F');
       
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(14);
-      doc.setTextColor(...primaryColor);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.text('ISV PROGRAM', 25, yPos + 5);
       
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
-      doc.setTextColor(...textColor);
+      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
       doc.text('For software integrators', 25, yPos + 15);
 
       const isvPoints = [
@@ -308,7 +308,7 @@ const PartnershipGuide = () => {
       doc.addPage();
       
       // Header
-      doc.setFillColor(...primaryColor);
+      doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.rect(0, 0, 210, 25, 'F');
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
@@ -320,13 +320,13 @@ const PartnershipGuide = () => {
       // Contact Information
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(14);
-      doc.setTextColor(...primaryColor);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.text('CONTACT OUR PARTNERSHIP TEAM', 20, yPos);
       yPos += 15;
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(12);
-      doc.setTextColor(...textColor);
+      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
       doc.text('📧 Email: partners@waveline.com', 25, yPos);
       yPos += 10;
       doc.text('📞 Phone: 1-800-WAVELINE', 25, yPos);
@@ -337,7 +337,7 @@ const PartnershipGuide = () => {
       // Application Process
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(14);
-      doc.setTextColor(...primaryColor);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.text('APPLICATION PROCESS', 20, yPos);
       yPos += 15;
 
@@ -351,7 +351,7 @@ const PartnershipGuide = () => {
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(11);
-      doc.setTextColor(...textColor);
+      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
       processSteps.forEach(step => {
         doc.text(step, 25, yPos);
         yPos += 8;
@@ -362,7 +362,7 @@ const PartnershipGuide = () => {
       // Success Tips
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(14);
-      doc.setTextColor(...primaryColor);
+      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.text('TIPS FOR SUCCESS', 20, yPos);
       yPos += 15;
 
@@ -376,14 +376,14 @@ const PartnershipGuide = () => {
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
-      doc.setTextColor(...textColor);
+      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
       successTips.forEach(tip => {
         doc.text(tip, 25, yPos);
         yPos += 7;
       });
 
       // Footer
-      doc.setFillColor(...primaryColor);
+      doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       doc.rect(0, 270, 210, 27, 'F');
       
       doc.setFont('helvetica', 'bold');
@@ -397,7 +397,7 @@ const PartnershipGuide = () => {
         doc.setPage(i);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
-        doc.setTextColor(...textColor);
+        doc.setTextColor(textColor[0], textColor[1], textColor[2]);
         doc.text(`Page ${i} of ${totalPages}`, 190, 290, { align: 'right' });
       }
 
