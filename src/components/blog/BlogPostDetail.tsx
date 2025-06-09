@@ -69,22 +69,30 @@ const BlogPostDetail: React.FC<BlogPostDetailProps> = ({ post }) => {
 
       {/* Article Content */}
       <div className="mb-12">
-        <div className="bg-white rounded-lg shadow-sm border p-8">
+        <div className="bg-white rounded-lg shadow-sm border p-10">
           <article 
             className="prose prose-lg max-w-none 
-              prose-headings:text-gray-900 prose-headings:font-bold prose-headings:mb-4 prose-headings:mt-8
-              prose-h1:text-3xl prose-h1:text-orange-600 prose-h1:border-b prose-h1:border-orange-100 prose-h1:pb-3
-              prose-h2:text-2xl prose-h2:text-gray-800 prose-h2:mt-10
-              prose-h3:text-xl prose-h3:text-gray-700
-              prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-6
-              prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
-              prose-strong:text-gray-900 prose-strong:font-semibold
-              prose-blockquote:border-l-4 prose-blockquote:border-orange-500 prose-blockquote:bg-orange-50 
-              prose-blockquote:p-4 prose-blockquote:rounded-r-lg prose-blockquote:italic prose-blockquote:text-gray-700
-              prose-ul:my-6 prose-li:text-gray-700 prose-li:mb-2
-              prose-img:rounded-lg prose-img:shadow-md prose-img:my-8
-              prose-code:bg-gray-100 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-sm
-              prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-lg prose-pre:p-4"
+              prose-headings:text-gray-900 prose-headings:font-bold prose-headings:leading-tight
+              prose-h1:text-4xl prose-h1:text-orange-600 prose-h1:border-b-2 prose-h1:border-orange-200 prose-h1:pb-4 prose-h1:mb-8 prose-h1:mt-0
+              prose-h2:text-3xl prose-h2:text-gray-800 prose-h2:mt-12 prose-h2:mb-6 prose-h2:border-l-4 prose-h2:border-orange-500 prose-h2:pl-4
+              prose-h3:text-2xl prose-h3:text-gray-700 prose-h3:mt-10 prose-h3:mb-5
+              prose-h4:text-xl prose-h4:text-gray-600 prose-h4:mt-8 prose-h4:mb-4
+              prose-p:text-gray-700 prose-p:text-lg prose-p:leading-relaxed prose-p:mb-6 prose-p:mt-0
+              prose-a:text-blue-600 prose-a:font-medium prose-a:no-underline hover:prose-a:underline hover:prose-a:text-blue-700
+              prose-strong:text-gray-900 prose-strong:font-bold prose-strong:bg-yellow-100 prose-strong:px-1 prose-strong:rounded
+              prose-em:text-gray-600 prose-em:italic
+              prose-blockquote:border-l-4 prose-blockquote:border-orange-500 prose-blockquote:bg-gradient-to-r prose-blockquote:from-orange-50 prose-blockquote:to-orange-25 
+              prose-blockquote:p-6 prose-blockquote:rounded-r-lg prose-blockquote:italic prose-blockquote:text-gray-700 prose-blockquote:font-medium prose-blockquote:my-8
+              prose-ul:my-8 prose-ul:space-y-3 prose-li:text-gray-700 prose-li:text-lg prose-li:leading-relaxed
+              prose-ol:my-8 prose-ol:space-y-3
+              prose-li:marker:text-orange-500 prose-li:marker:font-bold
+              prose-img:rounded-xl prose-img:shadow-lg prose-img:my-10 prose-img:border prose-img:border-gray-200
+              prose-code:bg-gray-100 prose-code:text-gray-800 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-base prose-code:font-mono
+              prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:rounded-xl prose-pre:p-6 prose-pre:my-8 prose-pre:overflow-x-auto
+              prose-table:my-8 prose-table:w-full prose-table:border-collapse
+              prose-th:bg-gray-50 prose-th:text-gray-900 prose-th:font-bold prose-th:p-4 prose-th:border prose-th:border-gray-200
+              prose-td:p-4 prose-td:border prose-td:border-gray-200 prose-td:text-gray-700
+              prose-hr:my-12 prose-hr:border-gray-300"
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
         </div>
