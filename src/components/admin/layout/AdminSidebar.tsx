@@ -13,7 +13,8 @@ import {
   Settings,
   Building,
   FileArchive,
-  SendToBack
+  SendToBack,
+  Megaphone
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,7 @@ export const AdminSidebar = () => {
     { name: 'Training', href: '/admin/training-hub', icon: Scroll },
     { name: 'Contacts', href: '/admin/contacts', icon: ContactIcon },
     { name: 'One Click Submit', href: '/admin/one-click-submit', icon: SendToBack },
+    { name: 'Marketing Materials', href: '/admin/marketing-materials', icon: Megaphone },
     { name: 'Industries', href: '/admin/industry-documents', icon: Building },
     { name: 'Documents', href: '/admin/documents', icon: FileArchive },
     { name: 'Settings', href: '/admin/settings', icon: Settings }

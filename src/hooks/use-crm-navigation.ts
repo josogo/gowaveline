@@ -23,6 +23,7 @@ export const useCrmNavigation = () => {
   const navigateToCommissions = () => navigateTo('/admin/commission-tracking');
   const navigateToTraining = () => navigateTo('/admin/training-hub');
   const navigateToContacts = () => navigateTo('/admin/contacts');
+  const navigateToMarketingMaterials = () => navigateTo('/admin/marketing-materials');
   const navigateToSettings = () => navigateTo('/admin/settings');
   
   return {
@@ -35,6 +36,7 @@ export const useCrmNavigation = () => {
     navigateToCommissions,
     navigateToTraining,
     navigateToContacts,
+    navigateToMarketingMaterials,
     navigateToSettings
   };
 };
