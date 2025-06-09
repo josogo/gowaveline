@@ -133,8 +133,8 @@ const Blog = () => {
       
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         {selectedPost && (
-          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-0">
-            <div className="p-8">
+          <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto p-0 bg-white">
+            <div className="p-0">
               <BlogPostDetail post={selectedPost} />
             </div>
           </DialogContent>
