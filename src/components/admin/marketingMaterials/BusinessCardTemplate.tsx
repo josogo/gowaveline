@@ -25,7 +25,6 @@ export const BusinessCardTemplate: React.FC = () => {
   });
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Load saved data from localStorage on component mount
   useEffect(() => {
     const savedData = localStorage.getItem('businessCardData');
     if (savedData) {
@@ -102,11 +101,9 @@ export const BusinessCardTemplate: React.FC = () => {
           
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Template Preview */}
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg">Template Preview</h3>
                 
-                {/* Front Side */}
                 <div className="bg-gradient-to-r from-orange-500 to-orange-400 p-6 rounded-lg text-white shadow-lg">
                   <div className="flex flex-col h-32">
                     <div className="flex items-center justify-between">
@@ -124,7 +121,6 @@ export const BusinessCardTemplate: React.FC = () => {
                   </div>
                 </div>
                 
-                {/* Back Side */}
                 <div className="bg-white border-2 border-gray-200 p-6 rounded-lg shadow-lg">
                   <div className="space-y-2">
                     <h4 className="font-bold text-lg text-gray-900">
@@ -142,7 +138,6 @@ export const BusinessCardTemplate: React.FC = () => {
                 </div>
               </div>
 
-              {/* Template Features */}
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg">Template Features</h3>
                 

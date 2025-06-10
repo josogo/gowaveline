@@ -9,16 +9,13 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    // Parse request body
     const { type, data } = await req.json()
 
-    // Validate request
     if (!type || !data) {
       return new Response(
         JSON.stringify({ error: 'Type and data are required' }),
@@ -28,8 +25,9 @@ serve(async (req) => {
 
     let pdfBytes: ArrayBuffer
 
-    if (type === 'preapp') {
-      // Generate a pre-application form
+    if (type === 'marketing-material') {
+      pdfBytes = await generateMarketingMaterial(data)
+    } else if (type === 'preapp') {
       pdfBytes = await generatePreApplicationForm(data)
     } else {
       return new Response(
@@ -41,7 +39,7 @@ serve(async (req) => {
     return new Response(pdfBytes, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': 'attachment; filename="generated-document.pdf"',
+        'Content-Disposition': `attachment; filename="${data.materialType || 'generated'}-document.pdf"`,
         ...corsHeaders
       }
     })
@@ -54,6 +52,155 @@ serve(async (req) => {
   }
 })
 
+async function generateMarketingMaterial(data: any): Promise<ArrayBuffer> {
+  const { materialType, content, companyInfo } = data
+  
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: 'a4'
+  })
+
+  // Set up colors
+  const orangeColor = [249, 115, 22] // Orange-500
+  const grayColor = [75, 85, 99] // Gray-600
+  const lightGrayColor = [243, 244, 246] // Gray-100
+
+  // Header section with gradient background
+  doc.setFillColor(orangeColor[0], orangeColor[1], orangeColor[2])
+  doc.rect(0, 0, 297, 50, 'F')
+  
+  // Company logo area (placeholder)
+  doc.setFillColor(255, 255, 255)
+  doc.roundedRect(20, 15, 40, 20, 3, 3, 'F')
+  doc.setFontSize(14)
+  doc.setTextColor(orangeColor[0], orangeColor[1], orangeColor[2])
+  doc.setFont('helvetica', 'bold')
+  doc.text('WaveLine', 40, 27, { align: 'center' })
+
+  // Main title
+  doc.setFontSize(24)
+  doc.setTextColor(255, 255, 255)
+  doc.setFont('helvetica', 'bold')
+  doc.text(content.title, 148, 25, { align: 'center' })
+  
+  // Subtitle
+  doc.setFontSize(14)
+  doc.setFont('helvetica', 'normal')
+  doc.text(content.subtitle, 148, 35, { align: 'center' })
+
+  // Company tagline
+  doc.setFontSize(12)
+  doc.setFont('helvetica', 'italic')
+  doc.text(companyInfo.tagline, 148, 43, { align: 'center' })
+
+  // Main content area
+  let yPosition = 65
+
+  // Industry Challenges section
+  doc.setFillColor(lightGrayColor[0], lightGrayColor[1], lightGrayColor[2])
+  doc.roundedRect(15, yPosition - 5, 125, 85, 5, 5, 'F')
+  
+  doc.setFontSize(16)
+  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2])
+  doc.setFont('helvetica', 'bold')
+  doc.text('Industry Challenges', 20, yPosition + 5)
+
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'normal')
+  let challengeY = yPosition + 15
+  
+  content.challenges.forEach((challenge: string, index: number) => {
+    // Bullet point
+    doc.setFillColor(orangeColor[0], orangeColor[1], orangeColor[2])
+    doc.circle(22, challengeY - 1, 1, 'F')
+    
+    // Wrap text to fit in column
+    const lines = doc.splitTextToSize(challenge, 110)
+    doc.text(lines, 26, challengeY)
+    challengeY += lines.length * 5 + 3
+  })
+
+  // Our Solutions section
+  doc.setFillColor(orangeColor[0], orangeColor[1], orangeColor[2])
+  doc.roundedRect(157, yPosition - 5, 125, 85, 5, 5, 'F')
+  
+  doc.setFontSize(16)
+  doc.setTextColor(255, 255, 255)
+  doc.setFont('helvetica', 'bold')
+  doc.text('Our Solutions', 162, yPosition + 5)
+
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'normal')
+  let solutionY = yPosition + 15
+  
+  content.solutions.slice(0, 6).forEach((solution: string, index: number) => {
+    // Bullet point
+    doc.setFillColor(255, 255, 255)
+    doc.circle(164, solutionY - 1, 1, 'F')
+    
+    // Wrap text to fit in column
+    const lines = doc.splitTextToSize(solution, 110)
+    doc.text(lines, 168, solutionY)
+    solutionY += lines.length * 5 + 3
+  })
+
+  // Key Features section (if available)
+  if (content.features) {
+    yPosition = 165
+    doc.setFillColor(grayColor[0], grayColor[1], grayColor[2])
+    doc.roundedRect(15, yPosition - 5, 267, 25, 5, 5, 'F')
+    
+    doc.setFontSize(14)
+    doc.setTextColor(255, 255, 255)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Key Features:', 20, yPosition + 5)
+    
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'normal')
+    let featureX = 80
+    content.features.forEach((feature: string, index: number) => {
+      doc.text(`• ${feature}`, featureX, yPosition + 5)
+      featureX += 50
+    })
+  }
+
+  // Footer with contact information
+  yPosition = 195
+  doc.setFillColor(lightGrayColor[0], lightGrayColor[1], lightGrayColor[2])
+  doc.rect(0, yPosition, 297, 15, 'F')
+  
+  doc.setFontSize(10)
+  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2])
+  doc.setFont('helvetica', 'normal')
+  doc.text(`${companyInfo.website} | ${companyInfo.phone} | ${companyInfo.email}`, 148, yPosition + 8, { align: 'center' })
+
+  // Add industry-specific styling
+  if (materialType === 'cbd') {
+    // Add subtle green accent
+    doc.setDrawColor(34, 197, 94) // Green-500
+    doc.setLineWidth(2)
+    doc.line(15, 55, 282, 55)
+  } else if (materialType === 'adult') {
+    // Add subtle purple accent
+    doc.setDrawColor(147, 51, 234) // Purple-500
+    doc.setLineWidth(2)
+    doc.line(15, 55, 282, 55)
+  } else if (materialType === 'firearms') {
+    // Add patriotic colors accent
+    doc.setDrawColor(239, 68, 68) // Red-500
+    doc.setLineWidth(1)
+    doc.line(15, 55, 282, 55)
+  } else if (materialType === 'vape') {
+    // Add blue accent
+    doc.setDrawColor(59, 130, 246) // Blue-500
+    doc.setLineWidth(2)
+    doc.line(15, 55, 282, 55)
+  }
+
+  return doc.output('arraybuffer')
+}
+
 async function generatePreApplicationForm(data: any): Promise<ArrayBuffer> {
   const {
     businessName = '',
@@ -64,7 +211,6 @@ async function generatePreApplicationForm(data: any): Promise<ArrayBuffer> {
     date = new Date().toLocaleDateString(),
   } = data
 
-  // Create a new PDF document
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -73,26 +219,21 @@ async function generatePreApplicationForm(data: any): Promise<ArrayBuffer> {
 
   // Add company logo and header
   doc.setFontSize(22)
-  doc.setTextColor(0, 71, 171) // Blue color
+  doc.setTextColor(0, 71, 171)
   doc.text('WaveLine Payments', 105, 20, { align: 'center' })
   
-  // Add document title
   doc.setFontSize(18)
   doc.text('Pre-Application Form', 105, 35, { align: 'center' })
 
-  // Add date
   doc.setFontSize(10)
-  doc.setTextColor(100, 100, 100) // Gray color
+  doc.setTextColor(100, 100, 100)
   doc.text(`Generated: ${date}`, 105, 42, { align: 'center' })
 
-  // Add divider
   doc.setDrawColor(220, 220, 220)
   doc.line(20, 45, 190, 45)
 
-  // Set text color to black for the rest of the document
   doc.setTextColor(0, 0, 0)
   
-  // Business information section
   doc.setFontSize(14)
   doc.setFont('helvetica', 'bold')
   doc.text('Business Information', 20, 60)
@@ -100,7 +241,6 @@ async function generatePreApplicationForm(data: any): Promise<ArrayBuffer> {
   doc.setFontSize(12)
   doc.setFont('helvetica', 'normal')
   
-  // Add form fields
   const fields = [
     { label: 'Business Name:', value: businessName },
     { label: 'Email Address:', value: email },
@@ -120,7 +260,6 @@ async function generatePreApplicationForm(data: any): Promise<ArrayBuffer> {
     yPosition += lineHeight
   })
   
-  // Additional required information section
   yPosition += 10
   doc.setFontSize(14)
   doc.setFont('helvetica', 'bold')
@@ -130,7 +269,6 @@ async function generatePreApplicationForm(data: any): Promise<ArrayBuffer> {
   doc.setFontSize(12)
   doc.setFont('helvetica', 'normal')
   
-  // Create form fields to be filled out
   const additionalFields = [
     'Business Type (LLC, Corp, etc.): _______________________________',
     'Years in Business: ___________________________________________',
@@ -148,7 +286,6 @@ async function generatePreApplicationForm(data: any): Promise<ArrayBuffer> {
     yPosition += lineHeight
   })
   
-  // Processing information section
   yPosition += 10
   doc.setFontSize(14)
   doc.setFont('helvetica', 'bold')
@@ -158,33 +295,27 @@ async function generatePreApplicationForm(data: any): Promise<ArrayBuffer> {
   doc.setFontSize(12)
   doc.setFont('helvetica', 'normal')
   
-  // Create checkboxes for card types
-  const cardTypes = [
-    'Visa', 'MasterCard', 'American Express', 'Discover'
-  ]
+  const cardTypes = ['Visa', 'MasterCard', 'American Express', 'Discover']
   
   doc.text('Card Types Accepted:', 20, yPosition)
   
   let xPosition = 80
   cardTypes.forEach(cardType => {
-    doc.rect(xPosition, yPosition - 4, 4, 4) // Draw checkbox
+    doc.rect(xPosition, yPosition - 4, 4, 4)
     doc.text(cardType, xPosition + 6, yPosition)
     xPosition += 30
   })
   
   yPosition += 20
   
-  // Footer with notes
   doc.setFontSize(10)
   doc.setTextColor(100, 100, 100)
   doc.text('This pre-application form is the first step in the approval process.', 20, 260)
   doc.text('A representative will contact you shortly to complete the application.', 20, 265)
   doc.text('For questions, please contact support@wavelinepayments.com', 20, 270)
   
-  // Add page number
   doc.setFontSize(10)
   doc.text('Page 1 of 1', 190, 280, { align: 'right' })
   
-  // Return PDF as ArrayBuffer
   return doc.output('arraybuffer')
 }

@@ -1,178 +1,260 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Download, Eye, FileText, Cannabis, ShieldCheck, Zap, Cigarette, Target } from 'lucide-react';
+import { Download, FileText, Users, Handshake } from 'lucide-react';
+import { toast } from 'sonner';
 
-const materials = [
+const materialTemplates = [
   {
     id: 'general',
     title: 'High-Risk Merchant Services Overview',
-    description: 'General one-pager introducing merchants to our high-risk payment processing solutions',
-    icon: Target,
-    category: 'General',
-    color: 'bg-blue-500',
-    keyPoints: [
-      'Why "High-Risk" Merchant Accounts Exist',
-      'Challenges with Mainstream Processors',
-      'Our High-Risk Expertise & Approval Network',
-      'Benefits of Choosing Our Services'
-    ]
+    description: 'General introduction to high-risk payment processing solutions',
+    icon: Handshake,
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50',
+    content: {
+      title: 'High-Risk Merchant Services',
+      subtitle: 'Your Partner in Payment Processing Success',
+      challenges: [
+        'Traditional processors reject high-risk industries',
+        'Mainstream providers like Stripe and PayPal often prohibit high-risk categories',
+        'Sudden account closures leave merchants stranded',
+        'Higher fees and strict terms from unsuitable processors'
+      ],
+      solutions: [
+        'Specialized high-risk underwriting expertise',
+        'Network of 20+ acquiring banking partners',
+        '99% approval rate with 24-hour turnaround',
+        'Stable processing without surprise holds',
+        'Transparent, competitive pricing with no hidden fees',
+        'Dedicated account management and support'
+      ],
+      industries: ['Adult Entertainment', 'Firearms', 'CBD', 'Vape/E-cigarettes', 'Online Gaming', 'Tobacco']
+    }
   },
   {
     id: 'cbd',
     title: 'CBD Industry Solutions',
-    description: 'Tailored for CBD and hemp product merchants addressing specific industry pain points',
-    icon: Cannabis,
-    category: 'Industry Specific',
-    color: 'bg-green-500',
-    keyPoints: [
-      'Specialized High-Risk Approval',
-      'Compliance Support',
-      'Stable Processing, No Freezes',
-      'Competitive Rates for CBD'
-    ]
+    description: 'Specialized payment processing for CBD and hemp businesses',
+    icon: FileText,
+    color: 'text-green-600',
+    bgColor: 'bg-green-50',
+    content: {
+      title: 'CBD Payment Processing Solutions',
+      subtitle: 'Compliant, Stable Processing for Hemp & CBD Merchants',
+      challenges: [
+        'Regulatory complexity despite 2018 Farm Bill legalization',
+        'PayPal, Stripe, and Square prohibit CBD transactions',
+        'Frequent account freezes and sudden shutdowns',
+        'Limited payment options for legitimate CBD businesses'
+      ],
+      solutions: [
+        'Specialized CBD compliance expertise',
+        'Banking partners comfortable with hemp products',
+        'No-freeze guarantee for stable cash flow',
+        'Support for subscriptions and high-ticket sales',
+        'Discreet billing descriptors available',
+        'Fast approval process for CBD merchants'
+      ],
+      features: ['Age Verification', 'State Compliance', 'ACH Processing', 'Subscription Billing']
+    }
   },
   {
     id: 'adult',
     title: 'Adult Entertainment Solutions',
-    description: 'For adult content websites, subscription platforms, and adult product retailers',
-    icon: ShieldCheck,
-    category: 'Industry Specific',
-    color: 'bg-purple-500',
-    keyPoints: [
-      'No Judgement, We Welcome Adult Businesses',
-      'High Approval Rates via Multiple Banks',
-      'Discreet Billing & Customer Privacy',
-      'Recurring Billing & Subscription Support'
-    ]
+    description: 'Discreet, reliable processing for adult industry businesses',
+    icon: Users,
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-50',
+    content: {
+      title: 'Adult Entertainment Payment Solutions',
+      subtitle: 'Discreet, Professional Processing You Can Trust',
+      challenges: [
+        'Banks avoid adult businesses for reputational reasons',
+        'Higher chargeback rates in adult industries',
+        'Need for customer privacy and discretion',
+        'Complex compliance requirements (age verification)'
+      ],
+      solutions: [
+        'Discreet billing descriptors for customer privacy',
+        'Robust subscription and membership billing',
+        'High approval rates with specialized underwriting',
+        'Global payment support with multi-currency',
+        'Advanced fraud detection and chargeback tools',
+        'No judgment - we welcome adult businesses'
+      ],
+      features: ['Discreet Billing', 'Recurring Payments', 'Age Verification', 'International Processing']
+    }
   },
   {
     id: 'firearms',
     title: 'Firearms & Ammunition Solutions',
-    description: 'Gun-friendly credit card processing for firearms, ammunition, and related businesses',
-    icon: Target,
-    category: 'Industry Specific',
-    color: 'bg-red-500',
-    keyPoints: [
-      'Proudly Serving Firearm Businesses',
-      'Secure, Compliant Processing',
-      'No More Unfair Terminations',
-      'Full Spectrum of Payment Solutions'
-    ]
+    description: 'Gun-friendly payment processing for FFL dealers and retailers',
+    icon: FileText,
+    color: 'text-orange-600',
+    bgColor: 'bg-orange-50',
+    content: {
+      title: 'Firearms Payment Processing Solutions',
+      subtitle: 'Second Amendment-Friendly Payment Solutions',
+      challenges: [
+        'Most processors refuse firearms businesses',
+        'Complex federal and state regulations',
+        'Banks avoid gun industry for image concerns',
+        'Limited options for FFL dealers and retailers'
+      ],
+      solutions: [
+        'Gun-friendly banking partnerships',
+        'ATF and compliance expertise',
+        'No arbitrary volume caps on ammunition sales',
+        'Robust processing for high-ticket firearms',
+        'Fraud tools and chargeback management',
+        'Support for gun shows and mobile payments'
+      ],
+      features: ['FFL Compliance', 'Age Verification', 'Background Check Integration', 'High-Ticket Support']
+    }
   },
   {
     id: 'vape',
     title: 'Vape & E-Cigarette Solutions',
-    description: 'Supporting vape shops and e-cigarette businesses with specialized payment processing',
-    icon: Cigarette,
-    category: 'Industry Specific',
-    color: 'bg-gray-500',
-    keyPoints: [
-      'Vape-Friendly Processing from Day One',
-      'No Surprise Freezes or Holds',
-      'Compliance with Regulations',
-      'Multiple Sales Channels Supported'
-    ]
+    description: 'Specialized processing for vape shops and e-cigarette retailers',
+    icon: FileText,
+    color: 'text-indigo-600',
+    bgColor: 'bg-indigo-50',
+    content: {
+      title: 'Vape & E-Cigarette Payment Solutions',
+      subtitle: 'Reliable Processing for the Vaping Industry',
+      challenges: [
+        'Health concerns make vape businesses high-risk',
+        'Evolving regulations and uncertain legal status',
+        'High chargeback rates in vape industry',
+        'Limited payment options from traditional processors'
+      ],
+      solutions: [
+        'Vape-friendly banking partnerships',
+        'Fast approval in under 48 hours',
+        'Multiple payment options (cards, ACH, e-checks)',
+        'Age verification and compliance tools',
+        'Chargeback prevention and fraud detection',
+        'Support for both online and retail vape shops'
+      ],
+      features: ['Age Verification', 'Fraud Prevention', 'Multiple Payment Types', 'Compliance Support']
+    }
   }
 ];
 
 export const MaterialsGrid: React.FC = () => {
-  const handleDownload = (materialId: string) => {
-    // This would trigger the download of the PDF
-    console.log('Downloading material:', materialId);
-  };
+  const [isGenerating, setIsGenerating] = useState<string | null>(null);
 
-  const handlePreview = (materialId: string) => {
-    // This would open a preview modal
-    console.log('Previewing material:', materialId);
+  const handleDownload = async (material: typeof materialTemplates[0]) => {
+    setIsGenerating(material.id);
+    
+    try {
+      const response = await fetch('/api/supabase/functions/v1/generate-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'marketing-material',
+          data: {
+            materialType: material.id,
+            content: material.content,
+            companyInfo: {
+              name: 'WaveLine',
+              tagline: 'Your Partner in High-Risk Merchant Services',
+              website: 'www.wavelinepayments.com',
+              phone: '1-800-WAVELINE',
+              email: 'info@wavelinepayments.com'
+            }
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${material.title.replace(/\s+/g, '-').toLowerCase()}-one-pager.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success(`${material.title} PDF downloaded successfully!`);
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast.error('Failed to download PDF. Please try again.');
+    } finally {
+      setIsGenerating(null);
+    }
   };
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {materials.map((material) => {
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Industry-Specific One-Page PDFs</h2>
+        <p className="text-gray-600">
+          Professional marketing materials tailored for different high-risk industries. 
+          Each one-pager addresses specific industry challenges and highlights our solutions.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {materialTemplates.map((material) => {
           const IconComponent = material.icon;
+          const isLoading = isGenerating === material.id;
+          
           return (
             <Card key={material.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${material.color} text-white`}>
-                      <IconComponent className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">{material.title}</CardTitle>
-                      <Badge variant="outline" className="mt-1">
-                        {material.category}
-                      </Badge>
-                    </div>
-                  </div>
+                <div className={`w-12 h-12 ${material.bgColor} rounded-lg flex items-center justify-center mb-3`}>
+                  <IconComponent className={`h-6 w-6 ${material.color}`} />
                 </div>
-                <CardDescription className="mt-3">
-                  {material.description}
-                </CardDescription>
+                <CardTitle className="text-lg">{material.title}</CardTitle>
+                <CardDescription>{material.description}</CardDescription>
               </CardHeader>
               
               <CardContent className="space-y-4">
-                <div>
-                  <h4 className="font-medium text-sm text-gray-700 mb-2">Key Points Covered:</h4>
-                  <ul className="space-y-1">
-                    {material.keyPoints.map((point, index) => (
-                      <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
-                        <span className="text-orange-500 mt-1">•</span>
-                        {point}
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm text-gray-700">Key Features:</h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    {material.content.solutions.slice(0, 3).map((solution, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <div className="w-1.5 h-1.5 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <span>{solution}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
                 
-                <div className="flex gap-2 pt-2">
-                  <Button 
-                    onClick={() => handlePreview(material.id)}
-                    variant="outline" 
-                    size="sm"
-                    className="flex-1"
-                  >
-                    <Eye className="h-4 w-4 mr-2" />
-                    Preview
-                  </Button>
-                  <Button 
-                    onClick={() => handleDownload(material.id)}
-                    size="sm"
-                    className="flex-1 bg-orange-500 hover:bg-orange-600"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download PDF
-                  </Button>
-                </div>
+                <Button 
+                  onClick={() => handleDownload(material)}
+                  disabled={isLoading}
+                  className="w-full bg-orange-500 hover:bg-orange-600"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  {isLoading ? 'Generating...' : 'Download PDF'}
+                </Button>
               </CardContent>
             </Card>
           );
         })}
       </div>
 
-      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-blue-800">
-            <FileText className="h-5 w-5" />
-            How to Use These Materials
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-700">
-            <div>
-              <h4 className="font-medium mb-2">General Overview Flyer:</h4>
-              <p>Great for any high-risk prospect. Use as a leave-behind or talking point when first discussing our services.</p>
-            </div>
-            <div>
-              <h4 className="font-medium mb-2">Industry-Specific Flyers:</h4>
-              <p>Ideal when approaching specific industry merchants. Speaks their language and addresses their unique frustrations.</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">How to Use These Materials</h3>
+        <div className="space-y-2 text-sm text-gray-700">
+          <p><strong>Target the Right Audience:</strong> Use industry-specific flyers when approaching prospects in those sectors.</p>
+          <p><strong>Leave Behind:</strong> These PDFs are perfect leave-behinds after meetings or conversations.</p>
+          <p><strong>Follow Up:</strong> Reference specific points from the flyer in your follow-up communications.</p>
+          <p><strong>Print Quality:</strong> All PDFs are optimized for professional printing at 300 DPI.</p>
+        </div>
+      </div>
     </div>
   );
 };
