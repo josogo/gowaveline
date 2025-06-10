@@ -49,6 +49,10 @@ serve(async (req) => {
             height: 1.75in;
             box-sizing: border-box;
             color: #1f2937;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
         .logo {
             font-size: 18px;
@@ -78,6 +82,34 @@ serve(async (req) => {
             width: 12px;
             height: 12px;
             margin-right: 0.05in;
+        }
+        .back-logo {
+            position: absolute;
+            bottom: 0.1in;
+            right: 0.1in;
+            width: 0.8in;
+            height: 0.4in;
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.8;
+        }
+        .back-logo .logo-text {
+            font-size: 10px;
+            font-weight: bold;
+            color: white;
+            line-height: 1;
+        }
+        .back-logo .logo-tagline {
+            font-size: 6px;
+            color: white;
+            opacity: 0.9;
+            text-align: center;
+            line-height: 1;
+            margin-top: 1px;
         }
     </style>
 </head>
@@ -109,6 +141,12 @@ serve(async (req) => {
                 <span class="icon">🌐</span>
                 <span>${agentData.website || '[Company Website]'}</span>
             </div>
+        </div>
+        
+        <!-- WaveLine Logo on Back -->
+        <div class="back-logo">
+            <div class="logo-text">WaveLine</div>
+            <div class="logo-tagline">Merchant Services</div>
         </div>
     </div>
 </body>
