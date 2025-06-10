@@ -133,15 +133,14 @@ const materialContents: Record<string, MaterialContent> = {
       "Managing both cash and credit transactions efficiently"
     ],
     solutions: [
-      "Dual pricing programs to offset processing costs",
+      "Specialized automotive industry processing",
       "Seamless integration with DMS systems",
       "High-ticket transaction specialization",
       "Flexible payment terms and financing options",
-      "Transparent fee structures with cash discounts",
+      "Transparent fee structures",
       "Dedicated automotive industry expertise"
     ],
-    features: ["Dual Pricing", "DMS Integration", "High-Ticket Support", "Cash Discounts"],
-    dualPricingFocus: true
+    features: ["DMS Integration", "High-Ticket Support", "Flexible Terms", "Industry Expertise"]
   },
   plasticsurgery: {
     title: "Plastic Surgery Payment Processing",
@@ -153,15 +152,14 @@ const materialContents: Record<string, MaterialContent> = {
       "Managing cosmetic vs. medical procedure classifications"
     ],
     solutions: [
-      "Dual pricing to reduce patient costs on cash payments",
+      "Premium payment processing for aesthetic practices",
       "Flexible payment plans and financing integration",
       "HIPAA-compliant payment processing",
       "Premium patient portal experiences",
-      "Transparent pricing with cash discount options",
+      "Transparent pricing structures",
       "Specialized aesthetic industry underwriting"
     ],
-    features: ["Dual Pricing", "Payment Plans", "HIPAA Compliance", "Patient Portals"],
-    dualPricingFocus: true
+    features: ["Payment Plans", "HIPAA Compliance", "Patient Portals", "Premium Experience"]
   },
   medspa: {
     title: "Med Spa Payment Processing",
@@ -173,15 +171,14 @@ const materialContents: Record<string, MaterialContent> = {
       "Balancing luxury experience with cost efficiency"
     ],
     solutions: [
-      "Dual pricing programs for treatment packages",
-      "Membership and subscription billing systems",
+      "Specialized membership and subscription billing systems",
       "Integrated appointment and payment scheduling",
-      "Cash discount programs for high-value treatments",
-      "Seamless payment experiences that match your brand",
+      "Premium payment experiences that match your brand",
+      "Flexible payment plans for treatment packages",
+      "Seamless payment experiences",
       "Specialized aesthetic medicine processing"
     ],
-    features: ["Dual Pricing", "Membership Billing", "Package Deals", "Luxury Experience"],
-    dualPricingFocus: true
+    features: ["Membership Billing", "Package Deals", "Luxury Experience", "Appointment Integration"]
   },
   sportsmedicine: {
     title: "Sports Medicine Payment Processing",
@@ -193,15 +190,14 @@ const materialContents: Record<string, MaterialContent> = {
       "Equipment and treatment package pricing"
     ],
     solutions: [
-      "Dual pricing for cash-pay performance treatments",
       "Insurance billing integration and direct-pay options",
       "Team account management and group billing",
       "Flexible payment plans for ongoing treatments",
       "HSA/FSA payment processing capabilities",
+      "Performance-focused payment solutions",
       "Sports medicine industry expertise"
     ],
-    features: ["Dual Pricing", "Insurance Integration", "Team Accounts", "HSA/FSA Support"],
-    dualPricingFocus: true
+    features: ["Insurance Integration", "Team Accounts", "HSA/FSA Support", "Performance Focus"]
   }
 };
 
@@ -381,13 +377,6 @@ export const MaterialsGrid: React.FC = () => {
             <FileText className="h-5 w-5 text-[#0EA5E9]" />
             <span className="text-sm text-gray-600">PDF Ready</span>
           </div>
-          <div className="w-px h-8 bg-gray-200"></div>
-          <div className="text-center">
-            <div className="text-xl font-bold text-green-600">
-              {materials.filter(m => materialContents[m.id]?.dualPricingFocus).length}
-            </div>
-            <div className="text-xs text-gray-600">Dual Pricing</div>
-          </div>
         </div>
       </motion.div>
 
@@ -397,7 +386,6 @@ export const MaterialsGrid: React.FC = () => {
           const IconComponent = material.icon;
           const isDownloading = downloading === material.id;
           const isDownloaded = downloadedItems.has(material.id);
-          const hasDualPricing = materialContents[material.id]?.dualPricingFocus;
           
           return (
             <motion.div
@@ -424,15 +412,6 @@ export const MaterialsGrid: React.FC = () => {
                     </motion.div>
                   )}
                 </AnimatePresence>
-
-                {/* Dual Pricing Badge */}
-                {hasDualPricing && (
-                  <div className="absolute top-4 left-4 z-10">
-                    <div className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium">
-                      Dual Pricing
-                    </div>
-                  </div>
-                )}
 
                 <CardHeader className="pb-4">
                   <div className="mb-4">
@@ -500,7 +479,7 @@ export const MaterialsGrid: React.FC = () => {
         <div className="max-w-2xl mx-auto">
           <h3 className="text-xl font-semibold mb-3 text-[#0EA5E9]">Need Custom Materials?</h3>
           <p className="text-gray-600 mb-6">
-            We can create custom marketing materials tailored to your specific industry or client needs, including dual pricing solutions.
+            We can create custom marketing materials tailored to your specific industry or client needs.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button 
