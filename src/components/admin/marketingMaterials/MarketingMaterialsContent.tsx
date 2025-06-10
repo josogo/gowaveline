@@ -28,7 +28,7 @@ const MarketingMaterialsContent = () => {
                 Industry Templates
               </h2>
               <p className="text-[#0EA5E9]/80 text-lg max-w-2xl mx-auto">
-                Professional marketing materials tailored for each industry vertical
+                Professional marketing materials tailored for each industry vertical. Download instantly and start closing more deals today.
               </p>
             </div>
             <MaterialsGrid />
@@ -44,7 +44,7 @@ const MarketingMaterialsContent = () => {
                 Business Cards
               </h2>
               <p className="text-[#0EA5E9]/80 text-lg max-w-2xl mx-auto">
-                Customizable business card templates with consistent WaveLine branding
+                Customizable business card templates with consistent WaveLine branding that make a lasting impression.
               </p>
             </div>
             <BusinessCardTemplate />
