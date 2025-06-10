@@ -5,17 +5,19 @@ import { Download, FileText, Car, Heart, Dumbbell, Shield, Leaf, Target, Zap, Lo
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 
+interface MaterialContent {
+  title: string;
+  subtitle: string;
+  challenges: string[];
+  solutions: string[];
+  features?: string[];
+  industries?: string[];
+  dualPricingFocus?: boolean;
+}
+
 interface MaterialData {
   materialType: string;
-  content: {
-    title: string;
-    subtitle: string;
-    challenges: string[];
-    solutions: string[];
-    features?: string[];
-    industries?: string[];
-    dualPricingFocus?: boolean;
-  };
+  content: MaterialContent;
   companyInfo: {
     name: string;
     tagline: string;
@@ -25,7 +27,7 @@ interface MaterialData {
   };
 }
 
-const materialContents = {
+const materialContents: Record<string, MaterialContent> = {
   general: {
     title: "High-Risk Merchant Services",
     subtitle: "Your Partner in Payment Processing Success",
@@ -235,7 +237,7 @@ export const MaterialsGrid: React.FC = () => {
     try {
       const materialData: MaterialData = {
         materialType,
-        content: materialContents[materialType as keyof typeof materialContents],
+        content: materialContents[materialType],
         companyInfo
       };
 
@@ -268,7 +270,7 @@ export const MaterialsGrid: React.FC = () => {
       // Mark as downloaded
       setDownloadedItems(prev => new Set(prev).add(materialType));
       toast.success('PDF downloaded successfully!', {
-        description: `${materialContents[materialType as keyof typeof materialContents].title} is ready to use.`
+        description: `${materialContents[materialType].title} is ready to use.`
       });
     } catch (error) {
       console.error('Error downloading PDF:', error);
@@ -382,7 +384,7 @@ export const MaterialsGrid: React.FC = () => {
           <div className="w-px h-8 bg-gray-200"></div>
           <div className="text-center">
             <div className="text-xl font-bold text-green-600">
-              {materials.filter(m => materialContents[m.id as keyof typeof materialContents]?.dualPricingFocus).length}
+              {materials.filter(m => materialContents[m.id]?.dualPricingFocus).length}
             </div>
             <div className="text-xs text-gray-600">Dual Pricing</div>
           </div>
@@ -395,7 +397,7 @@ export const MaterialsGrid: React.FC = () => {
           const IconComponent = material.icon;
           const isDownloading = downloading === material.id;
           const isDownloaded = downloadedItems.has(material.id);
-          const hasDualPricing = materialContents[material.id as keyof typeof materialContents]?.dualPricingFocus;
+          const hasDualPricing = materialContents[material.id]?.dualPricingFocus;
           
           return (
             <motion.div
