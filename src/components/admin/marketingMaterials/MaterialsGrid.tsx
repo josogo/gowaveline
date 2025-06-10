@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Download, FileText, Leaf, Shield, Target, Zap, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
 
 interface MaterialData {
   materialType: string;
@@ -183,111 +184,137 @@ export const MaterialsGrid: React.FC = () => {
       title: 'General High-Risk Services',
       description: 'Comprehensive overview of our high-risk merchant services for all industries',
       icon: Shield,
-      gradient: 'from-orange-500 to-orange-600',
+      gradient: 'from-orange-500 to-orange-400',
       bgGradient: 'from-orange-50 to-orange-100',
-      borderColor: 'border-orange-200',
-      iconBg: 'bg-orange-500'
+      iconColor: 'text-orange-500'
     },
     {
       id: 'cbd',
       title: 'CBD Industry Solutions',
       description: 'Specialized payment processing for hemp and CBD merchants',
       icon: Leaf,
-      gradient: 'from-green-500 to-green-600',
+      gradient: 'from-green-500 to-green-400',
       bgGradient: 'from-green-50 to-green-100',
-      borderColor: 'border-green-200',
-      iconBg: 'bg-green-500'
+      iconColor: 'text-green-500'
     },
     {
       id: 'adult',
       title: 'Adult Entertainment',
       description: 'Discreet and reliable processing for adult industry businesses',
       icon: Target,
-      gradient: 'from-purple-500 to-purple-600',
+      gradient: 'from-purple-500 to-purple-400',
       bgGradient: 'from-purple-50 to-purple-100',
-      borderColor: 'border-purple-200',
-      iconBg: 'bg-purple-500'
+      iconColor: 'text-purple-500'
     },
     {
       id: 'firearms',
       title: 'Firearms & Ammunition',
       description: 'Second Amendment-friendly payment solutions for gun retailers',
       icon: Shield,
-      gradient: 'from-red-500 to-red-600',
+      gradient: 'from-red-500 to-red-400',
       bgGradient: 'from-red-50 to-red-100',
-      borderColor: 'border-red-200',
-      iconBg: 'bg-red-500'
+      iconColor: 'text-red-500'
     },
     {
       id: 'vape',
       title: 'Vape & E-Cigarettes',
       description: 'Compliant processing solutions for vaping industry merchants',
       icon: Zap,
-      gradient: 'from-teal-500 to-teal-600',
+      gradient: 'from-teal-500 to-teal-400',
       bgGradient: 'from-teal-50 to-teal-100',
-      borderColor: 'border-teal-200',
-      iconBg: 'bg-teal-500'
+      iconColor: 'text-teal-500'
     }
   ];
 
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (i: number) => ({ 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        delay: i * 0.1,
+        duration: 0.5,
+        ease: "easeOut"
+      }
+    })
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {materials.map((material) => {
-        const IconComponent = material.icon;
-        const isDownloading = downloading === material.id;
-        
-        return (
-          <Card 
-            key={material.id} 
-            className="group relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50 hover:border-orange-300/50 transition-all duration-500 hover:shadow-2xl hover:shadow-orange-500/10 hover:-translate-y-1"
-          >
-            {/* Gradient accent bar */}
-            <div className={`h-1 bg-gradient-to-r ${material.gradient}`}></div>
-            
-            <CardHeader className="relative overflow-hidden pb-4">
-              {/* Background decoration */}
-              <div className={`absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br ${material.bgGradient} rounded-full opacity-20 group-hover:opacity-30 transition-opacity duration-500`}></div>
-              
-              <CardTitle className="flex items-center gap-3 relative z-10 text-lg font-semibold text-foreground">
-                <div className={`p-3 ${material.iconBg} rounded-xl shadow-lg group-hover:scale-110 transition-all duration-300`}>
-                  <IconComponent className="h-5 w-5 text-white" />
-                </div>
-                <span className="group-hover:text-orange-600 transition-colors duration-300">{material.title}</span>
-              </CardTitle>
-              
-              <CardDescription className="text-muted-foreground leading-relaxed relative z-10 text-sm mt-2">
-                {material.description}
-              </CardDescription>
-            </CardHeader>
-            
-            <CardContent className="space-y-4 pt-0">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-3 border border-border/50">
-                <FileText className="h-4 w-4 text-muted-foreground/70" />
-                <span>Professional PDF • One-page overview • Print ready</span>
-              </div>
-              
-              <Button 
-                onClick={() => handleDownload(material.id)}
-                disabled={isDownloading}
-                className={`w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] disabled:transform-none disabled:hover:scale-100 border-0`}
-                size="default"
-              >
-                {isDownloading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Generating PDF...
-                  </>
-                ) : (
-                  <>
-                    <Download className="h-4 w-4 mr-2" />
-                    Download Template
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-        );
-      })}
+    <div className="py-8 px-6 bg-gradient-to-b from-white to-gray-50">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {materials.map((material, index) => {
+          const IconComponent = material.icon;
+          const isDownloading = downloading === material.id;
+          
+          return (
+            <motion.div
+              key={material.id}
+              custom={index}
+              initial="hidden"
+              animate="visible"
+              variants={cardVariants}
+            >
+              <Card className="bg-white rounded-2xl shadow-md border border-gray-100 transition-all duration-300 cursor-pointer h-full flex flex-col transform hover:-translate-y-1 hover:shadow-xl">
+                <CardHeader className="pb-4">
+                  <div className="mb-4 transition-transform duration-300 hover:scale-110">
+                    <IconComponent className={`h-12 w-12 ${material.iconColor}`} />
+                  </div>
+                  
+                  <CardTitle className="text-xl font-bold mb-3 text-[#0EA5E9] transition-colors duration-300">
+                    {material.title}
+                  </CardTitle>
+                  
+                  <CardDescription className="text-sm text-[#0EA5E9]/80 leading-relaxed">
+                    {material.description}
+                  </CardDescription>
+                </CardHeader>
+                
+                <CardContent className="space-y-4 pt-0 flex-grow flex flex-col">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground bg-gray-50 rounded-lg p-3 border border-gray-100">
+                    <FileText className="h-4 w-4 text-muted-foreground/70" />
+                    <span>Professional PDF • One-page overview • Print ready</span>
+                  </div>
+                  
+                  <div className="mt-auto">
+                    <Button 
+                      onClick={() => handleDownload(material.id)}
+                      disabled={isDownloading}
+                      className={`w-full bg-gradient-to-r ${material.gradient} hover:opacity-90 text-white font-medium shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-[1.02] disabled:transform-none disabled:hover:scale-100 border-0`}
+                      size="default"
+                    >
+                      {isDownloading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Generating PDF...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="h-4 w-4 mr-2" />
+                          Download Template
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Call-to-Action Section */}
+      <div className="mt-16 p-8 bg-gradient-to-r from-[#0EA5E9]/10 to-[#FF9F5A]/5 rounded-2xl text-center shadow-sm">
+        <h3 className="text-2xl font-bold mb-4 text-[#0EA5E9]">Need Custom Materials?</h3>
+        <p className="text-[#0EA5E9]/80 mb-6 max-w-2xl mx-auto">
+          We can create custom marketing materials tailored to your specific industry or client needs. 
+          Contact us to discuss your requirements.
+        </p>
+        <Button 
+          className="bg-gradient-to-r from-[#FF9F5A] to-[#FF7F37] hover:from-[#FF7F37] hover:to-[#FF9F5A] text-white shadow-md transform transition-transform hover:scale-105"
+        >
+          Request Custom Materials
+        </Button>
+      </div>
     </div>
   );
 };
