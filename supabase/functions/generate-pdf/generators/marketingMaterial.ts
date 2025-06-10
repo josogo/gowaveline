@@ -6,13 +6,89 @@ export async function generateMarketingMaterial(data: any): Promise<ArrayBuffer>
   const { materialType, content, companyInfo } = data
   
   const doc = new jsPDF({
-    orientation: 'portrait',
+    orientation: 'landscape',
     unit: 'mm',
-    format: 'a4'
+    format: 'letter' // 8.5" x 11"
   })
 
-  // Add header with company branding
-  addHeader(doc, content.title, content.subtitle)
+  // Brand colors (converting to RGB)
+  const brandColors = {
+    pastelOrange: [255, 230, 204], // #FFE6CC
+    oceanBlue: [41, 98, 149],      // #296295
+    neonOrange: [255, 102, 0],     // #FF6600
+    lightGray: [248, 249, 250],    // #F8F9FA
+    darkGray: [52, 58, 64],        // #343A40
+    white: [255, 255, 255]
+  }
+
+  // Add header
+  addHeader(doc, content.title, materialType, brandColors)
+
+  // Add tagline bar
+  addTaglineBar(doc, brandColors)
+
+  // Add hero section with image
+  await addHeroSection(doc, materialType, content, brandColors)
+
+  // Add content body
+  addContentBody(doc, content, brandColors)
+
+  // Add footer
+  addFooter(doc, brandColors)
+
+  return doc.output('arraybuffer')
+}
+
+function addHeader(doc: jsPDF, title: string, materialType: string, colors: any) {
+  // Header background - light pastel orange
+  doc.setFillColor(...colors.pastelOrange)
+  doc.rect(0, 0, 279, 25, 'F') // Full width header
+
+  // Company logo area (left-aligned)
+  doc.setFillColor(...colors.white)
+  doc.rect(10, 5, 50, 15, 'F')
+  doc.setFontSize(14)
+  doc.setTextColor(...colors.oceanBlue)
+  doc.setFont('helvetica', 'bold')
+  doc.text('WaveLine', 35, 11, { align: 'center' })
+  doc.setFontSize(8)
+  doc.setTextColor(...colors.neonOrange)
+  doc.text('Payment Solutions', 35, 15, { align: 'center' })
+
+  // Page title (right-aligned, bold)
+  doc.setFontSize(18)
+  doc.setTextColor(...colors.oceanBlue)
+  doc.setFont('helvetica', 'bold')
+  doc.text(title, 260, 13, { align: 'right' })
+
+  // Industry icon area
+  const industryIcon = getIndustryIcon(materialType)
+  doc.setFontSize(10)
+  doc.setTextColor(...colors.darkGray)
+  doc.text(industryIcon, 220, 13, { align: 'center' })
+}
+
+function addTaglineBar(doc: jsPDF, colors: any) {
+  // Tagline bar background
+  doc.setFillColor(...colors.lightGray)
+  doc.rect(0, 25, 279, 12, 'F')
+
+  // Tagline text (centered, italic)
+  doc.setFontSize(12)
+  doc.setTextColor(...colors.oceanBlue)
+  doc.setFont('helvetica', 'italic')
+  doc.text('Your Partner in High-Risk Merchant Services', 139.5, 32, { align: 'center' })
+}
+
+async function addHeroSection(doc: jsPDF, materialType: string, content: any, colors: any) {
+  const yStart = 45
+
+  // Hero section background
+  doc.setFillColor(...colors.white)
+  doc.rect(10, yStart, 259, 60, 'F')
+  doc.setDrawColor(...colors.lightGray)
+  doc.setLineWidth(0.5)
+  doc.rect(10, yStart, 259, 60, 'S')
 
   // Add stock photo
   const stockPhotoUrl = getStockPhotoUrl(materialType)
@@ -20,191 +96,165 @@ export async function generateMarketingMaterial(data: any): Promise<ArrayBuffer>
     try {
       const imageBase64 = await loadImageAsBase64(stockPhotoUrl)
       if (imageBase64) {
-        doc.addImage(imageBase64, 'JPEG', 15, 55, 180, 90)
+        doc.addImage(imageBase64, 'JPEG', 15, yStart + 5, 80, 50)
       }
     } catch (error) {
       console.error('Failed to add image:', error)
     }
   }
 
-  // Add main content sections
-  addChallengesSection(doc, content.challenges)
-  addSolutionsSection(doc, content.solutions)
-  
-  if (content.features && content.features.length > 0) {
-    addFeaturesSection(doc, content.features)
-  }
+  // Industry summary overlay (text box)
+  doc.setFillColor(255, 255, 255, 0.9) // Semi-transparent white
+  doc.rect(100, yStart + 10, 160, 40, 'F')
+  doc.setDrawColor(...colors.neonOrange)
+  doc.setLineWidth(1)
+  doc.rect(100, yStart + 10, 160, 40, 'S')
 
-  // Add footer with correct contact info
-  addFooter(doc)
+  doc.setFontSize(14)
+  doc.setTextColor(...colors.oceanBlue)
+  doc.setFont('helvetica', 'bold')
+  doc.text(content.subtitle, 180, yStart + 20, { align: 'center' })
 
-  return doc.output('arraybuffer')
+  doc.setFontSize(10)
+  doc.setTextColor(...colors.darkGray)
+  doc.setFont('helvetica', 'normal')
+  const summaryText = getSummaryText(materialType)
+  const lines = doc.splitTextToSize(summaryText, 150)
+  doc.text(lines, 180, yStart + 28, { align: 'center' })
 }
 
-function addHeader(doc: jsPDF, title: string, subtitle: string) {
-  // Clean header background with gradient effect
-  doc.setFillColor(31, 41, 55) // Dark blue-gray
-  doc.rect(0, 0, 210, 45, 'F')
+function addContentBody(doc: jsPDF, content: any, colors: any) {
+  const yStart = 115
 
-  // Add subtle accent line
-  doc.setFillColor(249, 115, 22) // Orange accent
-  doc.rect(0, 42, 210, 3, 'F')
-
-  // WaveLine Logo area - clean white box
-  doc.setFillColor(255, 255, 255)
-  doc.rect(15, 8, 60, 28, 'F')
-  
-  // Company logo text
-  doc.setFontSize(18)
-  doc.setTextColor(31, 41, 55)
+  // Left column - Key Points
+  doc.setFillColor(...colors.oceanBlue)
+  doc.rect(10, yStart, 120, 8, 'F')
+  doc.setFontSize(14)
+  doc.setTextColor(...colors.white)
   doc.setFont('helvetica', 'bold')
-  doc.text('WaveLine', 45, 19, { align: 'center' })
-  
-  doc.setFontSize(9)
-  doc.setTextColor(249, 115, 22)
-  doc.setFont('helvetica', 'normal')
-  doc.text('Payment Solutions', 45, 26, { align: 'center' })
-  
-  doc.setFontSize(8)
-  doc.setTextColor(107, 114, 128)
-  doc.text('High-Risk Merchant Services', 45, 31, { align: 'center' })
+  doc.text('Key Benefits', 15, yStart + 6)
 
-  // Main title - clean and prominent
-  doc.setFontSize(22)
-  doc.setTextColor(255, 255, 255)
-  doc.setFont('helvetica', 'bold')
-  doc.text(title, 105, 22, { align: 'center' })
-  
+  let yPos = yStart + 15
   doc.setFontSize(11)
+  doc.setTextColor(...colors.darkGray)
   doc.setFont('helvetica', 'normal')
-  doc.setTextColor(203, 213, 225)
-  doc.text(subtitle, 105, 32, { align: 'center' })
+
+  content.solutions.slice(0, 4).forEach((solution: string, index: number) => {
+    // Bullet point
+    doc.setFillColor(...colors.neonOrange)
+    doc.circle(17, yPos - 1, 1.5, 'F')
+    
+    const lines = doc.splitTextToSize(solution, 105)
+    doc.text(lines, 22, yPos)
+    yPos += lines.length * 4 + 3
+  })
+
+  // Right column - Industry Challenges & Solutions
+  doc.setFillColor(...colors.neonOrange)
+  doc.rect(140, yStart, 120, 8, 'F')
+  doc.setFontSize(14)
+  doc.setTextColor(...colors.white)
+  doc.setFont('helvetica', 'bold')
+  doc.text('Industry Challenges We Solve', 145, yStart + 6)
+
+  yPos = yStart + 15
+  doc.setFontSize(11)
+  doc.setTextColor(...colors.darkGray)
+  doc.setFont('helvetica', 'normal')
+
+  content.challenges.slice(0, 4).forEach((challenge: string, index: number) => {
+    // Problem icon
+    doc.setFillColor(220, 53, 69) // Red for problems
+    doc.circle(147, yPos - 1, 1.5, 'F')
+    
+    const lines = doc.splitTextToSize(challenge, 105)
+    doc.text(lines, 152, yPos)
+    yPos += lines.length * 4 + 3
+  })
+
+  // Quick Stats section (bottom)
+  const statsY = 165
+  addQuickStats(doc, colors, statsY)
 }
 
-function addChallengesSection(doc: jsPDF, challenges: string[]) {
-  let yPosition = 155
+function addQuickStats(doc: jsPDF, colors: any, yPos: number) {
+  const stats = [
+    { label: '24hr Approvals', icon: '⚡' },
+    { label: '99% Approval Rate', icon: '✓' },
+    { label: '20+ Bank Partners', icon: '🏦' },
+    { label: 'No Hidden Fees', icon: '💎' }
+  ]
 
-  // Section header with background
-  doc.setFillColor(248, 250, 252)
-  doc.rect(15, yPosition - 5, 180, 12, 'F')
-  
-  doc.setFontSize(16)
-  doc.setTextColor(31, 41, 55)
-  doc.setFont('helvetica', 'bold')
-  doc.text('Industry Challenges You Face', 20, yPosition + 3)
+  const boxWidth = 60
+  const boxHeight = 15
+  const spacing = 10
+  const startX = (279 - (stats.length * boxWidth + (stats.length - 1) * spacing)) / 2
 
-  yPosition += 15
-  doc.setFontSize(10)
-  doc.setFont('helvetica', 'normal')
-  doc.setTextColor(75, 85, 99)
-
-  challenges.slice(0, 4).forEach((challenge, index) => {
-    // Modern bullet point
-    doc.setFillColor(239, 68, 68) // Red for challenges
-    doc.circle(18, yPosition - 1, 1.5, 'F')
+  stats.forEach((stat, index) => {
+    const x = startX + index * (boxWidth + spacing)
     
-    const lines = doc.splitTextToSize(challenge, 170)
-    doc.text(lines, 25, yPosition)
-    yPosition += lines.length * 4.5 + 4
+    // Box background
+    doc.setFillColor(...colors.lightGray)
+    doc.rect(x, yPos, boxWidth, boxHeight, 'F')
+    doc.setDrawColor(...colors.neonOrange)
+    doc.setLineWidth(1)
+    doc.rect(x, yPos, boxWidth, boxHeight, 'S')
+
+    // Icon
+    doc.setFontSize(12)
+    doc.setTextColor(...colors.neonOrange)
+    doc.text(stat.icon, x + 8, yPos + 9)
+
+    // Label
+    doc.setFontSize(9)
+    doc.setTextColor(...colors.darkGray)
+    doc.setFont('helvetica', 'bold')
+    doc.text(stat.label, x + 15, yPos + 9)
   })
 }
 
-function addSolutionsSection(doc: jsPDF, solutions: string[]) {
-  let yPosition = 200
-
-  // Section header with background
-  doc.setFillColor(240, 253, 244)
-  doc.rect(15, yPosition - 5, 180, 12, 'F')
-
-  doc.setFontSize(16)
-  doc.setTextColor(31, 41, 55)
-  doc.setFont('helvetica', 'bold')
-  doc.text('How WaveLine Solves These Problems', 20, yPosition + 3)
-
-  yPosition += 15
-  doc.setFontSize(10)
-  doc.setFont('helvetica', 'normal')
-  doc.setTextColor(31, 41, 55)
-
-  solutions.slice(0, 5).forEach((solution, index) => {
-    // Green checkmark bullet
-    doc.setFillColor(34, 197, 94) // Green for solutions
-    doc.circle(18, yPosition - 1, 1.5, 'F')
-    
-    const lines = doc.splitTextToSize(solution, 170)
-    doc.text(lines, 25, yPosition)
-    yPosition += lines.length * 4.5 + 4
-  })
-}
-
-function addFeaturesSection(doc: jsPDF, features: string[]) {
-  let yPosition = 250
-
-  // Features box with border
-  doc.setFillColor(254, 249, 195) // Light yellow background
-  doc.rect(15, yPosition - 3, 180, 22, 'F')
-  
-  doc.setDrawColor(245, 158, 11) // Yellow border
-  doc.setLineWidth(0.5)
-  doc.rect(15, yPosition - 3, 180, 22, 'S')
-  
-  doc.setFontSize(12)
-  doc.setTextColor(31, 41, 55)
-  doc.setFont('helvetica', 'bold')
-  doc.text('Key Features & Benefits', 20, yPosition + 5)
-  
-  doc.setFontSize(9)
-  doc.setFont('helvetica', 'normal')
-  doc.setTextColor(92, 84, 84)
-  
-  let featureX = 20
-  let featureY = yPosition + 12
-  
-  features.slice(0, 6).forEach((feature, index) => {
-    doc.setFillColor(245, 158, 11)
-    doc.circle(featureX, featureY - 1, 0.8, 'F')
-    doc.text(feature, featureX + 4, featureY)
-    
-    featureX += doc.getTextWidth(feature) + 18
-    
-    if (featureX > 160 || index === 2) {
-      featureX = 20
-      featureY += 5
-    }
-  })
-}
-
-function addFooter(doc: jsPDF) {
-  const yPosition = 275
+function addFooter(doc: jsPDF, colors: any) {
+  const footerY = 195
 
   // Footer background
-  doc.setFillColor(31, 41, 55)
-  doc.rect(0, yPosition, 210, 22, 'F')
-  
-  // Orange accent line
-  doc.setFillColor(249, 115, 22)
-  doc.rect(0, yPosition, 210, 2, 'F')
-  
-  // Contact header
-  doc.setFontSize(12)
-  doc.setTextColor(255, 255, 255)
+  doc.setFillColor(...colors.oceanBlue)
+  doc.rect(0, footerY, 279, 20, 'F')
+
+  // Contact info (left-aligned)
+  doc.setFontSize(11)
+  doc.setTextColor(...colors.white)
   doc.setFont('helvetica', 'bold')
-  doc.text('Ready to Get Started? Contact WaveLine Today', 105, yPosition + 8, { align: 'center' })
-  
-  // Contact information
+  doc.text('Ready to Get Started?', 15, footerY + 7)
+
   doc.setFontSize(10)
   doc.setFont('helvetica', 'normal')
-  doc.setTextColor(203, 213, 225)
-  
-  const contactInfo = [
-    'Phone: 818-264-6859  •  Website: gowaveline.com  •  Email: info@gowaveline.com'
-  ]
-  
-  doc.text(contactInfo[0], 105, yPosition + 14, { align: 'center' })
-  
-  // Call to action
-  doc.setFontSize(9)
-  doc.setTextColor(249, 115, 22)
+  doc.text('📞 818-264-6859  |  🌐 gowaveline.com  |  📧 info@gowaveline.com', 15, footerY + 13)
+
+  // Call to action (right-aligned)
+  doc.setFontSize(10)
+  doc.setTextColor(...colors.neonOrange)
   doc.setFont('helvetica', 'italic')
-  doc.text('Call today for a free consultation and competitive quote!', 105, yPosition + 19, { align: 'center' })
+  doc.text('Call today for a free consultation!', 260, footerY + 10, { align: 'right' })
+}
+
+function getIndustryIcon(materialType: string): string {
+  const icons = {
+    'cbd': '🌿 CBD',
+    'adult': '🔒 Adult',
+    'firearms': '🛡️ Firearms',
+    'vape': '💨 Vape',
+    'general': '⚡ High-Risk'
+  }
+  return icons[materialType as keyof typeof icons] || icons.general
+}
+
+function getSummaryText(materialType: string): string {
+  const summaries = {
+    'cbd': 'Specialized payment processing for hemp and CBD merchants with full compliance expertise.',
+    'adult': 'Discreet, reliable processing solutions designed specifically for adult entertainment businesses.',
+    'firearms': 'Second Amendment-friendly payment solutions with expertise in firearms regulations.',
+    'vape': 'Compliant processing for vaping industry with age verification and fraud protection.',
+    'general': 'Comprehensive high-risk merchant services with industry-leading approval rates.'
+  }
+  return summaries[materialType as keyof typeof summaries] || summaries.general
 }

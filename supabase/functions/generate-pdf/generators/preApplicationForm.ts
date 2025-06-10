@@ -12,13 +12,26 @@ export async function generatePreApplicationForm(data: any): Promise<ArrayBuffer
   } = data
 
   const doc = new jsPDF({
-    orientation: 'portrait',
+    orientation: 'landscape',
     unit: 'mm',
-    format: 'a4'
+    format: 'letter'
   })
 
+  // Brand colors
+  const brandColors = {
+    pastelOrange: [255, 230, 204],
+    oceanBlue: [41, 98, 149],
+    neonOrange: [255, 102, 0],
+    lightGray: [248, 249, 250],
+    darkGray: [52, 58, 64],
+    white: [255, 255, 255]
+  }
+
   // Add header
-  addFormHeader(doc, date)
+  addFormHeader(doc, date, brandColors)
+
+  // Add tagline bar
+  addFormTaglineBar(doc, brandColors)
 
   // Add business information section
   addBusinessInfoSection(doc, {
@@ -27,185 +40,180 @@ export async function generatePreApplicationForm(data: any): Promise<ArrayBuffer
     phone,
     website,
     processingVolume
-  })
+  }, brandColors)
 
-  // Add additional required information
-  addAdditionalInfoSection(doc)
+  // Add additional sections
+  addAdditionalInfoSection(doc, brandColors)
+  addProcessingInfoSection(doc, brandColors)
 
-  // Add processing information
-  addProcessingInfoSection(doc)
-
-  // Add footer with correct contact info
-  addFormFooter(doc)
+  // Add footer
+  addFormFooter(doc, brandColors)
 
   return doc.output('arraybuffer')
 }
 
-function addFormHeader(doc: jsPDF, date: string) {
-  // Clean header background
-  doc.setFillColor(31, 41, 55)
-  doc.rect(0, 0, 210, 50, 'F')
+function addFormHeader(doc: jsPDF, date: string, colors: any) {
+  // Header background
+  doc.setFillColor(...colors.pastelOrange)
+  doc.rect(0, 0, 279, 25, 'F')
 
-  // Orange accent
-  doc.setFillColor(249, 115, 22)
-  doc.rect(0, 47, 210, 3, 'F')
-
-  // WaveLine logo area
-  doc.setFillColor(255, 255, 255)
-  doc.rect(15, 10, 50, 30, 'F')
-  doc.setFontSize(16)
-  doc.setTextColor(31, 41, 55)
+  // Company logo (left-aligned)
+  doc.setFillColor(...colors.white)
+  doc.rect(10, 5, 50, 15, 'F')
+  doc.setFontSize(14)
+  doc.setTextColor(...colors.oceanBlue)
   doc.setFont('helvetica', 'bold')
-  doc.text('WaveLine', 40, 22, { align: 'center' })
-  doc.setFontSize(9)
-  doc.setTextColor(249, 115, 22)
-  doc.text('Payment Solutions', 40, 28, { align: 'center' })
+  doc.text('WaveLine', 35, 11, { align: 'center' })
   doc.setFontSize(8)
-  doc.setTextColor(107, 114, 128)
-  doc.text('High-Risk Specialists', 40, 33, { align: 'center' })
+  doc.setTextColor(...colors.neonOrange)
+  doc.text('Payment Solutions', 35, 15, { align: 'center' })
 
-  // Main title
-  doc.setFontSize(24)
-  doc.setTextColor(255, 255, 255)
+  // Page title (right-aligned)
+  doc.setFontSize(18)
+  doc.setTextColor(...colors.oceanBlue)
   doc.setFont('helvetica', 'bold')
-  doc.text('Pre-Application Form', 125, 22, { align: 'center' })
-  
-  doc.setFontSize(11)
-  doc.setFont('helvetica', 'normal')
-  doc.setTextColor(203, 213, 225)
-  doc.text('Fast Track Your Merchant Account Approval', 125, 32, { align: 'center' })
+  doc.text('Pre-Application Form', 260, 13, { align: 'right' })
 
-  doc.setFontSize(9)
-  doc.setTextColor(203, 213, 225)
-  doc.text(`Generated: ${date}`, 125, 40, { align: 'center' })
+  // Date
+  doc.setFontSize(10)
+  doc.setTextColor(...colors.darkGray)
+  doc.text(`Generated: ${date}`, 260, 20, { align: 'right' })
 }
 
-function addBusinessInfoSection(doc: jsPDF, data: any) {
-  doc.setTextColor(0, 0, 0)
-  
-  // Business Information section
-  doc.setFillColor(249, 250, 251)
-  doc.rect(15, 60, 180, 8, 'F')
-  
-  doc.setFontSize(16)
+function addFormTaglineBar(doc: jsPDF, colors: any) {
+  doc.setFillColor(...colors.lightGray)
+  doc.rect(0, 25, 279, 12, 'F')
+
+  doc.setFontSize(12)
+  doc.setTextColor(...colors.oceanBlue)
+  doc.setFont('helvetica', 'italic')
+  doc.text('Fast Track Your Merchant Account Approval', 139.5, 32, { align: 'center' })
+}
+
+function addBusinessInfoSection(doc: jsPDF, data: any, colors: any) {
+  const yStart = 50
+
+  // Section header
+  doc.setFillColor(...colors.oceanBlue)
+  doc.rect(10, yStart, 120, 8, 'F')
+  doc.setFontSize(14)
+  doc.setTextColor(...colors.white)
   doc.setFont('helvetica', 'bold')
-  doc.setTextColor(31, 41, 55)
-  doc.text('Business Information', 20, 66)
-  
-  doc.setFontSize(11)
-  doc.setFont('helvetica', 'normal')
-  doc.setTextColor(0, 0, 0)
-  
+  doc.text('Business Information', 15, yStart + 6)
+
+  // Fields
   const fields = [
     { label: 'Business Name:', value: data.businessName },
     { label: 'Email Address:', value: data.email },
     { label: 'Phone Number:', value: data.phone },
     { label: 'Website:', value: data.website },
-    { label: 'Monthly Processing Volume:', value: data.processingVolume }
+    { label: 'Monthly Volume:', value: data.processingVolume }
   ]
-  
-  let yPosition = 78
-  const lineHeight = 12
-  
+
+  let yPos = yStart + 15
+  doc.setFontSize(11)
+
   fields.forEach(field => {
     doc.setFont('helvetica', 'bold')
-    doc.setTextColor(31, 41, 55)
-    doc.text(`${field.label}`, 25, yPosition)
+    doc.setTextColor(...colors.darkGray)
+    doc.text(`${field.label}`, 15, yPos)
+    
+    // Value box
+    doc.setFillColor(...colors.white)
+    doc.rect(55, yPos - 4, 70, 6, 'F')
+    doc.setDrawColor(...colors.lightGray)
+    doc.rect(55, yPos - 4, 70, 6, 'S')
+    
     doc.setFont('helvetica', 'normal')
-    doc.setTextColor(0, 0, 0)
-    doc.text(`${field.value}`, 85, yPosition)
-    yPosition += lineHeight
+    doc.setTextColor(...colors.darkGray)
+    doc.text(`${field.value}`, 57, yPos)
+    yPos += 10
   })
 }
 
-function addAdditionalInfoSection(doc: jsPDF) {
-  let yPosition = 150
-  
-  doc.setFillColor(249, 250, 251)
-  doc.rect(15, yPosition - 3, 180, 8, 'F')
-  
-  doc.setFontSize(16)
+function addAdditionalInfoSection(doc: jsPDF, colors: any) {
+  const yStart = 50
+
+  // Section header (right column)
+  doc.setFillColor(...colors.neonOrange)
+  doc.rect(140, yStart, 120, 8, 'F')
+  doc.setFontSize(14)
+  doc.setTextColor(...colors.white)
   doc.setFont('helvetica', 'bold')
-  doc.setTextColor(31, 41, 55)
-  doc.text('Additional Required Information', 20, yPosition + 3)
-  yPosition += 15
-  
-  doc.setFontSize(10)
-  doc.setFont('helvetica', 'normal')
-  doc.setTextColor(0, 0, 0)
-  
+  doc.text('Additional Information', 145, yStart + 6)
+
+  // Fields
   const additionalFields = [
-    'Business Type (LLC, Corp, etc.): _______________________________',
-    'Years in Business: ___________________________________________',
-    'Federal Tax ID: _____________________________________________',
-    'Business Address: ___________________________________________',
-    'City, State, Zip: ____________________________________________',
-    'Owner/Officer Name: _________________________________________',
-    'Owner/Officer Title: _________________________________________',
-    'Owner/Officer Phone: ________________________________________',
-    'Owner/Officer Email: ________________________________________'
+    'Business Type (LLC, Corp, etc.):',
+    'Years in Business:',
+    'Federal Tax ID:',
+    'Business Address:',
+    'Owner/Officer Name:'
   ]
-  
+
+  let yPos = yStart + 15
+  doc.setFontSize(11)
+
   additionalFields.forEach((field) => {
-    doc.text(field, 25, yPosition)
-    yPosition += 8
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...colors.darkGray)
+    doc.text(field, 145, yPos)
+    
+    // Input line
+    doc.setDrawColor(...colors.lightGray)
+    doc.setLineWidth(0.5)
+    doc.line(145, yPos + 2, 255, yPos + 2)
+    
+    yPos += 10
   })
 }
 
-function addProcessingInfoSection(doc: jsPDF) {
-  let yPosition = 235
-  
-  doc.setFillColor(249, 250, 251)
-  doc.rect(15, yPosition - 3, 180, 8, 'F')
-  
-  doc.setFontSize(16)
+function addProcessingInfoSection(doc: jsPDF, colors: any) {
+  const yStart = 130
+
+  // Full width section
+  doc.setFillColor(...colors.lightGray)
+  doc.rect(10, yStart, 250, 8, 'F')
+  doc.setFontSize(14)
+  doc.setTextColor(...colors.oceanBlue)
   doc.setFont('helvetica', 'bold')
-  doc.setTextColor(31, 41, 55)
-  doc.text('Processing Information', 20, yPosition + 3)
-  yPosition += 15
-  
+  doc.text('Processing Information', 15, yStart + 6)
+
+  const yPos = yStart + 20
+  doc.setFontSize(11)
+  doc.setTextColor(...colors.darkGray)
+  doc.text('Card Types Accepted:', 15, yPos)
+
+  // Checkboxes for card types
+  const cardTypes = ['Visa', 'MasterCard', 'American Express', 'Discover']
+  let xPos = 80
+
+  cardTypes.forEach(cardType => {
+    doc.rect(xPos, yPos - 4, 4, 4, 'S')
+    doc.text(cardType, xPos + 7, yPos)
+    xPos += 40
+  })
+}
+
+function addFormFooter(doc: jsPDF, colors: any) {
+  const footerY = 170
+
+  // Footer background
+  doc.setFillColor(...colors.oceanBlue)
+  doc.rect(0, footerY, 279, 25, 'F')
+
+  // Next steps
+  doc.setFontSize(12)
+  doc.setTextColor(...colors.white)
+  doc.setFont('helvetica', 'bold')
+  doc.text('Next Steps', 15, footerY + 8)
+
   doc.setFontSize(10)
   doc.setFont('helvetica', 'normal')
-  doc.setTextColor(0, 0, 0)
-  
-  const cardTypes = ['Visa', 'MasterCard', 'American Express', 'Discover']
-  
-  doc.text('Card Types Accepted:', 25, yPosition)
-  
-  let xPosition = 85
-  cardTypes.forEach(cardType => {
-    doc.rect(xPosition, yPosition - 4, 4, 4, 'S')
-    doc.text(cardType, xPosition + 6, yPosition)
-    xPosition += 35
-  })
-}
+  doc.text('A WaveLine specialist will contact you within 24 hours to complete your application.', 15, footerY + 15)
 
-function addFormFooter(doc: jsPDF) {
-  const yPosition = 260
-  
-  // Footer background
-  doc.setFillColor(31, 41, 55)
-  doc.rect(0, yPosition, 210, 20, 'F')
-  
-  // Orange accent
-  doc.setFillColor(249, 115, 22)
-  doc.rect(0, yPosition, 210, 2, 'F')
-  
-  doc.setFontSize(11)
-  doc.setTextColor(255, 255, 255)
-  doc.setFont('helvetica', 'bold')
-  doc.text('Next Steps', 20, yPosition + 8)
-  
-  doc.setFontSize(9)
-  doc.setTextColor(203, 213, 225)
-  doc.setFont('helvetica', 'normal')
-  doc.text('A WaveLine specialist will contact you within 24 hours to complete your application.', 20, yPosition + 13)
-  
   // Contact info
-  doc.setTextColor(249, 115, 22)
-  doc.text('Questions? Call 818-264-6859 or visit gowaveline.com', 20, yPosition + 17)
-  
-  doc.setFontSize(8)
-  doc.setTextColor(203, 213, 225)
-  doc.text('Page 1 of 1', 190, 285, { align: 'right' })
+  doc.setTextColor(...colors.neonOrange)
+  doc.setFont('helvetica', 'bold')
+  doc.text('Questions? Call 818-264-6859 or visit gowaveline.com', 15, footerY + 20)
 }
