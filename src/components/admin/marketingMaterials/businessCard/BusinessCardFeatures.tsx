@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, Edit } from 'lucide-react';
+import { Download, Edit, FileText, Loader2 } from 'lucide-react';
 
 interface BusinessCardFeaturesProps {
   onCustomize: () => void;
@@ -16,58 +16,60 @@ export const BusinessCardFeatures: React.FC<BusinessCardFeaturesProps> = ({
 }) => {
   return (
     <div className="space-y-4">
-      <h3 className="font-semibold text-lg">Template Features</h3>
+      <h3 className="font-semibold text-lg">Features & Benefits</h3>
       
       <div className="space-y-3">
-        <div className="flex items-start gap-3">
-          <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
+        <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
+          <FileText className="h-5 w-5 text-orange-600" />
           <div>
-            <h4 className="font-medium">Standard Business Card Design</h4>
-            <p className="text-sm text-gray-600">3.5" x 2" standard size with front and back layouts</p>
+            <p className="font-medium text-orange-900">Professional Design</p>
+            <p className="text-sm text-orange-700">Consistent branding with company logo and colors</p>
           </div>
         </div>
         
-        <div className="flex items-start gap-3">
-          <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
+        <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <Edit className="h-5 w-5 text-blue-600" />
           <div>
-            <h4 className="font-medium">Customizable Agent Info</h4>
-            <p className="text-sm text-gray-600">Easy-to-edit fields for your contact details with live preview</p>
+            <p className="font-medium text-blue-900">Fully Customizable</p>
+            <p className="text-sm text-blue-700">Add your name, title, phone, and email</p>
           </div>
         </div>
         
-        <div className="flex items-start gap-3">
-          <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
+        <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
+          <Download className="h-5 w-5 text-green-600" />
           <div>
-            <h4 className="font-medium">Print-Ready Format</h4>
-            <p className="text-sm text-gray-600">High-resolution template with proper colors and margins</p>
-          </div>
-        </div>
-        
-        <div className="flex items-start gap-3">
-          <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
-          <div>
-            <h4 className="font-medium">Professional & Trust-Building</h4>
-            <p className="text-sm text-gray-600">Establishes credibility from the first interaction</p>
+            <p className="font-medium text-green-900">Print Ready</p>
+            <p className="text-sm text-green-700">High-quality HTML template for professional printing</p>
           </div>
         </div>
       </div>
-      
+
       <div className="flex gap-3 pt-4">
         <Button 
           onClick={onCustomize}
-          variant="outline" 
+          variant="outline"
           className="flex-1"
         >
           <Edit className="h-4 w-4 mr-2" />
-          Customize
+          Customize Card
         </Button>
+        
         <Button 
           onClick={onDownload}
           disabled={isGenerating}
-          className="flex-1 bg-orange-500 hover:bg-orange-600"
+          className="flex-1 bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-500 text-white"
         >
-          <Download className="h-4 w-4 mr-2" />
-          {isGenerating ? 'Generating...' : 'Download Template'}
+          {isGenerating ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Generating...
+            </>
+          ) : (
+            <>
+              <Download className="h-4 w-4 mr-2" />
+              Download Template
+            </>
+          )}
         </Button>
       </div>
     </div>

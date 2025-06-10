@@ -61,142 +61,278 @@ async function generateMarketingMaterial(data: any): Promise<ArrayBuffer> {
     format: 'a4'
   })
 
-  // Set up colors
+  // Define colors
   const orangeColor = [249, 115, 22] // Orange-500
+  const darkOrangeColor = [234, 88, 12] // Orange-600
   const grayColor = [75, 85, 99] // Gray-600
   const lightGrayColor = [243, 244, 246] // Gray-100
+  const darkGrayColor = [31, 41, 55] // Gray-800
+  const whiteColor = [255, 255, 255]
 
-  // Header section with gradient background
+  // Add decorative wave shapes in the background
   doc.setFillColor(orangeColor[0], orangeColor[1], orangeColor[2])
-  doc.rect(0, 0, 297, 50, 'F')
+  doc.setGlobalAlpha(0.05)
   
-  // Company logo area (placeholder)
-  doc.setFillColor(255, 255, 255)
-  doc.roundedRect(20, 15, 40, 20, 3, 3, 'F')
-  doc.setFontSize(14)
+  // Create wave pattern
+  for (let i = 0; i < 5; i++) {
+    doc.circle(50 + i * 60, -20, 40, 'F')
+    doc.circle(30 + i * 70, 220, 35, 'F')
+  }
+  
+  doc.setGlobalAlpha(1)
+
+  // Header section with enhanced gradient effect
+  doc.setFillColor(orangeColor[0], orangeColor[1], orangeColor[2])
+  doc.rect(0, 0, 297, 60, 'F')
+  
+  // Add subtle gradient effect with overlapping rectangles
+  doc.setFillColor(darkOrangeColor[0], darkOrangeColor[1], darkOrangeColor[2])
+  doc.setGlobalAlpha(0.3)
+  doc.rect(0, 45, 297, 15, 'F')
+  doc.setGlobalAlpha(1)
+
+  // Company logo area with enhanced styling
+  doc.setFillColor(whiteColor[0], whiteColor[1], whiteColor[2])
+  doc.roundedRect(20, 15, 50, 30, 5, 5, 'F')
+  
+  // Add shadow effect for logo area
+  doc.setFillColor(0, 0, 0)
+  doc.setGlobalAlpha(0.1)
+  doc.roundedRect(22, 17, 50, 30, 5, 5, 'F')
+  doc.setGlobalAlpha(1)
+  
+  // WaveLine logo text with enhanced styling
+  doc.setFontSize(18)
   doc.setTextColor(orangeColor[0], orangeColor[1], orangeColor[2])
   doc.setFont('helvetica', 'bold')
-  doc.text('WaveLine', 40, 27, { align: 'center' })
-
-  // Main title
-  doc.setFontSize(24)
-  doc.setTextColor(255, 255, 255)
-  doc.setFont('helvetica', 'bold')
-  doc.text(content.title, 148, 25, { align: 'center' })
+  doc.text('WaveLine', 45, 27, { align: 'center' })
   
-  // Subtitle
-  doc.setFontSize(14)
-  doc.setFont('helvetica', 'normal')
-  doc.text(content.subtitle, 148, 35, { align: 'center' })
+  // Add wave symbol
+  doc.setFontSize(12)
+  doc.text('~~~', 45, 37, { align: 'center' })
 
-  // Company tagline
+  // Main title with enhanced styling
+  doc.setFontSize(28)
+  doc.setTextColor(whiteColor[0], whiteColor[1], whiteColor[2])
+  doc.setFont('helvetica', 'bold')
+  doc.text(content.title, 148, 28, { align: 'center' })
+  
+  // Subtitle with better spacing
+  doc.setFontSize(16)
+  doc.setFont('helvetica', 'normal')
+  doc.text(content.subtitle, 148, 40, { align: 'center' })
+
+  // Company tagline with styling
   doc.setFontSize(12)
   doc.setFont('helvetica', 'italic')
-  doc.text(companyInfo.tagline, 148, 43, { align: 'center' })
+  doc.text(companyInfo.tagline, 148, 50, { align: 'center' })
 
-  // Main content area
-  let yPosition = 65
+  // Add decorative elements in header
+  doc.setDrawColor(whiteColor[0], whiteColor[1], whiteColor[2])
+  doc.setLineWidth(2)
+  doc.line(80, 25, 210, 25)
+  doc.line(80, 55, 210, 55)
 
-  // Industry Challenges section
+  // Main content area with enhanced layout
+  let yPosition = 75
+
+  // Industry Challenges section with enhanced styling
   doc.setFillColor(lightGrayColor[0], lightGrayColor[1], lightGrayColor[2])
-  doc.roundedRect(15, yPosition - 5, 125, 85, 5, 5, 'F')
+  doc.roundedRect(15, yPosition - 5, 130, 95, 8, 8, 'F')
   
-  doc.setFontSize(16)
-  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2])
+  // Add border accent
+  doc.setDrawColor(orangeColor[0], orangeColor[1], orangeColor[2])
+  doc.setLineWidth(3)
+  doc.line(15, yPosition - 5, 15, yPosition + 90)
+  
+  // Challenge icon
+  doc.setFillColor(orangeColor[0], orangeColor[1], orangeColor[2])
+  doc.circle(25, yPosition + 5, 3, 'F')
+  
+  doc.setFontSize(18)
+  doc.setTextColor(darkGrayColor[0], darkGrayColor[1], darkGrayColor[2])
   doc.setFont('helvetica', 'bold')
-  doc.text('Industry Challenges', 20, yPosition + 5)
+  doc.text('Industry Challenges', 32, yPosition + 8)
 
-  doc.setFontSize(10)
+  doc.setFontSize(11)
   doc.setFont('helvetica', 'normal')
-  let challengeY = yPosition + 15
+  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2])
+  let challengeY = yPosition + 20
   
   content.challenges.forEach((challenge: string, index: number) => {
-    // Bullet point
+    // Enhanced bullet points with icons
     doc.setFillColor(orangeColor[0], orangeColor[1], orangeColor[2])
-    doc.circle(22, challengeY - 1, 1, 'F')
+    doc.circle(22, challengeY - 1, 1.5, 'F')
     
-    // Wrap text to fit in column
-    const lines = doc.splitTextToSize(challenge, 110)
+    // Add warning triangle for emphasis
+    doc.setFillColor(234, 179, 8) // Yellow-500
+    const triangleSize = 1.5
+    doc.triangle(18, challengeY - 2, 18 + triangleSize, challengeY + 1, 18 - triangleSize, challengeY + 1, 'F')
+    
+    const lines = doc.splitTextToSize(challenge, 115)
     doc.text(lines, 26, challengeY)
-    challengeY += lines.length * 5 + 3
+    challengeY += lines.length * 5 + 4
   })
 
-  // Our Solutions section
+  // Our Solutions section with enhanced styling
   doc.setFillColor(orangeColor[0], orangeColor[1], orangeColor[2])
-  doc.roundedRect(157, yPosition - 5, 125, 85, 5, 5, 'F')
+  doc.roundedRect(152, yPosition - 5, 130, 95, 8, 8, 'F')
   
-  doc.setFontSize(16)
-  doc.setTextColor(255, 255, 255)
+  // Add decorative corner elements
+  doc.setFillColor(darkOrangeColor[0], darkOrangeColor[1], darkOrangeColor[2])
+  doc.triangle(152, yPosition - 5, 162, yPosition - 5, 152, yPosition + 5, 'F')
+  doc.triangle(272, yPosition - 5, 282, yPosition - 5, 282, yPosition + 5, 'F')
+  
+  // Solution icon
+  doc.setFillColor(whiteColor[0], whiteColor[1], whiteColor[2])
+  doc.circle(162, yPosition + 5, 3, 'F')
+  
+  doc.setFontSize(18)
+  doc.setTextColor(whiteColor[0], whiteColor[1], whiteColor[2])
   doc.setFont('helvetica', 'bold')
-  doc.text('Our Solutions', 162, yPosition + 5)
+  doc.text('Our Solutions', 169, yPosition + 8)
 
-  doc.setFontSize(10)
+  doc.setFontSize(11)
   doc.setFont('helvetica', 'normal')
-  let solutionY = yPosition + 15
+  let solutionY = yPosition + 20
   
   content.solutions.slice(0, 6).forEach((solution: string, index: number) => {
-    // Bullet point
-    doc.setFillColor(255, 255, 255)
-    doc.circle(164, solutionY - 1, 1, 'F')
+    // Enhanced bullet points with checkmarks
+    doc.setFillColor(whiteColor[0], whiteColor[1], whiteColor[2])
+    doc.circle(164, solutionY - 1, 1.5, 'F')
     
-    // Wrap text to fit in column
-    const lines = doc.splitTextToSize(solution, 110)
+    // Add checkmark for emphasis
+    doc.setFillColor(34, 197, 94) // Green-500
+    const checkSize = 1.5
+    doc.triangle(160, solutionY - 1, 160 + checkSize, solutionY + 1, 160 - checkSize, solutionY + 1, 'F')
+    
+    const lines = doc.splitTextToSize(solution, 115)
     doc.text(lines, 168, solutionY)
-    solutionY += lines.length * 5 + 3
+    solutionY += lines.length * 5 + 4
   })
 
-  // Key Features section (if available)
+  // Key Features section with enhanced design
   if (content.features) {
-    yPosition = 165
-    doc.setFillColor(grayColor[0], grayColor[1], grayColor[2])
-    doc.roundedRect(15, yPosition - 5, 267, 25, 5, 5, 'F')
+    yPosition = 180
+    doc.setFillColor(darkGrayColor[0], darkGrayColor[1], darkGrayColor[2])
+    doc.roundedRect(15, yPosition - 5, 267, 30, 8, 8, 'F')
     
-    doc.setFontSize(14)
-    doc.setTextColor(255, 255, 255)
+    // Add decorative elements
+    doc.setFillColor(orangeColor[0], orangeColor[1], orangeColor[2])
+    doc.circle(25, yPosition + 5, 2, 'F')
+    doc.circle(272, yPosition + 5, 2, 'F')
+    
+    doc.setFontSize(16)
+    doc.setTextColor(whiteColor[0], whiteColor[1], whiteColor[2])
     doc.setFont('helvetica', 'bold')
-    doc.text('Key Features:', 20, yPosition + 5)
+    doc.text('Key Features:', 30, yPosition + 8)
     
-    doc.setFontSize(11)
+    doc.setFontSize(12)
     doc.setFont('helvetica', 'normal')
-    let featureX = 80
+    let featureX = 30
+    let featureY = yPosition + 18
     content.features.forEach((feature: string, index: number) => {
-      doc.text(`• ${feature}`, featureX, yPosition + 5)
-      featureX += 50
+      // Add feature badges
+      doc.setFillColor(orangeColor[0], orangeColor[1], orangeColor[2])
+      doc.roundedRect(featureX - 2, featureY - 6, doc.getTextWidth(`• ${feature}`) + 4, 8, 3, 3, 'F')
+      doc.setTextColor(whiteColor[0], whiteColor[1], whiteColor[2])
+      doc.text(`• ${feature}`, featureX, featureY)
+      featureX += doc.getTextWidth(`• ${feature}`) + 15
+      if (featureX > 240) {
+        featureX = 30
+        featureY += 10
+      }
     })
   }
 
-  // Footer with contact information
+  // Enhanced footer with contact information
   yPosition = 195
   doc.setFillColor(lightGrayColor[0], lightGrayColor[1], lightGrayColor[2])
-  doc.rect(0, yPosition, 297, 15, 'F')
+  doc.rect(0, yPosition, 297, 20, 'F')
   
-  doc.setFontSize(10)
-  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2])
-  doc.setFont('helvetica', 'normal')
-  doc.text(`${companyInfo.website} | ${companyInfo.phone} | ${companyInfo.email}`, 148, yPosition + 8, { align: 'center' })
+  // Add footer accent line
+  doc.setFillColor(orangeColor[0], orangeColor[1], orangeColor[2])
+  doc.rect(0, yPosition, 297, 3, 'F')
+  
+  // Contact icons and information
+  doc.setFontSize(11)
+  doc.setTextColor(darkGrayColor[0], darkGrayColor[1], darkGrayColor[2])
+  doc.setFont('helvetica', 'bold')
+  
+  // Website
+  doc.circle(60, yPosition + 10, 2, 'F')
+  doc.text('🌐', 58, yPosition + 11)
+  doc.text(companyInfo.website, 70, yPosition + 11)
+  
+  // Phone
+  doc.circle(150, yPosition + 10, 2, 'F')
+  doc.text('📞', 148, yPosition + 11)
+  doc.text(companyInfo.phone, 160, yPosition + 11)
+  
+  // Email
+  doc.circle(240, yPosition + 10, 2, 'F')
+  doc.text('✉️', 238, yPosition + 11)
+  doc.text(companyInfo.email, 250, yPosition + 11)
 
-  // Add industry-specific styling
+  // Add industry-specific styling and graphics
   if (materialType === 'cbd') {
-    // Add subtle green accent
+    // Add green accent elements
     doc.setDrawColor(34, 197, 94) // Green-500
-    doc.setLineWidth(2)
-    doc.line(15, 55, 282, 55)
+    doc.setLineWidth(3)
+    doc.line(15, 65, 282, 65)
+    
+    // Add leaf graphics
+    doc.setFillColor(34, 197, 94)
+    doc.setGlobalAlpha(0.3)
+    for (let i = 0; i < 3; i++) {
+      doc.circle(250 + i * 10, 30 + i * 5, 3, 'F')
+    }
+    doc.setGlobalAlpha(1)
   } else if (materialType === 'adult') {
-    // Add subtle purple accent
+    // Add purple accent elements
     doc.setDrawColor(147, 51, 234) // Purple-500
-    doc.setLineWidth(2)
-    doc.line(15, 55, 282, 55)
+    doc.setLineWidth(3)
+    doc.line(15, 65, 282, 65)
+    
+    // Add discrete geometric shapes
+    doc.setFillColor(147, 51, 234)
+    doc.setGlobalAlpha(0.2)
+    doc.circle(260, 35, 8, 'F')
+    doc.setGlobalAlpha(1)
   } else if (materialType === 'firearms') {
     // Add patriotic colors accent
     doc.setDrawColor(239, 68, 68) // Red-500
-    doc.setLineWidth(1)
-    doc.line(15, 55, 282, 55)
-  } else if (materialType === 'vape') {
-    // Add blue accent
-    doc.setDrawColor(59, 130, 246) // Blue-500
     doc.setLineWidth(2)
-    doc.line(15, 55, 282, 55)
+    doc.line(15, 65, 282, 65)
+    
+    // Add shield graphics
+    doc.setFillColor(59, 130, 246) // Blue-500
+    doc.setGlobalAlpha(0.3)
+    doc.roundedRect(250, 25, 15, 20, 5, 5, 'F')
+    doc.setGlobalAlpha(1)
+  } else if (materialType === 'vape') {
+    // Add blue accent and tech elements
+    doc.setDrawColor(59, 130, 246) // Blue-500
+    doc.setLineWidth(3)
+    doc.line(15, 65, 282, 65)
+    
+    // Add circuit-like graphics
+    doc.setFillColor(59, 130, 246)
+    doc.setGlobalAlpha(0.2)
+    for (let i = 0; i < 4; i++) {
+      doc.rect(245 + i * 8, 30, 3, 15, 'F')
+    }
+    doc.setGlobalAlpha(1)
   }
+
+  // Add QR code placeholder for digital integration
+  doc.setFillColor(darkGrayColor[0], darkGrayColor[1], darkGrayColor[2])
+  doc.rect(260, 175, 15, 15, 'F')
+  doc.setFillColor(whiteColor[0], whiteColor[1], whiteColor[2])
+  doc.setFontSize(6)
+  doc.text('QR', 267, 183, { align: 'center' })
+  doc.setFontSize(8)
+  doc.text('Scan for more info', 267, 192, { align: 'center' })
 
   return doc.output('arraybuffer')
 }
@@ -217,29 +353,67 @@ async function generatePreApplicationForm(data: any): Promise<ArrayBuffer> {
     format: 'a4'
   })
 
-  // Add company logo and header
-  doc.setFontSize(22)
-  doc.setTextColor(0, 71, 171)
-  doc.text('WaveLine Payments', 105, 20, { align: 'center' })
+  // Define colors
+  const orangeColor = [249, 115, 22]
+  const darkOrangeColor = [234, 88, 12]
+  const grayColor = [100, 100, 100]
+  const darkGrayColor = [31, 41, 55]
+  const lightGrayColor = [243, 244, 246]
+
+  // Add decorative header background
+  doc.setFillColor(orangeColor[0], orangeColor[1], orangeColor[2])
+  doc.rect(0, 0, 210, 50, 'F')
   
-  doc.setFontSize(18)
-  doc.text('Pre-Application Form', 105, 35, { align: 'center' })
+  // Add gradient effect
+  doc.setFillColor(darkOrangeColor[0], darkOrangeColor[1], darkOrangeColor[2])
+  doc.setGlobalAlpha(0.3)
+  doc.rect(0, 35, 210, 15, 'F')
+  doc.setGlobalAlpha(1)
+
+  // Add WaveLine logo area
+  doc.setFillColor(255, 255, 255)
+  doc.roundedRect(15, 10, 40, 25, 3, 3, 'F')
+  doc.setFontSize(14)
+  doc.setTextColor(orangeColor[0], orangeColor[1], orangeColor[2])
+  doc.setFont('helvetica', 'bold')
+  doc.text('WaveLine', 35, 20, { align: 'center' })
+  doc.setFontSize(10)
+  doc.text('~~~', 35, 28, { align: 'center' })
+
+  // Main title with enhanced styling
+  doc.setFontSize(24)
+  doc.setTextColor(255, 255, 255)
+  doc.setFont('helvetica', 'bold')
+  doc.text('Pre-Application Form', 105, 25, { align: 'center' })
+  
+  doc.setFontSize(12)
+  doc.setFont('helvetica', 'italic')
+  doc.text('Your Partner in High-Risk Merchant Services', 105, 35, { align: 'center' })
 
   doc.setFontSize(10)
-  doc.setTextColor(100, 100, 100)
+  doc.setTextColor(255, 255, 255)
   doc.text(`Generated: ${date}`, 105, 42, { align: 'center' })
 
-  doc.setDrawColor(220, 220, 220)
+  // Add decorative line
+  doc.setDrawColor(255, 255, 255)
+  doc.setLineWidth(1)
   doc.line(20, 45, 190, 45)
 
+  // Reset text color for content
   doc.setTextColor(0, 0, 0)
   
-  doc.setFontSize(14)
+  // Business Information section with enhanced styling
+  doc.setFillColor(lightGrayColor[0], lightGrayColor[1], lightGrayColor[2])
+  doc.roundedRect(15, 55, 180, 8, 2, 2, 'F')
+  
+  doc.setFontSize(16)
   doc.setFont('helvetica', 'bold')
-  doc.text('Business Information', 20, 60)
+  doc.setTextColor(darkGrayColor[0], darkGrayColor[1], darkGrayColor[2])
+  doc.text('Business Information', 20, 61)
   
   doc.setFontSize(12)
   doc.setFont('helvetica', 'normal')
+  doc.setTextColor(0, 0, 0)
   
   const fields = [
     { label: 'Business Name:', value: businessName },
@@ -249,25 +423,37 @@ async function generatePreApplicationForm(data: any): Promise<ArrayBuffer> {
     { label: 'Monthly Processing Volume:', value: processingVolume }
   ]
   
-  let yPosition = 70
-  const lineHeight = 10
+  let yPosition = 72
+  const lineHeight = 12
   
   fields.forEach(field => {
+    // Add field background
+    doc.setFillColor(249, 250, 251)
+    doc.rect(20, yPosition - 3, 170, 8, 'F')
+    
     doc.setFont('helvetica', 'bold')
-    doc.text(`${field.label}`, 20, yPosition)
+    doc.setTextColor(darkGrayColor[0], darkGrayColor[1], darkGrayColor[2])
+    doc.text(`${field.label}`, 25, yPosition + 2)
     doc.setFont('helvetica', 'normal')
-    doc.text(`${field.value}`, 80, yPosition)
+    doc.setTextColor(0, 0, 0)
+    doc.text(`${field.value}`, 85, yPosition + 2)
     yPosition += lineHeight
   })
   
+  // Additional Required Information section
   yPosition += 10
-  doc.setFontSize(14)
-  doc.setFont('helvetica', 'bold')
-  doc.text('Additional Required Information', 20, yPosition)
-  yPosition += 10
+  doc.setFillColor(lightGrayColor[0], lightGrayColor[1], lightGrayColor[2])
+  doc.roundedRect(15, yPosition - 3, 180, 8, 2, 2, 'F')
   
-  doc.setFontSize(12)
+  doc.setFontSize(16)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(darkGrayColor[0], darkGrayColor[1], darkGrayColor[2])
+  doc.text('Additional Required Information', 20, yPosition + 3)
+  yPosition += 15
+  
+  doc.setFontSize(11)
   doc.setFont('helvetica', 'normal')
+  doc.setTextColor(0, 0, 0)
   
   const additionalFields = [
     'Business Type (LLC, Corp, etc.): _______________________________',
@@ -281,41 +467,68 @@ async function generatePreApplicationForm(data: any): Promise<ArrayBuffer> {
     'Owner/Officer Email: ________________________________________'
   ]
   
-  additionalFields.forEach(field => {
-    doc.text(field, 20, yPosition)
-    yPosition += lineHeight
+  additionalFields.forEach((field, index) => {
+    // Alternate background colors for better readability
+    if (index % 2 === 0) {
+      doc.setFillColor(249, 250, 251)
+      doc.rect(20, yPosition - 2, 170, 6, 'F')
+    }
+    doc.text(field, 25, yPosition + 2)
+    yPosition += 8
   })
   
+  // Processing Information section
   yPosition += 10
-  doc.setFontSize(14)
-  doc.setFont('helvetica', 'bold')
-  doc.text('Processing Information', 20, yPosition)
-  yPosition += 10
+  doc.setFillColor(lightGrayColor[0], lightGrayColor[1], lightGrayColor[2])
+  doc.roundedRect(15, yPosition - 3, 180, 8, 2, 2, 'F')
   
-  doc.setFontSize(12)
+  doc.setFontSize(16)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(darkGrayColor[0], darkGrayColor[1], darkGrayColor[2])
+  doc.text('Processing Information', 20, yPosition + 3)
+  yPosition += 15
+  
+  doc.setFontSize(11)
   doc.setFont('helvetica', 'normal')
+  doc.setTextColor(0, 0, 0)
   
   const cardTypes = ['Visa', 'MasterCard', 'American Express', 'Discover']
   
-  doc.text('Card Types Accepted:', 20, yPosition)
+  doc.text('Card Types Accepted:', 25, yPosition)
   
-  let xPosition = 80
+  let xPosition = 85
   cardTypes.forEach(cardType => {
-    doc.rect(xPosition, yPosition - 4, 4, 4)
+    // Enhanced checkbox design
+    doc.setFillColor(255, 255, 255)
+    doc.rect(xPosition, yPosition - 4, 4, 4, 'F')
+    doc.setDrawColor(orangeColor[0], orangeColor[1], orangeColor[2])
+    doc.setLineWidth(0.5)
+    doc.rect(xPosition, yPosition - 4, 4, 4, 'S')
     doc.text(cardType, xPosition + 6, yPosition)
-    xPosition += 30
+    xPosition += 35
   })
   
-  yPosition += 20
+  // Add footer with enhanced styling
+  yPosition = 260
+  doc.setFillColor(lightGrayColor[0], lightGrayColor[1], lightGrayColor[2])
+  doc.rect(0, yPosition, 210, 20, 'F')
+  
+  doc.setFillColor(orangeColor[0], orangeColor[1], orangeColor[2])
+  doc.rect(0, yPosition, 210, 2, 'F')
   
   doc.setFontSize(10)
-  doc.setTextColor(100, 100, 100)
-  doc.text('This pre-application form is the first step in the approval process.', 20, 260)
-  doc.text('A representative will contact you shortly to complete the application.', 20, 265)
-  doc.text('For questions, please contact support@wavelinepayments.com', 20, 270)
+  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2])
+  doc.text('This pre-application form is the first step in the approval process.', 20, yPosition + 8)
+  doc.text('A representative will contact you shortly to complete the application.', 20, yPosition + 13)
+  doc.text('For questions, please contact support@wavelinepayments.com', 20, yPosition + 18)
   
-  doc.setFontSize(10)
-  doc.text('Page 1 of 1', 190, 280, { align: 'right' })
+  // Add decorative elements
+  doc.setFillColor(orangeColor[0], orangeColor[1], orangeColor[2])
+  doc.circle(200, yPosition + 10, 3, 'F')
+  
+  doc.setFontSize(9)
+  doc.setTextColor(darkGrayColor[0], darkGrayColor[1], darkGrayColor[2])
+  doc.text('Page 1 of 1', 190, 285, { align: 'right' })
   
   return doc.output('arraybuffer')
 }
