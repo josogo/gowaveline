@@ -2,172 +2,156 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, FileText, Users, Handshake } from 'lucide-react';
+import { Download, FileText, Leaf, Shield, Target, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
-const materialTemplates = [
-  {
-    id: 'general',
-    title: 'High-Risk Merchant Services Overview',
-    description: 'General introduction to high-risk payment processing solutions',
-    icon: Handshake,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
-    content: {
-      title: 'High-Risk Merchant Services',
-      subtitle: 'Your Partner in Payment Processing Success',
-      challenges: [
-        'Traditional processors reject high-risk industries',
-        'Mainstream providers like Stripe and PayPal often prohibit high-risk categories',
-        'Sudden account closures leave merchants stranded',
-        'Higher fees and strict terms from unsuitable processors'
-      ],
-      solutions: [
-        'Specialized high-risk underwriting expertise',
-        'Network of 20+ acquiring banking partners',
-        '99% approval rate with 24-hour turnaround',
-        'Stable processing without surprise holds',
-        'Transparent, competitive pricing with no hidden fees',
-        'Dedicated account management and support'
-      ],
-      industries: ['Adult Entertainment', 'Firearms', 'CBD', 'Vape/E-cigarettes', 'Online Gaming', 'Tobacco']
-    }
+interface MaterialData {
+  materialType: string;
+  content: {
+    title: string;
+    subtitle: string;
+    challenges: string[];
+    solutions: string[];
+    features?: string[];
+    industries?: string[];
+  };
+  companyInfo: {
+    name: string;
+    tagline: string;
+    website: string;
+    phone: string;
+    email: string;
+  };
+}
+
+const materialContents = {
+  general: {
+    title: "High-Risk Merchant Services",
+    subtitle: "Your Partner in Payment Processing Success",
+    challenges: [
+      "Traditional processors reject high-risk industries",
+      "Mainstream providers like Stripe and PayPal often prohibit high-risk categories",
+      "Sudden account closures leave merchants stranded",
+      "Higher fees and strict terms from unsuitable processors"
+    ],
+    solutions: [
+      "Specialized high-risk underwriting expertise",
+      "Network of 20+ acquiring banking partners",
+      "99% approval rate with 24-hour turnaround",
+      "Stable processing without surprise holds",
+      "Transparent, competitive pricing with no hidden fees",
+      "Dedicated account management and support"
+    ],
+    industries: ["Adult Entertainment", "Firearms", "CBD", "Vape/E-cigarettes", "Online Gaming", "Tobacco"]
   },
-  {
-    id: 'cbd',
-    title: 'CBD Industry Solutions',
-    description: 'Specialized payment processing for CBD and hemp businesses',
-    icon: FileText,
-    color: 'text-green-600',
-    bgColor: 'bg-green-50',
-    content: {
-      title: 'CBD Payment Processing Solutions',
-      subtitle: 'Compliant, Stable Processing for Hemp & CBD Merchants',
-      challenges: [
-        'Regulatory complexity despite 2018 Farm Bill legalization',
-        'PayPal, Stripe, and Square prohibit CBD transactions',
-        'Frequent account freezes and sudden shutdowns',
-        'Limited payment options for legitimate CBD businesses'
-      ],
-      solutions: [
-        'Specialized CBD compliance expertise',
-        'Banking partners comfortable with hemp products',
-        'No-freeze guarantee for stable cash flow',
-        'Support for subscriptions and high-ticket sales',
-        'Discreet billing descriptors available',
-        'Fast approval process for CBD merchants'
-      ],
-      features: ['Age Verification', 'State Compliance', 'ACH Processing', 'Subscription Billing']
-    }
+  cbd: {
+    title: "CBD Payment Processing Solutions",
+    subtitle: "Compliant, Stable Processing for Hemp & CBD Merchants",
+    challenges: [
+      "Regulatory complexity despite 2018 Farm Bill legalization",
+      "PayPal, Stripe, and Square prohibit CBD transactions",
+      "Frequent account freezes and sudden shutdowns",
+      "Limited payment options for legitimate CBD businesses"
+    ],
+    solutions: [
+      "Specialized CBD compliance expertise",
+      "Banking partners comfortable with hemp products",
+      "No-freeze guarantee for stable cash flow",
+      "Support for subscriptions and high-ticket sales",
+      "Discreet billing descriptors available",
+      "Fast approval process for CBD merchants"
+    ],
+    features: ["Age Verification", "State Compliance", "ACH Processing", "Subscription Billing"]
   },
-  {
-    id: 'adult',
-    title: 'Adult Entertainment Solutions',
-    description: 'Discreet, reliable processing for adult industry businesses',
-    icon: Users,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50',
-    content: {
-      title: 'Adult Entertainment Payment Solutions',
-      subtitle: 'Discreet, Professional Processing You Can Trust',
-      challenges: [
-        'Banks avoid adult businesses for reputational reasons',
-        'Higher chargeback rates in adult industries',
-        'Need for customer privacy and discretion',
-        'Complex compliance requirements (age verification)'
-      ],
-      solutions: [
-        'Discreet billing descriptors for customer privacy',
-        'Robust subscription and membership billing',
-        'High approval rates with specialized underwriting',
-        'Global payment support with multi-currency',
-        'Advanced fraud detection and chargeback tools',
-        'No judgment - we welcome adult businesses'
-      ],
-      features: ['Discreet Billing', 'Recurring Payments', 'Age Verification', 'International Processing']
-    }
+  adult: {
+    title: "Adult Entertainment Payment Solutions",
+    subtitle: "Discreet, Reliable Processing for Adult Businesses",
+    challenges: [
+      "Mainstream processors avoid adult entertainment",
+      "High chargeback rates in the industry",
+      "Need for discrete billing descriptors",
+      "Age verification and compliance requirements"
+    ],
+    solutions: [
+      "Non-judgmental, professional service approach",
+      "Discreet billing and privacy protection",
+      "Subscription and membership billing support",
+      "Global payments and multi-currency processing",
+      "High approval rates with specialized underwriting",
+      "24/7 dedicated account management"
+    ],
+    features: ["Discrete Billing", "Global Processing", "Subscription Support", "Privacy Protection"]
   },
-  {
-    id: 'firearms',
-    title: 'Firearms & Ammunition Solutions',
-    description: 'Gun-friendly payment processing for FFL dealers and retailers',
-    icon: FileText,
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-50',
-    content: {
-      title: 'Firearms Payment Processing Solutions',
-      subtitle: 'Second Amendment-Friendly Payment Solutions',
-      challenges: [
-        'Most processors refuse firearms businesses',
-        'Complex federal and state regulations',
-        'Banks avoid gun industry for image concerns',
-        'Limited options for FFL dealers and retailers'
-      ],
-      solutions: [
-        'Gun-friendly banking partnerships',
-        'ATF and compliance expertise',
-        'No arbitrary volume caps on ammunition sales',
-        'Robust processing for high-ticket firearms',
-        'Fraud tools and chargeback management',
-        'Support for gun shows and mobile payments'
-      ],
-      features: ['FFL Compliance', 'Age Verification', 'Background Check Integration', 'High-Ticket Support']
-    }
+  firearms: {
+    title: "Firearms & Ammunition Processing",
+    subtitle: "Second Amendment-Friendly Payment Solutions",
+    challenges: [
+      "Many banks avoid firearms industry altogether",
+      "Complex federal and state regulations",
+      "High-ticket transactions require specialized handling",
+      "FFL compliance and background check requirements"
+    ],
+    solutions: [
+      "Gun-friendly banking partnerships",
+      "ATF and compliance expertise",
+      "Robust processing without arbitrary limits",
+      "Chargeback mitigation for high-value items",
+      "POS integration for gun shows and retail",
+      "Reliable service without reputation concerns"
+    ],
+    features: ["FFL Compliance", "High-Ticket Support", "Gun Show POS", "Regulation Expertise"]
   },
-  {
-    id: 'vape',
-    title: 'Vape & E-Cigarette Solutions',
-    description: 'Specialized processing for vape shops and e-cigarette retailers',
-    icon: FileText,
-    color: 'text-indigo-600',
-    bgColor: 'bg-indigo-50',
-    content: {
-      title: 'Vape & E-Cigarette Payment Solutions',
-      subtitle: 'Reliable Processing for the Vaping Industry',
-      challenges: [
-        'Health concerns make vape businesses high-risk',
-        'Evolving regulations and uncertain legal status',
-        'High chargeback rates in vape industry',
-        'Limited payment options from traditional processors'
-      ],
-      solutions: [
-        'Vape-friendly banking partnerships',
-        'Fast approval in under 48 hours',
-        'Multiple payment options (cards, ACH, e-checks)',
-        'Age verification and compliance tools',
-        'Chargeback prevention and fraud detection',
-        'Support for both online and retail vape shops'
-      ],
-      features: ['Age Verification', 'Fraud Prevention', 'Multiple Payment Types', 'Compliance Support']
-    }
+  vape: {
+    title: "Vape & E-Cigarette Processing",
+    subtitle: "Specialized Payment Solutions for Vaping Industry",
+    challenges: [
+      "Health concerns create processing challenges",
+      "Evolving regulations and uncertain legal status",
+      "High chargeback rates from customer disputes",
+      "Age verification and shipping restrictions"
+    ],
+    solutions: [
+      "Vape-friendly banking relationships",
+      "Fast setup under 48 hours",
+      "Complete payment options including ACH",
+      "Chargeback prevention and fraud tools",
+      "Age verification integration",
+      "Mobile and POS options for retail"
+    ],
+    features: ["Age Verification", "Fraud Prevention", "Mobile Payments", "Compliance Tools"]
   }
-];
+};
+
+const companyInfo = {
+  name: "WaveLine",
+  tagline: "Your Partner in High-Risk Merchant Services",
+  website: "www.wavelinepayments.com",
+  phone: "1-800-WAVELINE",
+  email: "info@wavelinepayments.com"
+};
 
 export const MaterialsGrid: React.FC = () => {
-  const [isGenerating, setIsGenerating] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState<string | null>(null);
 
-  const handleDownload = async (material: typeof materialTemplates[0]) => {
-    setIsGenerating(material.id);
+  const handleDownload = async (materialType: string) => {
+    setDownloading(materialType);
     
     try {
-      const response = await fetch('/api/supabase/functions/v1/generate-pdf', {
+      const materialData: MaterialData = {
+        materialType,
+        content: materialContents[materialType as keyof typeof materialContents],
+        companyInfo
+      };
+
+      const response = await fetch('https://rqwrvkkfixrogxogunsk.supabase.co/functions/v1/generate-pdf', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxd3J2a2tmaXhyb2d4b2d1bnNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MjMxMjEsImV4cCI6MjA1OTI5OTEyMX0.nESe15lNwkqji77TNpbWGFGo-uHkKt73AZFfBR6oMRY'}`,
         },
         body: JSON.stringify({
           type: 'marketing-material',
-          data: {
-            materialType: material.id,
-            content: material.content,
-            companyInfo: {
-              name: 'WaveLine',
-              tagline: 'Your Partner in High-Risk Merchant Services',
-              website: 'www.wavelinepayments.com',
-              phone: '1-800-WAVELINE',
-              email: 'info@wavelinepayments.com'
-            }
-          }
+          data: materialData
         }),
       });
 
@@ -179,82 +163,93 @@ export const MaterialsGrid: React.FC = () => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${material.title.replace(/\s+/g, '-').toLowerCase()}-one-pager.pdf`;
+      a.download = `${materialType}-merchant-services.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      toast.success(`${material.title} PDF downloaded successfully!`);
+      toast.success('PDF downloaded successfully!');
     } catch (error) {
       console.error('Error downloading PDF:', error);
       toast.error('Failed to download PDF. Please try again.');
     } finally {
-      setIsGenerating(null);
+      setDownloading(null);
     }
   };
 
+  const materials = [
+    {
+      id: 'general',
+      title: 'General High-Risk Services',
+      description: 'Overview of our comprehensive high-risk merchant services for all industries',
+      icon: Shield,
+      color: 'orange'
+    },
+    {
+      id: 'cbd',
+      title: 'CBD Industry Solutions',
+      description: 'Specialized payment processing for hemp and CBD merchants',
+      icon: Leaf,
+      color: 'green'
+    },
+    {
+      id: 'adult',
+      title: 'Adult Entertainment',
+      description: 'Discreet and reliable processing for adult industry businesses',
+      icon: Target,
+      color: 'purple'
+    },
+    {
+      id: 'firearms',
+      title: 'Firearms & Ammunition',
+      description: 'Second Amendment-friendly payment solutions for gun retailers',
+      icon: Shield,
+      color: 'red'
+    },
+    {
+      id: 'vape',
+      title: 'Vape & E-Cigarettes',
+      description: 'Compliant processing solutions for vaping industry merchants',
+      icon: Zap,
+      color: 'blue'
+    }
+  ];
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Industry-Specific One-Page PDFs</h2>
-        <p className="text-gray-600">
-          Professional marketing materials tailored for different high-risk industries. 
-          Each one-pager addresses specific industry challenges and highlights our solutions.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {materialTemplates.map((material) => {
-          const IconComponent = material.icon;
-          const isLoading = isGenerating === material.id;
-          
-          return (
-            <Card key={material.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className={`w-12 h-12 ${material.bgColor} rounded-lg flex items-center justify-center mb-3`}>
-                  <IconComponent className={`h-6 w-6 ${material.color}`} />
-                </div>
-                <CardTitle className="text-lg">{material.title}</CardTitle>
-                <CardDescription>{material.description}</CardDescription>
-              </CardHeader>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {materials.map((material) => {
+        const IconComponent = material.icon;
+        const isDownloading = downloading === material.id;
+        
+        return (
+          <Card key={material.id} className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3">
+                <IconComponent className={`h-6 w-6 text-${material.color}-500`} />
+                {material.title}
+              </CardTitle>
+              <CardDescription>{material.description}</CardDescription>
+            </CardHeader>
+            
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <FileText className="h-4 w-4" />
+                PDF Format • One-page overview
+              </div>
               
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <h4 className="font-medium text-sm text-gray-700">Key Features:</h4>
-                  <ul className="text-sm text-gray-600 space-y-1">
-                    {material.content.solutions.slice(0, 3).map((solution, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <div className="w-1.5 h-1.5 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
-                        <span>{solution}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                
-                <Button 
-                  onClick={() => handleDownload(material)}
-                  disabled={isLoading}
-                  className="w-full bg-orange-500 hover:bg-orange-600"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  {isLoading ? 'Generating...' : 'Download PDF'}
-                </Button>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">How to Use These Materials</h3>
-        <div className="space-y-2 text-sm text-gray-700">
-          <p><strong>Target the Right Audience:</strong> Use industry-specific flyers when approaching prospects in those sectors.</p>
-          <p><strong>Leave Behind:</strong> These PDFs are perfect leave-behinds after meetings or conversations.</p>
-          <p><strong>Follow Up:</strong> Reference specific points from the flyer in your follow-up communications.</p>
-          <p><strong>Print Quality:</strong> All PDFs are optimized for professional printing at 300 DPI.</p>
-        </div>
-      </div>
+              <Button 
+                onClick={() => handleDownload(material.id)}
+                disabled={isDownloading}
+                className="w-full"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {isDownloading ? 'Generating...' : 'Download Template'}
+              </Button>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 };

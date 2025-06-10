@@ -22,10 +22,11 @@ export const useBusinessCardDownload = () => {
 
     setIsGenerating(true);
     try {
-      const response = await fetch('/api/supabase/functions/v1/generate-business-card', {
+      const response = await fetch('https://rqwrvkkfixrogxogunsk.supabase.co/functions/v1/generate-business-card', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxd3J2a2tmaXhyb2d4b2d1bnNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3MjMxMjEsImV4cCI6MjA1OTI5OTEyMX0.nESe15lNwkqji77TNpbWGFGo-uHkKt73AZFfBR6oMRY'}`,
         },
         body: JSON.stringify({ agentData: cardData }),
       });
