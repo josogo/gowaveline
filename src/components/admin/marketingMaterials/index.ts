@@ -3,4 +3,5 @@ export { default as MarketingMaterialsContent } from './MarketingMaterialsConten
 export { MarketingHeader } from './MarketingHeader';
 export { MaterialsGrid } from './MaterialsGrid';
 export { BusinessCardTemplate } from './BusinessCardTemplate';
+export { BusinessCardCustomizer } from './BusinessCardCustomizer';
 export { AgentTips } from './AgentTips';
