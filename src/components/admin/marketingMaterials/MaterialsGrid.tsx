@@ -101,7 +101,7 @@ const materialContents = {
       "Reliable service without reputation concerns"
     ],
     features: ["FFL Compliance", "High-Ticket Support", "Gun Show POS", "Regulation Expertise"]
-  ],
+  },
   vape: {
     title: "Vape & E-Cigarette Processing",
     subtitle: "Specialized Payment Solutions for Vaping Industry",
@@ -229,168 +229,111 @@ export const MaterialsGrid: React.FC = () => {
     }
   ];
 
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: (i: number) => ({ 
-      opacity: 1, 
-      y: 0,
-      transition: { 
-        delay: i * 0.1,
-        duration: 0.5,
-        ease: "easeOut"
-      }
-    }),
-    hover: {
-      y: -4,
-      transition: { duration: 0.2, ease: "easeOut" }
-    }
-  };
-
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12">
-      {/* Simple Stats Bar */}
-      <motion.div 
-        className="mb-12 text-center"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        <div className="inline-flex items-center gap-8 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+    <div className="max-w-7xl mx-auto px-6 py-8">
+      {/* Stats Summary */}
+      <div className="mb-8">
+        <div className="inline-flex items-center gap-6 bg-white rounded-lg p-4 shadow-sm border border-gray-100">
           <div className="text-center">
-            <div className="text-2xl font-bold text-[#0EA5E9]">{materials.length}</div>
-            <div className="text-sm text-gray-600">Templates</div>
+            <div className="text-xl font-bold text-blue-600">{materials.length}</div>
+            <div className="text-xs text-gray-500">Templates</div>
           </div>
-          <div className="w-px h-8 bg-gray-200"></div>
+          <div className="w-px h-6 bg-gray-200"></div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-[#FF9F5A]">{downloadedItems.size}</div>
-            <div className="text-sm text-gray-600">Downloaded</div>
+            <div className="text-xl font-bold text-orange-500">{downloadedItems.size}</div>
+            <div className="text-xs text-gray-500">Downloaded</div>
           </div>
-          <div className="w-px h-8 bg-gray-200"></div>
+          <div className="w-px h-6 bg-gray-200"></div>
           <div className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-[#0EA5E9]" />
-            <span className="text-sm text-gray-600">PDF Ready</span>
+            <FileText className="h-4 w-4 text-blue-600" />
+            <span className="text-xs text-gray-500">PDF Ready</span>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Materials Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-16">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-12">
         {materials.map((material, index) => {
           const IconComponent = material.icon;
           const isDownloading = downloading === material.id;
           const isDownloaded = downloadedItems.has(material.id);
           
           return (
-            <motion.div
-              key={material.id}
-              custom={index}
-              initial="hidden"
-              animate="visible"
-              whileHover="hover"
-              variants={cardVariants}
-            >
-              <Card className="bg-white rounded-xl shadow-sm border border-gray-100 transition-all duration-300 h-full flex flex-col hover:shadow-lg relative overflow-hidden">
-                {/* Download Status */}
-                <AnimatePresence>
-                  {isDownloaded && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0 }}
-                      className="absolute top-4 right-4 z-10"
-                    >
-                      <div className="bg-green-500 text-white rounded-full p-1.5">
-                        <CheckCircle className="h-3 w-3" />
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+            <Card key={material.id} className="bg-white rounded-lg shadow-sm border border-gray-100 transition-all duration-200 h-full flex flex-col hover:shadow-md relative overflow-hidden">
+              {/* Download Status */}
+              {isDownloaded && (
+                <div className="absolute top-3 right-3 z-10">
+                  <div className="bg-green-500 text-white rounded-full p-1">
+                    <CheckCircle className="h-3 w-3" />
+                  </div>
+                </div>
+              )}
 
-                <CardHeader className="pb-4">
-                  <div className="mb-4">
-                    <IconComponent className={`h-10 w-10 ${material.iconColor}`} />
-                  </div>
-                  
-                  <CardTitle className="text-lg font-semibold mb-2 text-[#0EA5E9] leading-tight">
-                    {material.title}
-                  </CardTitle>
-                  
-                  <CardDescription className="text-sm text-gray-600 leading-relaxed">
-                    {material.description}
-                  </CardDescription>
-                </CardHeader>
+              <CardHeader className="pb-3">
+                <div className="mb-3">
+                  <IconComponent className={`h-8 w-8 ${material.iconColor}`} />
+                </div>
                 
-                <CardContent className="pt-0 flex-grow flex flex-col">
-                  <div className="mt-auto">
-                    <Button 
-                      onClick={() => handleDownload(material.id)}
-                      disabled={isDownloading}
-                      className={`w-full bg-gradient-to-r ${material.gradient} hover:opacity-90 text-white font-medium shadow-sm hover:shadow-md transition-all duration-300 border-0`}
-                      size="sm"
-                    >
-                      <AnimatePresence mode="wait">
-                        {isDownloading ? (
-                          <motion.div
-                            key="loading"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="flex items-center"
-                          >
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Generating...
-                          </motion.div>
-                        ) : (
-                          <motion.div
-                            key="download"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="flex items-center"
-                          >
-                            <Download className="h-4 w-4 mr-2" />
-                            Download PDF
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+                <CardTitle className="text-base font-semibold mb-1 text-blue-600 leading-tight">
+                  {material.title}
+                </CardTitle>
+                
+                <CardDescription className="text-xs text-gray-600 leading-relaxed">
+                  {material.description}
+                </CardDescription>
+              </CardHeader>
+              
+              <CardContent className="pt-0 flex-grow flex flex-col">
+                <div className="mt-auto">
+                  <Button 
+                    onClick={() => handleDownload(material.id)}
+                    disabled={isDownloading}
+                    className={`w-full bg-gradient-to-r ${material.gradient} hover:opacity-90 text-white font-medium shadow-sm transition-all duration-200 border-0`}
+                    size="sm"
+                  >
+                    {isDownloading ? (
+                      <div className="flex items-center">
+                        <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                        Generating...
+                      </div>
+                    ) : (
+                      <div className="flex items-center">
+                        <Download className="h-3 w-3 mr-2" />
+                        Download PDF
+                      </div>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           );
         })}
       </div>
 
       {/* Bottom Action Section */}
-      <motion.div 
-        className="text-center"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.3 }}
-      >
-        <div className="max-w-2xl mx-auto">
-          <h3 className="text-xl font-semibold mb-3 text-[#0EA5E9]">Need Custom Materials?</h3>
-          <p className="text-gray-600 mb-6">
+      <div className="text-center">
+        <div className="max-w-xl mx-auto">
+          <h3 className="text-lg font-semibold mb-2 text-blue-600">Need Custom Materials?</h3>
+          <p className="text-gray-600 text-sm mb-4">
             We can create custom marketing materials tailored to your specific industry or client needs.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button 
-              className="bg-gradient-to-r from-[#FF9F5A] to-[#FF7F37] hover:from-[#FF7F37] hover:to-[#FF9F5A] text-white shadow-sm"
+              className="bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-500 text-white shadow-sm"
               size="default"
             >
               Request Custom Materials
             </Button>
             <Button 
               variant="outline"
-              className="border-[#0EA5E9] text-[#0EA5E9] hover:bg-[#0EA5E9] hover:text-white"
+              className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
               size="default"
             >
               Schedule Consultation
             </Button>
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };
