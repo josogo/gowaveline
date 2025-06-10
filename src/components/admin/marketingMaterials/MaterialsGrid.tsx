@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -238,33 +237,40 @@ export const MaterialsGrid: React.FC = () => {
         const isDownloading = downloading === material.id;
         
         return (
-          <Card key={material.id} className="group hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 hover:border-orange-200 overflow-hidden">
-            <div className={`h-2 bg-gradient-to-r ${material.gradient}`}></div>
+          <Card 
+            key={material.id} 
+            className="group relative overflow-hidden bg-card/50 backdrop-blur-sm border-border/50 hover:border-orange-300/50 transition-all duration-500 hover:shadow-2xl hover:shadow-orange-500/10 hover:-translate-y-1"
+          >
+            {/* Gradient accent bar */}
+            <div className={`h-1 bg-gradient-to-r ${material.gradient}`}></div>
             
-            <CardHeader className="relative overflow-hidden">
-              <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${material.bgGradient} rounded-full opacity-20 transform translate-x-16 -translate-y-16`}></div>
+            <CardHeader className="relative overflow-hidden pb-4">
+              {/* Background decoration */}
+              <div className={`absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br ${material.bgGradient} rounded-full opacity-20 group-hover:opacity-30 transition-opacity duration-500`}></div>
               
-              <CardTitle className="flex items-center gap-3 relative z-10">
-                <div className={`p-3 ${material.iconBg} rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200`}>
-                  <IconComponent className="h-6 w-6 text-white" />
+              <CardTitle className="flex items-center gap-3 relative z-10 text-lg font-semibold text-foreground">
+                <div className={`p-3 ${material.iconBg} rounded-xl shadow-lg group-hover:scale-110 transition-all duration-300`}>
+                  <IconComponent className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-gray-800">{material.title}</span>
+                <span className="group-hover:text-orange-600 transition-colors duration-300">{material.title}</span>
               </CardTitle>
-              <CardDescription className="text-gray-600 leading-relaxed relative z-10">
+              
+              <CardDescription className="text-muted-foreground leading-relaxed relative z-10 text-sm mt-2">
                 {material.description}
               </CardDescription>
             </CardHeader>
             
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 rounded-lg p-3">
-                <FileText className="h-4 w-4 text-gray-400" />
-                <span>PDF Format • Professional one-page overview</span>
+            <CardContent className="space-y-4 pt-0">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-3 border border-border/50">
+                <FileText className="h-4 w-4 text-muted-foreground/70" />
+                <span>Professional PDF • One-page overview • Print ready</span>
               </div>
               
               <Button 
                 onClick={() => handleDownload(material.id)}
                 disabled={isDownloading}
-                className={`w-full bg-gradient-to-r ${material.gradient} hover:shadow-lg text-white transition-all duration-200 transform hover:scale-105 disabled:transform-none disabled:hover:scale-100`}
+                className={`w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] disabled:transform-none disabled:hover:scale-100 border-0`}
+                size="default"
               >
                 {isDownloading ? (
                   <>

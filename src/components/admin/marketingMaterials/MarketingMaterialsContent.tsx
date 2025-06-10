@@ -1,38 +1,55 @@
 
-import React, { useState } from 'react';
+import React from 'react';
+import { motion } from 'framer-motion';
 import { MarketingHeader } from './MarketingHeader';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MaterialsGrid } from './MaterialsGrid';
 import { BusinessCardTemplate } from './BusinessCardTemplate';
 import { AgentTips } from './AgentTips';
 
-const MarketingMaterialsContent: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('materials');
-
+const MarketingMaterialsContent = () => {
   return (
-    <div className="space-y-6">
+    <motion.div 
+      className="space-y-8 w-full max-w-full px-6 py-8 bg-gradient-to-br from-background via-background to-muted/20"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+    >
       <MarketingHeader />
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="materials">One-Page Materials</TabsTrigger>
-          <TabsTrigger value="business-cards">Business Cards</TabsTrigger>
-          <TabsTrigger value="tips">Agent Tips</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="materials" className="space-y-6">
+      
+      <div className="grid gap-8">
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-foreground mb-2">Industry Templates</h2>
+            <p className="text-muted-foreground">Professional marketing materials tailored for each industry vertical</p>
+          </div>
           <MaterialsGrid />
-        </TabsContent>
+        </motion.section>
 
-        <TabsContent value="business-cards" className="space-y-6">
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-foreground mb-2">Business Cards</h2>
+            <p className="text-muted-foreground">Customizable business card templates with consistent WaveLine branding</p>
+          </div>
           <BusinessCardTemplate />
-        </TabsContent>
+        </motion.section>
 
-        <TabsContent value="tips" className="space-y-6">
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
           <AgentTips />
-        </TabsContent>
-      </Tabs>
-    </div>
+        </motion.section>
+      </div>
+    </motion.div>
   );
 };
 

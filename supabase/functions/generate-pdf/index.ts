@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.14.0'
 import { jsPDF } from 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/+esm'
@@ -64,42 +63,37 @@ async function generateMarketingMaterial(data: any): Promise<ArrayBuffer> {
   // Define colors
   const orangeColor = [249, 115, 22] // Orange-500
   const darkOrangeColor = [234, 88, 12] // Orange-600
+  const tealColor = [20, 184, 166] // Teal-500
   const grayColor = [75, 85, 99] // Gray-600
   const lightGrayColor = [243, 244, 246] // Gray-100
   const darkGrayColor = [31, 41, 55] // Gray-800
   const whiteColor = [255, 255, 255]
 
-  // Add decorative wave shapes in the background
+  // Add decorative wave shapes in the background using circles with transparency
   doc.setFillColor(orangeColor[0], orangeColor[1], orangeColor[2])
-  doc.setGlobalAlpha(0.05)
   
-  // Create wave pattern
+  // Create wave pattern with circles (transparency effect using lighter colors)
+  doc.setFillColor(249, 235, 225) // Very light orange
   for (let i = 0; i < 5; i++) {
     doc.circle(50 + i * 60, -20, 40, 'F')
     doc.circle(30 + i * 70, 220, 35, 'F')
   }
-  
-  doc.setGlobalAlpha(1)
 
-  // Header section with enhanced gradient effect
+  // Header section with gradient effect using overlapping rectangles
   doc.setFillColor(orangeColor[0], orangeColor[1], orangeColor[2])
   doc.rect(0, 0, 297, 60, 'F')
   
-  // Add subtle gradient effect with overlapping rectangles
+  // Add gradient effect with overlapping rectangles
   doc.setFillColor(darkOrangeColor[0], darkOrangeColor[1], darkOrangeColor[2])
-  doc.setGlobalAlpha(0.3)
   doc.rect(0, 45, 297, 15, 'F')
-  doc.setGlobalAlpha(1)
 
   // Company logo area with enhanced styling
   doc.setFillColor(whiteColor[0], whiteColor[1], whiteColor[2])
   doc.roundedRect(20, 15, 50, 30, 5, 5, 'F')
   
-  // Add shadow effect for logo area
-  doc.setFillColor(0, 0, 0)
-  doc.setGlobalAlpha(0.1)
+  // Add shadow effect for logo area using darker gray
+  doc.setFillColor(220, 220, 220)
   doc.roundedRect(22, 17, 50, 30, 5, 5, 'F')
-  doc.setGlobalAlpha(1)
   
   // WaveLine logo text with enhanced styling
   doc.setFontSize(18)
@@ -109,6 +103,7 @@ async function generateMarketingMaterial(data: any): Promise<ArrayBuffer> {
   
   // Add wave symbol
   doc.setFontSize(12)
+  doc.setTextColor(tealColor[0], tealColor[1], tealColor[2])
   doc.text('~~~', 45, 37, { align: 'center' })
 
   // Main title with enhanced styling
@@ -175,11 +170,11 @@ async function generateMarketingMaterial(data: any): Promise<ArrayBuffer> {
   })
 
   // Our Solutions section with enhanced styling
-  doc.setFillColor(orangeColor[0], orangeColor[1], orangeColor[2])
+  doc.setFillColor(tealColor[0], tealColor[1], tealColor[2])
   doc.roundedRect(152, yPosition - 5, 130, 95, 8, 8, 'F')
   
   // Add decorative corner elements
-  doc.setFillColor(darkOrangeColor[0], darkOrangeColor[1], darkOrangeColor[2])
+  doc.setFillColor(17, 94, 89) // Darker teal
   doc.triangle(152, yPosition - 5, 162, yPosition - 5, 152, yPosition + 5, 'F')
   doc.triangle(272, yPosition - 5, 282, yPosition - 5, 282, yPosition + 5, 'F')
   
@@ -281,13 +276,11 @@ async function generateMarketingMaterial(data: any): Promise<ArrayBuffer> {
     doc.setLineWidth(3)
     doc.line(15, 65, 282, 65)
     
-    // Add leaf graphics
-    doc.setFillColor(34, 197, 94)
-    doc.setGlobalAlpha(0.3)
+    // Add leaf graphics using circles
+    doc.setFillColor(134, 239, 172) // Light green
     for (let i = 0; i < 3; i++) {
       doc.circle(250 + i * 10, 30 + i * 5, 3, 'F')
     }
-    doc.setGlobalAlpha(1)
   } else if (materialType === 'adult') {
     // Add purple accent elements
     doc.setDrawColor(147, 51, 234) // Purple-500
@@ -295,10 +288,8 @@ async function generateMarketingMaterial(data: any): Promise<ArrayBuffer> {
     doc.line(15, 65, 282, 65)
     
     // Add discrete geometric shapes
-    doc.setFillColor(147, 51, 234)
-    doc.setGlobalAlpha(0.2)
+    doc.setFillColor(196, 181, 253) // Light purple
     doc.circle(260, 35, 8, 'F')
-    doc.setGlobalAlpha(1)
   } else if (materialType === 'firearms') {
     // Add patriotic colors accent
     doc.setDrawColor(239, 68, 68) // Red-500
@@ -306,10 +297,8 @@ async function generateMarketingMaterial(data: any): Promise<ArrayBuffer> {
     doc.line(15, 65, 282, 65)
     
     // Add shield graphics
-    doc.setFillColor(59, 130, 246) // Blue-500
-    doc.setGlobalAlpha(0.3)
+    doc.setFillColor(147, 197, 253) // Light blue
     doc.roundedRect(250, 25, 15, 20, 5, 5, 'F')
-    doc.setGlobalAlpha(1)
   } else if (materialType === 'vape') {
     // Add blue accent and tech elements
     doc.setDrawColor(59, 130, 246) // Blue-500
@@ -317,12 +306,10 @@ async function generateMarketingMaterial(data: any): Promise<ArrayBuffer> {
     doc.line(15, 65, 282, 65)
     
     // Add circuit-like graphics
-    doc.setFillColor(59, 130, 246)
-    doc.setGlobalAlpha(0.2)
+    doc.setFillColor(147, 197, 253) // Light blue
     for (let i = 0; i < 4; i++) {
       doc.rect(245 + i * 8, 30, 3, 15, 'F')
     }
-    doc.setGlobalAlpha(1)
   }
 
   // Add QR code placeholder for digital integration
@@ -364,11 +351,9 @@ async function generatePreApplicationForm(data: any): Promise<ArrayBuffer> {
   doc.setFillColor(orangeColor[0], orangeColor[1], orangeColor[2])
   doc.rect(0, 0, 210, 50, 'F')
   
-  // Add gradient effect
+  // Add gradient effect using darker orange overlay
   doc.setFillColor(darkOrangeColor[0], darkOrangeColor[1], darkOrangeColor[2])
-  doc.setGlobalAlpha(0.3)
   doc.rect(0, 35, 210, 15, 'F')
-  doc.setGlobalAlpha(1)
 
   // Add WaveLine logo area
   doc.setFillColor(255, 255, 255)
