@@ -18,19 +18,20 @@ export async function generateMarketingMaterial(data: any): Promise<ArrayBuffer>
     neonOrange: [255, 102, 0],     // #FF6600
     lightGray: [248, 249, 250],    // #F8F9FA
     darkGray: [52, 58, 64],        // #343A40
-    white: [255, 255, 255]
+    white: [255, 255, 255],
+    green: [34, 197, 94]           // For dual pricing highlight
   }
 
   // Add header
   addHeader(doc, content.title, materialType, brandColors)
 
-  // Add tagline bar
-  addTaglineBar(doc, brandColors)
+  // Add tagline bar with dual pricing indicator
+  addTaglineBar(doc, brandColors, content.dualPricingFocus)
 
   // Add hero section with image
   await addHeroSection(doc, materialType, content, brandColors)
 
-  // Add content body
+  // Add content body with dual pricing emphasis
   addContentBody(doc, content, brandColors)
 
   // Add footer
@@ -68,7 +69,7 @@ function addHeader(doc: jsPDF, title: string, materialType: string, colors: any)
   doc.text(industryIcon, 220, 13, { align: 'center' })
 }
 
-function addTaglineBar(doc: jsPDF, colors: any) {
+function addTaglineBar(doc: jsPDF, colors: any, isDualPricing?: boolean) {
   // Tagline bar background
   doc.setFillColor(...colors.lightGray)
   doc.rect(0, 25, 279, 12, 'F')
@@ -77,7 +78,12 @@ function addTaglineBar(doc: jsPDF, colors: any) {
   doc.setFontSize(12)
   doc.setTextColor(...colors.oceanBlue)
   doc.setFont('helvetica', 'italic')
-  doc.text('Your Partner in High-Risk Merchant Services', 139.5, 32, { align: 'center' })
+  
+  if (isDualPricing) {
+    doc.text('Dual Pricing Solutions • Reduce Customer Costs • Increase Profit Margins', 139.5, 32, { align: 'center' })
+  } else {
+    doc.text('Your Partner in High-Risk Merchant Services', 139.5, 32, { align: 'center' })
+  }
 }
 
 async function addHeroSection(doc: jsPDF, materialType: string, content: any, colors: any) {
@@ -90,24 +96,20 @@ async function addHeroSection(doc: jsPDF, materialType: string, content: any, co
   doc.setLineWidth(0.5)
   doc.rect(10, yStart, 259, 60, 'S')
 
-  // Add stock photo
-  const stockPhotoUrl = getStockPhotoUrl(materialType)
-  if (stockPhotoUrl) {
-    try {
-      const imageBase64 = await loadImageAsBase64(stockPhotoUrl)
-      if (imageBase64) {
-        doc.addImage(imageBase64, 'JPEG', 15, yStart + 5, 80, 50)
-      }
-    } catch (error) {
-      console.error('Failed to add image:', error)
-    }
-  }
+  // Add stock photo (skip for now to avoid stack overflow)
+  // const stockPhotoUrl = getStockPhotoUrl(materialType)
 
   // Industry summary overlay (text box)
   doc.setFillColor(255, 255, 255, 0.9) // Semi-transparent white
   doc.rect(100, yStart + 10, 160, 40, 'F')
-  doc.setDrawColor(...colors.neonOrange)
-  doc.setLineWidth(1)
+  
+  // Different border color for dual pricing materials
+  if (content.dualPricingFocus) {
+    doc.setDrawColor(...colors.green)
+  } else {
+    doc.setDrawColor(...colors.neonOrange)
+  }
+  doc.setLineWidth(2)
   doc.rect(100, yStart + 10, 160, 40, 'S')
 
   doc.setFontSize(14)
@@ -115,24 +117,34 @@ async function addHeroSection(doc: jsPDF, materialType: string, content: any, co
   doc.setFont('helvetica', 'bold')
   doc.text(content.subtitle, 180, yStart + 20, { align: 'center' })
 
+  // Add dual pricing callout if applicable
+  if (content.dualPricingFocus) {
+    doc.setFontSize(10)
+    doc.setTextColor(...colors.green)
+    doc.setFont('helvetica', 'bold')
+    doc.text('★ DUAL PRICING SPECIALIST ★', 180, yStart + 30, { align: 'center' })
+  }
+
   doc.setFontSize(10)
   doc.setTextColor(...colors.darkGray)
   doc.setFont('helvetica', 'normal')
   const summaryText = getSummaryText(materialType)
   const lines = doc.splitTextToSize(summaryText, 150)
-  doc.text(lines, 180, yStart + 28, { align: 'center' })
+  const textYPos = content.dualPricingFocus ? yStart + 36 : yStart + 30
+  doc.text(lines, 180, textYPos, { align: 'center' })
 }
 
 function addContentBody(doc: jsPDF, content: any, colors: any) {
   const yStart = 115
 
   // Left column - Key Points
-  doc.setFillColor(...colors.oceanBlue)
+  const leftHeaderColor = content.dualPricingFocus ? colors.green : colors.oceanBlue
+  doc.setFillColor(...leftHeaderColor)
   doc.rect(10, yStart, 120, 8, 'F')
   doc.setFontSize(14)
   doc.setTextColor(...colors.white)
   doc.setFont('helvetica', 'bold')
-  doc.text('Key Benefits', 15, yStart + 6)
+  doc.text(content.dualPricingFocus ? 'Dual Pricing Benefits' : 'Key Benefits', 15, yStart + 6)
 
   let yPos = yStart + 15
   doc.setFontSize(11)
@@ -141,7 +153,8 @@ function addContentBody(doc: jsPDF, content: any, colors: any) {
 
   content.solutions.slice(0, 4).forEach((solution: string, index: number) => {
     // Bullet point
-    doc.setFillColor(...colors.neonOrange)
+    const bulletColor = content.dualPricingFocus ? colors.green : colors.neonOrange
+    doc.setFillColor(...bulletColor)
     doc.circle(17, yPos - 1, 1.5, 'F')
     
     const lines = doc.splitTextToSize(solution, 105)
@@ -172,13 +185,18 @@ function addContentBody(doc: jsPDF, content: any, colors: any) {
     yPos += lines.length * 4 + 3
   })
 
-  // Quick Stats section (bottom)
+  // Quick Stats section (bottom) - adjusted for dual pricing
   const statsY = 165
-  addQuickStats(doc, colors, statsY)
+  addQuickStats(doc, colors, statsY, content.dualPricingFocus)
 }
 
-function addQuickStats(doc: jsPDF, colors: any, yPos: number) {
-  const stats = [
+function addQuickStats(doc: jsPDF, colors: any, yPos: number, isDualPricing?: boolean) {
+  const stats = isDualPricing ? [
+    { label: 'Save 3-4% on Processing', icon: '💰' },
+    { label: 'Transparent Dual Pricing', icon: '📊' },
+    { label: 'Cash Discount Programs', icon: '💵' },
+    { label: 'Instant Setup Available', icon: '⚡' }
+  ] : [
     { label: '24hr Approvals', icon: '⚡' },
     { label: '99% Approval Rate', icon: '✓' },
     { label: '20+ Bank Partners', icon: '🏦' },
@@ -196,13 +214,16 @@ function addQuickStats(doc: jsPDF, colors: any, yPos: number) {
     // Box background
     doc.setFillColor(...colors.lightGray)
     doc.rect(x, yPos, boxWidth, boxHeight, 'F')
-    doc.setDrawColor(...colors.neonOrange)
+    
+    // Different border for dual pricing
+    const borderColor = isDualPricing ? colors.green : colors.neonOrange
+    doc.setDrawColor(...borderColor)
     doc.setLineWidth(1)
     doc.rect(x, yPos, boxWidth, boxHeight, 'S')
 
     // Icon
     doc.setFontSize(12)
-    doc.setTextColor(...colors.neonOrange)
+    doc.setTextColor(...borderColor)
     doc.text(stat.icon, x + 8, yPos + 9)
 
     // Label
@@ -234,7 +255,7 @@ function addFooter(doc: jsPDF, colors: any) {
   doc.setFontSize(10)
   doc.setTextColor(...colors.neonOrange)
   doc.setFont('helvetica', 'italic')
-  doc.text('Call today for a free consultation!', 260, footerY + 10, { align: 'right' })
+  doc.text('Call today for dual pricing consultation!', 260, footerY + 10, { align: 'right' })
 }
 
 function getIndustryIcon(materialType: string): string {
@@ -243,6 +264,10 @@ function getIndustryIcon(materialType: string): string {
     'adult': '🔒 Adult',
     'firearms': '🛡️ Firearms',
     'vape': '💨 Vape',
+    'auto': '🚗 Auto',
+    'plasticsurgery': '💎 Plastic Surgery',
+    'medspa': '✨ Med Spa',
+    'sportsmedicine': '🏃 Sports Medicine',
     'general': '⚡ High-Risk'
   }
   return icons[materialType as keyof typeof icons] || icons.general
@@ -254,6 +279,10 @@ function getSummaryText(materialType: string): string {
     'adult': 'Discreet, reliable processing solutions designed specifically for adult entertainment businesses.',
     'firearms': 'Second Amendment-friendly payment solutions with expertise in firearms regulations.',
     'vape': 'Compliant processing for vaping industry with age verification and fraud protection.',
+    'auto': 'Streamlined automotive payment processing with dual pricing to reduce customer costs.',
+    'plasticsurgery': 'Premium payment solutions for aesthetic practices with dual pricing programs.',
+    'medspa': 'Sophisticated payment processing for medical spas with membership and dual pricing options.',
+    'sportsmedicine': 'Performance-focused payment solutions with dual pricing and insurance integration.',
     'general': 'Comprehensive high-risk merchant services with industry-leading approval rates.'
   }
   return summaries[materialType as keyof typeof summaries] || summaries.general

@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, FileText, Leaf, Shield, Target, Zap, Loader2, CheckCircle } from 'lucide-react';
+import { Download, FileText, Car, Heart, Dumbbell, Shield, Leaf, Target, Zap, Loader2, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -15,6 +14,7 @@ interface MaterialData {
     solutions: string[];
     features?: string[];
     industries?: string[];
+    dualPricingFocus?: boolean;
   };
   companyInfo: {
     name: string;
@@ -120,6 +120,86 @@ const materialContents = {
       "Mobile and POS options for retail"
     ],
     features: ["Age Verification", "Fraud Prevention", "Mobile Payments", "Compliance Tools"]
+  },
+  auto: {
+    title: "Auto Dealership Payment Processing",
+    subtitle: "Streamlined Processing for Automotive Sales",
+    challenges: [
+      "High-ticket transactions create processing complications",
+      "Need for flexible financing and payment options",
+      "Complex documentation and compliance requirements",
+      "Managing both cash and credit transactions efficiently"
+    ],
+    solutions: [
+      "Dual pricing programs to offset processing costs",
+      "Seamless integration with DMS systems",
+      "High-ticket transaction specialization",
+      "Flexible payment terms and financing options",
+      "Transparent fee structures with cash discounts",
+      "Dedicated automotive industry expertise"
+    ],
+    features: ["Dual Pricing", "DMS Integration", "High-Ticket Support", "Cash Discounts"],
+    dualPricingFocus: true
+  },
+  plasticsurgery: {
+    title: "Plastic Surgery Payment Processing",
+    subtitle: "Elegant Payment Solutions for Aesthetic Practices",
+    challenges: [
+      "High-value elective procedures need flexible payment options",
+      "Patients expect premium payment experiences",
+      "Complex billing for multiple procedures and follow-ups",
+      "Managing cosmetic vs. medical procedure classifications"
+    ],
+    solutions: [
+      "Dual pricing to reduce patient costs on cash payments",
+      "Flexible payment plans and financing integration",
+      "HIPAA-compliant payment processing",
+      "Premium patient portal experiences",
+      "Transparent pricing with cash discount options",
+      "Specialized aesthetic industry underwriting"
+    ],
+    features: ["Dual Pricing", "Payment Plans", "HIPAA Compliance", "Patient Portals"],
+    dualPricingFocus: true
+  },
+  medspa: {
+    title: "Med Spa Payment Processing",
+    subtitle: "Sophisticated Payment Solutions for Medical Spas",
+    challenges: [
+      "Membership and package-based pricing models",
+      "High-value aesthetic treatments require flexible options",
+      "Managing recurring treatments and subscriptions",
+      "Balancing luxury experience with cost efficiency"
+    ],
+    solutions: [
+      "Dual pricing programs for treatment packages",
+      "Membership and subscription billing systems",
+      "Integrated appointment and payment scheduling",
+      "Cash discount programs for high-value treatments",
+      "Seamless payment experiences that match your brand",
+      "Specialized aesthetic medicine processing"
+    ],
+    features: ["Dual Pricing", "Membership Billing", "Package Deals", "Luxury Experience"],
+    dualPricingFocus: true
+  },
+  sportsmedicine: {
+    title: "Sports Medicine Payment Processing",
+    subtitle: "Performance-Driven Payment Solutions for Sports Medicine",
+    challenges: [
+      "Insurance and direct-pay dual billing complexity",
+      "High-performance treatments often not covered by insurance",
+      "Managing team accounts and individual patients",
+      "Equipment and treatment package pricing"
+    ],
+    solutions: [
+      "Dual pricing for cash-pay performance treatments",
+      "Insurance billing integration and direct-pay options",
+      "Team account management and group billing",
+      "Flexible payment plans for ongoing treatments",
+      "HSA/FSA payment processing capabilities",
+      "Sports medicine industry expertise"
+    ],
+    features: ["Dual Pricing", "Insurance Integration", "Team Accounts", "HSA/FSA Support"],
+    dualPricingFocus: true
   }
 };
 
@@ -129,6 +209,20 @@ const companyInfo = {
   website: "gowaveline.com",
   phone: "818-264-6859",
   email: "info@gowaveline.com"
+};
+
+const cardVariants = {
+  hidden: {
+    opacity: 0,
+    scale: 0.95,
+  },
+  visible: {
+    opacity: 1,
+    scale: 1,
+  },
+  hover: {
+    scale: 1.05,
+  },
 };
 
 export const MaterialsGrid: React.FC = () => {
@@ -226,114 +320,203 @@ export const MaterialsGrid: React.FC = () => {
       icon: Zap,
       gradient: 'from-teal-500 to-teal-400',
       iconColor: 'text-teal-500',
+    },
+    {
+      id: 'auto',
+      title: 'Auto Dealerships',
+      description: 'High-ticket automotive sales with dual pricing benefits',
+      icon: Car,
+      gradient: 'from-blue-500 to-blue-400',
+      iconColor: 'text-blue-500',
+    },
+    {
+      id: 'plasticsurgery',
+      title: 'Plastic Surgery',
+      description: 'Premium payment solutions for aesthetic practices',
+      icon: Heart,
+      gradient: 'from-pink-500 to-pink-400',
+      iconColor: 'text-pink-500',
+    },
+    {
+      id: 'medspa',
+      title: 'Medical Spas',
+      description: 'Luxury payment experiences with dual pricing options',
+      icon: Heart,
+      gradient: 'from-rose-500 to-rose-400',
+      iconColor: 'text-rose-500',
+    },
+    {
+      id: 'sportsmedicine',
+      title: 'Sports Medicine',
+      description: 'Performance-focused payment solutions with flexible pricing',
+      icon: Dumbbell,
+      gradient: 'from-indigo-500 to-indigo-400',
+      iconColor: 'text-indigo-500',
     }
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
-      {/* Stats Summary */}
-      <div className="mb-8">
-        <div className="inline-flex items-center gap-6 bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+    <div className="max-w-7xl mx-auto px-6 py-12">
+      {/* Simple Stats Bar */}
+      <motion.div 
+        className="mb-12 text-center"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <div className="inline-flex items-center gap-8 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="text-center">
-            <div className="text-xl font-bold text-blue-600">{materials.length}</div>
-            <div className="text-xs text-gray-500">Templates</div>
+            <div className="text-2xl font-bold text-[#0EA5E9]">{materials.length}</div>
+            <div className="text-sm text-gray-600">Templates</div>
           </div>
-          <div className="w-px h-6 bg-gray-200"></div>
+          <div className="w-px h-8 bg-gray-200"></div>
           <div className="text-center">
-            <div className="text-xl font-bold text-orange-500">{downloadedItems.size}</div>
-            <div className="text-xs text-gray-500">Downloaded</div>
+            <div className="text-2xl font-bold text-[#FF9F5A]">{downloadedItems.size}</div>
+            <div className="text-sm text-gray-600">Downloaded</div>
           </div>
-          <div className="w-px h-6 bg-gray-200"></div>
+          <div className="w-px h-8 bg-gray-200"></div>
           <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-blue-600" />
-            <span className="text-xs text-gray-500">PDF Ready</span>
+            <FileText className="h-5 w-5 text-[#0EA5E9]" />
+            <span className="text-sm text-gray-600">PDF Ready</span>
+          </div>
+          <div className="w-px h-8 bg-gray-200"></div>
+          <div className="text-center">
+            <div className="text-xl font-bold text-green-600">
+              {materials.filter(m => materialContents[m.id as keyof typeof materialContents]?.dualPricingFocus).length}
+            </div>
+            <div className="text-xs text-gray-600">Dual Pricing</div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Materials Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
         {materials.map((material, index) => {
           const IconComponent = material.icon;
           const isDownloading = downloading === material.id;
           const isDownloaded = downloadedItems.has(material.id);
+          const hasDualPricing = materialContents[material.id as keyof typeof materialContents]?.dualPricingFocus;
           
           return (
-            <Card key={material.id} className="bg-white rounded-lg shadow-sm border border-gray-100 transition-all duration-200 h-full flex flex-col hover:shadow-md relative overflow-hidden">
-              {/* Download Status */}
-              {isDownloaded && (
-                <div className="absolute top-3 right-3 z-10">
-                  <div className="bg-green-500 text-white rounded-full p-1">
-                    <CheckCircle className="h-3 w-3" />
-                  </div>
-                </div>
-              )}
+            <motion.div
+              key={material.id}
+              custom={index}
+              initial="hidden"
+              animate="visible"
+              whileHover="hover"
+              variants={cardVariants}
+            >
+              <Card className="bg-white rounded-xl shadow-sm border border-gray-100 transition-all duration-300 h-full flex flex-col hover:shadow-lg relative overflow-hidden">
+                {/* Download Status */}
+                <AnimatePresence>
+                  {isDownloaded && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0 }}
+                      className="absolute top-4 right-4 z-10"
+                    >
+                      <div className="bg-green-500 text-white rounded-full p-1.5">
+                        <CheckCircle className="h-3 w-3" />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-              <CardHeader className="pb-3">
-                <div className="mb-3">
-                  <IconComponent className={`h-8 w-8 ${material.iconColor}`} />
-                </div>
+                {/* Dual Pricing Badge */}
+                {hasDualPricing && (
+                  <div className="absolute top-4 left-4 z-10">
+                    <div className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium">
+                      Dual Pricing
+                    </div>
+                  </div>
+                )}
+
+                <CardHeader className="pb-4">
+                  <div className="mb-4">
+                    <IconComponent className={`h-10 w-10 ${material.iconColor}`} />
+                  </div>
+                  
+                  <CardTitle className="text-lg font-semibold mb-2 text-[#0EA5E9] leading-tight">
+                    {material.title}
+                  </CardTitle>
+                  
+                  <CardDescription className="text-sm text-gray-600 leading-relaxed">
+                    {material.description}
+                  </CardDescription>
+                </CardHeader>
                 
-                <CardTitle className="text-base font-semibold mb-1 text-blue-600 leading-tight">
-                  {material.title}
-                </CardTitle>
-                
-                <CardDescription className="text-xs text-gray-600 leading-relaxed">
-                  {material.description}
-                </CardDescription>
-              </CardHeader>
-              
-              <CardContent className="pt-0 flex-grow flex flex-col">
-                <div className="mt-auto">
-                  <Button 
-                    onClick={() => handleDownload(material.id)}
-                    disabled={isDownloading}
-                    className={`w-full bg-gradient-to-r ${material.gradient} hover:opacity-90 text-white font-medium shadow-sm transition-all duration-200 border-0`}
-                    size="sm"
-                  >
-                    {isDownloading ? (
-                      <div className="flex items-center">
-                        <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                        Generating...
-                      </div>
-                    ) : (
-                      <div className="flex items-center">
-                        <Download className="h-3 w-3 mr-2" />
-                        Download PDF
-                      </div>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                <CardContent className="pt-0 flex-grow flex flex-col">
+                  <div className="mt-auto">
+                    <Button 
+                      onClick={() => handleDownload(material.id)}
+                      disabled={isDownloading}
+                      className={`w-full bg-gradient-to-r ${material.gradient} hover:opacity-90 text-white font-medium shadow-sm hover:shadow-md transition-all duration-300 border-0`}
+                      size="sm"
+                    >
+                      <AnimatePresence mode="wait">
+                        {isDownloading ? (
+                          <motion.div
+                            key="loading"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="flex items-center"
+                          >
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Generating...
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="download"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="flex items-center"
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Download PDF
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           );
         })}
       </div>
 
       {/* Bottom Action Section */}
-      <div className="text-center">
-        <div className="max-w-xl mx-auto">
-          <h3 className="text-lg font-semibold mb-2 text-blue-600">Need Custom Materials?</h3>
-          <p className="text-gray-600 text-sm mb-4">
-            We can create custom marketing materials tailored to your specific industry or client needs.
+      <motion.div 
+        className="text-center"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.3 }}
+      >
+        <div className="max-w-2xl mx-auto">
+          <h3 className="text-xl font-semibold mb-3 text-[#0EA5E9]">Need Custom Materials?</h3>
+          <p className="text-gray-600 mb-6">
+            We can create custom marketing materials tailored to your specific industry or client needs, including dual pricing solutions.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button 
-              className="bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-500 text-white shadow-sm"
+              className="bg-gradient-to-r from-[#FF9F5A] to-[#FF7F37] hover:from-[#FF7F37] hover:to-[#FF9F5A] text-white shadow-sm"
               size="default"
             >
               Request Custom Materials
             </Button>
             <Button 
               variant="outline"
-              className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
+              className="border-[#0EA5E9] text-[#0EA5E9] hover:bg-[#0EA5E9] hover:text-white"
               size="default"
             >
               Schedule Consultation
             </Button>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
