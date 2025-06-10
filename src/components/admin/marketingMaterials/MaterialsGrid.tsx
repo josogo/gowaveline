@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, FileText, Leaf, Shield, Target, Zap } from 'lucide-react';
+import { Download, FileText, Leaf, Shield, Target, Zap, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface MaterialData {
@@ -182,37 +182,52 @@ export const MaterialsGrid: React.FC = () => {
     {
       id: 'general',
       title: 'General High-Risk Services',
-      description: 'Overview of our comprehensive high-risk merchant services for all industries',
+      description: 'Comprehensive overview of our high-risk merchant services for all industries',
       icon: Shield,
-      color: 'orange'
+      gradient: 'from-orange-500 to-orange-600',
+      bgGradient: 'from-orange-50 to-orange-100',
+      borderColor: 'border-orange-200',
+      iconBg: 'bg-orange-500'
     },
     {
       id: 'cbd',
       title: 'CBD Industry Solutions',
       description: 'Specialized payment processing for hemp and CBD merchants',
       icon: Leaf,
-      color: 'green'
+      gradient: 'from-green-500 to-green-600',
+      bgGradient: 'from-green-50 to-green-100',
+      borderColor: 'border-green-200',
+      iconBg: 'bg-green-500'
     },
     {
       id: 'adult',
       title: 'Adult Entertainment',
       description: 'Discreet and reliable processing for adult industry businesses',
       icon: Target,
-      color: 'purple'
+      gradient: 'from-purple-500 to-purple-600',
+      bgGradient: 'from-purple-50 to-purple-100',
+      borderColor: 'border-purple-200',
+      iconBg: 'bg-purple-500'
     },
     {
       id: 'firearms',
       title: 'Firearms & Ammunition',
       description: 'Second Amendment-friendly payment solutions for gun retailers',
       icon: Shield,
-      color: 'red'
+      gradient: 'from-red-500 to-red-600',
+      bgGradient: 'from-red-50 to-red-100',
+      borderColor: 'border-red-200',
+      iconBg: 'bg-red-500'
     },
     {
       id: 'vape',
       title: 'Vape & E-Cigarettes',
       description: 'Compliant processing solutions for vaping industry merchants',
       icon: Zap,
-      color: 'blue'
+      gradient: 'from-teal-500 to-teal-600',
+      bgGradient: 'from-teal-50 to-teal-100',
+      borderColor: 'border-teal-200',
+      iconBg: 'bg-teal-500'
     }
   ];
 
@@ -223,28 +238,45 @@ export const MaterialsGrid: React.FC = () => {
         const isDownloading = downloading === material.id;
         
         return (
-          <Card key={material.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3">
-                <IconComponent className={`h-6 w-6 text-${material.color}-500`} />
-                {material.title}
+          <Card key={material.id} className="group hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 hover:border-orange-200 overflow-hidden">
+            <div className={`h-2 bg-gradient-to-r ${material.gradient}`}></div>
+            
+            <CardHeader className="relative overflow-hidden">
+              <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${material.bgGradient} rounded-full opacity-20 transform translate-x-16 -translate-y-16`}></div>
+              
+              <CardTitle className="flex items-center gap-3 relative z-10">
+                <div className={`p-3 ${material.iconBg} rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200`}>
+                  <IconComponent className="h-6 w-6 text-white" />
+                </div>
+                <span className="text-gray-800">{material.title}</span>
               </CardTitle>
-              <CardDescription>{material.description}</CardDescription>
+              <CardDescription className="text-gray-600 leading-relaxed relative z-10">
+                {material.description}
+              </CardDescription>
             </CardHeader>
             
             <CardContent className="space-y-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <FileText className="h-4 w-4" />
-                PDF Format • One-page overview
+              <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 rounded-lg p-3">
+                <FileText className="h-4 w-4 text-gray-400" />
+                <span>PDF Format • Professional one-page overview</span>
               </div>
               
               <Button 
                 onClick={() => handleDownload(material.id)}
                 disabled={isDownloading}
-                className="w-full"
+                className={`w-full bg-gradient-to-r ${material.gradient} hover:shadow-lg text-white transition-all duration-200 transform hover:scale-105 disabled:transform-none disabled:hover:scale-100`}
               >
-                <Download className="h-4 w-4 mr-2" />
-                {isDownloading ? 'Generating...' : 'Download Template'}
+                {isDownloading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Generating PDF...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Template
+                  </>
+                )}
               </Button>
             </CardContent>
           </Card>
