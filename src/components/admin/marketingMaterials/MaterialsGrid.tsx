@@ -124,9 +124,9 @@ const materialContents = {
 const companyInfo = {
   name: "WaveLine",
   tagline: "Your Partner in High-Risk Merchant Services",
-  website: "www.wavelinepayments.com",
-  phone: "1-800-WAVELINE",
-  email: "info@wavelinepayments.com"
+  website: "gowaveline.com",
+  phone: "818-264-6859",
+  email: "info@gowaveline.com"
 };
 
 export const MaterialsGrid: React.FC = () => {

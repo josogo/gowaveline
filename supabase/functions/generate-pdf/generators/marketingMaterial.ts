@@ -20,7 +20,7 @@ export async function generateMarketingMaterial(data: any): Promise<ArrayBuffer>
     try {
       const imageBase64 = await loadImageAsBase64(stockPhotoUrl)
       if (imageBase64) {
-        doc.addImage(imageBase64, 'JPEG', 15, 60, 180, 80)
+        doc.addImage(imageBase64, 'JPEG', 15, 55, 180, 90)
       }
     } catch (error) {
       console.error('Failed to add image:', error)
@@ -35,143 +35,176 @@ export async function generateMarketingMaterial(data: any): Promise<ArrayBuffer>
     addFeaturesSection(doc, content.features)
   }
 
-  // Add footer
-  addFooter(doc, companyInfo)
+  // Add footer with correct contact info
+  addFooter(doc)
 
   return doc.output('arraybuffer')
 }
 
 function addHeader(doc: jsPDF, title: string, subtitle: string) {
-  // Header background
-  doc.setFillColor(249, 115, 22) // Orange
-  doc.rect(0, 0, 210, 50, 'F')
+  // Clean header background with gradient effect
+  doc.setFillColor(31, 41, 55) // Dark blue-gray
+  doc.rect(0, 0, 210, 45, 'F')
 
-  // WaveLine Logo
+  // Add subtle accent line
+  doc.setFillColor(249, 115, 22) // Orange accent
+  doc.rect(0, 42, 210, 3, 'F')
+
+  // WaveLine Logo area - clean white box
   doc.setFillColor(255, 255, 255)
-  doc.rect(15, 10, 50, 25, 'F')
+  doc.rect(15, 8, 60, 28, 'F')
   
-  doc.setFontSize(16)
-  doc.setTextColor(249, 115, 22)
+  // Company logo text
+  doc.setFontSize(18)
+  doc.setTextColor(31, 41, 55)
   doc.setFont('helvetica', 'bold')
-  doc.text('WaveLine', 40, 20, { align: 'center' })
+  doc.text('WaveLine', 45, 19, { align: 'center' })
   
-  doc.setFontSize(10)
-  doc.setTextColor(20, 184, 166)
-  doc.text('Payment Solutions', 40, 27, { align: 'center' })
+  doc.setFontSize(9)
+  doc.setTextColor(249, 115, 22)
+  doc.setFont('helvetica', 'normal')
+  doc.text('Payment Solutions', 45, 26, { align: 'center' })
+  
+  doc.setFontSize(8)
+  doc.setTextColor(107, 114, 128)
+  doc.text('High-Risk Merchant Services', 45, 31, { align: 'center' })
 
-  // Main title
-  doc.setFontSize(24)
+  // Main title - clean and prominent
+  doc.setFontSize(22)
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
-  doc.text(title, 105, 25, { align: 'center' })
+  doc.text(title, 105, 22, { align: 'center' })
   
-  doc.setFontSize(12)
+  doc.setFontSize(11)
   doc.setFont('helvetica', 'normal')
-  doc.text(subtitle, 105, 35, { align: 'center' })
+  doc.setTextColor(203, 213, 225)
+  doc.text(subtitle, 105, 32, { align: 'center' })
 }
 
 function addChallengesSection(doc: jsPDF, challenges: string[]) {
   let yPosition = 155
 
-  doc.setFontSize(18)
+  // Section header with background
+  doc.setFillColor(248, 250, 252)
+  doc.rect(15, yPosition - 5, 180, 12, 'F')
+  
+  doc.setFontSize(16)
   doc.setTextColor(31, 41, 55)
   doc.setFont('helvetica', 'bold')
-  doc.text('Industry Challenges', 15, yPosition)
+  doc.text('Industry Challenges You Face', 20, yPosition + 3)
 
-  yPosition += 10
-  doc.setFontSize(11)
+  yPosition += 15
+  doc.setFontSize(10)
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(75, 85, 99)
 
-  challenges.slice(0, 4).forEach((challenge) => {
-    doc.setFillColor(249, 115, 22)
-    doc.circle(17, yPosition - 1, 1, 'F')
+  challenges.slice(0, 4).forEach((challenge, index) => {
+    // Modern bullet point
+    doc.setFillColor(239, 68, 68) // Red for challenges
+    doc.circle(18, yPosition - 1, 1.5, 'F')
     
-    const lines = doc.splitTextToSize(challenge, 175)
-    doc.text(lines, 22, yPosition)
-    yPosition += lines.length * 5 + 3
+    const lines = doc.splitTextToSize(challenge, 170)
+    doc.text(lines, 25, yPosition)
+    yPosition += lines.length * 4.5 + 4
   })
 }
 
 function addSolutionsSection(doc: jsPDF, solutions: string[]) {
   let yPosition = 200
 
-  doc.setFontSize(18)
+  // Section header with background
+  doc.setFillColor(240, 253, 244)
+  doc.rect(15, yPosition - 5, 180, 12, 'F')
+
+  doc.setFontSize(16)
   doc.setTextColor(31, 41, 55)
   doc.setFont('helvetica', 'bold')
-  doc.text('Our Solutions', 15, yPosition)
+  doc.text('How WaveLine Solves These Problems', 20, yPosition + 3)
 
-  yPosition += 10
-  doc.setFontSize(11)
+  yPosition += 15
+  doc.setFontSize(10)
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(31, 41, 55)
 
-  solutions.forEach((solution) => {
-    doc.setFillColor(20, 184, 166)
-    doc.circle(17, yPosition - 1, 1, 'F')
+  solutions.slice(0, 5).forEach((solution, index) => {
+    // Green checkmark bullet
+    doc.setFillColor(34, 197, 94) // Green for solutions
+    doc.circle(18, yPosition - 1, 1.5, 'F')
     
-    const lines = doc.splitTextToSize(solution, 175)
-    doc.text(lines, 22, yPosition)
-    yPosition += lines.length * 5 + 3
+    const lines = doc.splitTextToSize(solution, 170)
+    doc.text(lines, 25, yPosition)
+    yPosition += lines.length * 4.5 + 4
   })
 }
 
 function addFeaturesSection(doc: jsPDF, features: string[]) {
-  let yPosition = 245
+  let yPosition = 250
 
-  doc.setFillColor(249, 250, 251)
-  doc.rect(15, yPosition, 180, 20, 'F')
+  // Features box with border
+  doc.setFillColor(254, 249, 195) // Light yellow background
+  doc.rect(15, yPosition - 3, 180, 22, 'F')
   
-  doc.setFontSize(14)
+  doc.setDrawColor(245, 158, 11) // Yellow border
+  doc.setLineWidth(0.5)
+  doc.rect(15, yPosition - 3, 180, 22, 'S')
+  
+  doc.setFontSize(12)
   doc.setTextColor(31, 41, 55)
   doc.setFont('helvetica', 'bold')
-  doc.text('Key Features', 20, yPosition + 8)
+  doc.text('Key Features & Benefits', 20, yPosition + 5)
   
-  doc.setFontSize(10)
+  doc.setFontSize(9)
   doc.setFont('helvetica', 'normal')
-  let featureX = 20
-  let featureY = yPosition + 15
+  doc.setTextColor(92, 84, 84)
   
-  features.forEach((feature) => {
-    doc.setFillColor(249, 115, 22)
+  let featureX = 20
+  let featureY = yPosition + 12
+  
+  features.slice(0, 6).forEach((feature, index) => {
+    doc.setFillColor(245, 158, 11)
     doc.circle(featureX, featureY - 1, 0.8, 'F')
     doc.text(feature, featureX + 4, featureY)
-    featureX += doc.getTextWidth(feature) + 20
     
-    if (featureX > 160) {
+    featureX += doc.getTextWidth(feature) + 18
+    
+    if (featureX > 160 || index === 2) {
       featureX = 20
       featureY += 5
     }
   })
 }
 
-function addFooter(doc: jsPDF, companyInfo: any) {
+function addFooter(doc: jsPDF) {
   const yPosition = 275
 
-  doc.setFillColor(248, 250, 252)
-  doc.rect(0, yPosition, 210, 20, 'F')
+  // Footer background
+  doc.setFillColor(31, 41, 55)
+  doc.rect(0, yPosition, 210, 22, 'F')
   
+  // Orange accent line
   doc.setFillColor(249, 115, 22)
   doc.rect(0, yPosition, 210, 2, 'F')
   
+  // Contact header
   doc.setFontSize(12)
-  doc.setTextColor(31, 41, 55)
+  doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
-  doc.text('Contact WaveLine Payment Solutions', 105, yPosition + 8, { align: 'center' })
+  doc.text('Ready to Get Started? Contact WaveLine Today', 105, yPosition + 8, { align: 'center' })
   
+  // Contact information
   doc.setFontSize(10)
   doc.setFont('helvetica', 'normal')
-  doc.setTextColor(75, 85, 99)
+  doc.setTextColor(203, 213, 225)
   
   const contactInfo = [
-    `Email: ${companyInfo.email}`,
-    `Phone: ${companyInfo.phone}`,
-    `Website: ${companyInfo.website}`
+    'Phone: 818-264-6859  •  Website: gowaveline.com  •  Email: info@gowaveline.com'
   ]
   
-  let contactY = yPosition + 14
-  contactInfo.forEach(info => {
-    doc.text(info, 105, contactY, { align: 'center' })
-    contactY += 3
-  })
+  doc.text(contactInfo[0], 105, yPosition + 14, { align: 'center' })
+  
+  // Call to action
+  doc.setFontSize(9)
+  doc.setTextColor(249, 115, 22)
+  doc.setFont('helvetica', 'italic')
+  doc.text('Call today for a free consultation and competitive quote!', 105, yPosition + 19, { align: 'center' })
 }
